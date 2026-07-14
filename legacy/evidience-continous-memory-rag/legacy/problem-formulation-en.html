@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EviCtrl — Problem Formulation</title>
+  <style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #1a1d23;
+  --muted: #5c6570;
+  --border: #e2e6ec;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --draft: #94a3b8;
+  --active: #2563eb;
+  --parked: #d97706;
+  --done: #16a34a;
+  --rejected: #dc2626;
+  --open: #7c3aed;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141b;
+    --surface: #171d26;
+    --surface-2: #1f2731;
+    --text: #e6e9ef;
+    --muted: #9aa4b2;
+    --border: #2a313c;
+    --accent: #6ba2ff;
+    --accent-soft: #18283f;
+    --draft: #6b7686;
+    --active: #6ba2ff;
+    --parked: #e0a648;
+    --done: #46c275;
+    --rejected: #f06868;
+    --open: #a78bfa;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 53rem;
+  margin-inline: auto;
+  padding: 1.5rem 1.25rem 4rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.doc-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.8rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.lang-nav {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.project {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+  counter-reset: idea-counter;
+  scroll-margin-top: 1rem;
+}
+
+.project h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.project-summary {
+  color: var(--muted);
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.idea {
+  position: relative;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--draft);
+  padding: 0.9rem 1.1rem;
+  margin: 0.85rem 0;
+  background: var(--bg);
+  border-radius: 0 10px 10px 0;
+  scroll-margin-top: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.idea:hover {
+  box-shadow: var(--shadow);
+}
+
+.idea:target {
+  border-left-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.idea[data-status="active"] {
+  border-left-color: var(--active);
+}
+
+.idea[data-status="parked"] {
+  border-left-color: var(--parked);
+}
+
+.idea[data-status="done"] {
+  border-left-color: var(--done);
+}
+
+.idea[data-status="rejected"] {
+  border-left-color: var(--rejected);
+  opacity: 0.75;
+}
+
+.idea[data-status="open"] {
+  border-left-color: var(--open);
+}
+
+.idea {
+  counter-increment: idea-counter;
+}
+
+.idea-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  letter-spacing: -0.005em;
+}
+
+.idea-title::before {
+  content: counter(idea-counter, decimal-leading-zero);
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.05rem 0.4rem;
+  line-height: 1.5;
+}
+
+.idea-title::after {
+  margin-left: auto;
+  align-self: center;
+  font-weight: 600;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.idea[data-status="draft"] .idea-title::after {
+  content: "draft";
+  color: var(--draft);
+}
+
+.idea[data-status="active"] .idea-title::after {
+  content: "active";
+  color: var(--active);
+}
+
+.idea[data-status="parked"] .idea-title::after {
+  content: "parked";
+  color: var(--parked);
+}
+
+.idea[data-status="done"] .idea-title::after {
+  content: "done";
+  color: var(--done);
+}
+
+.idea[data-status="rejected"] .idea-title::after {
+  content: "rejected";
+  color: var(--rejected);
+}
+
+.idea[data-status="open"] .idea-title::after {
+  content: "open question";
+  color: var(--open);
+}
+
+.idea-body {
+  margin: 0 0 0.6rem;
+}
+
+.key-points {
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.85rem 0.65rem 1.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.key-points li {
+  margin-bottom: 0.35rem;
+  padding-left: 0.1rem;
+}
+
+.key-points li:last-child {
+  margin-bottom: 0;
+}
+
+.key-points strong {
+  color: var(--accent);
+}
+
+.idea-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0;
+}
+
+.idea-tags li {
+  font-size: 0.74rem;
+  padding: 0.15rem 0.55rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.idea-notes {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.idea-notes strong {
+  color: var(--text);
+}
+
+.problem-list,
+.problem-list ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.problem-list li {
+  margin-bottom: 0.4rem;
+}
+
+.example-query {
+  margin: 0.85rem 0;
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.95rem;
+}
+
+.example-query cite {
+  display: block;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+.example-query p {
+  margin: 0.3rem 0;
+}
+
+.example-query .expected {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.changelog h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.changelog ol {
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog li {
+  margin-bottom: 0.3rem;
+}
+
+.changelog time {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Foldable sections (<details class="foldable">) */
+.foldable {
+  margin: 0.5rem 0;
+}
+
+.foldable > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+  padding: 0.15rem 0;
+}
+
+.foldable > summary::-webkit-details-marker {
+  display: none;
+}
+
+.foldable > summary::before {
+  content: "▸";
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.foldable[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.foldable > summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foldable.idea-details {
+  margin-top: 0.25rem;
+}
+
+.foldable.idea-details > summary {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.foldable.changelog-archive {
+  margin-top: 0.5rem;
+}
+
+/* Related work */
+.related-work {
+  margin: 0.85rem 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.related-work > summary {
+  font-size: 0.85rem;
+}
+
+.related-work-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.related-work-list li {
+  margin-bottom: 0.45rem;
+}
+
+.related-work-list .relevance {
+  color: var(--text);
+}
+
+/* Lightweight concept figures */
+.memory-figure {
+  margin: 1.1rem 0;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.memory-figure figcaption {
+  margin-bottom: 0.85rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.memory-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: flow-step;
+}
+
+.memory-flow li {
+  position: relative;
+  counter-increment: flow-step;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+.memory-flow li::before {
+  content: counter(flow-step);
+  position: absolute;
+  top: 0.45rem;
+  right: 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.memory-flow strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  padding-right: 1rem;
+}
+
+.memory-flow span {
+  color: var(--muted);
+}
+
+@media (max-width: 32rem) {
+  body {
+    padding: 1.25rem 0.9rem 3rem;
+  }
+
+  .project {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .doc-header h1 {
+    font-size: 1.5rem;
+  }
+}
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <h1>EviCtrl: Evidence-State Memory Control</h1>
+    <p class="meta">Last updated: <time datetime="2026-06-16">2026-06-16</time> · Version 2 of <a href="../continuous-memory-model-and-retrieval/problem-formulation-en.html">Continuous Memory Model and Retrieval</a></p>
+    <nav class="lang-nav">
+      <a href="problem-formulation-zh.html">Chinese</a> |
+      <a href="../../.cursor/skills/nec-brainstorming/ideas/index.html">Brainstorming hub</a>
+    </nav>
+  </header>
+
+  <section class="project" data-project="evidience-continous-memory-rag" id="problem-formulation">
+    <h2>Research track</h2>
+    <p class="project-summary"><strong>What can a lossy long-video memory still support?</strong> EviCtrl reformulates streaming long-video QA as <strong>evidence-state memory control</strong>: under a fixed memory budget, the system tracks which required evidence roles are still supported by surviving memory, then controls retrieval, verification, answer granularity, and abstention from that state. RAG is the execution loop, not the core contribution.</p>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-001" data-status="active">
+      <h3 class="idea-title">Problem: Lossy Continuous Video Memory QA</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">Given a continuous video stream <code>V = {f1, f2, ...}</code>, build a bounded memory module <code>M_t</code> that ingests incrementally, consolidates continuously, and answers natural-language queries with evidence. The key change from ordinary streaming QA is that answerability changes as memory is compressed: the original video may contain the answer, but the current memory state may no longer contain the evidence needed to support every claim.</p>
+        <p class="idea-body">The paper-level question is: <em>what can a lossy continuous video memory still support, and how should an agent control retrieval and generation according to surviving evidence states?</em> This shifts the v2 line away from "hierarchical memory + RAG + verifier" toward a method contribution: active evidence acquisition over uncertain evidence-role states.</p>
+        <div class="example-query">
+          <cite>Example query</cite>
+          <p>"What did I do between taking my phone out and putting it back in my pocket?"</p>
+          <p class="expected"><strong>Evidence roles:</strong> phone-out anchor, phone-back anchor, interval evidence, app-interaction evidence, and visual/OCR evidence for the specific activities. If only anchors and a summary survive, the system should return a coarse grounded answer, not a precise unsupported story.</p>
+        </div>
+        <ul class="key-points">
+          <li><strong>Central variable:</strong> answerability is determined by surviving evidence, not by what happened in the original stream.</li>
+          <li><strong>Method core:</strong> maintain a belief over role-level evidence states during retrieval, not just a final evidence chain after retrieval.</li>
+          <li><strong>ICLR framing:</strong> evidence-state control under lossy memory, with RAG as one implementation of the control loop.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-002" data-status="active">
+      <h3 class="idea-title">Core abstraction: evidence roles and states</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">For a query <code>q</code>, EviCtrl parses a set of required evidence roles <code>R(q) = {r1, ..., rn}</code>. A role is a typed requirement that must be supported before a corresponding answer claim is allowed. The internal state is <code>State(ri, M_t)</code>, not a scalar confidence attached to the final answer.</p>
+        <p class="idea-body"><strong>Role-state belief.</strong> Each role state lies in <code>{supported, missing, insufficient_fidelity, ambiguous, contradicted, not_yet_found}</code>. EviCtrl should not keep only a hard label such as "missing"; it maintains a belief distribution <code>b_t(ri)=P(si | q, M_t, h_t)</code>. This distinction matters because "stored but not found yet" should trigger more search, while "probably missing" should trigger degradation or abstention.</p>
+        <p class="idea-body"><strong>Bayesian-style filtering.</strong> Retrieval and verification return observations such as <code>FOUND_EVIDENCE</code>, <code>NO_RESULT</code>, <code>MODALITY_MISSING</code>, <code>LOW_FIDELITY</code>, <code>CONTRADICTION</code>, and <code>ENTITY_AMBIGUOUS</code>. The controller updates belief with <code>b_{t+1}=F_theta(b_t, a_t, o_t)</code>, making EviCtrl a partially observable evidence-state control problem rather than a deterministic state machine.</p>
+        <p class="idea-body"><strong>Multimodal role schema.</strong> Role types include <code>TemporalAnchor</code>, <code>ObjectState</code>, <code>ActionEvent</code>, <code>EntityIdentity</code>, <code>SpeakerIdentity</code>, <code>SpeechContent</code>, <code>OCRText</code>, <code>SpatialRelation</code>, <code>CausalTransition</code>, and <code>IntervalSummary</code>. Each role has modality and fidelity requirements: speaker identity needs diarization/voice/face evidence; OCR text needs crop or frame evidence; object state needs keyframe or raw visual evidence; temporal anchors need timestamped events.</p>
+        <p class="idea-body"><strong>Failure codes.</strong> Failed roles are reported with typed codes such as <code>NO_EVIDENCE_POINTER</code>, <code>MODALITY_MISSING</code>, <code>FIDELITY_TOO_LOW</code>, <code>ENTITY_AMBIGUOUS</code>, <code>TEMPORAL_ANCHOR_MISSING</code>, <code>CONTRADICTION_FOUND</code>, and <code>BUDGET_EXHAUSTED</code>. This makes abstention diagnostic rather than generic.</p>
+        <ul class="key-points">
+          <li><strong>Evidence chain becomes belief state:</strong> the chain is built by updating role-state beliefs through retrieve-verify-act, not merely assembled at the end.</li>
+          <li><strong>Granularity follows fidelity:</strong> raw clips can support fine visual claims; summaries can support only coarse claims; belief or gist alone can support only hypotheses.</li>
+          <li><strong>Diagnostic refusal:</strong> the system reports the failed role and failure code, e.g. "I can confirm phone use, but not the specific app because OCR/screen evidence was not retained."</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-003" data-status="active">
+      <h3 class="idea-title">Method: EviCtrl as evidence-state MDP</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Sequential decision view.</strong> EviCtrl is a partially observable evidence-state MDP. The hidden state is whether each required role is supported, missing, insufficient, ambiguous, or contradicted in the current lossy memory. The belief <code>b_t</code> summarizes what the controller knows after previous retrieval and verification observations. The objective is <code>max_pi E[AnswerUtility(b_T) - lambda SearchCost - mu UnsupportedRisk]</code>.</p>
+        <p class="idea-body"><strong>Algorithm 1: Evidence-State Belief Filter.</strong> Given a query, parse roles <code>R(q)</code>, initialize <code>b_0</code>, execute evidence-seeking actions, and update <code>b_{t+1}=F_theta(b_t, a_t, o_t)</code> from verifier observations. This filter separates <em>not found yet</em> from <em>probably missing</em>, and represents contradiction probability instead of treating contradiction as a post-hoc flag.</p>
+        <p class="idea-body"><strong>Algorithm 2: Value-of-Evidence Controller.</strong> Candidate actions include <code>search_ASR(role)</code>, <code>search_visual(role)</code>, <code>expand_temporal(role)</code>, <code>retrieve_schema(role)</code>, <code>check_contradiction(role)</code>, <code>stop_and_answer</code>, and <code>abstain</code>. At each step, choose the action with largest expected value of evidence: <code>VoE(a)=E_o[U(F_theta(b_t,a,o))-U(b_t)]-lambda C(a)</code>. Stop when <code>max_a VoE(a) &lt;= tau</code>.</p>
+        <p class="idea-body"><strong>Algorithm 3: Risk-Constrained Claim Generation.</strong> After stopping, choose the answer level with a risk-sensitive decision rule over <code>{precise, coarse, hypothesis, abstain}</code>. A claim <code>c_j</code> may be generated only if its role-level support risk is below threshold: <code>Risk(c_j | b_T) &lt;= epsilon</code>. Contradiction probability and ambiguity probability directly increase risk, so checking contradiction can have high value before high-stakes claims.</p>
+        <figure class="memory-figure">
+          <figcaption>Figure: EviCtrl as active evidence acquisition over typed role-state beliefs.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Query</strong><span>natural-language long-video question</span></li>
+            <li><strong>Roles</strong><span>typed evidence requirements</span></li>
+            <li><strong>Belief</strong><span>P(s_i | query, memory, history)</span></li>
+            <li><strong>VoE Control</strong><span>retrieve, verify, refine, stop, abstain</span></li>
+            <li><strong>Risk Gate</strong><span>precise / coarse / hypothesis / abstain</span></li>
+          </ol>
+        </figure>
+        <ul class="key-points">
+          <li><strong>Novelty:</strong> the controller performs active evidence acquisition over role-state beliefs, not fixed top-k retrieval.</li>
+          <li><strong>Adaptive stopping:</strong> the system keeps searching only while expected answerability gain exceeds evidence-acquisition cost.</li>
+          <li><strong>Anti-hallucination by construction:</strong> high-risk roles mask unsupported claims before generation.</li>
+          <li><strong>RAG is subordinate:</strong> retrieval is one action in a state-control loop, not the paper's main abstraction.</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://proceedings.neurips.cc/paper_files/paper/2025/file/8190b210e9808e54ee16263b673a847d-Paper-Conference.pdf" target="_blank" rel="noopener">Deep Video Discovery (DVD)</a> — <span class="relevance">Agentic search over multi-granularity video; closest read-path baseline.</span></li>
+            <li><a href="https://github.com/OSU-NLP-Group/HippoRAG" target="_blank" rel="noopener">HippoRAG</a> — <span class="relevance">Graph-structured multi-hop RAG; reference for warm-tier graph traversal.</span></li>
+            <li><a href="https://arxiv.org/abs/2310.11511" target="_blank" rel="noopener">Self-RAG</a> — <span class="relevance">Retrieval and self-reflection baseline; EviCtrl differs by controlling role-level evidence states under lossy video memory.</span></li>
+            <li><a href="https://github.com/OpenGVLab/RIVER" target="_blank" rel="noopener">RIVER</a> — <span class="relevance">Streaming video benchmark with memory and live perception; useful for mid-stream queryability.</span></li>
+          </ul>
+        </details>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-004" data-status="active">
+      <h3 class="idea-title">Learning objectives</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Unified role-coverage objective.</strong> Retention and query-time retrieval should optimize the same abstraction: typed evidence-role coverage under budget. Long-term memory budget chooses <code>M_B</code> to maximize <code>E_q RoleCoverage(q, M_B)</code>; query-time budget chooses actions <code>A_{1:T}</code> to maximize <code>RoleCoverage(q, Retrieved(A_{1:T})) - lambda Cost(A)</code>.</p>
+        <p class="idea-body"><strong>Budgeted retention as coverage maximization.</strong> Each memory item <code>e</code> supports a set of role types with fidelity-dependent capacity <code>Support(e,r)</code>. The retention objective can be written as a knapsack / submodular coverage problem: <code>max_{Cost(M)&lt;=B} sum_r w_r max_{e in M} Support(e,r) - lambda Redundancy(M)</code>. A practical online approximation adds the item with largest marginal answerability gain <code>Delta(e | M)</code> while budget remains.</p>
+        <p class="idea-body"><strong>Training the controller.</strong> Use two stages. First, teacher-trace imitation learns <code>pi_theta(a_t | q, b_t, M)</code> from oracle evidence chains and verifier-labeled trajectories. Second, offline preference learning / DPO ranks trajectories by <code>RoleRecall + alpha Answerability - beta UnsupportedClaims - lambda Cost</code>, preferring shorter trajectories that find enough evidence and avoid unsupported precise claims.</p>
+        <p class="idea-body"><strong>Counterfactual compression supervision.</strong> Compare full memory, keyframe-only, schema-only, summary-only, gist-only, and missing-evidence states. The model should learn that output granularity follows survivability: full supports precise, schema supports coarse, gist supports hypothesis, and missing supports abstention.</p>
+        <ul class="key-points">
+          <li><strong>Retention target:</strong> maximize future evidence-role coverage, not visually salient clip retention.</li>
+          <li><strong>Control target:</strong> learn value-of-evidence action selection and adaptive stopping.</li>
+          <li><strong>Generation target:</strong> strongly penalize unsupported factual answers while rewarding calibrated precise, coarse, hypothesis, or abstain outputs.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-005" data-status="active">
+      <h3 class="idea-title">Evaluation protocol</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Setting.</strong> Fixed-budget, growing-horizon long-video QA with realistic lossy tiers. Adapt Ego4D, QAEgo4D, EgoSchema, MovieChat-1K, RIVER-style retrospective tasks, and M3-style long-memory tasks. The benchmark should include gold answers, evidence roles, evidence-chain labels, surviving evidence crumbs, allowed answer granularity, and ambiguity/failure labels.</p>
+        <p class="idea-body"><strong>Metrics.</strong> Report Evidence-Role Recall@K, Evidence-Chain Completion@K, Role Recall@Budget, Search Steps to Answerability, Answer Accuracy with Support, Unsupported Answer Rate, False Support Rate, Correct Abstention, Stop Decision Accuracy, Missing-vs-Not-Found Separation, Risk-Coverage AUC, Granularity Calibration, Role-State Belief Accuracy, forgetting curves, latency, storage cost, and deletion-compliance rate.</p>
+        <p class="idea-body"><strong>Baselines.</strong> Include long-context VLM/LLM with sampled frames, caption-RAG, ANN over retained clips, ANN + graph traversal, MMR + reranker, LLM planner with the same tools, RAG + verifier + abstention classifier, M3-Agent-style memory, RIVER/StreamBridge-style streaming memory when comparable, DVD-style agentic search, LongMem-style SideNet memory fusion (non-attributable residual injection), oracle decomposition, oracle retention, and oracle evidence chain.</p>
+        <ul class="key-points">
+          <li><strong>Hero result:</strong> at fixed answer coverage and search budget, lower unsupported-answer rate without simply over-abstaining.</li>
+          <li><strong>Algorithm result:</strong> VoE control should dominate random unresolved-role search, greedy semantic retrieval, uncertainty-only search, and LLM planners on role recall per search step.</li>
+          <li><strong>Scaling result:</strong> as horizon grows under fixed memory budget, retain higher evidence-role recall and better risk-coverage than strong retrieval and memory baselines.</li>
+          <li><strong>Oracle baselines:</strong> identify whether bottlenecks come from retention, decomposition, retrieval, or generation.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-006" data-status="active">
+      <h3 class="idea-title">Ablations and attribution</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Retention experiment.</strong> Fix the controller and compare retention policies: FIFO, reservoir, saliency, summary-only, graph memory, learned survivability policy, and oracle retention. This tests whether survivability-aware consolidation is doing real work.</p>
+        <p class="idea-body"><strong>Retrieval/control experiment.</strong> Fix the memory store and give every method the same retained evidence. Compare EviCtrl VoE search to random unresolved-role search, greedy semantic retrieval, uncertainty-only search, graph traversal, reranker, verifier-only systems, LLM tool planners, and oracle VoE. This isolates the value of belief-state tracking and value-of-evidence action selection.</p>
+        <p class="idea-body"><strong>Belief-filter experiment.</strong> Compare hard state labels, answer-level confidence, role-level belief state, and oracle role state. Metrics: belief calibration, missing-vs-not-found separation, contradiction detection, and stop decision accuracy.</p>
+        <p class="idea-body"><strong>Generation/gating experiment.</strong> Fix the evidence chain and compare direct LLM answering, LLM + verifier, answer-level abstention classifier, claim-level binding, risk-constrained claim generation, and oracle claim binding. This tests whether hallucination reduction comes from risk-constrained generation rather than from better retrieval.</p>
+        <ul class="key-points">
+          <li><strong>Remove components:</strong> role decomposition, belief filter, VoE controller, adaptive stopping, fidelity labels, failure codes, risk gate, contradiction check, and claim-level binding.</li>
+          <li><strong>Attribution discipline:</strong> separate retention, retrieval, and generation so the paper can explain why the method wins.</li>
+          <li><strong>Failure analysis:</strong> report whether failed answers came from not stored, not found, insufficient fidelity, ambiguity, or contradiction.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-007" data-status="active">
+      <h3 class="idea-title">Relation to v1 and contribution list</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Relation to v1.</strong> v1 studies a generative continuous memory field. EviCtrl makes the safer but sharper v2 claim: the core issue in bounded long-video memory is not whether a latent field can store the past, but whether surviving evidence can still support claims. The v1 field can return as a proposal prior or cold-tier add-on, but it is not the main contribution.</p>
+        <p class="idea-body"><strong>Refined contributions.</strong> (1) Evidence-state belief formulation: long-video QA as partially observable role-state tracking. (2) Budgeted role-coverage retention: keep evidence crumbs that maximize future answerability under memory cost. (3) Value-of-evidence controller: actively acquire evidence while expected answerability gain exceeds search cost. (4) Risk-constrained claim generation: precise/coarse/hypothesis/abstain with claim-level support-risk thresholds and failed-role reporting. (5) Controlled evaluation protocol that separates retention, retrieval/control, belief tracking, and generation.</p>
+        <p class="idea-body"><strong>Reviewer-facing positioning.</strong> The method is not "hierarchical memory + RAG + verifier + abstention." EviCtrl turns long-video memory QA into active evidence acquisition over typed role-state beliefs, optimized by value of evidence and constrained by claim-level support risk.</p>
+        <ul class="idea-tags">
+          <li>EviCtrl</li>
+          <li>evidence-state control</li>
+          <li>lossy long-video memory</li>
+          <li>survivability-aware consolidation</li>
+          <li>claim-level answerability</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-008" data-status="active">
+      <h3 class="idea-title">ICLR reviewer scoring view</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Recommendation target.</strong> The realistic ICLR goal is not "8/10" as a generic quality score. In ICLR reviewer terms, the current concept without strong experiments is around borderline; the formal EviCtrl algorithm plus strong baselines can reach <em>Overall 6 = Weak Accept</em>; strong risk-coverage and role-recall results can reach <em>Overall 7 = Accept</em>. An <em>Overall 8+ = Strong Accept</em> requires a clearer new phenomenon and a result that feels hard for existing RAG / verifier / selective-answering systems to reproduce.</p>
+        <p class="idea-body"><strong>Reviewer dimensions.</strong> EviCtrl should be judged on soundness, significance, novelty, empirical rigor, clarity, prior-work positioning, and reproducibility. The story is likely strong on significance because bounded long-video memory is a real problem, moderate on novelty unless role-state belief control is clearly separated from RAG sufficiency / verifier baselines, and decided mainly by empirical rigor.</p>
+        <p class="idea-body"><strong>Score ladder.</strong> A pipeline version with role parser + retriever + verifier + answerability gate is likely <em>Overall 5</em>: interesting but too close to system assembly. The evidence-state MDP version with belief tracking, value-of-evidence acquisition, adaptive stopping, risk-constrained generation, and attribution experiments is likely <em>Overall 6</em>. To reach <em>Overall 7</em>, EviCtrl must beat strong baselines on risk-coverage, unsupported claim rate, role recall under budget, and granularity calibration. <em>Overall 8+</em> needs a broad, well-demonstrated phenomenon plus large gains over strong baselines.</p>
+        <ul class="key-points">
+          <li><strong>Do not claim:</strong> "EviCtrl solves hallucination." Claim: "EviCtrl reduces unsupported factual claims under bounded/lossy memory by conditioning generation on role-level evidence states."</li>
+          <li><strong>Do not claim:</strong> "EviCtrl remembers better." Claim: "EviCtrl better preserves and recovers query-required evidence roles under fixed memory and retrieval budgets."</li>
+          <li><strong>Reviewer-buying metrics:</strong> RoleRecall@Budget, UnsupportedClaimRate@Coverage, Coverage@FixedRisk, Risk-Coverage AUC, Granularity Calibration, and Missing-vs-Not-Found Separation.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-009" data-status="active">
+      <h3 class="idea-title">8+ strategy: support collapse under bounded memory</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Killer phenomenon.</strong> To have 8+ ICLR potential, EviCtrl should identify and control a failure mode of bounded video memory: <strong>support collapse under relevance preservation</strong>. Under compression, a memory may remain semantically relevant to the query while losing the specific evidence roles needed to support a fine-grained factual claim. This is not ordinary retrieval failure and not ordinary hallucination; it is a bounded-memory support-degradation problem.</p>
+        <p class="idea-body"><strong>Example.</strong> A compressed memory summary says "the user used their phone around noon." The query asks, "Which app did I open?" A baseline retrieves the relevant summary and guesses an app. EviCtrl detects that OCR / screen / app-interaction evidence is missing or insufficient-fidelity, so it downgrades to a coarse answer or abstains from the fine-grained app claim.</p>
+        <p class="idea-body"><strong>Controlled Support Decay experiment.</strong> For the same video-query pairs, construct memory tiers: full clip, keyframe, ASR/OCR, schema, summary, gist/latent, and missing. Then show three curves: (1) semantic relevance stays high while role-level support drops, (2) unsupported claim rate versus coverage shows EviCtrl lower-risk at the same coverage and higher coverage at the same risk, and (3) RoleRecall@Budget shows EviCtrl finds more required evidence per memory access than RAG, LLM planners, rerankers, and selective sufficiency baselines.</p>
+        <p class="idea-body"><strong>Quantitative bar for a standout paper.</strong> The result should not be a small average QA gain. A convincing 8+ attempt would show large reductions in Unsupported Claim Rate, higher Coverage@FixedRisk, better RoleRecall@Budget, lower fine-detail hallucination under summary/schema memory, and better granularity calibration, all against strong baselines such as RAG + verifier + abstention, MMR + reranker + verifier, LLM planner with same tools, SURE-RAG-style selective sufficiency, and long-video memory systems when comparable.</p>
+        <ul class="key-points">
+          <li><strong>8+ thesis:</strong> relevant memories can stop supporting claims under bounded compression; EviCtrl actively controls support, not just relevance.</li>
+          <li><strong>Best title direction:</strong> <em>EviCtrl: Active Support Control for Bounded Long-Video Memory</em>, with the subtitle "When Relevant Memories No Longer Support the Answer."</li>
+          <li><strong>Honest target:</strong> design the paper with 8+ ambition, but write with 7-level restraint: no overclaiming, just strong evidence for support collapse and active support control.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-010" data-status="active">
+      <h3 class="idea-title">High-fidelity feature tier: latent/KV evidence vs semantic features</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>One tier, three candidate feature sources.</strong> Several recent memory designs store learned features instead of text or pixels: Mirage caches diffusion VAE latents at 3D points, and LongMem caches frozen-LLM KV pairs in an external bank. We unify these as one optional <em>high-fidelity feature tier</em> inside EviCtrl's fidelity hierarchy: the stored unit can be a diffusion latent, a VLM visual token, or an LLM KV pair. This tier is meant to support fine-grained roles (OCRText, ObjectState, precise SpatialRelation) that caption/summary tiers lose.</p>
+        <p class="idea-body"><strong>Why it is only a luxury tier, not the default store.</strong> Raw latents and KV are high-dimensional and expensive, so they directly fight the fixed bit budget. LongMem assumes an unbounded bank; EviCtrl does not. Feature-level evidence can therefore only be afforded for a few budgeted items, which is exactly why it sits at the top of the fidelity ladder (raw/feature &gt; keyframe &gt; schema &gt; summary &gt; gist &gt; missing), not as the backbone.</p>
+        <p class="idea-body"><strong>Representation-mismatch risk (the deciding bet).</strong> Generation latents (diffusion VAE) and frozen-model KV are optimized for reconstruction / next-token prediction, not for query-aligned semantics. LLaVA-style reasoning consumes semantic, language-aligned features (CLIP/SigLIP). So feeding raw latents directly into a VLM for navigation or reasoning is unproven and may underperform semantic features. We treat this as a falsifiable hypothesis, not an assumption.</p>
+        <p class="idea-body"><strong>Deciding ablation.</strong> For the same long-video QA, feed three visual-token sources into the same VLM and use each for where-to-look navigation: (1) SigLIP semantic features, (2) raw diffusion/KV latents, (3) latents + a trained semantic adapter. The feature tier earns its place only if (2)/(3) beat (1) on fine-grained / OCR / spatial roles and on RoleRecall; otherwise it becomes a baseline, not a component.</p>
+        <p class="idea-body"><strong>What LongMem actually contributes.</strong> Its real gift is the decoupling principle — a frozen reasoner plus a small trainable memory-side module — which backs EviCtrl's fixed-policy controller and filtering belief state over a frozen VLM. But LongMem's SideNet fuses memory as an opaque hidden-state residual, which is in direct tension with EviCtrl's claim-level attribution and abstention. Opaque fusion is therefore allowed only on a coarse/gist tier (no attribution needed) or kept as a non-attributable baseline.</p>
+        <ul class="key-points">
+          <li><strong>Unify, do not stack:</strong> diffusion latent / VLM token / LLM KV are one high-fidelity tier with different feature sources, not three separate modules.</li>
+          <li><strong>Budget tension:</strong> feature/KV storage is a luxury top tier under the bit budget, never the default store.</li>
+          <li><strong>Attribution vs fusion:</strong> SideNet-style residual fusion conflicts with role-level support gating; keep evidence explicit where claims must be attributable.</li>
+          <li><strong>Frankenstein warning:</strong> EviCtrl stays the spine; latent/KV ideas enter only as a verified tier or as baselines.</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://github.com/Victorwz/LongMem" target="_blank" rel="noopener">LongMem</a> — <span class="relevance">Frozen LLM + trainable SideNet over an unbounded external KV bank (NeurIPS 2023); precedent for decoupled memory, contrast on bounded budget and attribution.</span></li>
+            <li><a href="https://arxiv.org/abs/2606.09828" target="_blank" rel="noopener">Mirage (Latent Spatial Memory)</a> — <span class="relevance">Diffusion-latent 3D cache for video generation; source for the latent feature tier and for the generation-vs-understanding representation risk.</span></li>
+          </ul>
+        </details>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-011" data-status="active">
+      <h3 class="idea-title">Two-distribution lossy memory buffer: event distribution × importance distribution</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Factorize the buffer into "where to store" × "how finely to store".</strong> The lossy memory buffer is governed by two distributions with orthogonal jobs, which is why a single scalar score is not enough. <em>Event distribution</em> <code>p_E</code> answers "where in the stream is a memorable unit, and how dense are they": it controls the support (anchor placement, segmentation, granularity) and is learned self-supervised from prediction surprise / boundary / novelty, query-agnostic. <em>Importance distribution</em> <code>p_I</code> answers "how valuable is this unit for future answering": it controls the bit / fidelity allocation per anchor and is learned weakly-supervised as value-of-evidence from teacher evidence chains. In one line: the event distribution decides where and how densely to sample; the importance distribution decides how high-fidelity each sample is kept.</p>
+        <p class="idea-body"><strong>Formulation 1 — marked point process.</strong> Ground process = inhomogeneous intensity <code>λ_E(t)</code> (Poisson/Hawkes; Hawkes captures one event making short-term follow-ups more likely) placing anchors with expected count <code>N ≈ ∫ λ_E ≤ N_max</code>. Marks = importance samples <code>m(e) ~ p_I</code> mapped to a fidelity tier <code>f(e) ∈ {raw, keyframe, schema, summary, gist}</code> (the idea-010 ladder). Retention factorizes as <code>keep_and_fidelity(e) ∝ p_E(e) · p_I(f | e)</code>. Importance is conditioned on the event, not independent, because important things are often event boundaries — conditioning avoids double counting.</p>
+        <p class="idea-body"><strong>Formulation 2 — rate–distortion bit allocation.</strong> "Lossy" is literally lossy compression: the event distribution defines the source symbol set (how to segment the stream), the importance distribution supplies weights <code>w(e)=p_I(e)</code>, and under budget <code>Σ b(e) ≤ B</code> we solve <code>min_b Σ w(e) D(b(e))</code>. The optimum is reverse water-filling: higher importance → more bits → higher fidelity tier; low importance → compressed to summary/gist or dropped. This makes the buffer an online, samplable factorized approximation of the idea-004 submodular role-coverage retention objective (idea-004 is the target; this buffer is the efficient implementation).</p>
+        <p class="idea-body"><strong>Why this is the generative model of support collapse (the 8+ thesis).</strong> Relevance ≈ survival in <code>p_E</code> (the event is still represented, still retrievable). Support ≈ enough bits allocated by <code>p_I</code> for the role's required fidelity. <em>Support collapse is exactly a mismatch between the two distributions</em>: the event survives in <code>p_E</code> (relevant) but <code>p_I</code> under-allocated bits for the role a future query needs (detail compressed away) → relevant-but-unsupported. The two knobs (sampling density vs fidelity allocation) can be turned independently to produce the idea-009 support-decay curves.</p>
+        <p class="idea-body"><strong>Online forgetting = both distributions degrade over time.</strong> Under growing horizon and budget pressure: (1) importance decay — add recency / already-answered decay to <code>p_I</code> so old anchors slide down the fidelity ladder (raw→summary→gist); (2) event coarsening — merge old events into IntervalSummary so <code>p_E</code> coarsens. Together this yields a sharp-recent, blurry-distant buffer for free.</p>
+        <p class="idea-body"><strong>Learning.</strong> <code>p_E</code>: self-supervised boundary/novelty model, no labels. <code>p_I</code>: learn <code>importance(e)=E_q[Δ RoleCoverage(q) | keep e]</code> from teacher evidence chains; since the query is unknown at retention time, marginalize over a query prior and decompose into an intrinsic evidence-density prior (faces, text, object-state changes, interactions are evidence-dense) plus a learned query-marginal term to resist train/test query shift.</p>
+        <ul class="key-points">
+          <li><strong>Orthogonal roles:</strong> event distribution = support / where & how dense; importance distribution = fidelity / how many bits per anchor.</li>
+          <li><strong>Two clean math views:</strong> marked point process (anchors + fidelity marks) and rate–distortion reverse water-filling under a bit budget.</li>
+          <li><strong>Support collapse made explicit:</strong> it is a measurable <code>p_E</code>-survives / <code>p_I</code>-under-allocates mismatch, giving two independent experimental knobs.</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> Risks — (1) importance is query-blind at retention time, so it must use a query-marginal plus intrinsic prior or it breaks under test-query shift; (2) the two distributions are correlated, so model importance as <code>p_I(·|e)</code> rather than independent; (3) event mis-segmentation propagates into bit allocation (a missed boundary merges two events and loses evidence), so segmentation should be recoverable/revisable. Open question: jointly vs sequentially learn <code>p_E</code> and <code>p_I</code>, and whether to share an encoder.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-012" data-status="active">
+      <h3 class="idea-title">Trainable buffer-management agent and where its learning signal comes from</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>The hard part is not the policy, it is the credit assignment.</strong> The buffer agent acts query-blind and now, while the only ground-truth reward (answerability) arrives query-conditioned and much later. The whole design problem is converting delayed downstream answerability into a retention-time signal. EviCtrl therefore has two controllers sharing one objective (role coverage under budget): the query-time value-of-evidence controller (idea-003, fast, query-aware, has direct reward) and a new <em>buffer-management agent</em> (slow, query-blind, runs at consolidation).</p>
+        <p class="idea-body"><strong>Buffer agent as a memory-control MDP.</strong> State = current memory <code>M_t</code> (summary stats + per-item fidelity) + incoming item + budget remaining + intrinsic evidence-density features. Action = <code>admit</code> (the <code>p_E</code> gate), <code>fidelity_tier</code> (the <code>p_I</code> bit allocation), <code>merge</code>/<code>coarsen</code>, <code>demote</code>, <code>evict</code>. Architecture = frozen VLM encoder (idea-010 / LongMem decoupling) + small trainable memory-side head; only the manager is trained, not the reasoner.</p>
+        <p class="idea-body"><strong>Learning signals, weakest-coupling first.</strong> (1) <em>Self-supervised for <code>p_E</code></em>: next-feature prediction / reconstruction / boundary prediction; predictive surprise = boundary = high intensity, no query needed. (2) <em>Retrospective oracle labels for <code>p_I</code></em> (cleanest): run unbounded memory + oracle evidence chains (idea-005), and for each future query you know which items were on a needed chain, so <code>importance(e)=E_q[1(e ∈ evidence_chain(q))] ≈ E_q[Δ RoleCoverage(q) | keep e]</code> — a supervised regression target, no RL for the first cut. (3) <em>Counterfactual compression for the fidelity head</em>: ablate each item to tiers and label the minimum tier at which the claim is still supported (idea-004). (4) <em>Hindsight-optimal imitation for the joint policy</em> (most practical): solve the offline submodular/knapsack optimal keep set given the full future and full query set, then DAgger-imitate it online, converting intractable online credit assignment into supervised imitation of a tractable offline oracle. (5) <em>RL / preference fine-tuning last</em>: reward <code>R = RoleRecall@Budget + α Answerability − β UnsupportedClaims − λ Cost</code> via trajectory DPO with the query-time controller frozen as evaluator.</p>
+        <p class="idea-body"><strong>Beating delay and sparsity.</strong> The importance model <em>is</em> the critic: <code>p_I</code> predicts future role-coverage value, so it doubles as a dense query-blind retention-time reward (supervised pretrain, then refine with downstream reward). Per-item credit comes from claim-level attribution — when a query is answered, the evidence chain credits the specific retained items, reusing EviCtrl's risk-gate attribution as the credit-assignment mechanism. Hindsight relabeling (HER-style) treats whichever queries actually arrived as the realized goal distribution.</p>
+        <p class="idea-body"><strong>Suggested 4-stage recipe.</strong> Stage 0: self-supervised <code>p_E</code> on raw video. Stage 1: supervised <code>p_I</code> from retrospective evidence-chain importance + counterfactual-compression fidelity labels. Stage 2: DAgger imitation of the hindsight-optimal buffer for the joint admit/fidelity/merge policy under budget. Stage 3: trajectory DPO / RL with downstream answerability reward, query-time controller frozen as evaluator.</p>
+        <ul class="key-points">
+          <li><strong>Two controllers, one objective:</strong> buffer agent (retention, query-blind) and VoE controller (query-time) co-trained on role coverage under budget.</li>
+          <li><strong>Signal ladder:</strong> self-supervised <code>p_E</code> → retrospective oracle importance → counterfactual fidelity labels → hindsight-optimal imitation → downstream-reward RL.</li>
+          <li><strong>Importance = critic:</strong> the same <code>p_I</code> head provides the dense retention-time reward, bootstrapped from supervised labels and refined by downstream answerability.</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> Pitfalls — query-distribution shift (regularize with intrinsic evidence-density prior + randomize query types), reward hacking toward "keep everything" (enforce a hard budget / Lagrangian, not a soft cost), and non-stationarity from the agent changing its own future state distribution (on-policy with trajectory replay or off-policy correction). Open question: whether the buffer agent and query-time controller should share weights/encoder or stay separate heads.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-013" data-status="active">
+      <h3 class="idea-title">Diffusion evidence-navigation agent over the memory distributions (impact verdict)</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Honest verdict first.</strong> A trainable navigation agent over the <code>p_E</code>/<code>p_I</code> landscape is promising and diffusion is a strong instantiation, but it is "more impactful" only if it earns its place on a phenomenon that step-wise VoE control cannot handle. Otherwise reviewers read it as a method-for-method's-sake swap — the Frankenstein risk of idea-010.</p>
+        <p class="idea-body"><strong>Reframe: retrieval as trajectory navigation over the landscape.</strong> The two distributions define a structured landscape: <code>λ_E(t)</code> says where events are dense, <code>p_I</code> says where surviving fidelity/value is high. The current controller (idea-003) walks it greedily one discrete action at a time. A <em>Diffusion Evidence Navigator</em> (à la Diffuser / Decision Diffuser) instead generates a whole trajectory of memory-access waypoints conditioned on <code>(query, role set R(q), belief b_t, landscape (λ_E, p_I))</code>, trained with the VoE objective as reward.</p>
+        <p class="idea-body"><strong>Why diffusion fits.</strong> (1) It models a multimodal "where to look" distribution — a query's evidence is often scattered (phone-out anchor, app-interaction, OCR elsewhere), and greedy top-k/single-step VoE gets trapped in one mode while a diffusion planner samples several coherent multi-target trajectories that jointly cover roles. (2) It plans non-greedy combinatorial search orders under budget and is naturally anytime: sample K candidate plans, score each by expected role coverage − cost, execute the best.</p>
+        <p class="idea-body"><strong>On-thesis impact link (support collapse).</strong> A navigator that reads both distributions can detect support-collapse zones — regions where <code>p_E</code> survived (relevant/retrievable) but <code>p_I</code> fidelity collapsed (role evidence gone). A greedy semantic retriever walks into that zone, pulls the relevant-but-unsupported memory, and hallucinates; a landscape-aware navigator learns to route around it or trigger abstention. This converts diffusion navigation from a bolt-on into a direct mechanism for controlling support collapse. It is also the non-hallucinatory home for v1's diffusion field (idea-007): used as a navigation proposal prior over where degraded evidence likely lives, not as an answer generator.</p>
+        <p class="idea-body"><strong>Honest risks.</strong> (1) Method-for-method's-sake: the EviCtrl core does not require diffusion, so any gain must be attributed to trajectory-level generative planning + landscape awareness, not the diffusion brand — mandatory baseline is a non-diffusion trajectory planner (AR-transformer planner, MCTS over the same landscape). (2) Latency: denoising steps fight streaming/latency metrics, so report the cost curve. (3) Representation mismatch (idea-010): navigation must run in a semantic, query-aligned space, not raw diffusion-latent space, unless the SigLIP-vs-latent-vs-latent+adapter ablation passes.</p>
+        <p class="idea-body"><strong>Decisive experiment.</strong> On a fixed memory store (idea-006 retrieval/control protocol), compare greedy semantic retrieval, step-wise VoE, AR-transformer planner, MCTS planner, and the diffusion navigator — the last two with vs without <code>(λ_E, p_I)</code> landscape conditioning and semantic vs latent space. Metrics: RoleRecall per search step, Coverage@FixedRisk, and especially the scattered-multi-role / multimodal-evidence query subset where greedy fails. Diffusion earns inclusion only if it wins there and on anytime budget curves; if transformer/MCTS matches it, the claim degrades gracefully to "trajectory-level landscape-aware navigation beats greedy retrieval," with diffusion as one implementation.</p>
+        <ul class="key-points">
+          <li><strong>Conditional yes:</strong> raises the ceiling (multimodal multi-role coverage, support-collapse-aware routing, a safe home for v1's field) but only with an honest non-diffusion planner baseline.</li>
+          <li><strong>Attribution discipline:</strong> credit the idea (trajectory + landscape awareness), not the machinery (diffusion).</li>
+          <li><strong>Strengthens 8+ story if</strong> the navigator demonstrably avoids support-collapse zones and lifts Coverage@FixedRisk on scattered-evidence queries.</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> Open questions — train the navigator jointly with the buffer agent (idea-012) and VoE controller on the shared role-coverage objective, or stage it? Does landscape conditioning need an explicit (λ_E, p_I) field input or can it be read from memory features? Keep diffusion strictly subordinate to the EviCtrl spine, as a verified navigation tier, never the headline mechanism.</p>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2205.09991" target="_blank" rel="noopener">Diffuser (Planning with Diffusion)</a> — <span class="relevance">Trajectory-level diffusion planning; basis for sampling multi-waypoint evidence-search plans.</span></li>
+            <li><a href="https://arxiv.org/abs/2211.15657" target="_blank" rel="noopener">Decision Diffuser</a> — <span class="relevance">Conditional diffusion policy; precedent for conditioning navigation on query/belief/landscape.</span></li>
+          </ul>
+        </details>
+      </details>
+    </article>
+
+  </section>
+
+  <section class="changelog">
+    <h2>Discussion log</h2>
+    <ol>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Added the diffusion evidence-navigation agent over the memory distributions (idea-013) with an honest impact verdict: reframed retrieval as trajectory-level navigation over the <code>(λ_E, p_I)</code> landscape, argued diffusion fits multimodal scattered-multi-role evidence and anytime budget planning, and tied it to the 8+ thesis via support-collapse-zone avoidance and as the non-hallucinatory home for v1's diffusion field (proposal prior, not answer generator). Gated it behind a mandatory non-diffusion planner baseline (AR-transformer / MCTS) and the idea-010 semantic-vs-latent ablation so the gain is attributed to trajectory + landscape awareness, not the diffusion brand.</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Added the trainable buffer-management agent and its learning signal (idea-012): framed buffer management as a query-blind memory-control MDP co-trained with the query-time VoE controller on one role-coverage objective, and laid out a signal ladder (self-supervised <code>p_E</code> → retrospective oracle importance for <code>p_I</code> → counterfactual-compression fidelity labels → hindsight-optimal DAgger imitation → downstream-reward trajectory DPO). Resolved the delayed/query-blind credit-assignment problem by making the importance model double as the dense critic and reusing claim-level attribution for per-item credit.</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Added the two-distribution lossy memory buffer (idea-011): factorize retention into an event distribution <code>p_E</code> (support / where & how densely to place anchors, self-supervised from surprise/boundary) and an importance distribution <code>p_I</code> (fidelity / bits per anchor, value-of-evidence). Formalized as a marked point process and as rate–distortion reverse water-filling under a bit budget, framed as an online samplable approximation of the idea-004 role-coverage objective, and shown to be the generative model of support collapse (event survives in <code>p_E</code> while <code>p_I</code> under-allocates bits for a needed role).</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Folded LongMem and Mirage into EviCtrl as one optional high-fidelity feature tier (idea-010): diffusion latent / VLM token / LLM KV are unified feature sources gated by a SigLIP-vs-latent-vs-latent+adapter ablation, kept as a luxury tier under the bit budget. Adopted LongMem's frozen-reasoner decoupling as precedent, but flagged SideNet-style opaque fusion as conflicting with claim-level attribution, so it is limited to a coarse tier or a non-attributable baseline.</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Added an ICLR reviewer scoring view and an 8+ strategy. The updated target is to move from <em>Overall 5</em> (pipeline-like RAG + verifier) to <em>Overall 6</em> (formal evidence-state control) and possibly <em>Overall 7</em> (strong risk-coverage / role-recall results). An <em>Overall 8+</em> requires demonstrating support collapse under bounded video memory: semantically relevant memories remain retrievable while claim-support evidence roles are lost or degraded, and EviCtrl controls that failure mode better than strong baselines.</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Reframed the project from Evidence Continuous Memory RAG into <strong>EviCtrl: Evidence-State Memory Control</strong>. The page now centers lossy long-video answerability, evidence roles and role states, online consolidation, evidence-state retrieval sessions, claim-level answerability-gated generation, survivability-aware learning objectives, stronger baselines, oracle controls, and retention/retrieval/generation attribution experiments.</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Added hallucination mitigation as a core idea: separated consolidation-time hallucination from generation-time hallucination, plus fidelity-aware calibrated abstention, deletion compliance, and faithfulness/attribution/abstention/calibration metrics.</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — Created Version 2 of the continuous-memory line as a new project, originally framed as Evidence Continuous Memory RAG: same Streaming Multi-hop Memory QA problem as v1, but with evidence-grounded retrieval over a tiered, continuously consolidated discrete store instead of a generative continuous memory field.</li>
+    </ol>
+  </section>
+</body>
+</html>

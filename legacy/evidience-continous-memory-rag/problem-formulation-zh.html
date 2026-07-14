@@ -1,0 +1,842 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>碎片化证据链恢复 — 问题设定</title>
+  <style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #1a1d23;
+  --muted: #5c6570;
+  --border: #e2e6ec;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --draft: #94a3b8;
+  --active: #2563eb;
+  --parked: #d97706;
+  --done: #16a34a;
+  --rejected: #dc2626;
+  --open: #7c3aed;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141b;
+    --surface: #171d26;
+    --surface-2: #1f2731;
+    --text: #e6e9ef;
+    --muted: #9aa4b2;
+    --border: #2a313c;
+    --accent: #6ba2ff;
+    --accent-soft: #18283f;
+    --draft: #6b7686;
+    --active: #6ba2ff;
+    --parked: #e0a648;
+    --done: #46c275;
+    --rejected: #f06868;
+    --open: #a78bfa;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 53rem;
+  margin-inline: auto;
+  padding: 1.5rem 1.25rem 4rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.doc-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.8rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.lang-nav {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.project {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+  counter-reset: idea-counter;
+  scroll-margin-top: 1rem;
+}
+
+.project h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.project-summary {
+  color: var(--muted);
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.idea {
+  position: relative;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--draft);
+  padding: 0.9rem 1.1rem;
+  margin: 0.85rem 0;
+  background: var(--bg);
+  border-radius: 0 10px 10px 0;
+  scroll-margin-top: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.idea:hover {
+  box-shadow: var(--shadow);
+}
+
+.idea:target {
+  border-left-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.idea[data-status="active"] {
+  border-left-color: var(--active);
+}
+
+.idea[data-status="parked"] {
+  border-left-color: var(--parked);
+}
+
+.idea[data-status="done"] {
+  border-left-color: var(--done);
+}
+
+.idea[data-status="rejected"] {
+  border-left-color: var(--rejected);
+  opacity: 0.75;
+}
+
+.idea[data-status="open"] {
+  border-left-color: var(--open);
+}
+
+.idea {
+  counter-increment: idea-counter;
+}
+
+.idea-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  letter-spacing: -0.005em;
+}
+
+.idea-title::before {
+  content: counter(idea-counter, decimal-leading-zero);
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.05rem 0.4rem;
+  line-height: 1.5;
+}
+
+.idea-title::after {
+  margin-left: auto;
+  align-self: center;
+  font-weight: 600;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.idea[data-status="draft"] .idea-title::after {
+  content: "draft";
+  color: var(--draft);
+}
+
+.idea[data-status="active"] .idea-title::after {
+  content: "active";
+  color: var(--active);
+}
+
+.idea[data-status="parked"] .idea-title::after {
+  content: "parked";
+  color: var(--parked);
+}
+
+.idea[data-status="done"] .idea-title::after {
+  content: "done";
+  color: var(--done);
+}
+
+.idea[data-status="rejected"] .idea-title::after {
+  content: "rejected";
+  color: var(--rejected);
+}
+
+.idea[data-status="open"] .idea-title::after {
+  content: "open question";
+  color: var(--open);
+}
+
+.idea-body {
+  margin: 0 0 0.6rem;
+}
+
+.key-points {
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.85rem 0.65rem 1.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.key-points li {
+  margin-bottom: 0.35rem;
+  padding-left: 0.1rem;
+}
+
+.key-points li:last-child {
+  margin-bottom: 0;
+}
+
+.key-points strong {
+  color: var(--accent);
+}
+
+.idea-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0;
+}
+
+.idea-tags li {
+  font-size: 0.74rem;
+  padding: 0.15rem 0.55rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.idea-notes {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.idea-notes strong {
+  color: var(--text);
+}
+
+.problem-list,
+.problem-list ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.problem-list li {
+  margin-bottom: 0.4rem;
+}
+
+.example-query {
+  margin: 0.85rem 0;
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.95rem;
+}
+
+.example-query cite {
+  display: block;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+.example-query p {
+  margin: 0.3rem 0;
+}
+
+.example-query .expected {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.changelog h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.changelog ol {
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog li {
+  margin-bottom: 0.3rem;
+}
+
+.changelog time {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Foldable sections (<details class="foldable">) */
+.foldable {
+  margin: 0.5rem 0;
+}
+
+.foldable > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+  padding: 0.15rem 0;
+}
+
+.foldable > summary::-webkit-details-marker {
+  display: none;
+}
+
+.foldable > summary::before {
+  content: "▸";
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.foldable[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.foldable > summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foldable.idea-details {
+  margin-top: 0.25rem;
+}
+
+.foldable.idea-details > summary {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.foldable.changelog-archive {
+  margin-top: 0.5rem;
+}
+
+/* Related work */
+.related-work {
+  margin: 0.85rem 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.related-work > summary {
+  font-size: 0.85rem;
+}
+
+.related-work-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.related-work-list li {
+  margin-bottom: 0.45rem;
+}
+
+.related-work-list .relevance {
+  color: var(--text);
+}
+
+/* Lightweight concept figures */
+.memory-figure {
+  margin: 1.1rem 0;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.memory-figure figcaption {
+  margin-bottom: 0.85rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.memory-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: flow-step;
+}
+
+.memory-flow li {
+  position: relative;
+  counter-increment: flow-step;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+.memory-flow li::before {
+  content: counter(flow-step);
+  position: absolute;
+  top: 0.45rem;
+  right: 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.memory-flow strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  padding-right: 1rem;
+}
+
+.memory-flow span {
+  color: var(--muted);
+}
+
+@media (max-width: 32rem) {
+  body {
+    padding: 1.25rem 0.9rem 3rem;
+  }
+
+  .project {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .doc-header h1 {
+    font-size: 1.5rem;
+  }
+}
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <h1>流式视频问答中的碎片化证据链恢复</h1>
+    <p class="meta">最后更新：<time datetime="2026-06-25">2026-06-25</time> · <a href="../continuous-memory-model-and-retrieval/problem-formulation-zh.html">连续记忆建模与检索</a>的第 2 版</p>
+    <nav class="lang-nav">
+      <a href="problem-formulation-en.html">English</a> |
+      <a href="../../.cursor/skills/nec-brainstorming/ideas/index.html">头脑风暴主页</a>
+    </nav>
+  </header>
+
+  <section class="project" data-project="evidience-continous-memory-rag" id="problem-formulation">
+    <h2>研究方向</h2>
+    <p class="project-summary"><strong>当记忆是碎片化的，8B agent 的 answerability 取决于它如何管理证据。</strong>这个方向研究有界、有损记忆下的 streaming video QA：原始视频不可回看，或只能回看极少 cached clips。核心不是让 8B 从完整视频回答，而是让一个 8B Evidence-Memory Agent 用 typed actions 管理 sparse evidence anchors，调用 diffusion proposal 工具连接幸存 fragments，并通过 evidence-bounded verification 和 answer gate 控制哪些 claims 可以被回答。</p>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-001" data-status="active">
+      <h3 class="idea-title">问题：碎片化证据链恢复</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">给定连续到达的视频流 <code>V = {f1, f2, ...}</code>，系统只能维护一个有界记忆 <code>M_t</code>。它不保存完整 clip，而是保存压缩后的 fragments，例如 object state、human pose/state、event sketch、scene relation、temporal anchor、low-res visual token 和 uncertainty tag。很多用户问题依赖的中间转移并没有被完整保存。</p>
+        <p class="idea-body"><strong>这个 setting 是实际问题，但它不是“视频存储问题”。</strong>更准确的说法是：这是流式智能体的证据可用性问题，或者 <em>answerability under lossy operational memory</em>。一个 agent 在持续观察世界时，不可能把所有历史都作为可推理证据永久保留；它只能把历史压缩成 operational memory。未来问题到来时，答案是否还能被当前记忆支持，是一个真实且困难的问题。</p>
+        <p class="idea-body"><strong>Publishable 与否取决于关键中间区间。</strong>这个 setting 是 valid 的；论文能否站住，取决于能不能证明 diffusion 在 <em>sparse anchors + missing transitions</em> 的中间预算区间显著优于 LLM planner，同时更少产生 unsupported claims。也就是说，贡献不是证明“视频能不能存”，而是证明“agent 能否从它选择保留下来的证据中负责任地回答”。</p>
+        <p class="idea-body"><strong>核心 failure phenomenon：support collapse under relevance preservation。</strong>有界压缩后，某条 memory fragment 仍然语义相关、仍然能被检索出来，但它已经不再支持细粒度 claim。也就是 <em>relevance survives, support collapses</em>：系统记得“红袋子后来在桌边”和“B 在窗边”，但没有 handoff / pickup 的过渡证据。普通 RAG 容易把相关性误当成支持性；本方法要显式判断当前 memory 是否仍能支持 claim。</p>
+        <p class="idea-body">任务不是简单“检索哪个 clip”。clip 可能已经没了。任务是恢复一组候选 evidence chains，把幸存碎片连接起来；然后把每条 chain ground 到真实 memory item，或标记为 unsupported。</p>
+        <p class="idea-body"><strong>要避免的陷阱。</strong>如果表述成“我们删除中间 transition，然后用 diffusion 猜回来”，它会像人为 benchmark。更实际的 framing 是：streaming agents maintain sparse, lossy memories for future unknown queries. This creates an answerability gap: the original stream may contain the answer, but the retained memory may only partially support it. The system must recover candidate evidence chains and know when not to answer.</p>
+        <div class="example-query">
+          <cite>实际场景</cite>
+          <table>
+            <thead>
+              <tr>
+                <th>场景</th>
+                <th>为什么是实际问题</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>家庭 / 机器人助手</td>
+                <td>机器人看到过很多事件，但不能永久保存完整室内视频。</td>
+              </tr>
+              <tr>
+                <td>wearable / egocentric assistant</td>
+                <td>第一视角视频很长、隐私敏感，而且未来查询未知。</td>
+              </tr>
+              <tr>
+                <td>edge camera agent</td>
+                <td>系统本地实时处理，只上传或保留语义事件。</td>
+              </tr>
+              <tr>
+                <td>long-running lab / warehouse agent</td>
+                <td>需要记住物体、人和任务状态，但完整回放成本高。</td>
+              </tr>
+              <tr>
+                <td>streaming multimodal agent</td>
+                <td>模型 context 和 memory API 有限，必须压缩历史。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="idea-body"><strong>三层真实问题。</strong>第一是 memory survival：哪些 evidence anchors 在 streaming compression 后还活着？第二是 evidence reconstruction：这些 anchors 是否能组成一条可能的 evidence chain？第三是 answerability control：哪些 chain 被当前 memory 支持到足以回答，哪些只能拒答？</p>
+        <p class="idea-body"><strong>区别于普通 RAG。</strong>普通 RAG 假设文档或 clip 还在，只要检索出来即可。这里原始 evidence path 不一定还在，只剩稀疏 anchors，中间 transition 可能缺失，系统必须判断“是否还能回答”。</p>
+        <div class="example-query">
+          <cite>示例查询</cite>
+          <p>“那个一开始拿红色袋子的人，后来是不是把它交给了坐在窗边的人？”</p>
+          <p class="expected"><strong>幸存碎片：</strong>red bag near table；person B by window；A disappeared；uncertain handover event。真正缺失的是连续转移：A holding bag -> bag near table -> B picks it up -> B by window。</p>
+          <p class="expected"><strong>更实际的回答纪律：</strong>如果 memory 只有 <code>m1: A earlier held red bag</code>、<code>m2: red bag later near table</code>、<code>m3: B later sat near window with red object</code>，agent 不应该直接回答“是的，他给了”。它应该说：我记得 A 早些时候拿着红袋子，也记得之后窗边的人附近出现了红色物体，但我没有保留到交接或拿取过程，所以不能确认是交给了他。</p>
+        </div>
+        <ul class="key-points">
+          <li><strong>核心变量：</strong>answerability 取决于一条 plausible latent chain 能否 ground 到幸存记忆，而不是原始视频里是否曾经有完整证据。</li>
+          <li><strong>方法核心：</strong>先在碎片化有损记忆上重建候选证据轨迹，再决定检索、验证和回答。</li>
+          <li><strong>论文设定：</strong>exact evidence path 部分丢失，只剩压缩 fragments 的 streaming video QA。</li>
+          <li><strong>实际价值：</strong>防止 agent 把 plausible memory 写成 confirmed memory claim。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-011" data-status="active">
+      <h3 class="idea-title">核心：8B Evidence-Memory Agent</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>8B agent 是系统核心 controller。</strong>它不是只作为 offline teacher 或 final verbalizer；它负责在 streaming 过程中选择 memory actions，在 query-time 调用 retrieval、diffusion、verification 和 answer gate。论文问题变成：一个 8B streaming video agent 在只能保留 lossy operational memory 时，如何管理证据、恢复候选证据链，并避免 unsupported memory claims。</p>
+        <p class="idea-body"><strong>Typed action space。</strong>8B agent 不能自由写事实，而是通过受限动作操作 memory：<code>BUDGET_SELECT</code>、<code>WRITE_ANCHOR</code>、<code>SET_FIDELITY</code>、<code>PROMOTE</code>、<code>DEMOTE</code>、<code>MERGE</code>、<code>EVICT</code>、<code>ADD_EDGE</code>、<code>MARK_UNCERTAIN</code>、<code>ADD_GAP_RECORD</code>、<code>ADD_SUPPORT_RECORD</code>、<code>ADD_QUERY_TRACE</code>、<code>RETRIEVE_BY_ROLE</code>、<code>CALL_DIFFUSION</code>、<code>VERIFY_CHAIN</code>、<code>ANSWER_PRECISE</code>、<code>ANSWER_CONSERVATIVE</code> 和 <code>ABSTAIN</code>。</p>
+        <p class="idea-body"><strong>工具分工。</strong><code>p_E</code>/<code>p_I</code> 不是主 controller，而是给 8B agent 提供 anchor utility、fidelity-cost tradeoff 和 budget-aware recommendations 的 learned tools。Diffusion 不是 memory，也不是 answer model，而是 8B agent 在 sparse anchors disconnected 时调用的 latent evidence-chain proposal tool。Verifier 是同一个 8B agent 的 evidence-bounded support-checking mode，answer gate 是它最后必须遵守的输出策略。</p>
+        <p class="idea-body"><strong>硬边界。</strong>8B agent 可以 propose、retrieve、verify、mark gaps，但不能把 unverified hypothesis 写成 factual memory。Unsupported diffusion transitions 只能写入 <code>QueryTrace</code> 或 <code>GapRecord</code>，不能写入 <code>EvidenceAnchor</code>。最终回答只能来自 verifier-approved support records。</p>
+        <ul class="key-points">
+          <li><strong>Agent core：</strong>8B model controls memory actions and tool calls.</li>
+          <li><strong>Memory tools：</strong><code>p_E/p_I</code> provide learned utility and fidelity recommendations.</li>
+          <li><strong>Proposal tool：</strong>diffusion samples candidate latent evidence chains.</li>
+          <li><strong>Safety constraint：</strong>verified support, not plausible reasoning, licenses final claims.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-002" data-status="active">
+      <h3 class="idea-title">为什么需要 Diffusion</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>ANN 检索是局部的。</strong>它可以找到 “red bag”、“window person”、“table” 这些相关 fragment，但不知道它们之间能否组成合理的事件转移。</p>
+        <p class="idea-body"><strong>图搜索依赖已有边。</strong>如果 handover 没被存下来，图上就没有边。图遍历会在最需要重建的地方断掉。</p>
+        <p class="idea-body"><strong>Beam search 只能扩展观察到的候选。</strong>如果中间状态缺失，beam 大多是在残缺状态空间里扩展，容易局部失败。</p>
+        <p class="idea-body"><strong>RL navigation 需要更明确的 action/reward。</strong>这里 latent transition 本身不确定，reward 稀疏，而且每个 query 需要的 evidence chain 形态都可能不同。</p>
+        <p class="idea-body"><strong>Diffusion 正好贴合这个 failure mode。</strong>它可以学习 trajectory prior：从 noisy / incomplete evidence fragments 到 coherent latent evidence trajectories 的条件去噪分布。因此它发生在 navigation 之前，而不只是一个 navigation policy。</p>
+        <ul class="key-points">
+          <li><strong>一句话：</strong>当 memory partially missing 时，diffusion 可以在碎片状态之间采样 coherent latent evidence trajectories。</li>
+          <li><strong>边界：</strong>diffusion 只 propose chains；grounding 和 verification 决定 support。</li>
+          <li><strong>新意来源：</strong>missing-transition recovery，而不是更快检索。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-003" data-status="active">
+      <h3 class="idea-title">方法：Diffusion Evidence Trajectory Prior</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>输入。</strong>Diffusion model 条件化在 question embedding、surviving memory fragments、temporal anchors、entity states、scene graph snippets、low-resolution visual tokens，以及标记缺失/低保真区域的 uncertainty mask 上。</p>
+        <p class="idea-body"><strong>输出。</strong>模型采样 <code>K</code> 条 latent evidence chains，例如 <code>A holding red bag -> table region -> B picks object -> window seat</code>、<code>A holding red bag -> bag left on chair -> B near chair -> window seat</code>，或 <code>A holding red bag -> no transfer -> B has different object</code>。</p>
+        <p class="idea-body"><strong>执行循环。</strong>每条生成 chain 都做三步检查：grounding 把 latent states snap 到幸存 memory fragments；verification 检查关键 transition 是否有支持；answer control 决定精确回答、保守回答、报告 unsupported transition，还是拒答。</p>
+        <figure class="memory-figure">
+          <figcaption>图：diffusion 重建候选 latent trajectories，再由验证控制回答。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Query</strong><span>长视频问题</span></li>
+            <li><strong>Fragments</strong><span>压缩有损记忆</span></li>
+            <li><strong>Diffusion</strong><span>K 条潜在证据链</span></li>
+            <li><strong>Grounding</strong><span>对齐到 memory item</span></li>
+            <li><strong>Verifier</strong><span>支持 / 冲突 / 缺失</span></li>
+            <li><strong>Answer</strong><span>精确 / 保守 / 拒答</span></li>
+          </ol>
+        </figure>
+        <ul class="key-points">
+          <li><strong>多峰性：</strong>一个问题可能有多条 plausible chains，top-1 reconstruction 不安全。</li>
+          <li><strong>粗到细：</strong>先生成事件级路径，再细化实体、物体和时间状态。</li>
+          <li><strong>不确定性：</strong>多条 sampled chains 分歧越大，说明答案越不稳定。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-004" data-status="active">
+      <h3 class="idea-title">可训练实现：预训练 Encoder + 小型 Diffusion Head</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>方案 B 是最适合论文的版本：</strong>不要从零训练一个大生成模型，而是让预训练 LLM/VLM encoder 提供输入空间，只训练一个小型 conditional latent DDPM head。Qwen2.5-VL、InternVL 或 GPT-4o 负责抽取 video fragments；LLM embedding、CLIP 或 SigLIP 负责把 question 和 retained fragments 编码；小型 diffusion head 只在 latent evidence-chain space 里生成候选轨迹；verifier 再判断哪些 transition 被当前记忆支持。</p>
+        <p class="idea-body"><strong>训练形式。</strong><code>question + retained fragments -> pretrained encoder -> condition embedding C</code>。同时把 oracle evidence chain 经过 pretrained 或 learned step encoder 编成 <code>Z_0</code>。训练目标是条件去噪：<code>denoise Z_t -> Z_0 conditioned on C</code>。这样 diffusion 本身不是完全 pretrained，但它站在预训练语义空间上学习，训练压力小很多。</p>
+        <p class="idea-body"><strong>我心里的具体模型。</strong>8B agent 是 controller；前端 encoder 尽量冻结：用 Qwen2.5-VL / InternVL 一类 VLM 抽取结构化 anchors，用 SigLIP / CLIP 或 LLM embedding 编码 question、anchor text 和 visual tokens。Diffusion 本体不是大 LLM，而是一个小型 conditional latent diffusion tool：优先用 Transformer/DiT-style denoiser 处理 variable-length chain latents，也可以从 1D U-Net DDPM 做轻量 baseline。8B agent 调用 structured chain decoder、8B verifier mode 和 answer gate；它不能直接相信 diffusion，也不能把 unverified proposal 写成事实。</p>
+        <p class="idea-body"><strong>Diffusion 的训练数据。</strong>每个样本包含原始视频 <code>V</code>、问题 <code>q</code>、full-video oracle evidence chain <code>C*</code>、在压缩率 <code>R</code> 下由 learned buffer 得到的 <code>M_R</code>，以及 answer / support labels。训练时 diffusion 不能看 full video，只能条件化在 <code>q + M_R + R</code> 上；full video 只用来产生 oracle chain supervision。</p>
+        <p class="idea-body"><strong>Latent chain supervision。</strong>先用 step encoder 把 oracle chain <code>C* = [c_1, ..., c_L]</code> 编成 <code>Z_0 = [z_1, ..., z_L]</code>。每个 <code>c_i</code> 是一个 structured evidence step，例如 role、entity refs、time span、state / transition type 和 support requirement。训练时对 <code>Z_0</code> 加噪得到 <code>Z_t</code>，denoiser 学 <code>ε_θ(Z_t, t, C)</code> 预测噪声，损失为 <code>L_diff = ||ε - ε_θ(Z_t, t, C)||^2</code>，其中 <code>C = Enc(q, M_R, R)</code>。</p>
+        <p class="idea-body"><strong>Decoder 与 grounding-aware loss。</strong>Diffusion sample 出 <code>Z = [z_1, ..., z_L]</code> 后，chain decoder 把每个 waypoint 解成结构化 proposal：<code>role</code>、<code>entity_refs</code>、<code>time_hint</code>、<code>anchor_query</code>、<code>transition_type</code> 和 <code>support_requirement</code>。Decoder 用 oracle chain 标签训练：role / transition classification、entity linking、temporal bin regression 和 support-requirement multi-label loss。再加 grounding loss：如果 oracle step 在 <code>M_R</code> 里有 retained anchor，就用 contrastive loss 拉近 <code>z_i</code> 和对应 anchor embedding；如果该 step 缺失，就训练 missing / hypothesis flag。</p>
+        <p class="idea-body"><strong>总训练目标。</strong>第一版可以用 <code>L = L_diff + λ_dec L_dec + λ_ground L_ground + λ_missing L_missing</code>。后期再用 verifier score 做 reranking 或 preference fine-tuning，偏好 grounded support 更高、unsupported transition 更少、contradiction 更少的 chains。关键边界是：diffusion 学 <code>p(latent evidence chain | question, compressed anchors, compression rate)</code>，不是学 <code>p(answer | video)</code>。</p>
+        <p class="idea-body"><strong>生成形式。</strong>先计算 <code>C = encode(question, memory)</code>，再从 diffusion sample <code>K</code> 条 latent chains，decode 成 structured evidence chains，ground 到具体 memory items，最后由 verifier 检查 support、contradiction 和 missing transition。</p>
+        <ul class="key-points">
+          <li><strong>论文表述：</strong>diffusion operates over latent evidence trajectories, not raw language.</li>
+          <li><strong>模型选择：</strong>frozen VLM / embedding encoder + small DiT-style latent denoiser + structured chain decoder + verifier。</li>
+          <li><strong>安全边界：</strong>diffusion 不是在编故事，而是在 proposal 多条 latent evidence chain。</li>
+          <li><strong>实现优势：</strong>大模型负责感知和编码，小 diffusion head 负责多峰轨迹 proposal，verifier 负责事实支持。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-005" data-status="active">
+      <h3 class="idea-title">记忆表示</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">Memory buffer 存的是 fragments，而不是完整 footage。一个 memory item 可以包含 <code>ObjectState</code>、<code>HumanState</code>、<code>ActionSketch</code>、<code>SceneRelation</code>、<code>TemporalAnchor</code>、<code>LowResVisualToken</code> 和 <code>UncertaintyTag</code>。这些足以形成约束，但不足以保证事件转移已经被保存。</p>
+        <p class="idea-body"><strong>保留 fragment，但改变它的角色。</strong>Fragment 不再是论文的主问题标题；主问题是 <em>answerability under lossy operational memory</em>。Fragment 是这种 operational memory 的具体载体，而 <em>evidence anchor</em> 是其中能被 verifier 使用的证据单元：带 provenance、时间、实体、状态、fidelity 和 claim scope 的 compressed fragment。</p>
+        <p class="idea-body"><strong>术语关系。</strong><code>memory fragment</code> 是压缩后的历史观察；<code>evidence anchor</code> 是保留了足够来源、实体状态、时间位置和可支持 claim 类型的 fragment。换句话说，系统不是从随机碎片里“猜回视频”，而是从可验证 anchors 上 proposal 可能的 evidence chains，再由 verifier 决定 support。</p>
+        <p class="idea-body">候选 chain 形式是 <code>fragment_1 -> latent transition -> fragment_2 -> latent transition -> fragment_3</code>。每个 observed fragment 必须 ground 到真实 retained item。每个 latent transition 只能作为 hypothesis，直到被验证或被标记 unsupported。</p>
+        <ul class="key-points">
+          <li><strong>已存证据：</strong>带时间戳、实体、关系和 fidelity tag 的压缩状态 fragments。</li>
+          <li><strong>Anchor 化：</strong>只有带 provenance、claim scope 和 verifier 可检查字段的 fragment 才是 evidence anchor。</li>
+          <li><strong>缺失证据：</strong>retained states 之间的中间转移。</li>
+          <li><strong>回答纪律：</strong>chain 可以指导搜索，但只有 grounded memory 能许可 factual claim。</li>
+          <li><strong>方法链条：</strong><code>compressed fragment -> evidence anchor -> latent evidence chain -> verified answer</code>。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-006" data-status="active">
+      <h3 class="idea-title">Buffer：稀疏多保真 Evidence Substrate</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>旧的 multi-level buffer 仍然可行，但必须瘦身。</strong>它不应该被写成一个大而全的 memory architecture，而应该被收缩成 <em>sparse multi-fidelity evidence substrate</em>。也就是说，buffer 的职责不是理解、存储、检索和推理一切，而是让未来 answerability 仍然有 grounded evidence 落点。</p>
+        <p class="idea-body"><strong>三层主结构。</strong><code>L0 Ephemeral Visual Cache</code> 保存最近短窗口的 keyframes、object crops、low-res visual tokens、ASR/OCR snippets 和少量 short clip cache，只服务于近期 grounding，过期后 demote 或删除。<code>L1 Structured Evidence Anchors</code> 是长期主体，保存 anchor 化后的 <code>EntityState</code>、<code>ObjectState</code>、<code>ActionSketch</code>、<code>SceneRelation</code>、<code>TemporalAnchor</code>、被支持的 <code>StateTransition</code> 和 <code>UncertaintyRecord</code>。<code>L2 Evidence Role Index</code> 不是另一套记忆，而是按 <code>identity</code>、<code>object_state</code>、<code>location</code>、<code>action</code>、<code>interaction</code>、<code>temporal_order</code>、<code>count</code>、<code>text/OCR</code>、<code>causal_transfer</code> 等 evidence roles 组织 L1 anchors。</p>
+        <p class="idea-body"><strong>Multi-fidelity，而不是 multi-storage。</strong>同一批 evidence anchors 可以处在不同 fidelity tier：<code>raw/cache -> keyframe/token -> schema -> summary -> gist -> missing</code>。系统可以 <code>promote</code> 重要 anchor 到更高 fidelity，<code>demote</code> 旧 cache 为 schema 或 summary，<code>merge</code> 相邻/重复 anchors，<code>split</code> 错误事件边界，<code>evict</code> 低价值 anchor，或在 query-time <code>refresh</code> 低保真但高风险的证据。</p>
+        <p class="idea-body"><strong><code>p_E × p_I</code> 是 learning-based memory writer，而不是 heuristic 规则。</strong><code>p_E(e | x_t, M_t; θ_E)</code> 学习 anchor placement：当前 streaming chunk 里的 candidate event/span 是否应该成为 evidence anchor。<code>p_I(f | e, x_t, M_t; θ_I)</code> 学习 fidelity allocation：如果保留这个 anchor，它应该以哪个 fidelity tier 存活。联合写入决策是 <code>p(e, f | x_t, M_t) = p_E(e | x_t, M_t) · p_I(f | e, x_t, M_t)</code>，其中 <code>x_t</code> 是当前 VLM/ASR/OCR/metadata features，<code>M_t</code> 是已有 buffer 状态。</p>
+        <p class="idea-body"><strong>BERT-style writer backbone。</strong><code>p_E</code> 和 <code>p_I</code> 可以用一个很小的预训练文本 encoder 参数化，例如 MiniLM、DistilBERT、BERT-base 或 DeBERTa-v3-small。它不直接看 raw video，而是吃结构化 anchor descriptions：<code>[BUDGET=5%]</code>、role tokens、以及 <code>[ANCHOR] t=12 person_A holds red_bag fidelity=F3 uncertainty=low</code> 这类文本化/schema 化证据 token。视觉信息先由 VLM/SigLIP 变成 object labels、action labels、caption snippets、crop embeddings 和 uncertainty，再和 BERT hidden state 拼接。</p>
+        <p class="idea-body"><strong>Writer heads as tools。</strong>对每个 <code>[ANCHOR]</code> token 的 hidden state <code>h_i</code> 接小 head：<code>s_E(e_i)=W_E h_i</code> 输出 anchor utility logit；<code>s_I(e_i, f, r)=W_I[h_i, f_emb, role_emb, budget_emb]</code> 输出某个 fidelity-role pair 的 utility logit；可选再加 role coverage head 和 unsupported-risk head。在线时 8B agent 读取这些 logits、budget state 和 graph/memory state，然后通过 typed actions 决定 <code>WRITE_ANCHOR</code>、<code>SET_FIDELITY</code>、<code>MERGE</code>、<code>DEMOTE</code> 或 <code>EVICT</code>。因此小 writer heads 是 8B agent 的 learned utility tools，而不是取代 agent 的 controller。</p>
+        <p class="idea-body"><strong>Rate-constrained objective。</strong>Buffer 不是为了“压缩得好看”，而是为了在压缩率 <code>R</code> 下最大化未来 answerability：<code>max E_q[SupportCoverage(q, M_R) - λ UnsupportedRisk(q, M_R)]</code> subject to <code>Cost(M_R) / Cost(V) <= R</code>。这里 <code>M_R</code> 是压缩率为 <code>R</code> 的 operational memory，<code>V</code> 是原始视频流。这样 compression rate 就不是附属指标，而是问题设定的核心变量。</p>
+        <p class="idea-body"><strong>训练 <code>p_E</code>：用 ranking 学 evidence survival。</strong>不要回归 8B 的绝对分数，因为 <code>0.83</code> 这类 score 会随 prompt、batch 和视频分布漂移。更稳的是构造同一 video chunk、同一 memory state、同一 compression budget 下的 pairwise preference：<code>e_i ≻ e_j</code> 表示 <code>e_i</code> 比 <code>e_j</code> 更值得保留。偏好来源可以是 oracle chain（出现在 future evidence chain 的 anchor 优于未使用/冗余 anchor）、8B pairwise choice，或 counterfactual memory evaluation。训练损失用 <code>L_rank_E = -log σ(s_E(e_i) - s_E(e_j))</code> 或 margin ranking loss。</p>
+        <p class="idea-body"><strong>训练 <code>p_I</code>：用 ranking 学 minimum sufficient fidelity。</strong>对同一个 anchor 和 evidence role 比较不同 fidelity：<code>(e, F1), ..., (e, F5)</code>。Preference 不是“越高 fidelity 越好”，而是 <em>最低但足够支持</em> 的 fidelity 优于 insufficient fidelity，也优于更贵但冗余的 fidelity。例如 handoff role 里 <code>F4 ≻ F2</code> 表示 F2 不足，若 <code>F3</code> 已足够，则 <code>F3 ≻ F4</code> 表示 F3 更省 budget。训练损失为 <code>L_rank_I = -log σ(s_I(e, f_preferred, r) - s_I(e, f_rejected, r))</code>。这样 <code>p_I</code> 学的是 support fidelity / cost tradeoff，而不是总想存最高保真。</p>
+        <p class="idea-body"><strong>Counterfactual compression supervision。</strong><code>p_I</code> 的标签可以通过反事实压缩获得：对同一个 oracle evidence item，构造 <code>full clip -> keyframe/crop -> visual token -> schema -> summary -> gist -> missing</code> 多个 tier，然后让 verifier 判断某个 claim / role 在每个 tier 下是否仍被支持。最低且足够支持的 tier 作为 preferred fidelity；低于它的是 <code>insufficient_fidelity</code>，高于它但不增加 support 的是 redundant cost。这个监督直接训练 answer granularity 跟随 survivability：full 支持 precise，schema 支持 coarse，gist 只能支持 hypothesis 或 abstain。</p>
+        <p class="idea-body"><strong>训练 8B agent / writer tools。</strong>训练时用更强 teacher，例如 <code>Llama3.3-70B</code> 或 <code>GPT-oss-120B</code>，在 richer context、oracle chains、full-memory replay 和预算约束下产生 memory-control action traces：哪个 anchor 更 critical、哪个 fidelity 是 minimum sufficient、哪个 memory action 更好、哪条 candidate chain 更 grounded。然后做 <strong>on-policy distillation</strong>：让 8B agent 在自己的当前 memory state 上 rollout，teacher 对这些 on-policy states 给出更优的 typed actions / rankings / correction labels。小 writer heads 学这些 utility preferences，8B agent 通过 action-level distillation 学 typed memory control。部署时 8B agent 只看 streaming chunk、当前 memory、budget、writer logits 和 graph state；所有事实写入仍必须经过 evidence constraints。</p>
+        <p class="idea-body"><strong>Compression rate 的报告方式。</strong>主实验应该报告 <code>CR_storage = Cost(M_R) / Cost(raw video)</code>，也可以补充 <code>CR_token = Tokens(M_R) / Tokens(raw captions or dense frames)</code> 和 <code>CR_evidence = #retained anchors / #oracle evidence units</code>。关键曲线是：x-axis 为 compression rate，例如 1%、2%、5%、10%、20%；y-axis 为 Answer Accuracy with Support、Evidence-Chain Recovery@K 和 Unsupported Claim Rate。最重要的区间是中间预算：极高预算大家都接近 full video，极低预算大家都没证据，而 sparse anchors + missing transitions 的中间区间决定方法价值。</p>
+        <p class="idea-body"><strong>Support collapse。</strong>当 anchor 存活，但它的 fidelity 不足以支持当前 evidence role，就发生 support collapse。例如系统记得红袋子后来在桌边，也记得 B 在窗边，但没有保留 handoff / pickup 过程；这时 anchor exists, but fidelity is insufficient for the required evidence role。</p>
+        <p class="idea-body"><strong>与 diffusion 的接口。</strong>Query 到来后，系统先预测 required evidence roles，用 L2 检索 sparse anchors；diffusion 在这些 disconnected anchors 之间 sample <code>K</code> 条 latent evidence chains；chain waypoints 再 snap 到 L1/L0；verifier 检查 support、conflict、missing transition；answer gate 决定回答、保守回答或拒答。</p>
+        <ul class="key-points">
+          <li><strong>8B agent 负责：</strong>memory action selection、tool calling 和 answer policy。</li>
+          <li><strong>Buffer 负责：</strong>evidence survival 和 grounded evidence substrate。</li>
+          <li><strong>Anchor 负责：</strong>定义可验证证据单位。</li>
+          <li><strong>Diffusion 负责：</strong>disconnected evidence reconstruction / navigation。</li>
+          <li><strong>Verifier 负责：</strong>answerability control，防止 unsupported claims。</li>
+          <li><strong>最小可行版本：</strong><code>8B agent + L0 recent cache + L1 structured anchors + L2 role index + BERT-style ranking-trained p_E/p_I tools + fidelity/uncertainty metadata</code>。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-012" data-status="active">
+      <h3 class="idea-title">Memory Manager：Write / Query / Update Loop</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>Memory manager 把 8B agent 的 typed actions 落到可写、可查、可更新的 evidence substrate 上。</strong>它不是一个静态压缩文件，而是围绕三条路径运行：streaming write path、query-time retrieval path、post-query update path。核心原则是：真实 observation 写成 evidence anchors；diffusion / agent 的 hypothesis 只能写成 trace 或 gap；verifier 支持过的 claim 写成 support record。</p>
+        <p class="idea-body"><strong>Evidence Anchor Graph。</strong>系统维护 <code>G = (V_G, E_G)</code> 作为 store / query substrate，而不是主推理器。Graph nodes 包括 <code>EvidenceAnchor</code>、<code>SupportRecord</code>、<code>GapRecord</code>、<code>QueryTrace</code> 和必要的 entity/object/time nodes。Graph edges 包括 <code>temporal_before</code>、<code>same_entity</code>、<code>same_object_candidate</code>、<code>near_time</code>、<code>same_location</code>、<code>possible_interaction</code>、<code>verified_transition</code>、<code>missing_transition</code>、<code>contradiction</code> 和 <code>insufficient_fidelity</code>。</p>
+        <p class="idea-body"><strong>Verified edge vs hypothesis edge。</strong><code>verified_transition</code>、verifier-approved <code>same_object</code> 和 support-backed relations 可以作为 evidence constraints；<code>same_object_candidate</code>、<code>possible_interaction</code> 和 diffusion-proposed edges 只能用于 retrieval / proposal，不能许可 factual claim。Graph 的作用是让 8B agent 快速找到 evidence neighborhood，而不是用 graph traversal 直接回答问题。</p>
+        <p class="idea-body"><strong>Write path。</strong><code>write(video_chunk)</code> 先用 VLM/SigLIP/ASR/OCR extractor 产生 candidate anchors <code>E_t</code>，每个 anchor 包含 time span、entity/object ids、event type、state/relation、text/visual embeddings、provenance、uncertainty、candidate roles 和 cost-by-fidelity。8B agent 读取 <code>p_E/p_I</code> utility、budget state、current memory <code>M_t</code> 和 graph neighborhood <code>G_t</code>，先执行 <code>BUDGET_SELECT</code> 得到 under-budget action set，再选择 <code>WRITE_ANCHOR</code>、<code>SET_FIDELITY</code>、<code>ADD_EDGE</code>、<code>MERGE</code>、<code>DEMOTE</code>、<code>EVICT</code> 或 <code>MARK_UNCERTAIN</code>，最后更新 <code>L0</code> recent cache、<code>L1</code> anchor store、<code>L2</code> role index 和 graph <code>G</code>。</p>
+        <p class="idea-body"><strong>Budgeted controller action。</strong>预算目标不是外部 oracle optimizer，而是 8B controller 的一个 constrained action policy：<code>BUDGET_SELECT(E_t, M_t, G_t, R)</code> 输出一组 typed memory actions。它的训练/执行目标可写成：<code>M_{t+1} = argmax Σ[s_E(e) + s_I(e,f,r) - λ Cost(f) - ρ Redundancy(e,M_t)]</code> subject to <code>Cost(M_{t+1}) / Cost(V_{1:t}) <= R</code>。因此公式定义的是 controller 的 action preference 和 budget legality：<code>s_E/s_I</code> 给 action ranking，<code>Cost</code> 给 legality mask，<code>Redundancy</code> 惩罚重复写入。这个 policy 通过 on-policy distillation 学出来：8B 先在真实压缩 memory state 上提出 <code>BUDGET_SELECT / WRITE_ANCHOR / SET_FIDELITY / EVICT / ADD_GAP_RECORD</code> 等动作，70B/120B teacher 在同一 state 上重排、修正或拒绝这些动作，形成 action-level supervision。实现上可以用 top-k candidate actions + constrained decoding、knapsack-style action mask，或 teacher-corrected preference learning 后让 8B agent 直接输出合法 action sequence。</p>
+        <p class="idea-body"><strong>Query path。</strong><code>query(question)</code> 先由 8B agent 解析 required evidence roles <code>R(q)</code>，例如 <code>identity</code>、<code>object_state</code>、<code>location</code>、<code>interaction/handoff</code>、<code>temporal_order</code>、<code>OCR/text</code>。然后系统用 <code>L2</code> role index 和 graph neighborhood 检索 sparse anchors，把 question、anchors、fidelity metadata、uncertainty 和 gap records 打包给 diffusion；diffusion sample <code>K</code> 条 latent evidence chains；grounding 把 waypoints snap 回 <code>L1/L0/G</code>；8B verifier mode 检查 support；answer gate 输出 precise / conservative / abstain。</p>
+        <p class="idea-body"><strong>Post-query update actions。</strong><code>update_after_query(verified)</code> 也不是自由写 memory，而是由 8B agent 选择受限更新动作：若 verifier 输出 <code>supported</code>，只能执行 <code>ADD_SUPPORT_RECORD(claim, supporting_anchors, support_label)</code>；若输出 <code>missing</code> 或 <code>insufficient_fidelity</code>，执行 <code>ADD_GAP_RECORD(role, missing_span, required_fidelity)</code> 并可追加 <code>PROMOTE</code> 或 <code>SET_FIDELITY</code> 来提高未来 retention pressure；若输出 <code>contradicted</code>，执行 <code>ADD_EDGE(type=contradiction)</code>；diffusion proposals 和 agent search trace 只能执行 <code>ADD_QUERY_TRACE</code>。任何 <code>unsupported</code> 或 <code>hypothesis</code> transition 都被 action mask 禁止写成 <code>WRITE_ANCHOR</code> 或 factual <code>ADD_EDGE</code>。</p>
+        <ul class="key-points">
+          <li><strong>Write：</strong><code>video_chunk -> candidate anchors -> 8B typed actions -> L0/L1/L2/G update</code>。</li>
+          <li><strong>Query：</strong><code>question -> evidence roles -> role/graph neighborhood -> diffusion -> grounding -> verifier -> answer gate</code>。</li>
+          <li><strong>Update：</strong><code>SupportRecord / GapRecord / QueryTrace</code> 更新 memory metadata，但不创造未验证事实。</li>
+          <li><strong>Graph 定位：</strong>store/query substrate，不是替代 diffusion 或 verifier 的主推理器。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-007" data-status="active">
+      <h3 class="idea-title">Verifier：8B Evidence-Bounded Support Classifier</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>Verifier 是 8B agent 的 evidence-bounded mode。</strong>同一个 8B agent 在 verifier mode 下不是开放式 QA model，也不是让它回答“发生了什么”。它只回答一个受限问题：给定 structured claim / transition 和 grounded anchors，当前 retained memory 是否支持这个 claim？因此 8B 的能力被用在 evidence sufficiency / NLI-style 判断上，而不是用来生成新的 evidence chain。</p>
+        <p class="idea-body"><strong>输入 schema。</strong>Verifier 输入包含 <code>claim_or_transition</code>、<code>grounded_anchors</code> 和 <code>support_requirement</code>。例如 claim 是 <code>handoff(person_A, red_bag, person_B)</code>，grounded anchors 包括 <code>a12: person_A held red_bag at t1, fidelity=F3_visual_token</code>、<code>a18: red_bag near table at t2, fidelity=F2_schema</code>、<code>a24: person_B near window with red object at t3, identity_uncertain</code>，support requirement 是 <code>object_identity</code>、<code>temporal_order</code>、<code>visual_transition</code>。</p>
+        <p class="idea-body"><strong>输出 schema。</strong>8B verifier 必须输出固定标签，而不是自由解释：<code>supported</code>、<code>unsupported</code>、<code>missing</code>、<code>not_found_yet</code>、<code>contradicted</code>、<code>insufficient_fidelity</code>、<code>ambiguous_identity</code>。同时输出 <code>support_score</code>、<code>supported_parts</code>、<code>unsupported_parts</code>、<code>missing_evidence</code>、<code>failure_code</code> 和 <code>allowed_answer</code>，例如 <code>precise</code>、<code>conservative</code> 或 <code>abstain</code>。</p>
+        <p class="idea-body"><strong>Missing-vs-not-found 边界。</strong><code>not_found_yet</code> 表示当前 retrieval / graph neighborhood 还没找到证据，但 memory 里仍可能存在，需要继续查或扩大 neighborhood；<code>missing</code> 表示在当前 memory budget 与索引可见范围内，该 role 所需证据没有存活，应该降级或拒答。这个区分防止系统把“还没检索到”误判为“证据不存在”，也防止在预算耗尽后继续空转。</p>
+        <p class="idea-body"><strong>Diagnostic failure codes。</strong>Verifier 还要输出可诊断失败码，例如 <code>NO_EVIDENCE_POINTER</code>、<code>MODALITY_MISSING</code>、<code>FIDELITY_TOO_LOW</code>、<code>ENTITY_AMBIGUOUS</code>、<code>TEMPORAL_ANCHOR_MISSING</code>、<code>TRANSITION_MISSING</code>、<code>CONTRADICTION_FOUND</code> 和 <code>BUDGET_EXHAUSTED</code>。这样 abstain 不是泛泛“不知道”，而是报告哪个 evidence role 缺失、低保真或冲突。</p>
+        <p class="idea-body"><strong>硬约束 prompt。</strong>Verifier prompt 必须写死：only use listed anchors；do not infer missing transitions；relevant is not supported；if transition evidence is absent, output <code>missing</code> or <code>insufficient_fidelity</code>。关键原则是：相关 anchor 不是充分证据，除非 required transition、identity 和 temporal constraints 都被 retained fidelity 支持。</p>
+        <p class="idea-body"><strong>Chain-level verification。</strong>Diffusion 生成一条 chain 后，verifier 不只看最终答案，而是检查 node、edge 和 identity link：node support 判断 anchor 是否支持状态；transition support 判断 handoff / pickup / putdown 等边是否有证据；identity support 判断 <code>red_bag</code> 和 later <code>red object</code> 是否是同一物体；chain support 综合为 supported、partially_supported、answer_insufficient 或 contradicted。</p>
+        <p class="idea-body"><strong>Answer gate。</strong>8B verifier 的输出直接约束后端回答。LLM verbalizer 只能看到 <code>verified_facts</code>、<code>unsupported_transitions</code>、<code>missing_evidence</code> 和 <code>allowed_answer</code>，不能新增未验证事实。如果 handoff transition 是 <code>missing</code> 或 <code>insufficient_fidelity</code>，最终回答必须保守或拒答。</p>
+        <ul class="key-points">
+          <li><strong>8B 的角色：</strong>agent core 的 verifier mode / evidence-bounded support classifier。</li>
+          <li><strong>不是：</strong>open-ended QA、diffusion decoder、自由 evidence-chain generator。</li>
+          <li><strong>防幻觉原则：</strong>relevant anchors are not sufficient evidence unless required constraints are supported。</li>
+          <li><strong>输出给后端：</strong><code>verified_facts + unsupported_transitions + missing_evidence + answer_policy</code>。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-008" data-status="active">
+      <h3 class="idea-title">Answer Gate：最终后端回答策略</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>Answer gate 是 verifier 之后的最后一道策略层。</strong>它不重新推理视频，也不让 8B agent 自由补证据；它只把 verifier mode 的结构化输出转换成可回答、保守回答或拒答。这样 8B agent 的 answer mode 被限制为 verbalizer：把 verified support state 写成自然语言，而不是生成新的 evidence。</p>
+        <p class="idea-body"><strong>8B answer mode 可见输入。</strong>最终 answer mode 只能看到 <code>verified_facts</code>、<code>unsupported_transitions</code>、<code>missing_evidence</code>、<code>contradictions</code>、<code>insufficient_fidelity</code> 和 <code>answer_policy</code>。它不能看到未验证的 diffusion latent chain，也不能把 plausible transition 写成 confirmed fact。</p>
+        <p class="idea-body"><strong>输出策略。</strong><code>precise_answer</code> 只在所有 required evidence roles 被 supported 且无关键 contradiction 时允许；<code>conservative_answer</code> 用于部分事实 supported、但关键 transition / identity / temporal link missing 或 insufficient fidelity 的情况；<code>abstain</code> 用于证据缺失、冲突、身份歧义过强或 unsupported risk 超过阈值的情况。</p>
+        <p class="idea-body"><strong>形式化规则。</strong>可以写成 <code>π_answer = Gate(S_chain, U_chain, C_chain, F_chain)</code>，其中 <code>S_chain</code> 是 verifier 支持度，<code>U_chain</code> 是 unsupported transition risk，<code>C_chain</code> 是 contradiction flag，<code>F_chain</code> 是 insufficient-fidelity flag。若 <code>S_chain >= τ_s</code> 且 <code>U_chain <= τ_u</code> 且无 contradiction，则 precise；若有 supported facts 但存在 missing / insufficient fidelity，则 conservative；若 contradiction 或 unsupported risk 高，则 abstain。</p>
+        <p class="idea-body"><strong>红袋子例子。</strong>如果 verifier 支持 <code>A held red_bag</code>、<code>red_bag near table</code>、<code>B near window with red object</code>，但将 <code>A handed red_bag to B</code> 标为 <code>missing</code> 或 <code>insufficient_fidelity</code>，answer gate 必须输出 conservative answer：可以确认已支持的观察，但不能确认 handoff。</p>
+        <ul class="key-points">
+          <li><strong>8B answer mode 输入：</strong><code>verified_facts + unsupported_transitions + missing_evidence + answer_policy</code>。</li>
+          <li><strong>8B answer mode 禁止：</strong>自由补全 missing transition，或把 plausible chain 写成事实。</li>
+          <li><strong>三类输出：</strong><code>precise_answer</code>、<code>conservative_answer</code>、<code>abstain</code>。</li>
+          <li><strong>作用：</strong>把 diffusion proposal 和 verifier labels 转成风险受控的最终回答。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-009" data-status="active">
+      <h3 class="idea-title">评测协议</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>设定。</strong>构造 streaming video QA：回答时原始视频不可用，或只允许回看极少 cached subset。benchmark 用 full-video oracle chains 做标注，但模型输入只暴露 compressed memory fragments。</p>
+        <p class="idea-body"><strong>指标。</strong>报告 Evidence-Chain Recovery@K、Grounded Chain Precision、Transition Support Recall、Unsupported Transition Rate、Answer Accuracy with Support、Conservative Answer Calibration、Abstention Quality、conflict detection、storage cost、latency，以及不同 compression rate 下的 risk-coverage 曲线。</p>
+        <p class="idea-body"><strong>主实验假设。</strong>论文最重要的结果不是 full-memory 上的 QA accuracy，而是 tight-budget / lossy-fragment regime 下的 answerability gain：当 memory 只保留少量 anchors、许多 transition 缺失时，我们的方法应该在同一 compression rate 下取得更高的 grounded evidence-chain recovery、更低的 unsupported-claim rate，并保持更好的 conservative / abstain calibration。换句话说，核心贡献要被展示为：<em>under fragmented memory and tight storage budgets, the agent can answer more questions only when current memory supports them, and refuse more appropriately when it does not.</em></p>
+        <p class="idea-body"><strong>基线。</strong>比较 ANN retrieval、caption-RAG、retained-fragment graph traversal、fragment graph 上的 beam search、LLM tool planner、RL/value-of-information navigator、autoregressive trajectory planner 和 oracle reconstruction。还要比较 <code>8B agent + ranking-trained p_E × p_I tools + diffusion + verifier</code>、<code>8B agent + ranking-trained p_E × p_I tools + LLM planner + verifier</code>、<code>8B agent without diffusion</code>、<code>BCE/CE score-regression p_E × p_I</code>、<code>learned p_E only + fixed fidelity</code>、随机/heuristic anchors、oracle <code>p_E</code>、oracle <code>p_E + p_I</code> 和 full-video upper bound。关键比较是：8B agent 调用 diffusion 后，能否在同一 learned compressed memory 上恢复 search/planner methods 无法从缺失边里创造出来的 missing-transition hypotheses。</p>
+        <p class="idea-body"><strong>Diffusion 必要性测试。</strong>为了回应 reviewer 对 beam search、LLM planner、graph search、retrieval reranking 或 MCTS 的质疑，实验必须固定同一 memory buffer、同一 retained anchors、同一 verifier 和同一 answer gate，只替换 proposal mechanism。若 diffusion 真的有贡献，它应在 sparse anchors + missing transitions 的中间预算区间产生更高 proposal recall / chain diversity，同时经过 verifier 后带来更少 unsupported transfer、handoff、causal 和 object-continuity claims。若 memory 极宽，普通 retrieval 已经足够；若 memory 极窄，所有方法都没有证据。最有说服力的区间正是中间预算。</p>
+        <p class="idea-body"><strong>Decisive subset。</strong>除了平均结果，必须单独报告 scattered multi-role / multimodal evidence 子集：同一个问题需要跨时间、跨对象、跨模态连接多个证据点，例如 person identity、object continuity、handoff transition、OCR/text 和 temporal order 分散在不同 anchors 中。这个子集最容易暴露 greedy retrieval、beam search 和 LLM planner 的局限，也是 diffusion trajectory proposal 最应该赢的地方。</p>
+        <p class="idea-body"><strong>归因实验纪律。</strong>为了避免“系统堆料”质疑，消融要拆成三组：retention/write 实验固定 query policy，比较 FIFO、reservoir、saliency、heuristic anchors、learned <code>p_E/p_I</code> 和 oracle retention；proposal/query 实验固定同一 memory store，只替换 diffusion、beam search、LLM planner、graph search、reranker 和 MCTS；generation/gating 实验固定 evidence chain，只比较 direct answer、LLM+verifier、answer-level abstention、claim-level verifier gate 和 oracle claim binding。</p>
+        <ul class="key-points">
+          <li><strong>Hero result：</strong>同一 lossy fragment-memory budget 下，grounded chain recovery 更高，unsupported claims 更少。</li>
+          <li><strong>Compression result：</strong>在 1% 到 20% 等不同 compression rate 下画 answerability / unsupported-claim 曲线，重点展示中间预算区间。</li>
+          <li><strong>风险结果：</strong>当中间 transition 缺失时，unsupported transfer/causal claims 更少。</li>
+          <li><strong>消融：</strong>固定 buffer、anchors、verifier 和 answer gate，只替换 diffusion 为 beam search / LLM planner / graph search / reranker / MCTS，证明差异来自 trajectory proposal prior。</li>
+          <li><strong>归因：</strong>分别证明 memory retention、trajectory proposal 和 answer gating 的贡献，而不是只报告端到端平均分。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-010" data-status="active">
+      <h3 class="idea-title">贡献表述</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">我们提出面向 8B streaming video agent 的碎片化记忆问答：原始视频不可回看，答案证据只以压缩、不完整的 memory fragments 存在。核心是一个 8B Evidence-Memory Agent：它通过 typed memory actions 管理 rate-constrained evidence substrate，用 <code>p_E</code>/<code>p_I</code> tools 获得 anchor survival 与 fidelity-cost 建议；在 query-time 调用 diffusion evidence trajectory proposal tool 生成连接 anchors 的多条潜在证据链；随后用 evidence-bounded verifier mode 检查 support、missing transition 和 insufficient fidelity；最终 answer gate 只把 verified state verbalize 成 precise、conservative 或 abstained answer，从而在 exact evidence paths 部分丢失时实现 uncertainty-aware QA。</p>
+        <p class="idea-body"><strong>收紧后的主贡献。</strong>这不是一个大而全 memory architecture。主贡献是一个可检验的能力边界：在 <em>lossy memory + fragmented evidence + tight budget</em> 下，8B agent 如何通过受限 memory actions、learned anchor/fidelity utilities、diffusion trajectory proposals 和 verifier-gated answering，把有限 memory 转化为更可靠的 answerability。各模块的必要性按功能分解：buffer/graph 负责可查询证据 substrate；<code>p_E/p_I</code> 负责预算下的 anchor 与 fidelity preference；diffusion 负责在 disconnected anchors 之间 proposal 多条 missing-transition hypotheses；verifier/answer gate 负责阻止这些 hypotheses 变成 unsupported claims。</p>
+        <ul class="idea-tags">
+          <li>fragmented memory</li>
+          <li>evidence chain recovery</li>
+          <li>diffusion trajectory prior</li>
+          <li>streaming video QA</li>
+          <li>grounded verification</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> 更强的 claim 是：search 默认路径已经存在；这个 setting 里路径可能断了，所以必须先重建候选路径，再验证。论文成败要靠同一 tight compression budget 下的曲线证明：diffusion proposal + verifier 比 planner/search 更能恢复可验证 chain，并更少产生 unsupported claims。</p>
+      </details>
+    </article>
+  </section>
+
+  <section class="changelog">
+    <h2>讨论记录</h2>
+    <ol>
+          <li><time datetime="2026-06-25">2026-06-25</time> — 补充 Memory Manager 闭环：定义 write / query / update 三条路径，并加入 Evidence Anchor Graph 作为 store/query substrate；graph nodes 包括 anchors、support records、gap records 和 query traces，edges 区分 verified relations 与 hypothesis/proposal relations，unsupported transitions 只能写入 GapRecord 或 QueryTrace，不能写成事实 anchor。</li>
+          <li><time datetime="2026-06-25">2026-06-25</time> — 从 legacy 版复用关键 insight：加入 support collapse under relevance preservation、missing-vs-not-found 边界、diagnostic failure codes、counterfactual compression supervision、scattered multi-role 子集和 retention/proposal/gating 分离归因实验。</li>
+          <li><time datetime="2026-06-25">2026-06-25</time> — 明确 budgeted memory-control policy 由 on-policy distillation 学出：8B controller 在压缩 memory state 上 rollout typed actions，由 Llama3.3-70B / GPT-oss-120B teacher 重排、修正和拒绝动作，蒸馏成 <code>BUDGET_SELECT</code> 与 post-query update action policy。</li>
+          <li><time datetime="2026-06-25">2026-06-25</time> — 收紧主贡献与评测假设：核心不是堆叠模块，而是在 lossy fragment memory 和 tight compression budget 下证明更高 grounded chain recovery、更低 unsupported-claim rate；diffusion 必须在固定 buffer/verifier/answer gate 后对比 beam search、LLM planner、graph search、reranker 和 MCTS。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 将主叙事改为 <strong>8B Evidence-Memory Agent</strong>：8B 是核心 controller，负责 typed memory actions、tool calling、verification mode 和 answer policy；<code>p_E</code>/<code>p_I</code> 是 learned utility tools，diffusion 是 evidence-chain proposal tool，所有事实写入和回答仍受 evidence constraints 限制。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 加入 answer gate / final backend policy：LLM 只能看到 <code>verified_facts</code>、<code>unsupported_transitions</code>、<code>missing_evidence</code> 和 <code>answer_policy</code>，不能自由补证据；最终输出限制为 precise answer、conservative answer 或 abstain。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 采用 8B 作为主 verifier，但限定为 evidence-bounded support classifier：输入 structured claim / transition、grounded anchors 和 fidelity metadata，输出 supported / unsupported / missing / contradicted / insufficient_fidelity / ambiguous_identity，以及 allowed answer policy；8B 不做开放式 QA 或 evidence-chain generation。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 将 <code>p_E</code>/<code>p_I</code> 的 teacher supervision 从绝对 score 回归改成 ranking / preference learning：8B teacher 和 oracle chain 提供 pairwise anchor preference、minimum sufficient fidelity preference 和 chain-level support preference，小 writer 学 utility logits 而不是不稳定分数。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 明确 <code>p_E</code>/<code>p_I</code> 的小模型实现：用 MiniLM / DistilBERT / BERT-base / DeBERTa-v3-small 这类 BERT-style encoder 读取结构化 anchor descriptions 和 role/budget tokens；这些 heads 作为 8B agent 的 learned utility tools，为 typed memory actions 提供 anchor/fidelity 建议。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 补充 diffusion training 方案：用 full-video oracle evidence chains 监督 latent chain <code>Z_0</code>，但条件只给 compressed memory <code>M_R</code>；采用 frozen VLM/embedding encoder + 小型 DiT-style latent denoiser + structured chain decoder + grounding/missing loss。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 合并旧 multi-level buffer 设计，但将其收缩为 <em>sparse multi-fidelity evidence substrate</em>：L0 recent visual cache、L1 structured evidence anchors、L2 evidence role index；buffer 负责 evidence survival，diffusion 负责连接 disconnected anchors，verifier 负责 answerability control。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 明确 fragment 与 evidence anchor 的关系：保留 fragment 作为 operational memory 的底层载体，但主术语转为 evidence anchor；只有带 provenance、claim scope 和 verifier 可检查字段的 fragment 才能作为未来 answerability 的证据约束。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 强化 problem framing：把 setting 定义为流式智能体的证据可用性问题，即 <em>answerability under lossy operational memory</em>，并明确 publishable claim 取决于 sparse anchors + missing transitions 的中间预算区间能否优于 LLM planner 且减少 unsupported claims。</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — 加入推荐实现方案：用预训练 LLM/VLM encoder 提供 question 和 fragment 的语义空间，只训练小型 conditional latent DDPM head 来 proposal 多条 latent evidence trajectories；生成链必须经过 grounding 和 verifier，而不是直接生成事实叙述。</li>
+      <li><time datetime="2026-06-23">2026-06-23</time> — 从零重构为 <strong>Fragmented Evidence Chain Recovery</strong>。Diffusion 现在被定义为 latent evidence trajectory prior，用来在 compressed memory fragments 之间重建 plausible transitions；最终由 grounding 和 verifier 判断 support。</li>
+    </ol>
+  </section>
+</body>
+</html>
+
+

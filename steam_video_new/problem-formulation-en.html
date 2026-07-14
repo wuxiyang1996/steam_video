@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Support-Progressive Navigation over Fixed Streaming Semantic Memory</title><link rel="stylesheet" href="styles.css"></head><body>
+<header><h1>Support-Progressive Navigation over Fixed Streaming Semantic Memory</h1><p class="subtitle">Semantic-state navigation without discrete evidence retrieval for streaming Video QA</p><p class="meta">Problem formulation · 2026-07-12 · <a href="problem-formulation-zh.html">中文</a></p></header>
+
+<section class="card thesis"><span class="label">Core problem</span><h2>How can a question progressively find an answer inside a non-retrievable continuous history state?</h2><p>A streaming Video-LLM must compress video-caption history under a fixed budget. We retain no frames, segments, nodes, or graph: history exists only in one fixed, LLM-aligned embedding state. Once a question arrives, the system cannot retrieve an explicit evidence chain; it must progressively transform the question representation within the continuous state.</p><div class="equation">How can a streaming Video-LLM navigate a fixed, query-independent multimodal
+semantic state to progressively acquire answer-supporting information,
+without retrieving discrete memory items?</div><p><strong>The main contribution is navigation, not memory architecture:</strong> each step selects a semantic operation, reads complementary information from the same continuous state, and increases support for the correct answer over plausible alternatives.</p></section>
+
+<section class="card"><h2>1. Problem setting: fixed query-independent multimodal semantic state</h2><div class="equation">Z_t = Fuse(E_V(V_t),E_C(C_t))
+M_t = U_φ(M_{t-1},Z_t),   M_t∈R^{N×d},   N=constant</div><p><span class="math">M_t</span> is written online before any future question and jointly encodes entities, events, states, temporal relations, caption/ASR semantics, visual-only details, and cross-modal conflicts.</p><p>History contains no independent evidence items, frames, clips, caption entries, timestamps, pointers, provenance, nodes, edges, growing bank, Top-K retrieval, or raw-video replay.</p><p>The claim is about <strong>answer-supporting latent information</strong>, not grounded or source-traceable evidence.</p></section>
+
+<section class="card"><h2>2. Streaming interface: decouple current perception and history</h2><div class="equation">Current path:  W_t = RecentWindow(Z_{t-w:t})
+History path:  M_t = U_φ(M_{t-1},Z_{t-w-1})</div><p><span class="math">W_t</span> retains raw/lightly compressed recent tokens for object, attribute, action, OCR, and fine detail. <span class="math">M_t</span> represents only older history. This split is a streaming interface, not the novelty.</p></section>
+
+<section class="card"><h2>3. Main method: Semantic-State Navigator</h2><p>Initialize the query state and perform at most <span class="math">K</span> operation-conditioned reads over fixed history:</p><div class="equation">u_0=E_Q(q)
+π_k=p_ψ(o_k|u_{k-1},q)
+e_k=Σ_o π_{k,o}e_o^{op}
+r_k=CrossAttn(u_{k-1}+e_k,M_t)
+u_k=GRU(u_{k-1},r_k,e_k)</div><p>The first version uses one shared reader and six lightweight operation embeddings:</p><div class="equation">O={GROUND_ENTITY, RESOLVE_EVENT, TRACE_STATE,
+   LINK_TEMPORAL, CHECK_CONFLICT, COMPOSE}</div><p>Operations are not agents or expert networks. They condition what semantic relation the shared reader should decode at each step.</p></section>
+
+<section class="card"><h2>4. Navigation supervision: support progress, not attention depth</h2><div class="equation">m_k=s(a^+|u_k,W_t)−max_{a^-∈A^-}s(a^-|u_k,W_t)</div><p>Each step should improve discrimination between the correct answer and the strongest plausible alternative:</p><div class="equation">L_progress=Σ_k max(0,m_{k-1}+δ−m_k)</div><p>Complementarity discourages repeated reads of the same latent direction:</p><div class="equation">L_comp=Σ_{k>1}Overlap(α_k,α_{k-1})</div><div class="equation">L_nav=L_QA+λ_pL_progress+λ_cL_comp+λ_oL_operation</div><p><span class="math">L_operation</span> may use weak supervision from question semantics or teacher traces but must not become a hard-coded program. If operation shuffling has no effect, the semantic-navigation claim fails.</p></section>
+
+<section class="card"><h2>5. Replacing SelectStream graph routing with semantic navigation</h2><table><thead><tr><th>SelectStream</th><th>This work</th></tr></thead><tbody><tr><td>Addressable latent evidence nodes</td><td>One fixed consolidated state</td></tr><tr><td>Temporal / semantic graph edges</td><td>No nodes or edges</td></tr><tr><td>Top-K seeds + subgraph expansion</td><td>Operation-conditioned soft reads over the full state</td></tr><tr><td>Graph attention + reranking</td><td>Progressively updated query state</td></tr><tr><td>Selected evidence tokens</td><td>Final semantic query state</td></tr><tr><td>Temporal retrieval recall</td><td>Step-wise answer-support progress</td></tr></tbody></table><div class="equation">SelectStream: q → select nodes → traverse edges → evidence tokens
+Ours:        q → semantic operation → read M → update q → answer</div><p>SelectStream navigates where evidence is stored; this work navigates which semantic transformation is required to decode an answer from a continuous state.</p></section>
+
+<section class="card"><h2>6. Answerability collapse: the failure navigation addresses</h2><div class="equation">coarse semantic relevance survives
+                ≠
+future claim remains answerable</div><p>Compression may preserve a bag, A, B, and a window while losing handoff, pickup, or object continuity. The navigator does not reconstruct raw evidence; it recovers latent semantics needed to discriminate the correct answer from plausible alternatives.</p><div class="equation">FullHistoryAnswerable(q,S_≤t)=1
+LatentMemoryAnswerable(q,M_t)=0</div></section>
+
+<section class="card"><h2>7. Outer constraint: history navigation must not corrupt current perception</h2><div class="equation">L_hist=KL[p_T(a|q,W_t,H_t)||p_S(a|q,W_t,M_t)]
+L_current=KL[p_R(a|q,W_t)||p_S(a|q,W_t,M_t)]</div><div class="equation">min L_hist+L_nav
+s.t. E_{q∈Q_current}L_current≤ε,   |M_t|=N</div><p>Navigation is the novelty; the perception–memory trade-off is its streaming constraint.</p></section>
+
+<section class="card"><h2>8. Qwen3.5-2B implementation</h2><div class="equation">H_t=HiddenStates_Qwen3.5-2B(V_t,C_t)
+Z_t=Resampler(H_t),   Z_t∈R^{L×2048}</div><p>Default: 16 latent tokens per chunk and 64 history tokens; evaluate <span class="math">L∈{8,16,32}</span> and <span class="math">N∈{32,64,128}</span>. No single-vector mean pooling.</p><div class="equation">frozen Qwen3.5-2B encoder
+→ learned resampler / updater / navigator
+→ projection + LayerNorm
+→ frozen 7B/8B answer VLM</div><p>Qwen3-VL-Embedding-2B is an encoder baseline. The backbone is an implementation choice, not a contribution.</p></section>
+
+<section class="card benchmark"><span class="label">Representation probes</span><h2>9. Validate the semantic state before training navigation</h2><table><thead><tr><th>Probe</th><th>Target</th></tr></thead><tbody><tr><td>Entity / visual detail</td><td>Identity, color, OCR, small objects, local state</td></tr><tr><td>Event / temporal</td><td>Actions, before/after, state transitions, object continuity</td></tr><tr><td>Caption dependence</td><td>Video-only, caption-only, joint</td></tr><tr><td>Conflict</td><td>Retain competing interpretations under video-caption disagreement</td></tr><tr><td>Streaming overwrite</td><td>Retention of early semantics over horizon</td></tr></tbody></table><p>Navigation cannot recover distinctions lost before its input.</p></section>
+
+<section class="card"><h2>10. Navigation necessity experiments</h2><p>Match reader parameters, inputs, and FLOPs:</p><ol><li>one-step global CrossAttn;</li><li>deeper one-shot Transformer reader;</li><li>HME/ReDAN-style recurrent attention;</li><li>HippoTune-style latent deliberation;</li><li>navigator without operations;</li><li>navigator without progress loss;</li><li>full navigator;</li><li>SelectStream graph retrieval.</li></ol><p>Interventions shuffle/remove operations, align operation sequences with question types, plot <span class="math">m_0,…,m_K</span>, and compare K under equal compute.</p></section>
+
+<section class="card benchmark"><span class="label">Benchmarks</span><h2>11. OVO-Bench, StreamingBench, and VideoMME</h2><table><thead><tr><th>Benchmark</th><th>Role</th></tr></thead><tbody><tr><td>OVO-Bench</td><td>Real-time perception and Backward Tracing; separate current and history</td></tr><tr><td>StreamingBench</td><td>Current perception, causal/event/context, multi-turn consistency</td></tr><tr><td>VideoMME</td><td>Preserve ordinary short/medium/long video ability</td></tr></tbody></table><p>Navigation gains should concentrate on temporal, multi-event, state-transition, conflict, and history-dependent questions—not merely overall accuracy.</p></section>
+
+<section class="card"><h2>12. Metrics</h2><div class="equation">Historical Gain=Acc(W_t,M_t)−Acc(W_t)
+Current Interference=Acc_current(W_t)−Acc_current(W_t,M_t)
+Net Memory Value=Historical Gain−λ·Current Interference</div><ul><li>step-wise answer-support margin and monotonic progress rate;</li><li>operation-intervention sensitivity;</li><li>multi-hop / temporal question gain;</li><li>Answerability Collapse Rate;</li><li>memory tokens, read FLOPs, latency, and steps;</li><li>VideoMME retention.</li></ul></section>
+
+<section class="card"><h2>13. Honest prior-work boundary</h2><p>Prior work separately covers multi-step VideoQA attention, semantic-role-guided frame reasoning, recurrent question refinement, modern latent iterative retrieval, and multimodal embedding navigation. This work cannot claim the first latent navigation or multi-step VideoQA reasoning.</p><p>The strict combination not found in direct prior work is:</p><div class="equation">streaming query-independent fixed LLM-aligned semantic state
++ no discrete items / graph / retrieval
++ operation-conditioned navigation
++ step-wise answer-support progress
++ bounded current-scene interference</div></section>
+
+<section class="card warning"><span class="label">Go / No-Go</span><h2>14. Evidence threshold</h2><p><strong>Go:</strong> under equal FLOPs, the semantic navigator beats deeper one-shot, recurrent attention, and latent deliberation; operations align with question types and shuffling hurts; support margin increases by step; and historical performance approaches or exceeds SelectStream while current perception is preserved.</p><p><strong>No-Go:</strong> gains are explained by Qwen embeddings or depth; operations can be shuffled; progress loss is ordinary deep supervision; or the fixed state cannot approach SelectStream graph retrieval. Then the method is an old recurrent-attention network with a modern backbone.</p></section>
+
+<section class="card"><h2>One-sentence position</h2><p><strong>We introduce support-progressive semantic navigation over a fixed, query-independent, LLM-aligned multimodal history state, progressively transforming the question without retrieving discrete video evidence.</strong></p></section>
+</body></html>

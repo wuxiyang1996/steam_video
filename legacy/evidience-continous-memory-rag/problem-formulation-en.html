@@ -1,0 +1,842 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fragmented Evidence Chain Recovery — Problem Formulation</title>
+  <style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #1a1d23;
+  --muted: #5c6570;
+  --border: #e2e6ec;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --draft: #94a3b8;
+  --active: #2563eb;
+  --parked: #d97706;
+  --done: #16a34a;
+  --rejected: #dc2626;
+  --open: #7c3aed;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141b;
+    --surface: #171d26;
+    --surface-2: #1f2731;
+    --text: #e6e9ef;
+    --muted: #9aa4b2;
+    --border: #2a313c;
+    --accent: #6ba2ff;
+    --accent-soft: #18283f;
+    --draft: #6b7686;
+    --active: #6ba2ff;
+    --parked: #e0a648;
+    --done: #46c275;
+    --rejected: #f06868;
+    --open: #a78bfa;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 53rem;
+  margin-inline: auto;
+  padding: 1.5rem 1.25rem 4rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.doc-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.8rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.lang-nav {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.project {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+  counter-reset: idea-counter;
+  scroll-margin-top: 1rem;
+}
+
+.project h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.project-summary {
+  color: var(--muted);
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.idea {
+  position: relative;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--draft);
+  padding: 0.9rem 1.1rem;
+  margin: 0.85rem 0;
+  background: var(--bg);
+  border-radius: 0 10px 10px 0;
+  scroll-margin-top: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.idea:hover {
+  box-shadow: var(--shadow);
+}
+
+.idea:target {
+  border-left-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.idea[data-status="active"] {
+  border-left-color: var(--active);
+}
+
+.idea[data-status="parked"] {
+  border-left-color: var(--parked);
+}
+
+.idea[data-status="done"] {
+  border-left-color: var(--done);
+}
+
+.idea[data-status="rejected"] {
+  border-left-color: var(--rejected);
+  opacity: 0.75;
+}
+
+.idea[data-status="open"] {
+  border-left-color: var(--open);
+}
+
+.idea {
+  counter-increment: idea-counter;
+}
+
+.idea-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  letter-spacing: -0.005em;
+}
+
+.idea-title::before {
+  content: counter(idea-counter, decimal-leading-zero);
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.05rem 0.4rem;
+  line-height: 1.5;
+}
+
+.idea-title::after {
+  margin-left: auto;
+  align-self: center;
+  font-weight: 600;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.idea[data-status="draft"] .idea-title::after {
+  content: "draft";
+  color: var(--draft);
+}
+
+.idea[data-status="active"] .idea-title::after {
+  content: "active";
+  color: var(--active);
+}
+
+.idea[data-status="parked"] .idea-title::after {
+  content: "parked";
+  color: var(--parked);
+}
+
+.idea[data-status="done"] .idea-title::after {
+  content: "done";
+  color: var(--done);
+}
+
+.idea[data-status="rejected"] .idea-title::after {
+  content: "rejected";
+  color: var(--rejected);
+}
+
+.idea[data-status="open"] .idea-title::after {
+  content: "open question";
+  color: var(--open);
+}
+
+.idea-body {
+  margin: 0 0 0.6rem;
+}
+
+.key-points {
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.85rem 0.65rem 1.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.key-points li {
+  margin-bottom: 0.35rem;
+  padding-left: 0.1rem;
+}
+
+.key-points li:last-child {
+  margin-bottom: 0;
+}
+
+.key-points strong {
+  color: var(--accent);
+}
+
+.idea-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0;
+}
+
+.idea-tags li {
+  font-size: 0.74rem;
+  padding: 0.15rem 0.55rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.idea-notes {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.idea-notes strong {
+  color: var(--text);
+}
+
+.problem-list,
+.problem-list ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.problem-list li {
+  margin-bottom: 0.4rem;
+}
+
+.example-query {
+  margin: 0.85rem 0;
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.95rem;
+}
+
+.example-query cite {
+  display: block;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+.example-query p {
+  margin: 0.3rem 0;
+}
+
+.example-query .expected {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.changelog h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.changelog ol {
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog li {
+  margin-bottom: 0.3rem;
+}
+
+.changelog time {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Foldable sections (<details class="foldable">) */
+.foldable {
+  margin: 0.5rem 0;
+}
+
+.foldable > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+  padding: 0.15rem 0;
+}
+
+.foldable > summary::-webkit-details-marker {
+  display: none;
+}
+
+.foldable > summary::before {
+  content: "▸";
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.foldable[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.foldable > summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foldable.idea-details {
+  margin-top: 0.25rem;
+}
+
+.foldable.idea-details > summary {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.foldable.changelog-archive {
+  margin-top: 0.5rem;
+}
+
+/* Related work */
+.related-work {
+  margin: 0.85rem 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.related-work > summary {
+  font-size: 0.85rem;
+}
+
+.related-work-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.related-work-list li {
+  margin-bottom: 0.45rem;
+}
+
+.related-work-list .relevance {
+  color: var(--text);
+}
+
+/* Lightweight concept figures */
+.memory-figure {
+  margin: 1.1rem 0;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.memory-figure figcaption {
+  margin-bottom: 0.85rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.memory-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: flow-step;
+}
+
+.memory-flow li {
+  position: relative;
+  counter-increment: flow-step;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+.memory-flow li::before {
+  content: counter(flow-step);
+  position: absolute;
+  top: 0.45rem;
+  right: 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.memory-flow strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  padding-right: 1rem;
+}
+
+.memory-flow span {
+  color: var(--muted);
+}
+
+@media (max-width: 32rem) {
+  body {
+    padding: 1.25rem 0.9rem 3rem;
+  }
+
+  .project {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .doc-header h1 {
+    font-size: 1.5rem;
+  }
+}
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <h1>Fragmented Evidence Chain Recovery for Streaming Video QA</h1>
+    <p class="meta">Last updated: <time datetime="2026-06-25">2026-06-25</time> · Version 2 of <a href="../continuous-memory-model-and-retrieval/problem-formulation-en.html">Continuous Memory Model and Retrieval</a></p>
+    <nav class="lang-nav">
+      <a href="problem-formulation-zh.html">Chinese</a> |
+      <a href="../../.cursor/skills/nec-brainstorming/ideas/index.html">Brainstorming hub</a>
+    </nav>
+  </header>
+
+  <section class="project" data-project="evidience-continous-memory-rag" id="problem-formulation">
+    <h2>Research track</h2>
+    <p class="project-summary"><strong>When memory is fragmented, an 8B agent's answerability depends on how it manages evidence.</strong> This track studies streaming video QA with a bounded, lossy memory buffer where the original video is unavailable or almost unavailable. The core is not asking an 8B model to answer from full video; it is an 8B Evidence-Memory Agent that uses typed actions to manage sparse evidence anchors, calls a diffusion proposal tool to connect surviving fragments, and uses evidence-bounded verification plus an answer gate to control which claims may be answered.</p>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-001" data-status="active">
+      <h3 class="idea-title">Problem: Fragmented Evidence Chain Recovery</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">Given a continuous video stream <code>V = {f1, f2, ...}</code>, the system can only keep a bounded memory <code>M_t</code>. Instead of retaining complete clips, it stores compressed fragments such as object states, human pose/state, event sketches, scene relations, temporal anchors, low-resolution visual tokens, and uncertainty tags. Many user questions depend on transitions that were never stored as complete evidence.</p>
+        <p class="idea-body"><strong>This setting is an actual problem, but it is not a video-storage problem.</strong> A better formulation is: evidence availability for streaming agents, or <em>answerability under lossy operational memory</em>. When an agent continuously observes the world, it cannot permanently retain all history as reasoning-ready evidence. It must compress history into operational memory. When a future query arrives, whether the answer is still supported by the current memory is a real and difficult problem.</p>
+        <p class="idea-body"><strong>Publishability depends on the critical middle-budget regime.</strong> The setting is valid; the paper becomes publishable if it shows that diffusion significantly outperforms an LLM planner in the <em>sparse anchors + missing transitions</em> regime while producing fewer unsupported claims. The question is not whether we can store the video, but whether the agent can still justify an answer from what it chose to remember.</p>
+        <p class="idea-body"><strong>Core failure phenomenon: support collapse under relevance preservation.</strong> After bounded compression, a memory fragment may remain semantically relevant and retrievable while no longer supporting a fine-grained claim. In short, <em>relevance survives, support collapses</em>: the system remembers that the red bag later appeared near the table and that B was near the window, but it did not retain the handoff / pickup transition. Ordinary RAG can mistake relevance for support; this method explicitly asks whether current memory still supports the claim.</p>
+        <p class="idea-body">The task is not simply to retrieve the right clip. The clip may be gone. The task is to recover a small set of candidate evidence chains that could connect the surviving fragments, then ground each chain back to real memory items or mark it unsupported.</p>
+        <p class="idea-body"><strong>Avoid the wrong framing.</strong> If the paper says "we delete the middle transition and use diffusion to guess it back," the setting looks artificial. The practical framing is: streaming agents maintain sparse, lossy memories for future unknown queries. This creates an answerability gap: the original stream may contain the answer, but the retained memory may only partially support it. The system must recover candidate evidence chains and know when not to answer.</p>
+        <div class="example-query">
+          <cite>Practical scenarios</cite>
+          <table>
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Why this is practical</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Home / robot assistant</td>
+                <td>The robot observes many events but cannot permanently store full indoor video.</td>
+              </tr>
+              <tr>
+                <td>Wearable / egocentric assistant</td>
+                <td>First-person video is long, privacy-sensitive, and future queries are unknown.</td>
+              </tr>
+              <tr>
+                <td>Edge camera agent</td>
+                <td>The system processes locally in real time and uploads or retains only semantic events.</td>
+              </tr>
+              <tr>
+                <td>Long-running lab / warehouse agent</td>
+                <td>The agent must remember objects, people, and task states, but full replay is expensive.</td>
+              </tr>
+              <tr>
+                <td>Streaming multimodal agent</td>
+                <td>Model context and memory APIs are limited, so history must be compressed.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="idea-body"><strong>The real problem has three layers.</strong> First, memory survival: which evidence anchors remain after streaming compression? Second, evidence reconstruction: can those anchors form a possible evidence chain? Third, answerability control: which chains are supported enough by current memory to answer, and which require abstention?</p>
+        <p class="idea-body"><strong>Why this is not ordinary RAG.</strong> Ordinary RAG assumes the document or clip still exists and only needs to be retrieved. Here the original evidence path may no longer exist in memory; only sparse anchors remain, the middle transition may be missing, and the system must decide whether the question is still answerable.</p>
+        <div class="example-query">
+          <cite>Example query</cite>
+          <p>"Did the person who first held the red bag later hand it to the person sitting by the window?"</p>
+          <p class="expected"><strong>Surviving fragments:</strong> red bag near table; person B by window; person A disappeared; uncertain handover event. The missing part is the continuous transition: A holding bag -> bag near table -> B picks it up -> B by window.</p>
+          <p class="expected"><strong>Practical answer discipline:</strong> if memory only contains <code>m1: A earlier held red bag</code>, <code>m2: red bag later near table</code>, and <code>m3: B later sat near window with red object</code>, the agent should not directly answer "yes, he handed it over." It should say: I remember A holding the red bag earlier, and I remember a red object near the person by the window later, but I did not retain the handoff or pickup process, so I cannot confirm that it was handed to him.</p>
+        </div>
+        <ul class="key-points">
+          <li><strong>Central variable:</strong> answerability depends on whether a plausible latent chain can be grounded to surviving memory, not whether the original stream once contained the evidence.</li>
+          <li><strong>Method core:</strong> reconstruct candidate evidence trajectories over fragmented lossy memory before deciding what to retrieve or verify.</li>
+          <li><strong>Paper setting:</strong> streaming video QA where exact evidence paths are partially lost and only compressed fragments remain.</li>
+          <li><strong>Practical value:</strong> prevent the agent from turning plausible memory into confirmed memory claims.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-011" data-status="active">
+      <h3 class="idea-title">Core: 8B Evidence-Memory Agent</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>The 8B agent is the system's core controller.</strong> It is not only an offline teacher or a final verbalizer; it chooses memory actions during streaming and calls retrieval, diffusion, verification, and the answer gate at query time. The paper question becomes: how can an 8B streaming video agent manage compressed evidence memory, recover candidate evidence chains, and avoid unsupported memory claims when only lossy operational memory is retained?</p>
+        <p class="idea-body"><strong>Typed action space.</strong> The 8B agent cannot freely write facts; it operates memory through constrained actions: <code>BUDGET_SELECT</code>, <code>WRITE_ANCHOR</code>, <code>SET_FIDELITY</code>, <code>PROMOTE</code>, <code>DEMOTE</code>, <code>MERGE</code>, <code>EVICT</code>, <code>ADD_EDGE</code>, <code>MARK_UNCERTAIN</code>, <code>ADD_GAP_RECORD</code>, <code>ADD_SUPPORT_RECORD</code>, <code>ADD_QUERY_TRACE</code>, <code>RETRIEVE_BY_ROLE</code>, <code>CALL_DIFFUSION</code>, <code>VERIFY_CHAIN</code>, <code>ANSWER_PRECISE</code>, <code>ANSWER_CONSERVATIVE</code>, and <code>ABSTAIN</code>.</p>
+        <p class="idea-body"><strong>Tool roles.</strong><code>p_E</code>/<code>p_I</code> are not the main controller; they are learned tools that provide anchor utility, fidelity-cost tradeoffs, and budget-aware recommendations to the 8B agent. Diffusion is not memory and not an answer model; it is a latent evidence-chain proposal tool the 8B agent calls when sparse anchors are disconnected. The verifier is the same 8B agent in evidence-bounded support-checking mode, and the answer gate is the final output policy it must obey.</p>
+        <p class="idea-body"><strong>Hard boundary.</strong> The 8B agent may propose, retrieve, verify, and mark gaps, but it cannot write unverified hypotheses as factual memory. Unsupported diffusion transitions may be written only into <code>QueryTrace</code> or <code>GapRecord</code>, never into <code>EvidenceAnchor</code>. Final answers may only be licensed by verifier-approved support records.</p>
+        <ul class="key-points">
+          <li><strong>Agent core:</strong> 8B model controls memory actions and tool calls.</li>
+          <li><strong>Memory tools:</strong><code>p_E/p_I</code> provide learned utility and fidelity recommendations.</li>
+          <li><strong>Proposal tool:</strong> diffusion samples candidate latent evidence chains.</li>
+          <li><strong>Safety constraint:</strong> verified support, not plausible reasoning, licenses final claims.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-002" data-status="active">
+      <h3 class="idea-title">Why Diffusion Is Needed</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>ANN retrieval is local.</strong> It can retrieve fragments about "red bag", "window person", or "table", but it does not model whether these fragments form a coherent temporal event transition.</p>
+        <p class="idea-body"><strong>Graph search assumes existing edges.</strong> If the handover was not retained, the edge is missing. Graph traversal stops exactly where reconstruction is needed most.</p>
+        <p class="idea-body"><strong>Beam search extends observed candidates.</strong> When the middle state is absent, beam search mostly expands over a broken state space and can fail locally.</p>
+        <p class="idea-body"><strong>RL navigation needs a clearer action/reward surface.</strong> Here the latent transition itself is uncertain, reward is sparse, and every query may require a differently shaped evidence chain.</p>
+        <p class="idea-body"><strong>Diffusion fits the failure mode.</strong> It can learn a trajectory prior: a conditional denoising process from noisy, incomplete evidence fragments to coherent latent evidence trajectories. That makes it useful before navigation, not merely as a navigation policy.</p>
+        <ul class="key-points">
+          <li><strong>One-line claim:</strong> diffusion is useful when memory is partially missing, because it can sample coherent latent evidence trajectories between fragmented states.</li>
+          <li><strong>Important boundary:</strong> diffusion proposes chains; grounding and verification decide support.</li>
+          <li><strong>Novelty source:</strong> missing-transition recovery, not faster retrieval.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-003" data-status="active">
+      <h3 class="idea-title">Method: Diffusion Evidence Trajectory Prior</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Input.</strong> The diffusion model conditions on the question embedding, surviving memory fragments, temporal anchors, entity states, scene-graph snippets, low-resolution visual tokens, and an uncertainty mask that marks missing or low-fidelity regions.</p>
+        <p class="idea-body"><strong>Output.</strong> It samples <code>K</code> latent evidence chains such as <code>A holding red bag -> table region -> B picks object -> window seat</code>, <code>A holding red bag -> bag left on chair -> B near chair -> window seat</code>, or <code>A holding red bag -> no transfer -> B has different object</code>.</p>
+        <p class="idea-body"><strong>Execution loop.</strong> For each generated chain, the system runs three checks: grounding snaps latent states to surviving memory fragments; verification checks whether key transitions have support; answer control decides whether to answer, downgrade to a conservative statement, report unsupported transitions, or abstain.</p>
+        <figure class="memory-figure">
+          <figcaption>Figure: diffusion reconstructs candidate latent trajectories, then verification gates the answer.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Query</strong><span>long-video question</span></li>
+            <li><strong>Fragments</strong><span>compressed lossy memory</span></li>
+            <li><strong>Diffusion</strong><span>K latent evidence chains</span></li>
+            <li><strong>Grounding</strong><span>snap states to memory items</span></li>
+            <li><strong>Verifier</strong><span>support / conflict / missing</span></li>
+            <li><strong>Answer</strong><span>precise / conservative / abstain</span></li>
+          </ol>
+        </figure>
+        <ul class="key-points">
+          <li><strong>Multimodality:</strong> a query may have several plausible chains, so top-1 reconstruction is unsafe.</li>
+          <li><strong>Coarse-to-fine:</strong> generate event-level paths first, then refine entity, object, and time states.</li>
+          <li><strong>Uncertainty:</strong> large disagreement across sampled chains is evidence that the answer is unstable.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-004" data-status="active">
+      <h3 class="idea-title">Trainable Version: Pretrained Encoder + Small Diffusion Head</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Option B is the most paper-ready version:</strong> do not train a large generative model from scratch. Use pretrained LLM/VLM encoders to define the input space, then train only a small conditional latent DDPM head. Qwen2.5-VL, InternVL, or GPT-4o extracts video fragments; LLM embeddings, CLIP, or SigLIP encode the question and retained fragments; the small diffusion head proposes candidate trajectories in latent evidence-chain space; the verifier then decides which transitions are supported by the current memory.</p>
+        <p class="idea-body"><strong>Training form.</strong><code>question + retained fragments -> pretrained encoder -> condition embedding C</code>. The oracle evidence chain is encoded by a pretrained or learned step encoder into <code>Z_0</code>. The diffusion objective is conditional denoising: <code>denoise Z_t -> Z_0 conditioned on C</code>. The diffusion module is therefore not fully pretrained, but its input space is provided by pretrained semantic encoders, which sharply reduces training pressure.</p>
+        <p class="idea-body"><strong>Concrete model in mind.</strong> The 8B agent is the controller. Keep the front-end encoders mostly frozen: use a VLM such as Qwen2.5-VL or InternVL to extract structured anchors, and use SigLIP / CLIP or LLM embeddings for the question, anchor text, and visual tokens. The diffusion module is not a large LLM; it is a small conditional latent diffusion tool. The preferred version is a Transformer / DiT-style denoiser over variable-length chain latents, with a 1D U-Net DDPM as a lighter baseline. The 8B agent calls the structured chain decoder, 8B verifier mode, and answer gate; it cannot directly trust diffusion or write unverified proposals as facts.</p>
+        <p class="idea-body"><strong>Diffusion training data.</strong> Each training sample contains the original video <code>V</code>, question <code>q</code>, full-video oracle evidence chain <code>C*</code>, compressed memory <code>M_R</code> produced by the learned buffer at compression rate <code>R</code>, and answer / support labels. During diffusion training, the model must not condition on the full video; it only receives <code>q + M_R + R</code>. The full video is used only to construct oracle chain supervision.</p>
+        <p class="idea-body"><strong>Latent chain supervision.</strong> First encode the oracle chain <code>C* = [c_1, ..., c_L]</code> into <code>Z_0 = [z_1, ..., z_L]</code> with a step encoder. Each <code>c_i</code> is a structured evidence step containing role, entity refs, time span, state / transition type, and support requirement. Add noise to <code>Z_0</code> to obtain <code>Z_t</code>, then train the denoiser <code>ε_θ(Z_t, t, C)</code> to predict the noise with <code>L_diff = ||ε - ε_θ(Z_t, t, C)||^2</code>, where <code>C = Enc(q, M_R, R)</code>.</p>
+        <p class="idea-body"><strong>Decoder and grounding-aware loss.</strong> After diffusion samples <code>Z = [z_1, ..., z_L]</code>, a chain decoder turns each waypoint into a structured proposal with <code>role</code>, <code>entity_refs</code>, <code>time_hint</code>, <code>anchor_query</code>, <code>transition_type</code>, and <code>support_requirement</code>. Train the decoder from oracle chain labels using role / transition classification, entity linking, temporal-bin regression, and support-requirement multi-label loss. Add a grounding loss: if an oracle step has a retained anchor in <code>M_R</code>, use contrastive learning to pull <code>z_i</code> toward that anchor embedding; if the step is absent, train a missing / hypothesis flag.</p>
+        <p class="idea-body"><strong>Total objective.</strong> A clean first version uses <code>L = L_diff + λ_dec L_dec + λ_ground L_ground + λ_missing L_missing</code>. Later, verifier scores can rerank or preference-tune chains toward higher grounded support, fewer unsupported transitions, and fewer contradictions. The boundary is crucial: diffusion learns <code>p(latent evidence chain | question, compressed anchors, compression rate)</code>, not <code>p(answer | video)</code>.</p>
+        <p class="idea-body"><strong>Generation form.</strong> Compute <code>C = encode(question, memory)</code>, sample <code>K</code> latent chains from diffusion, decode them into structured evidence chains, ground them to concrete memory items, and let the verifier check support, contradiction, and missing transitions.</p>
+        <ul class="key-points">
+          <li><strong>Paper claim:</strong> diffusion operates over latent evidence trajectories, not raw language.</li>
+          <li><strong>Model choice:</strong> frozen VLM / embedding encoder + small DiT-style latent denoiser + structured chain decoder + verifier.</li>
+          <li><strong>Safety boundary:</strong> diffusion is not inventing a story; it proposes multiple latent evidence chains.</li>
+          <li><strong>Implementation advantage:</strong> large models handle perception and encoding, the small diffusion head handles multimodal trajectory proposal, and the verifier handles factual support.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-005" data-status="active">
+      <h3 class="idea-title">Memory Representation</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The memory buffer stores fragments rather than full footage. A memory item may contain <code>ObjectState</code>, <code>HumanState</code>, <code>ActionSketch</code>, <code>SceneRelation</code>, <code>TemporalAnchor</code>, <code>LowResVisualToken</code>, and <code>UncertaintyTag</code>. These are enough to form constraints, but not enough to guarantee that an event transition is preserved.</p>
+        <p class="idea-body"><strong>Keep fragments, but change their role.</strong> Fragments are no longer the headline problem; the headline is <em>answerability under lossy operational memory</em>. A fragment is the concrete substrate of that operational memory, while an <em>evidence anchor</em> is the verifier-usable evidence unit inside it: a compressed fragment with provenance, time, entities, state, fidelity, and claim scope.</p>
+        <p class="idea-body"><strong>Term hierarchy.</strong><code>memory fragment</code> means a compressed historical observation; <code>evidence anchor</code> means a fragment that preserves enough source, entity state, temporal location, and supported-claim type to constrain future answers. In other words, the system is not guessing deleted video from random fragments; it proposes possible evidence chains over verifiable anchors, then lets the verifier decide support.</p>
+        <p class="idea-body">A candidate chain has the form <code>fragment_1 -> latent transition -> fragment_2 -> latent transition -> fragment_3</code>. Each observed fragment must be grounded to a real retained item. Each latent transition is allowed as a hypothesis only until verified or marked unsupported.</p>
+        <ul class="key-points">
+          <li><strong>Stored evidence:</strong> compressed state fragments with timestamps, entities, relations, and fidelity tags.</li>
+          <li><strong>Anchorization:</strong> only fragments with provenance, claim scope, and verifier-checkable fields become evidence anchors.</li>
+          <li><strong>Missing evidence:</strong> intermediate transitions between retained states.</li>
+          <li><strong>Answer discipline:</strong> a chain can guide search, but only grounded memory can license a factual claim.</li>
+          <li><strong>Method chain:</strong><code>compressed fragment -> evidence anchor -> latent evidence chain -> verified answer</code>.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-006" data-status="active">
+      <h3 class="idea-title">Buffer: Sparse Multi-Fidelity Evidence Substrate</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>The old multi-level buffer remains feasible, but it must be narrowed.</strong> It should not be presented as a large general-purpose memory architecture. It should be reduced to a <em>sparse multi-fidelity evidence substrate</em>. In other words, the buffer does not try to understand, store, retrieve, and reason about everything; it keeps grounded evidence footholds so future answerability is still possible.</p>
+        <p class="idea-body"><strong>Three-layer structure.</strong><code>L0 Ephemeral Visual Cache</code> stores recent-window keyframes, object crops, low-resolution visual tokens, ASR/OCR snippets, and a small short-clip cache for near-term grounding only; it is demoted or deleted after TTL. <code>L1 Structured Evidence Anchors</code> is the long-term substrate, storing anchorized <code>EntityState</code>, <code>ObjectState</code>, <code>ActionSketch</code>, <code>SceneRelation</code>, <code>TemporalAnchor</code>, supported <code>StateTransition</code>, and <code>UncertaintyRecord</code>. <code>L2 Evidence Role Index</code> is not another memory store; it organizes L1 anchors by evidence roles such as <code>identity</code>, <code>object_state</code>, <code>location</code>, <code>action</code>, <code>interaction</code>, <code>temporal_order</code>, <code>count</code>, <code>text/OCR</code>, and <code>causal_transfer</code>.</p>
+        <p class="idea-body"><strong>Multi-fidelity, not multi-storage.</strong> The same evidence anchors can exist at different fidelity tiers: <code>raw/cache -> keyframe/token -> schema -> summary -> gist -> missing</code>. The system can <code>promote</code> important anchors to higher fidelity, <code>demote</code> old cache into schema or summary, <code>merge</code> adjacent or duplicate anchors, <code>split</code> incorrect event boundaries, <code>evict</code> low-value anchors, or <code>refresh</code> low-fidelity but high-risk evidence at query time.</p>
+        <p class="idea-body"><strong><code>p_E × p_I</code> is a learning-based memory writer, not a heuristic rule set.</strong><code>p_E(e | x_t, M_t; θ_E)</code> learns anchor placement: whether a candidate event/span in the current streaming chunk should become an evidence anchor. <code>p_I(f | e, x_t, M_t; θ_I)</code> learns fidelity allocation: if the anchor is kept, which fidelity tier should survive. The joint write decision is <code>p(e, f | x_t, M_t) = p_E(e | x_t, M_t) · p_I(f | e, x_t, M_t)</code>, where <code>x_t</code> denotes current VLM/ASR/OCR/metadata features and <code>M_t</code> denotes the existing buffer state.</p>
+        <p class="idea-body"><strong>BERT-style writer backbone.</strong><code>p_E</code> and <code>p_I</code> can be parameterized by a small pretrained text encoder such as MiniLM, DistilBERT, BERT-base, or DeBERTa-v3-small. It does not read raw video directly; it consumes structured anchor descriptions: <code>[BUDGET=5%]</code>, role tokens, and textual / schema evidence tokens such as <code>[ANCHOR] t=12 person_A holds red_bag fidelity=F3 uncertainty=low</code>. Visual information is first converted by the VLM/SigLIP into object labels, action labels, caption snippets, crop embeddings, and uncertainty, then fused with the BERT hidden state.</p>
+        <p class="idea-body"><strong>Writer heads as tools.</strong> For each <code>[ANCHOR]</code> token hidden state <code>h_i</code>, attach small heads: <code>s_E(e_i)=W_E h_i</code> outputs an anchor utility logit; <code>s_I(e_i, f, r)=W_I[h_i, f_emb, role_emb, budget_emb]</code> outputs a utility logit for a fidelity-role pair; optional role coverage and unsupported-risk heads can be added. Online, the 8B agent reads these logits, the budget state, and the graph/memory state, then chooses typed actions such as <code>WRITE_ANCHOR</code>, <code>SET_FIDELITY</code>, <code>MERGE</code>, <code>DEMOTE</code>, or <code>EVICT</code>. Thus the small writer heads are learned utility tools for the 8B agent, not replacements for the agent controller.</p>
+        <p class="idea-body"><strong>Rate-constrained objective.</strong> The buffer is not optimized to compress video nicely; it is optimized to maximize future answerability at compression rate <code>R</code>: <code>max E_q[SupportCoverage(q, M_R) - λ UnsupportedRisk(q, M_R)]</code> subject to <code>Cost(M_R) / Cost(V) <= R</code>. Here <code>M_R</code> is the operational memory at compression rate <code>R</code>, and <code>V</code> is the original video stream. Compression rate is therefore not an auxiliary metric; it is the central variable of the setting.</p>
+        <p class="idea-body"><strong>Training <code>p_E</code>: learn evidence survival with ranking.</strong> Do not regress absolute 8B scores, because values such as <code>0.83</code> drift across prompts, batches, and video distributions. Instead, construct pairwise preferences under the same video chunk, memory state, and compression budget: <code>e_i ≻ e_j</code> means <code>e_i</code> is more worth retaining than <code>e_j</code>. Preferences can come from oracle chains, where anchors in future evidence chains outrank unused or redundant anchors, from 8B pairwise choices, or from counterfactual memory evaluation. Train with <code>L_rank_E = -log σ(s_E(e_i) - s_E(e_j))</code> or a margin ranking loss.</p>
+        <p class="idea-body"><strong>Training <code>p_I</code>: learn minimum sufficient fidelity with ranking.</strong> For the same anchor and evidence role, compare fidelity tiers <code>(e, F1), ..., (e, F5)</code>. The preference is not simply higher fidelity is better; the <em>lowest sufficient</em> fidelity should beat both insufficient fidelity and unnecessarily expensive redundant fidelity. For example, for a handoff role, <code>F4 ≻ F2</code> means F2 is insufficient; if <code>F3</code> is already sufficient, <code>F3 ≻ F4</code> means F3 is more budget-efficient. Train with <code>L_rank_I = -log σ(s_I(e, f_preferred, r) - s_I(e, f_rejected, r))</code>. Thus <code>p_I</code> learns support fidelity / cost tradeoff instead of always choosing maximum fidelity.</p>
+        <p class="idea-body"><strong>Counterfactual compression supervision.</strong><code>p_I</code> labels can be obtained by counterfactual compression: for the same oracle evidence item, construct tiers <code>full clip -> keyframe/crop -> visual token -> schema -> summary -> gist -> missing</code>, then let the verifier judge whether a claim / role is still supported at each tier. The lowest tier that still supports the claim becomes the preferred fidelity; tiers below it are <code>insufficient_fidelity</code>, and tiers above it that add no support are redundant cost. This directly trains answer granularity to follow survivability: full supports precise, schema supports coarse, and gist supports only hypothesis or abstention.</p>
+        <p class="idea-body"><strong>Training the 8B agent / writer tools.</strong> During training, use a stronger teacher such as <code>Llama3.3-70B</code> or <code>GPT-oss-120B</code> with richer context, oracle chains, full-memory replay, and budget constraints to produce memory-control action traces: which anchor is more critical, which fidelity is minimum sufficient, which memory action is better, and which candidate chain is more grounded. Then perform <strong>on-policy distillation</strong>: the 8B agent rolls out on its own current memory states, and the teacher provides better typed actions / rankings / correction labels for those on-policy states. The small writer heads learn these utility preferences, and the 8B agent learns typed memory control through action-level distillation. At deployment, the 8B agent only sees the streaming chunk, current memory, budget, writer logits, and graph state; all factual writes remain constrained by evidence checks.</p>
+        <p class="idea-body"><strong>Reporting compression rate.</strong> The main experiment should report <code>CR_storage = Cost(M_R) / Cost(raw video)</code>, with optional <code>CR_token = Tokens(M_R) / Tokens(raw captions or dense frames)</code> and <code>CR_evidence = #retained anchors / #oracle evidence units</code>. The key plot uses compression rate on the x-axis, for example 1%, 2%, 5%, 10%, 20%, and Answer Accuracy with Support, Evidence-Chain Recovery@K, or Unsupported Claim Rate on the y-axis. The important regime is the middle budget: high budgets approach full video, very low budgets leave everyone without evidence, and the sparse anchors + missing transitions regime determines the method's value.</p>
+        <p class="idea-body"><strong>Support collapse.</strong> Support collapse occurs when an anchor survives but its fidelity is insufficient for the required evidence role. For example, the system may remember that the red bag was later near the table and that B was near the window, but not retain the handoff or pickup process; the anchor exists, but fidelity is insufficient for the required evidence role.</p>
+        <p class="idea-body"><strong>Interface to diffusion.</strong> When a query arrives, the system first predicts required evidence roles and uses L2 to retrieve sparse anchors; diffusion samples <code>K</code> latent evidence chains between these disconnected anchors; chain waypoints are snapped back to L1/L0; the verifier checks support, conflict, and missing transitions; the answer gate chooses precise answer, conservative answer, or abstention.</p>
+        <ul class="key-points">
+          <li><strong>8B agent handles:</strong> memory action selection, tool calling, and answer policy.</li>
+          <li><strong>Buffer handles:</strong> evidence survival and grounded evidence substrate.</li>
+          <li><strong>Anchors handle:</strong> the definition of verifier-usable evidence units.</li>
+          <li><strong>Diffusion handles:</strong> disconnected evidence reconstruction / navigation.</li>
+          <li><strong>Verifier handles:</strong> answerability control and prevention of unsupported claims.</li>
+          <li><strong>Minimum feasible version:</strong><code>8B agent + L0 recent cache + L1 structured anchors + L2 role index + BERT-style ranking-trained p_E/p_I tools + fidelity/uncertainty metadata</code>.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-012" data-status="active">
+      <h3 class="idea-title">Memory Manager: Write / Query / Update Loop</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>The memory manager turns the 8B agent's typed actions into a writable, searchable, and updatable evidence substrate.</strong> It is not a static compressed file. It runs three paths: streaming write path, query-time retrieval path, and post-query update path. The core rule is: real observations become evidence anchors; diffusion / agent hypotheses become traces or gaps; verifier-supported claims become support records.</p>
+        <p class="idea-body"><strong>Evidence Anchor Graph.</strong> The system maintains <code>G = (V_G, E_G)</code> as a store / query substrate, not as the main reasoner. Graph nodes include <code>EvidenceAnchor</code>, <code>SupportRecord</code>, <code>GapRecord</code>, <code>QueryTrace</code>, and necessary entity/object/time nodes. Graph edges include <code>temporal_before</code>, <code>same_entity</code>, <code>same_object_candidate</code>, <code>near_time</code>, <code>same_location</code>, <code>possible_interaction</code>, <code>verified_transition</code>, <code>missing_transition</code>, <code>contradiction</code>, and <code>insufficient_fidelity</code>.</p>
+        <p class="idea-body"><strong>Verified edge vs hypothesis edge.</strong><code>verified_transition</code>, verifier-approved <code>same_object</code>, and support-backed relations can act as evidence constraints. <code>same_object_candidate</code>, <code>possible_interaction</code>, and diffusion-proposed edges are only for retrieval / proposal and cannot license factual claims. The graph helps the 8B agent retrieve an evidence neighborhood; graph traversal alone is not allowed to answer the question.</p>
+        <p class="idea-body"><strong>Write path.</strong><code>write(video_chunk)</code> first uses a VLM/SigLIP/ASR/OCR extractor to produce candidate anchors <code>E_t</code>. Each anchor includes time span, entity/object ids, event type, state/relation, text/visual embeddings, provenance, uncertainty, candidate roles, and cost-by-fidelity. The 8B agent reads <code>p_E/p_I</code> utility, budget state, current memory <code>M_t</code>, and graph neighborhood <code>G_t</code>, first executes <code>BUDGET_SELECT</code> to obtain an under-budget action set, then chooses <code>WRITE_ANCHOR</code>, <code>SET_FIDELITY</code>, <code>ADD_EDGE</code>, <code>MERGE</code>, <code>DEMOTE</code>, <code>EVICT</code>, or <code>MARK_UNCERTAIN</code>, finally updating <code>L0</code> recent cache, <code>L1</code> anchor store, <code>L2</code> role index, and graph <code>G</code>.</p>
+        <p class="idea-body"><strong>Budgeted controller action.</strong> The budget objective is not an external oracle optimizer. It is a constrained action policy for the 8B controller: <code>BUDGET_SELECT(E_t, M_t, G_t, R)</code> outputs a set of typed memory actions. Its training/execution objective can be written as <code>M_{t+1} = argmax Σ[s_E(e) + s_I(e,f,r) - λ Cost(f) - ρ Redundancy(e,M_t)]</code> subject to <code>Cost(M_{t+1}) / Cost(V_{1:t}) <= R</code>. The formula defines the controller's action preference and budget legality: <code>s_E/s_I</code> rank actions, <code>Cost</code> provides a legality mask, and <code>Redundancy</code> penalizes repeated writes. This policy is learned through on-policy distillation: the 8B agent first proposes actions such as <code>BUDGET_SELECT / WRITE_ANCHOR / SET_FIDELITY / EVICT / ADD_GAP_RECORD</code> on real compressed memory states, and a 70B/120B teacher reranks, corrects, or rejects those actions on the same states, producing action-level supervision. Implementation can use top-k candidate actions plus constrained decoding, a knapsack-style action mask, or teacher-corrected preference learning followed by direct legal action-sequence generation from the 8B agent.</p>
+        <p class="idea-body"><strong>Query path.</strong><code>query(question)</code> first has the 8B agent parse required evidence roles <code>R(q)</code>, such as <code>identity</code>, <code>object_state</code>, <code>location</code>, <code>interaction/handoff</code>, <code>temporal_order</code>, and <code>OCR/text</code>. The system then uses the <code>L2</code> role index and graph neighborhoods to retrieve sparse anchors, packages the question, anchors, fidelity metadata, uncertainty, and gap records for diffusion; diffusion samples <code>K</code> latent evidence chains; grounding snaps waypoints back to <code>L1/L0/G</code>; 8B verifier mode checks support; the answer gate outputs precise / conservative / abstain.</p>
+        <p class="idea-body"><strong>Post-query update actions.</strong><code>update_after_query(verified)</code> is also not free-form memory writing. The 8B agent selects constrained update actions: if the verifier outputs <code>supported</code>, it may only execute <code>ADD_SUPPORT_RECORD(claim, supporting_anchors, support_label)</code>; if the verifier outputs <code>missing</code> or <code>insufficient_fidelity</code>, it executes <code>ADD_GAP_RECORD(role, missing_span, required_fidelity)</code> and may append <code>PROMOTE</code> or <code>SET_FIDELITY</code> to increase future retention pressure; if the verifier outputs <code>contradicted</code>, it executes <code>ADD_EDGE(type=contradiction)</code>; diffusion proposals and agent search traces may only execute <code>ADD_QUERY_TRACE</code>. Any <code>unsupported</code> or <code>hypothesis</code> transition is masked from <code>WRITE_ANCHOR</code> or factual <code>ADD_EDGE</code>.</p>
+        <ul class="key-points">
+          <li><strong>Write:</strong><code>video_chunk -> candidate anchors -> 8B typed actions -> L0/L1/L2/G update</code>.</li>
+          <li><strong>Query:</strong><code>question -> evidence roles -> role/graph neighborhood -> diffusion -> grounding -> verifier -> answer gate</code>.</li>
+          <li><strong>Update:</strong><code>SupportRecord / GapRecord / QueryTrace</code> update memory metadata without creating unverified facts.</li>
+          <li><strong>Graph role:</strong> store/query substrate, not a replacement for diffusion or verification.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-007" data-status="active">
+      <h3 class="idea-title">Verifier: 8B Evidence-Bounded Support Classifier</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>The verifier is the 8B agent's evidence-bounded mode.</strong> In verifier mode, the same 8B agent is not an open-ended QA model and is not asked to answer what happened. It answers a restricted question: given a structured claim / transition and grounded anchors, does the retained memory support this claim? The 8B model is therefore used for evidence sufficiency / NLI-style judgment, not for generating new evidence chains.</p>
+        <p class="idea-body"><strong>Input schema.</strong> The verifier input contains <code>claim_or_transition</code>, <code>grounded_anchors</code>, and <code>support_requirement</code>. For example, the claim may be <code>handoff(person_A, red_bag, person_B)</code>; grounded anchors may include <code>a12: person_A held red_bag at t1, fidelity=F3_visual_token</code>, <code>a18: red_bag near table at t2, fidelity=F2_schema</code>, and <code>a24: person_B near window with red object at t3, identity_uncertain</code>; support requirements include <code>object_identity</code>, <code>temporal_order</code>, and <code>visual_transition</code>.</p>
+        <p class="idea-body"><strong>Output schema.</strong> The 8B verifier must output fixed labels rather than free-form reasoning: <code>supported</code>, <code>unsupported</code>, <code>missing</code>, <code>not_found_yet</code>, <code>contradicted</code>, <code>insufficient_fidelity</code>, and <code>ambiguous_identity</code>. It also outputs <code>support_score</code>, <code>supported_parts</code>, <code>unsupported_parts</code>, <code>missing_evidence</code>, <code>failure_code</code>, and <code>allowed_answer</code>, such as <code>precise</code>, <code>conservative</code>, or <code>abstain</code>.</p>
+        <p class="idea-body"><strong>Missing-vs-not-found boundary.</strong><code>not_found_yet</code> means the current retrieval / graph neighborhood has not found evidence yet, but memory may still contain it, so the system should continue searching or expand the neighborhood. <code>missing</code> means that under the current memory budget and visible index, the required evidence did not survive and the answer should be degraded or abstained. This distinction prevents the system from treating "not retrieved yet" as "not stored" and also prevents endless searching once the budget is exhausted.</p>
+        <p class="idea-body"><strong>Diagnostic failure codes.</strong> The verifier should also emit diagnostic failure codes such as <code>NO_EVIDENCE_POINTER</code>, <code>MODALITY_MISSING</code>, <code>FIDELITY_TOO_LOW</code>, <code>ENTITY_AMBIGUOUS</code>, <code>TEMPORAL_ANCHOR_MISSING</code>, <code>TRANSITION_MISSING</code>, <code>CONTRADICTION_FOUND</code>, and <code>BUDGET_EXHAUSTED</code>. Abstention is therefore not a generic "I don't know"; it reports which evidence role is missing, low-fidelity, or contradicted.</p>
+        <p class="idea-body"><strong>Hard prompt constraint.</strong> The verifier prompt must enforce: only use listed anchors; do not infer missing transitions; relevant is not supported; if transition evidence is absent, output <code>missing</code> or <code>insufficient_fidelity</code>. The key principle is that relevant anchors are not sufficient evidence unless the required transition, identity, and temporal constraints are supported by retained fidelity.</p>
+        <p class="idea-body"><strong>Chain-level verification.</strong> After diffusion generates a chain, the verifier checks nodes, edges, and identity links rather than only the final answer: node support checks whether anchors support states; transition support checks whether handoff / pickup / putdown edges have evidence; identity support checks whether <code>red_bag</code> and a later <code>red object</code> are the same object; chain support is summarized as supported, partially_supported, answer_insufficient, or contradicted.</p>
+        <p class="idea-body"><strong>Answer gate.</strong> The 8B verifier output directly constrains the backend answer. The LLM verbalizer only receives <code>verified_facts</code>, <code>unsupported_transitions</code>, <code>missing_evidence</code>, and <code>allowed_answer</code>, and cannot add unverified facts. If the handoff transition is <code>missing</code> or <code>insufficient_fidelity</code>, the final answer must be conservative or abstain.</p>
+        <ul class="key-points">
+          <li><strong>8B role:</strong> verifier mode of the agent core / evidence-bounded support classifier.</li>
+          <li><strong>Not:</strong> open-ended QA, diffusion decoder, or free evidence-chain generator.</li>
+          <li><strong>Anti-hallucination rule:</strong> relevant anchors are not sufficient evidence unless required constraints are supported.</li>
+          <li><strong>Output to backend:</strong><code>verified_facts + unsupported_transitions + missing_evidence + answer_policy</code>.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-008" data-status="active">
+      <h3 class="idea-title">Answer Gate: Final Backend Policy</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>The answer gate is the final policy layer after verification.</strong> It does not re-reason over the video and does not let the 8B agent fill evidence gaps freely. It only turns verifier-mode structured output into a precise answer, conservative answer, or abstention. The 8B agent's answer mode is therefore constrained as a verbalizer: it writes the verified support state in natural language instead of generating new evidence.</p>
+        <p class="idea-body"><strong>Inputs visible to 8B answer mode.</strong> The final answer mode only receives <code>verified_facts</code>, <code>unsupported_transitions</code>, <code>missing_evidence</code>, <code>contradictions</code>, <code>insufficient_fidelity</code>, and <code>answer_policy</code>. It cannot see unverified diffusion latent chains and cannot turn plausible transitions into confirmed facts.</p>
+        <p class="idea-body"><strong>Output policy.</strong><code>precise_answer</code> is allowed only when all required evidence roles are supported and no key contradiction is present. <code>conservative_answer</code> is used when some facts are supported but a key transition, identity link, or temporal link is missing or has insufficient fidelity. <code>abstain</code> is used when evidence is missing, contradictory, identity is too ambiguous, or unsupported risk exceeds the threshold.</p>
+        <p class="idea-body"><strong>Formal rule.</strong> Write <code>π_answer = Gate(S_chain, U_chain, C_chain, F_chain)</code>, where <code>S_chain</code> is verifier support, <code>U_chain</code> is unsupported-transition risk, <code>C_chain</code> is a contradiction flag, and <code>F_chain</code> is an insufficient-fidelity flag. If <code>S_chain >= τ_s</code>, <code>U_chain <= τ_u</code>, and there is no contradiction, output precise; if supported facts exist but missing / insufficient fidelity remains, output conservative; if contradiction or unsupported risk is high, abstain.</p>
+        <p class="idea-body"><strong>Red-bag example.</strong> If the verifier supports <code>A held red_bag</code>, <code>red_bag near table</code>, and <code>B near window with red object</code>, but labels <code>A handed red_bag to B</code> as <code>missing</code> or <code>insufficient_fidelity</code>, the answer gate must output a conservative answer: it can state the supported observations but cannot confirm the handoff.</p>
+        <ul class="key-points">
+          <li><strong>8B answer-mode input:</strong><code>verified_facts + unsupported_transitions + missing_evidence + answer_policy</code>.</li>
+          <li><strong>8B answer mode forbidden:</strong> filling missing transitions freely or stating plausible chains as facts.</li>
+          <li><strong>Three outputs:</strong><code>precise_answer</code>, <code>conservative_answer</code>, and <code>abstain</code>.</li>
+          <li><strong>Purpose:</strong> convert diffusion proposals and verifier labels into a risk-controlled final answer.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-009" data-status="active">
+      <h3 class="idea-title">Evaluation Protocol</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Setting.</strong> Construct streaming video QA tasks where original videos are unavailable at answer time or only a tiny cached subset can be revisited. The benchmark should provide full-video oracle chains for labeling, then expose only compressed memory fragments to the model.</p>
+        <p class="idea-body"><strong>Metrics.</strong> Report Evidence-Chain Recovery@K, Grounded Chain Precision, Transition Support Recall, Unsupported Transition Rate, Answer Accuracy with Support, Conservative Answer Calibration, Abstention Quality, conflict detection, storage cost, latency, and risk-coverage curves across compression rates.</p>
+        <p class="idea-body"><strong>Main experimental hypothesis.</strong> The most important result is not full-memory QA accuracy. It is answerability gain in the tight-budget / lossy-fragment regime: when memory keeps only sparse anchors and many transitions are missing, the method should achieve higher grounded evidence-chain recovery, lower unsupported-claim rate, and better conservative / abstain calibration under the same compression rate. In other words, the core contribution should be shown as: under fragmented memory and tight storage budgets, the agent answers more questions only when current memory supports them, and refuses more appropriately when it does not.</p>
+        <p class="idea-body"><strong>Baselines.</strong> Compare ANN retrieval, caption-RAG, graph traversal over retained fragments, beam search over fragment graphs, LLM tool planners, RL or value-of-information navigators, autoregressive trajectory planners, and oracle reconstruction. Also compare <code>8B agent + ranking-trained p_E × p_I tools + diffusion + verifier</code>, <code>8B agent + ranking-trained p_E × p_I tools + LLM planner + verifier</code>, <code>8B agent without diffusion</code>, <code>BCE/CE score-regression p_E × p_I</code>, <code>learned p_E only + fixed fidelity</code>, random/heuristic anchors, oracle <code>p_E</code>, oracle <code>p_E + p_I</code>, and a full-video upper bound. The important comparison is whether the 8B agent, when allowed to call diffusion, recovers missing-transition hypotheses that search or planner methods cannot create from absent edges under the same learned compressed memory.</p>
+        <p class="idea-body"><strong>Diffusion necessity test.</strong> To answer reviewer concerns about beam search, LLM planners, graph search, retrieval reranking, or MCTS, the experiment must fix the same memory buffer, retained anchors, verifier, and answer gate, and replace only the proposal mechanism. If diffusion is truly useful, it should produce higher proposal recall and chain diversity in the sparse-anchors + missing-transitions middle-budget regime, and after verification it should reduce unsupported transfer, handoff, causal, and object-continuity claims. If memory is wide, ordinary retrieval may already suffice; if memory is extremely narrow, no method has enough evidence. The convincing regime is the middle budget.</p>
+        <p class="idea-body"><strong>Decisive subset.</strong> In addition to average results, report a scattered multi-role / multimodal-evidence subset: questions that require connecting evidence across time, objects, and modalities, such as person identity, object continuity, handoff transition, OCR/text, and temporal order distributed across different anchors. This subset exposes the limits of greedy retrieval, beam search, and LLM planners, and is where diffusion trajectory proposal should win if it is necessary.</p>
+        <p class="idea-body"><strong>Attribution discipline.</strong> To avoid the "module stacking" critique, split ablations into three groups: retention/write experiments fix the query policy and compare FIFO, reservoir, saliency, heuristic anchors, learned <code>p_E/p_I</code>, and oracle retention; proposal/query experiments fix the same memory store and replace only diffusion, beam search, LLM planner, graph search, reranker, and MCTS; generation/gating experiments fix the evidence chain and compare direct answering, LLM+verifier, answer-level abstention, claim-level verifier gate, and oracle claim binding.</p>
+        <ul class="key-points">
+          <li><strong>Hero result:</strong> higher grounded chain recovery and fewer unsupported claims under the same lossy fragment-memory budget.</li>
+          <li><strong>Compression result:</strong> plot answerability and unsupported-claim curves across compression rates such as 1% to 20%, emphasizing the middle-budget regime.</li>
+          <li><strong>Risk result:</strong> fewer unsupported transfer/causal claims when the middle transition is missing.</li>
+          <li><strong>Ablation:</strong> fix the buffer, anchors, verifier, and answer gate, then replace diffusion with beam search / LLM planner / graph search / reranker / MCTS to show that the gain comes from the trajectory proposal prior.</li>
+          <li><strong>Attribution:</strong> separately show the contribution of memory retention, trajectory proposal, and answer gating instead of reporting only end-to-end averages.</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-010" data-status="active">
+      <h3 class="idea-title">Contribution Statement</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">We introduce fragmented-memory QA for 8B streaming video agents: the original video is unavailable, and answer evidence survives only as compressed, incomplete memory fragments. The core is an 8B Evidence-Memory Agent. It manages a rate-constrained evidence substrate through typed memory actions, uses <code>p_E</code>/<code>p_I</code> tools for anchor-survival and fidelity-cost recommendations, calls a diffusion evidence-trajectory proposal tool at query time to sample plausible chains connecting anchors, checks support, missing transitions, and insufficient fidelity with evidence-bounded verifier mode, and finally verbalizes only the verified state as a precise, conservative, or abstained answer. This enables uncertainty-aware QA when exact evidence paths are partially lost.</p>
+        <p class="idea-body"><strong>Tightened main contribution.</strong> This is not a large all-purpose memory architecture. The main contribution is a testable capability boundary: under <em>lossy memory + fragmented evidence + tight budget</em>, how an 8B agent turns limited memory into more reliable answerability through constrained memory actions, learned anchor/fidelity utilities, diffusion trajectory proposals, and verifier-gated answering. Each module has a narrow role: the buffer/graph provides the searchable evidence substrate; <code>p_E/p_I</code> provide budgeted anchor and fidelity preferences; diffusion proposes multiple missing-transition hypotheses between disconnected anchors; the verifier and answer gate prevent those hypotheses from becoming unsupported claims.</p>
+        <ul class="idea-tags">
+          <li>fragmented memory</li>
+          <li>evidence chain recovery</li>
+          <li>diffusion trajectory prior</li>
+          <li>streaming video QA</li>
+          <li>grounded verification</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> The stronger claim is that search assumes the path exists, while this setting requires reconstructing candidate paths through missing transitions before verification. The paper should succeed or fail on curves under the same tight compression budget: diffusion proposal + verifier must recover more verifiable chains than planner/search and produce fewer unsupported claims.</p>
+      </details>
+    </article>
+  </section>
+
+  <section class="changelog">
+    <h2>Discussion log</h2>
+    <ol>
+          <li><time datetime="2026-06-25">2026-06-25</time> — Added the Memory Manager loop: defined write / query / update paths and introduced the Evidence Anchor Graph as a store/query substrate; graph nodes include anchors, support records, gap records, and query traces, while edges distinguish verified relations from hypothesis/proposal relations, so unsupported transitions can only become GapRecords or QueryTraces, never factual anchors.</li>
+          <li><time datetime="2026-06-25">2026-06-25</time> — Reused key insights from the legacy version: support collapse under relevance preservation, missing-vs-not-found separation, diagnostic failure codes, counterfactual compression supervision, the scattered multi-role subset, and separated retention/proposal/gating attribution experiments.</li>
+          <li><time datetime="2026-06-25">2026-06-25</time> — Clarified that the budgeted memory-control policy is learned through on-policy distillation: the 8B controller rolls out typed actions on compressed memory states, and a Llama3.3-70B / GPT-oss-120B teacher reranks, corrects, or rejects actions to distill <code>BUDGET_SELECT</code> and post-query update policies.</li>
+          <li><time datetime="2026-06-25">2026-06-25</time> — Tightened the main contribution and evaluation hypothesis: the paper should not read as module stacking, but as improved answerability under lossy fragment memory and tight compression budgets; diffusion must be tested against beam search, LLM planners, graph search, rerankers, and MCTS while keeping the buffer/verifier/answer gate fixed.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Shifted the main narrative to an <strong>8B Evidence-Memory Agent</strong>: the 8B model is the core controller for typed memory actions, tool calling, verifier mode, and answer policy; <code>p_E</code>/<code>p_I</code> are learned utility tools, diffusion is an evidence-chain proposal tool, and all factual writes and answers remain constrained by evidence checks.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Added the answer gate / final backend policy: the LLM only receives <code>verified_facts</code>, <code>unsupported_transitions</code>, <code>missing_evidence</code>, and <code>answer_policy</code>; it cannot freely add evidence, and final outputs are restricted to precise answer, conservative answer, or abstain.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Adopted an 8B model as the main verifier, but constrained it as an evidence-bounded support classifier: it receives structured claims / transitions, grounded anchors, and fidelity metadata, and outputs supported / unsupported / missing / contradicted / insufficient_fidelity / ambiguous_identity plus allowed answer policy; it is not used for open-ended QA or evidence-chain generation.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Changed <code>p_E</code>/<code>p_I</code> teacher supervision from absolute score regression to ranking / preference learning: the 8B teacher and oracle chains provide pairwise anchor preferences, minimum-sufficient-fidelity preferences, and chain-level support preferences, while the compact writer learns utility logits instead of unstable scores.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Specified the compact implementation for <code>p_E</code>/<code>p_I</code>: use a BERT-style encoder such as MiniLM, DistilBERT, BERT-base, or DeBERTa-v3-small over structured anchor descriptions plus role/budget tokens; these heads act as learned utility tools for the 8B agent's typed memory actions by providing anchor/fidelity recommendations.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Added the diffusion training plan: supervise latent chain <code>Z_0</code> with full-video oracle evidence chains while conditioning only on compressed memory <code>M_R</code>; use frozen VLM/embedding encoders, a small DiT-style latent denoiser, a structured chain decoder, and grounding/missing losses.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Merged the old multi-level buffer design, but narrowed it into a <em>sparse multi-fidelity evidence substrate</em>: L0 recent visual cache, L1 structured evidence anchors, and L2 evidence role index; the buffer handles evidence survival, diffusion connects disconnected anchors, and the verifier handles answerability control.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Clarified the relation between fragments and evidence anchors: fragments remain the substrate of operational memory, but the main term becomes evidence anchor; only fragments with provenance, claim scope, and verifier-checkable fields can act as evidence constraints for future answerability.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Strengthened the problem framing: defined the setting as evidence availability for streaming agents, or <em>answerability under lossy operational memory</em>, and clarified that the publishable claim depends on outperforming LLM planners in the sparse anchors + missing transitions middle-budget regime while reducing unsupported claims.</li>
+      <li><time datetime="2026-06-25">2026-06-25</time> — Added the recommended implementation path: pretrained LLM/VLM encoders define the semantic space for questions and fragments, while a small conditional latent DDPM head proposes multiple latent evidence trajectories; generated chains must still pass grounding and verification instead of directly producing factual narration.</li>
+      <li><time datetime="2026-06-23">2026-06-23</time> — Rebuilt the formulation from scratch around <strong>Fragmented Evidence Chain Recovery</strong>. Diffusion is now defined as a latent evidence trajectory prior for reconstructing plausible transitions between compressed memory fragments, while grounding and verification decide support.</li>
+    </ol>
+  </section>
+</body>
+</html>
+
+

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Continuous Memory Model and Retrieval — Problem Formulation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="doc-header">
+    <h1>Continuous Memory Model and Retrieval</h1>
+    <p class="meta">Last updated: <time datetime="2026-06-15">2026-06-15</time></p>
+    <nav class="lang-nav">
+      <a href="problem-formulation-zh.html">Chinese</a> |
+      <a href="../../.cursor/skills/nec-brainstorming/ideas/index.html">Brainstorming hub</a>
+    </nav>
+  </header>
+
+  <section class="project" data-project="continuous-memory-model-and-retrieval" id="problem-formulation">
+    <h2>Research track</h2>
+    <p class="project-summary">Part 2 of the summer internship project <em>Streaming Video LLM with Infinite Memory</em>: how to store, organize, and retrieve from memory over a continuous video stream without keeping all past frames in the LLM context window.</p>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-001" data-status="active">
+      <h3 class="idea-title">Problem formulation</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+
+        <p class="idea-body"><strong>Context.</strong> The parent project splits into (1) efficient stream processing and (2) efficient memory storage and retrieval. This track owns (2). Prior work proposes memory and streaming architecture adaptations, but <strong>none can hold effectively infinite video context</strong> while supporting rich natural-language queries at arbitrary future times.</p>
+
+        <p class="idea-body"><strong>Problem statement.</strong> Given a continuous video stream <code>V = {f₁, f₂, …}</code> arriving in real time, design a memory module <code>M</code> that:</p>
+        <ol class="problem-list">
+          <li><strong>Ingests incrementally</strong> — writes new observations as frames or clips arrive, without requiring the full video upfront.</li>
+          <li><strong>Stores selectively</strong> — keeps salient information under bounded per-frame compute and storage cost.</li>
+          <li><strong>Retrieves on demand</strong> — answers natural-language queries <code>Q</code> by finding relevant temporal evidence, not by re-encoding the entire history into context.</li>
+          <li><strong>Scales in horizon</strong> — supports hours-to-days of egocentric or streaming video with retrieval cost that does not grow linearly with naive full-context attention.</li>
+          <li><strong>Grounds answers in evidence</strong> — returns intervals, events, or summaries traceable to stored frames, clips, or structured memory entries.</li>
+        </ol>
+
+        <div class="example-query">
+          <cite>Example query</cite>
+          <p>“What did I do between taking my phone out and putting it back in my pocket?”</p>
+          <p class="expected"><strong>Illustrative answer:</strong> You opened Instagram and scrolled through memes, then played Candy Crush and took some selfies.</p>
+        </div>
+
+        <p class="idea-body"><strong>Why this is hard.</strong> The query is not a single nearest-neighbor lookup. It requires <strong>multi-hop temporal reasoning</strong>:</p>
+        <ol class="problem-list">
+          <li>Find the anchor event: phone taken out.</li>
+          <li>Find the closing anchor: phone put back in pocket.</li>
+          <li>Traverse and summarize the segment between those anchors in a streaming-compatible way.</li>
+        </ol>
+        <p class="idea-body">Standard vision–language embeddings (e.g. CLIP-style) alone are insufficient. The system likely needs an <strong>agentic loop</strong>: query → plan → search memory → inspect evidence → refine → answer. Storing entire days of video and retrieving efficiently at query time remains an open systems + modeling problem.</p>
+
+        <p class="idea-body"><strong>Starting direction.</strong> A concrete first baseline to explore:</p>
+        <ol class="problem-list">
+          <li>Extract frame or clip embeddings from the incoming stream.</li>
+          <li>Store them in an external index (e.g. FAISS) with temporal metadata.</li>
+          <li>Let an LLM agent navigate the index at query time — search, browse summaries, and inspect frames (DVD-style tool use is a relevant pattern).</li>
+        </ol>
+
+        <p class="idea-body"><strong>Evaluation framing.</strong> Adapt existing long-horizon video benchmarks (e.g. Ego4D) and streaming interaction benchmarks (e.g. RIVER retrospective-memory tasks). Success means answering interval and event queries over long streams with evidence that can be inspected, not only generating plausible text.</p>
+
+        <ul class="key-points">
+          <li><strong>Core task:</strong> build a memory module for video streams that never really end.</li>
+          <li><strong>Main challenge:</strong> answer interval and event queries through evidence, not one-shot nearest-neighbor retrieval.</li>
+          <li><strong>First baseline:</strong> combine clip embeddings, temporal metadata, vector search, and an LLM agent that inspects evidence.</li>
+        </ul>
+
+        <ul class="idea-tags">
+          <li>infinite memory</li>
+          <li>streaming video</li>
+          <li>retrieval</li>
+          <li>multi-hop reasoning</li>
+          <li>agentic search</li>
+        </ul>
+
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/pdf/2203.08913" target="_blank" rel="noopener">Memorizing Transformers</a> — <span class="relevance">Explicit external key–value memory with kNN retrieval; baseline for FAISS-style indexing over embeddings.</span></li>
+            <li><a href="https://proceedings.neurips.cc/paper_files/paper/2025/file/8190b210e9808e54ee16263b673a847d-Paper-Conference.pdf" target="_blank" rel="noopener">Deep Video Discovery (DVD)</a> — <span class="relevance">Agentic search over a multi-granularity video database; strong pattern for query-time memory navigation.</span></li>
+            <li><a href="https://github.com/OpenGVLab/RIVER" target="_blank" rel="noopener">RIVER</a> — <span class="relevance">Streaming benchmark separating retrospective memory, live perception, and anticipation.</span></li>
+            <li><a href="https://microsoft.github.io/LatentSpatialMemory/" target="_blank" rel="noopener">Mirage</a> — <span class="relevance">Latent spatial memory inside a video world model; alternative to caption + vector search only.</span></li>
+            <li><a href="https://github.com/Victorwz/LongMem" target="_blank" rel="noopener">LongMem</a> — <span class="relevance">Long-context memory architecture for LLMs; NLP-side reference for external memory design.</span></li>
+          </ul>
+        </details>
+
+        <p class="idea-notes"><strong>Notes:</strong> Open questions — what granularity to index (frame vs. clip vs. event), when to consolidate or forget, how to update memory during live streaming, and how to combine explicit retrieval with latent memory fields. Companion track: atomic skill decomposition for agent tool use.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-002" data-status="active">
+      <h3 class="idea-title">Key notes</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The central research note is that “infinite memory” should not be framed as simply expanding the context window. It is a memory-management problem: what to write, how to compress or consolidate it, how to retrieve it later, and how to make the answer auditable through temporal evidence.</p>
+        <p class="idea-body"><strong>Near-term milestone.</strong> Start with an explicit, evidence-grounded memory baseline before exploring latent or generative memory:</p>
+        <ol class="problem-list">
+          <li>Stream observations into frame, clip, or event embeddings.</li>
+          <li>Attach temporal metadata and lightweight summaries to each memory entry.</li>
+          <li>Store entries in a vector index plus a timeline-aware metadata store.</li>
+          <li>Use an LLM agent to search, inspect, and refine retrieval until it can answer with cited intervals or events.</li>
+        </ol>
+        <p class="idea-body"><strong>Research emphasis.</strong> The important contribution is not only retrieval accuracy, but memory policy: deciding which observations become durable memories, when memories should be merged, and how retrieval can recover multi-hop temporal structure across long streams.</p>
+        <ul class="key-points">
+          <li><strong>Do not frame infinite memory as larger context:</strong> frame it as write, retain, compress, retrieve, and verify.</li>
+          <li><strong>Measure the explicit baseline first:</strong> only then compare latent or generative memory against it.</li>
+          <li><strong>Policy matters:</strong> the system must learn what deserves to become durable memory.</li>
+        </ul>
+        <ul class="idea-tags">
+          <li>key note</li>
+          <li>memory management</li>
+          <li>evidence grounding</li>
+          <li>baseline design</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> Treat latent or generative memory as a later comparison once the explicit baseline can be measured on interval queries, anchor-event retrieval, and evidence traceability.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-003" data-status="active">
+      <h3 class="idea-title">Agentic interactive memory architecture</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">We are working on infinitely long stream videos, so the system must operate while video is arriving rather than after a fixed clip is complete. The intended direction is to leverage agents with tool-calling, policy improvement, and training so the system can decide when to interact, what to retrieve, and how to preserve memory.</p>
+        <p class="idea-body"><strong>Problem axes.</strong></p>
+        <ul class="idea-tags">
+          <li>stream video</li>
+          <li>agents</li>
+          <li>interactive</li>
+          <li>memory</li>
+        </ul>
+        <p class="idea-body"><strong>Sub-goals.</strong></p>
+        <ol class="problem-list">
+          <li>Design interactive agents with front-end agents that can interact with users in real time, while back-end agents maintain and update memory.</li>
+          <li>Explore diffusion-based navigable memory: represent memory as a distribution conditioned on queries, instead of only as discrete text or vector entries.</li>
+          <li>Train agents to manage memory query and retrieval with high accuracy, including when to call tools, inspect evidence, and refine searches.</li>
+          <li>Compare short-term explicit memory inside the context window, often text-based, with long-term parameterized memory represented functionally inside a neural network or distribution.</li>
+        </ol>
+        <p class="idea-body"><strong>Architecture note.</strong> The front-end agent should track real-time user events and decide when to ask, notify, or request clarification. The back-end agent should preserve memory, consolidate it, expose retrieval tools, and learn policies for querying or updating memory.</p>
+        <ul class="key-points">
+          <li><strong>Front-end agent:</strong> stays close to the user, recent stream, and live interaction.</li>
+          <li><strong>Back-end agent:</strong> maintains memory, tools, consolidation, and retrieval policies.</li>
+          <li><strong>Training target:</strong> learn when to store, query, inspect evidence, and stay quiet.</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://thinkingmachines.ai/blog/interaction-models/" target="_blank" rel="noopener">Thinking Machines Lab: Interaction Models</a> — <span class="relevance">A real-time multimodal interaction architecture with time-aligned micro-turns, a front interaction model for presence, and an asynchronous background model for tool use and longer-horizon reasoning.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> Interactive agents are needed to track real-time user events and decide when memory should be preserved, queried, summarized, or compressed.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-004" data-status="active">
+      <h3 class="idea-title">Related-work baselines: RIVER, ReMEmbR, StreamBridge</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>RIVER.</strong> RIVER is a real-time Video LLM interaction benchmark from OpenGVLab. Instead of evaluating offline video QA after the full video is available, it tests whether a model can process a video stream as it unfolds, remember past events, perceive the current moment, and proactively respond when future clues appear. Its retrospective memory, live perception, and proactive response tasks make it a strong evaluation reference for this project.</p>
+        <p class="idea-body"><strong>ReMEmbR.</strong> NVIDIA ReMEmbR is a long-horizon embodied robot memory system. It uses a VLM to caption video clips, stores captions, embeddings, timestamps, robot poses, and visual evidence in a vector database, then lets an LLM agent retrieve and reason over spatial, temporal, and navigation questions. It is a strong caption-level RAG memory baseline.</p>
+        <p class="idea-body"><strong>StreamBridge.</strong> Apple StreamBridge aims to convert offline Video-LLMs into proactive streaming assistants. It uses a memory buffer, round-decayed compression, and an activation model to support long video streams, multi-turn interaction, and proactive response timing. It is directly relevant to streaming Video-LLMs, but its memory is closer to context compression than persistent, queryable infinite external memory.</p>
+        <p class="idea-body"><strong>Main limitation.</strong> Most prior work still uses explicit memory representations: text queries, captions, summaries, vectorized captions, or written memory bodies. This makes the memory easy to inspect, but it also throws away visual detail, timing, and weak signals. In a streaming-video setting, that compression can cause the system to forget exactly the small events it may need later.</p>
+        <p class="idea-body"><strong>Additional context from old files.</strong> The original brief also points to Flash-VStream as a streaming video processing reference, and to LongMem / Memorizing Transformers as long-context or external-memory references. The paper notes add DVD-style agentic video search, Mirage-style latent spatial memory, and diffusion-style associative memory as comparison families.</p>
+        <ul class="key-points">
+          <li><strong>RIVER:</strong> best fit as a real-time evaluation reference.</li>
+          <li><strong>ReMEmbR:</strong> strong caption-level embodied memory baseline.</li>
+          <li><strong>StreamBridge:</strong> strong streaming-assistant baseline, but closer to context compression.</li>
+          <li><strong>Gap:</strong> text/caption memories lose dense visual and temporal detail.</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://github.com/OpenGVLab/RIVER" target="_blank" rel="noopener">RIVER</a> — <span class="relevance">Benchmark for retrospective memory, live perception, and proactive response in real-time video interaction.</span></li>
+            <li><a href="https://nvidia-ai-iot.github.io/remembr/" target="_blank" rel="noopener">NVIDIA ReMEmbR</a> — <span class="relevance">Embodied long-term memory system combining VLM captions, vector database retrieval, and an LLM agent.</span></li>
+            <li><a href="https://github.com/apple/ml-streambridge" target="_blank" rel="noopener">Apple StreamBridge</a> — <span class="relevance">Framework that turns offline Video-LLMs into proactive streaming assistants with compressed memory and response activation.</span></li>
+            <li><a href="https://github.com/IVGSZ/Flash-VStream/tree/main" target="_blank" rel="noopener">Flash-VStream</a> — <span class="relevance">Streaming video / vision reference from the original brief; relevant to efficient video stream processing.</span></li>
+            <li><a href="https://github.com/Victorwz/LongMem" target="_blank" rel="noopener">LongMem</a> — <span class="relevance">Long-context memory architecture reference from NLP; useful for external-memory design beyond the context window.</span></li>
+            <li><a href="https://arxiv.org/pdf/2203.08913" target="_blank" rel="noopener">Memorizing Transformers</a> — <span class="relevance">External kNN memory baseline that motivates vector-store retrieval over frame, clip, or caption embeddings.</span></li>
+            <li><a href="https://proceedings.neurips.cc/paper_files/paper/2025/file/8190b210e9808e54ee16263b673a847d-Paper-Conference.pdf" target="_blank" rel="noopener">Deep Video Discovery</a> — <span class="relevance">Agentic long-video search with browse, clip search, and frame inspection tools.</span></li>
+            <li><a href="https://microsoft.github.io/LatentSpatialMemory/" target="_blank" rel="noopener">Mirage</a> — <span class="relevance">Latent spatial memory reference for memory representations beyond caption + vector search.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> RIVER can be used as the evaluation reference, ReMEmbR as an embodied long-term memory system baseline, and StreamBridge as a Video-LLM streaming framework baseline. The old files also suggest keeping explicit retrieval and latent / generative memory baselines visible as comparison families.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-005" data-status="active">
+      <h3 class="idea-title">Key contribution: continuous memory fields</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">A core design choice is what the continuous field actually is. The explicit memory buffer is the real long-term memory: it stores the evidence and models the actual distribution of what the stream contained. The continuous field is not that store — it is a learned, bounded-size retrieval prior over the buffer. Given a query it models where the relevant memory likely lives, so the agent can sample from the buffer instead of scanning all of it, then move step by step: find anchors, follow temporal or semantic gradients, inspect evidence, refine the path.</p>
+        <p class="idea-body"><strong>Buffer is the memory; the field is the prior.</strong> The buffer stores evidence in tiers — raw clips for hot, schema and pointers for warm, compact summaries for cold — and it is queried by sampling. The field never stores or reconstructs evidence; it only predicts where to sample. Querying long-term memory therefore means importance-sampling from the buffer under the field's guidance, and the answer is always grounded in concrete evidence pulled from the buffer.</p>
+        <p class="idea-body"><strong>Why a continuous prior at all?</strong> Streaming video is an unbounded intake. We keep storage bounded by tiering and compressing the buffer, and we keep search tractable by learning a fixed-size continuous prior over it rather than scanning a flat vector store. Video memory is uncertain, dense, and continuous — events overlap, object states change gradually, useful evidence lives between obvious clips — so a continuous, query-conditioned prior (flow matching or diffusion) is a natural way to model where to look and to transport a query toward the right region of the buffer.</p>
+        <p class="idea-body"><strong>Tiers and graceful degradation.</strong> All tiers live in the buffer at different fidelity. Hot memory keeps raw clips and dense features for exact grounding; warm memory keeps schema and pointers that are partly re-inspectable; cold memory keeps compact summaries. The field guides which tier and region to sample, not what the answer is. Recent answers stay exact; older answers degrade to gist with a confidence, so the target is graceful forgetting rather than catastrophic hallucination.</p>
+        <figure class="memory-figure">
+          <figcaption>Figure: buffer tiers store the evidence; the field is a prior over where to sample.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Hot</strong><span>recent/important raw clips, exact grounding</span></li>
+            <li><strong>Warm</strong><span>schema + pointers, partly re-inspectable</span></li>
+            <li><strong>Cold</strong><span>compact summaries kept in the buffer</span></li>
+            <li><strong>Field + sampling</strong><span>prior over where to sample; gist + confidence</span></li>
+          </ol>
+        </figure>
+        <ul class="key-points">
+          <li><strong>Buffer = memory:</strong> the explicit tiered buffer stores evidence and models the actual long-term distribution.</li>
+          <li><strong>Field = prior:</strong> a learned, bounded-size retrieval prior over the buffer; it never stores or reconstructs evidence.</li>
+          <li><strong>Query = sampling:</strong> querying long-term memory means importance-sampling from the buffer under the field's guidance.</li>
+          <li><strong>Why continuous:</strong> a fixed-size continuous prior keeps search tractable over an unbounded, tiered buffer.</li>
+          <li><strong>Grounding rule:</strong> answers are always grounded in concrete evidence pulled from the buffer.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: query-guided sampling from the buffer, routed by the field prior.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Stream</strong><span>video, audio, text, time</span></li>
+            <li><strong>Buffer</strong><span>tiered evidence, actual distribution</span></li>
+            <li><strong>Field prior</strong><span>where to sample, conditioned on query</span></li>
+            <li><strong>Structured query</strong><span>anchors, entities, time ranges</span></li>
+            <li><strong>Sample + ground</strong><span>concrete clips pulled from buffer</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>retrieval prior</li>
+          <li>navigation field</li>
+          <li>memory buffer</li>
+          <li>flow matching</li>
+          <li>structured query</li>
+          <li>graceful forgetting</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/pdf/2604.26841" target="_blank" rel="noopener">Language Diffusion Models are Associative Memories</a> — <span class="relevance">Supports the idea that diffusion-style language models can act like associative memory, which is close to query-conditioned memory reconstruction.</span></li>
+            <li><a href="https://openreview.net/forum?id=KpaKtbGgUa" target="_blank" rel="noopener">MemoryField: Exploiting Gravitational Field for Long-term Memory Management</a> — <span class="relevance">Potentially relevant field metaphor for memory management; worth reading carefully before deciding whether it transfers to video memory.</span></li>
+            <li><a href="https://arxiv.org/abs/2606.09828" target="_blank" rel="noopener">Latent Spatial Memory for Video World Models</a> — <span class="relevance">Shows how video models can maintain latent spatial memory, a useful precedent for memory beyond text captions or vector chunks.</span></li>
+            <li><a href="https://rotalabs.ai/blog/field-theoretic-memory-for-ai-agents/" target="_blank" rel="noopener">Field-Theoretic Memory for AI Agents</a> — <span class="relevance">Conceptual reference for treating agent memory as a field rather than a discrete store.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> The field is a learned retrieval prior, not the memory. The buffer is the actual long-term memory and the only source of grounded evidence; the field just makes sampling from it navigable. <em>See 019: the field is justified as an access / management layer, not as a fix for "can't store it all"; "fixed-size prior keeps search tractable" must not be read as "ANN can't scale" — its necessity is empirical (020).</em></p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-006" data-status="active">
+      <h3 class="idea-title">Core contribution and ICLR positioning</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body"><strong>Thesis.</strong> Streaming video memory should not be framed as a larger context window or a growing caption store. It should be framed as <strong>distribution-guided evidence navigation</strong>: keep a grounded evidence buffer as the memory, learn a query-conditioned retrieval distribution over that buffer, and let an interactive two-agent system construct, navigate, and answer from the memory in real time. <strong>The core, ICLR-level claim (upgraded in 021)</strong> sharpens this into a falsifiable statement: under a fixed bit budget with unbounded intake, discrete retrieval is information-theoretically capped once events exceed storable tokens, whereas an amortized continuous memory field degrades gracefully — so the field is necessary, not merely convenient, past a measurable discrete ↔ amortized crossover.</p>
+        <p class="idea-body"><strong>Task formulation.</strong> The ICLR-level problem should be explicit: <em>Streaming Multi-hop Memory QA</em>. A video stream arrives online as <code>S_t = {x_1, ..., x_t}</code>; the model cannot assume the full video is available in advance; a user query <code>q</code> can arrive at any time; the answer must be supported by a cross-time evidence chain <code>E* = (m_a, m_b, m_c, ...)</code> with timestamps or clip pointers. Evaluation should stress horizon growth, bounded memory, latency, and whether the answer is grounded.</p>
+        <p class="idea-body"><strong>Method claim.</strong> The explicit buffer <code>B_t = {m_i}</code> stores real evidence units: clip pointer, timestamp, entities, schema, latent keys, tier, and importance. The learned component is not the memory itself; it is a navigation prior <code>p_theta(m | q, h, B_t)</code>, where <code>h</code> is the current retrieval session: anchors found, visited regions, partial evidence chain, and uncertainty. Multi-hop retrieval becomes repeated sampling / navigation under this distribution, followed by snapping back to real buffer evidence.</p>
+        <p class="idea-body"><strong>System claim.</strong> The front-end agent remains close to the user: live context, interaction, and in-context query decomposition. The back-end agent owns memory construction and multi-hop navigation: ingest evidence, maintain the buffer / graph / field, run stateful retrieval sessions, and return typed, timestamped evidence to the front-end. The front-end should not answer from the field; it answers from retrieved evidence.</p>
+        <p class="idea-body"><strong>What is new.</strong> Compared with caption-RAG or ReMEmbR-style memory, the method does not reduce long video to text captions alone. Compared with MovieChat / Flash-VStream-style memory compression, it is not only context management; it is persistent, queryable, evidence-grounded long-term memory. Compared with M3-Agent-style entity memory, the key addition is a learned continuous navigation distribution over the grounded buffer / graph. Compared with offline long-video QA, the setting is online, unbounded, and interactive.</p>
+        <p class="idea-body"><strong>Minimum viable contribution.</strong> If the continuous prior fails to beat a strong ANN / graph traversal baseline, the fallback paper should still stand on the task and system: a streaming multi-hop memory benchmark, a grounded two-agent memory architecture, and careful evidence-chain / forgetting-curve evaluation. The high-risk, high-reward claim is that distribution-guided navigation scales better as horizon grows under a fixed memory budget.</p>
+        <ul class="key-points">
+          <li><strong>Core thesis:</strong> unbounded video memory is distribution-guided evidence navigation, not larger context or caption storage.</li>
+          <li><strong>New task:</strong> Streaming Multi-hop Memory QA with online intake, bounded memory, and evidence-chain answers.</li>
+          <li><strong>Method:</strong> explicit buffer stores evidence; <code>p_theta(m | q, h, B_t)</code> guides where to sample and navigate.</li>
+          <li><strong>System:</strong> front-end handles interaction and ICL decomposition; back-end handles memory construction and stateful multi-hop navigation.</li>
+          <li><strong>ICLR bar:</strong> show horizon-scaling gains under fixed budget: evidence recall, multi-hop accuracy, forgetting curve, and latency.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: paper-level claim from stream to grounded answer.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Streaming intake</strong><span>online video, audio, metadata</span></li>
+            <li><strong>Evidence buffer</strong><span>grounded memory units and tiers</span></li>
+            <li><strong>Navigation distribution</strong><span><code>p_theta(m | q, h, B_t)</code></span></li>
+            <li><strong>Two-agent loop</strong><span>front-end interaction, back-end navigation</span></li>
+            <li><strong>Evidence-chain answer</strong><span>timestamps, clips, confidence</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>core contribution</li>
+          <li>ICLR positioning</li>
+          <li>streaming multi-hop memory QA</li>
+          <li>distribution-guided navigation</li>
+          <li>two-agent system</li>
+          <li>evidence chain</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://nvidia-ai-iot.github.io/remembr/" target="_blank" rel="noopener">ReMEmbR</a> — <span class="relevance">Strong explicit embodied-memory baseline, but mostly caption/vector memory rather than distribution-guided video evidence navigation.</span></li>
+            <li><a href="https://arxiv.org/abs/2307.16449" target="_blank" rel="noopener">MovieChat</a> — <span class="relevance">Long-video memory compression baseline; useful contrast because it manages context but does not define persistent distribution-guided evidence-chain retrieval.</span></li>
+            <li><a href="https://arxiv.org/abs/2508.09736" target="_blank" rel="noopener">M3-Agent / M3-Bench</a> — <span class="relevance">Closest memory-agent baseline with entity-centric episodic/semantic memory; key contrast is the learned navigation distribution and unbounded streaming protocol.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> For an ICLR-highlight pitch, keep this as the spine: new task, one crisp method claim, one system loop, one scaling story. Do not let optional modules (OPD, query critic) become equal-weight contributions unless they are actually evaluated. <em>The core claim is the discrete ↔ amortized crossover in 021 (field-as-core); 019 supplies the discrete-first discipline and the fallback (task + system + evaluation) that keeps the paper alive if the crossover fails (kill criterion in 021).</em></p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-007" data-status="active">
+      <h3 class="idea-title">Difficulty 1: structure and hierarchy in memory</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">Open question: how should the system model structure and hierarchy in video memory storage and query? A flat memory field is too vague for temporal relations, multi-hop reasoning, and evidence grounding. But a fully hand-crafted hierarchy like episode → event → clip → frame may be too rigid for open-ended streaming video.</p>
+        <p class="idea-body">The current working idea is to use a temporal-semantic graph as a scaffold, while letting useful structure emerge from the stream and from queries. State changes, prediction error, entity continuity, temporal proximity, repeated co-retrieval, and future query usefulness can all create or strengthen nodes and edges. The memory field then gives a coarse navigation signal over this graph; it tells the agent where to look, not what the final answer is.</p>
+        <p class="idea-body">After navigation, the trace should become a cue/reminder: “these anchors, entities, time ranges, and relations are worth checking.” The agent can then retrieve actual evidence into context and optionally update memory: create a new event node, link two clips, strengthen an entity relation, compress a redundant segment, or archive a low-utility trace. This discussion is still open; the main design question is how much structure should be learned versus specified.</p>
+        <p class="idea-body">A reasonable decomposition is: the graph stores interpretable structure, while diffusion / flow matching manages the uncertain dynamics on top of that structure. Nodes can represent frames, clips, events, entities, places, user goals, or summary memories. Edges can represent temporal order, same entity, state transition, causal guess, co-retrieval, or “often useful for the same query.” Flow modules can then operate on different parts: node activation flow, edge update flow, retention-state flow, and hierarchy-proposal flow.</p>
+        <p class="idea-body">The key is not to make every graph operation generative. Some operations should stay deterministic and auditable, such as storing raw evidence pointers. The learned flow is more useful for soft decisions: which nodes should wake up, which edge should be strengthened, which memory should be compressed, and which region of the graph should be explored next.</p>
+        <ul class="key-points">
+          <li><strong>Graph role:</strong> keep memory structure inspectable through nodes, edges, and evidence pointers.</li>
+          <li><strong>Flow role:</strong> manage uncertain activation, navigation, retention, and compression decisions.</li>
+          <li><strong>Open question:</strong> decide which hierarchy should be specified and which should emerge from stream/query use.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: graph as structure, flow as navigation and update dynamics.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Stream evidence</strong><span>frames, clips, audio, metadata</span></li>
+            <li><strong>Memory graph</strong><span>nodes, edges, evidence pointers</span></li>
+            <li><strong>Flow modules</strong><span>activation, edge update, retention</span></li>
+            <li><strong>Cue packet</strong><span>anchors, entities, candidate paths</span></li>
+            <li><strong>Context</strong><span>actual evidence for the agent</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>open difficulty</li>
+          <li>memory hierarchy</li>
+          <li>query navigation</li>
+          <li>temporal graph</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2502.17436" target="_blank" rel="noopener">Towards Hierarchical Rectified Flow</a> — <span class="relevance">Models hierarchy in flow dynamics; useful as inspiration for hierarchical memory distributions rather than as a memory method directly.</span></li>
+            <li><a href="https://arxiv.org/abs/2410.05954" target="_blank" rel="noopener">Pyramidal Flow Matching for Efficient Video Generative Modeling</a> — <span class="relevance">Uses spatial and temporal pyramids for video generation; relevant to coarse-to-fine organization over long visual streams.</span></li>
+            <li><a href="https://arxiv.org/abs/2502.15855" target="_blank" rel="noopener">THFlow: Temporally Hierarchical Flow Matching</a> — <span class="relevance">Shows how different modalities or states can evolve on different schedules, which may transfer to memory activation versus evidence refinement.</span></li>
+            <li><a href="https://arxiv.org/pdf/2604.00236" target="_blank" rel="noopener">Hierarchical Discrete Flow Matching for Graph Generation</a> — <span class="relevance">Coarse-to-fine discrete graph flow; relevant if memory structure is represented as changing nodes, edges, and retention states.</span></li>
+            <li><a href="https://arxiv.org/abs/2405.14831" target="_blank" rel="noopener">HippoRAG: Neurobiologically Inspired Long-Term Memory for LLMs</a> — <span class="relevance">Builds a schemaless knowledge graph and uses Personalized PageRank for single-step multi-hop retrieval; a precedent for graph-structured memory that supports multi-hop reasoning.</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04363" target="_blank" rel="noopener">AriGraph: Knowledge Graph World Models with Episodic Memory</a> — <span class="relevance">An agent that incrementally builds a memory graph fusing semantic and episodic memory; close to the temporal-semantic graph scaffold proposed here.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> Do not claim that hierarchy is solved. A careful framing is: explicit graph structure keeps memory inspectable; diffusion / flow gives a learned policy over activation, navigation, compression, and forgetting; retrieved evidence still verifies every useful path.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-008" data-status="active">
+      <h3 class="idea-title">Difficulty 2: efficient storage and retrieval</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The next open problem is efficiency: how do we keep the system useful in real time without trying to push the whole video stream into one context window? A possible split is to keep a front-end agent close to the user and a back-end memory agent close to the long-term store.</p>
+        <p class="idea-body">The front-end agent handles the live interaction. It keeps a small context window for three things: recent video intake, memory retrieved from the long-term buffer, and the current user goal. Its job is not to remember everything forever, but to understand the current moment and ask the back-end for the right evidence when needed.</p>
+        <p class="idea-body">The back-end agent maintains the long-term memory distribution. As new video comes in, it converts raw intake into manageable evidence units and schemas: clips, event candidates, entity tracks, relations, summaries, and raw evidence pointers. A diffusion or flow-matching module can then update the current memory distribution so it reflects the stream so far: which memories are active, which are likely useful, which should be compressed, and which should stay retrievable but cold.</p>
+        <p class="idea-body">Because video is extremely information-dense, the schema and video clips should be treated as concise query and storage handles, not as the whole memory. A schema may say “person A picked up the phone near the desk,” and a clip pointer may keep the actual visual evidence. The compact schema makes retrieval cheap; the linked clip keeps the answer grounded when visual details, timing, or object state matter.</p>
+        <p class="idea-body"><strong>Flow matching vs diffusion.</strong> Diffusion is more mature and natural as a generator or denoiser. Flow matching feels more natural for this memory setting because it resembles latent transport: moving a query or memory state toward the useful region quickly. So the claim should not be “flow is better,” but: flow matching may be better suited for real-time memory navigation and buffer management, while diffusion may be better for reconstruction, denoising, or sampling missing context.</p>
+        <ul class="key-points">
+          <li><strong>Front-end context:</strong> recent video, retrieved evidence, and current user goal.</li>
+          <li><strong>Storage handle:</strong> schema and clip pointers make dense video queryable without replacing raw evidence.</li>
+          <li><strong>Model choice:</strong> flow matching is a navigator/updater; diffusion is more natural as denoiser/reconstructor.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: real-time memory loop for efficient retrieval.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Front-end agent</strong><span>recent stream + user interaction</span></li>
+            <li><strong>Schema + clips</strong><span>concise handles plus grounded evidence</span></li>
+            <li><strong>Scope distributions</strong><span>events, entities, uncertain ranges</span></li>
+            <li><strong>Flow cue</strong><span>coarse route for evidence navigation</span></li>
+            <li><strong>Context window</strong><span>recent video + retrieved evidence</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>efficient retrieval</li>
+          <li>front-end agent</li>
+          <li>back-end memory</li>
+          <li>importance sampling</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2307.16449" target="_blank" rel="noopener">MovieChat: From Dense Token to Sparse Memory</a> — <span class="relevance">Atkinson–Shiffrin-style short-term to long-term memory consolidation for long video; a precedent for tiered, compressed memory under tight compute and memory budgets.</span></li>
+            <li><a href="https://github.com/IVGSZ/Flash-VStream/tree/main" target="_blank" rel="noopener">Flash-VStream</a> — <span class="relevance">Real-time streaming video understanding with a memory mechanism; reference for the efficiency and latency side of the front-end loop.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> We likely need a real-time memory evaluation signal: not just retrieval accuracy after the fact, but whether the system samples the right memories into context under latency and memory-budget constraints. The field / flow output should be evaluated as a cue quality problem: did it point the agent toward the needed evidence scope?</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-009" data-status="active">
+      <h3 class="idea-title">Multi-hop QA as evidence-chain retrieval</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">Multi-hop QA makes this memory design more necessary. Long-video questions are often not answered by finding one relevant clip; they require evidence across multiple time points, entity states, and event relations.</p>
+        <p class="idea-body">Example: “After I picked up the phone from the desk, before I put it into my pocket, who did I talk to?” This requires several hops: find the initial state where the phone is on the desk; find the pick-up event; track the phone and the user along the timeline; find the pocket event; retrieve social interactions inside that interval; then aggregate evidence into an answer.</p>
+        <p class="idea-body">So retrieval cannot be only top-k similarity search. A better framing is query-guided memory traversal: query → anchor events → temporal/entity graph expansion → intermediate evidence retrieval → path verification → context window. Graph and schema matter because multi-hop reasoning needs explicit relations: before / after, same entity, state transition, inside time interval, causal or likely-caused-by, co-occurred with, user-goal related, and object ownership or possession.</p>
+        <p class="idea-body">Flow matching or the memory field can provide soft navigation. It does not directly answer the question; it predicts where the next hop should go. One concise design statement is: memory field handles where to search; graph handles how evidence is connected; raw evidence handles whether the answer is true.</p>
+        <p class="idea-body">For multi-hop QA, the front-end agent’s context window should behave like a small reasoning workspace, not a one-shot top-k dump. It should hold the current query, found anchor events, candidate path, evidence snippets for each hop, missing evidence or uncertainty, and the next retrieval action. The back-end should return an evidence chain, such as anchor A → relation → anchor B → relation → clip C → answer support.</p>
+        <p class="idea-body">This also explains why video density matters. If early compression keeps only captions, many middle hops disappear. Multi-hop QA needs raw pointers and dense features so the second or third hop can still be grounded in actual video evidence.</p>
+        <ul class="key-points">
+          <li><strong>Retrieval pattern:</strong> query-guided traversal instead of one-shot top-k search.</li>
+          <li><strong>Reasoning workspace:</strong> keep anchors, candidate path, evidence snippets, and next action in context.</li>
+          <li><strong>Evaluation driver:</strong> require verifiable evidence chains, not just plausible answers.</li>
+        </ul>
+        <ul class="idea-tags">
+          <li>multi-hop QA</li>
+          <li>evidence chain</li>
+          <li>query-guided traversal</li>
+          <li>reasoning workspace</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2105.08276" target="_blank" rel="noopener">NExT-QA: Explaining Temporal Actions</a> — <span class="relevance">VideoQA benchmark built around causal and temporal reasoning rather than single-frame description; close to the before/after, multi-hop questions targeted here.</span></li>
+            <li><a href="https://arxiv.org/abs/2312.06505" target="_blank" rel="noopener">Grounded Question-Answering in Long Egocentric Videos</a> — <span class="relevance">Joint temporal grounding and answering over long egocentric video (QAEgo4D / Ego4D-NLQ); a precedent for evidence-grounded, time-localized multi-hop answers.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> Multi-hop QA should be a core evaluation driver. It separates this direction from caption-RAG or simple memory-buffer baselines: the hard problem is not recalling one relevant segment, but constructing a verifiable evidence path inside unbounded video memory.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-010" data-status="active">
+      <h3 class="idea-title">Methodology: two-agent memory loop</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The methodology can follow the spirit of the interaction-model framework: keep one front-end agent close to the live user interaction, and one back-end agent close to the long-term memory system. The front-end agent is responsible for presence, context, and query decomposition. The back-end agent is responsible for memory maintenance, distribution updates, and evidence retrieval.</p>
+        <p class="idea-body">The front-end agent receives two kinds of visual context: recent real-time video intake, and evidence retrieved from long-term memory. It keeps a bounded context window containing the current user goal, recent stream observations, retrieved clips or schemas, and the current reasoning state. When new video arrives, the front-end converts it into concise query handles: clip pointers, event candidates, entity tracks, object states, temporal anchors, and raw-evidence references. These schemas are for storage and querying; they should not replace the dense video evidence.</p>
+        <p class="idea-body">When the user asks a high-level goal or a multi-hop question, the front-end agent turns it into executable hops. For example, “After I picked up the phone just now, and before I put it in my pocket, who did I talk to in between?” becomes: find the phone entity, find the pick-up event, find the pocket event, define the time interval, search for conversation events inside the interval, then ask for supporting clips. The front-end sends these hops to the back-end agent as structured queries rather than one vague text query.</p>
+        <p class="idea-body">The back-end agent maintains the long-term store and a changing memory distribution. As schemas and video evidence arrive, diffusion or flow matching updates distributions over event scope, entity scope, temporal range, and memory importance. The point is not to generate the answer directly. The distribution acts as a coarse cue: which part of memory should be activated, which evidence range should be sampled, which old memory should be compressed, and which clip should enter the front-end context window.</p>
+        <figure class="memory-figure">
+          <figcaption>Method loop: front-end interaction, back-end memory distribution, and evidence return.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Live intake</strong><span>recent video, user goal, context window</span></li>
+            <li><strong>Schema handles</strong><span>clips, events, entities, raw pointers</span></li>
+            <li><strong>Executable hops</strong><span>high-level question to structured queries</span></li>
+            <li><strong>Back-end update</strong><span>flow/diffusion memory distributions</span></li>
+            <li><strong>Evidence return</strong><span>sampled clips and schemas for context</span></li>
+          </ol>
+        </figure>
+        <p class="idea-body"><strong>Dialogue example.</strong> User: “After I picked up the phone from the table just now, and before I put it in my pocket, who did I talk to in between?” Front-end agent: “First I will break this into a few retrieval steps: find the phone entity, find the pick-up event, find the put-in-pocket event, define the in-between time interval, then retrieve conversation events inside that interval.” Back-end agent: “I will activate the corresponding event and entity distributions from those hops, and return candidate time intervals, the people involved, and inspectable video clips.” Front-end agent: “I put the returned evidence into the context window and answer from the concrete clips, instead of relying only on the memory field's guess.”</p>
+        <p class="idea-body">This methodology needs a real-time memory evaluation signal. The system should score whether the back-end distribution and importance sampler send the right evidence into the front-end context window under latency and budget constraints. The evaluation target is therefore not only answer accuracy, but also cue quality, evidence-chain completeness, retrieval latency, and whether important dense video details survive the schema compression.</p>
+        <ul class="key-points">
+          <li><strong>Front-end agent:</strong> turns live video and high-level goals into executable query hops.</li>
+          <li><strong>Back-end agent:</strong> updates memory distributions and returns concrete evidence scopes.</li>
+          <li><strong>Importance sampling:</strong> decide which clips and schemas deserve space in the front-end context window.</li>
+          <li><strong>Evaluation:</strong> score cue quality, evidence completeness, latency, and detail preservation.</li>
+        </ul>
+        <ul class="idea-tags">
+          <li>methodology</li>
+          <li>two-agent architecture</li>
+          <li>context window</li>
+          <li>memory distribution</li>
+          <li>importance sampling</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> The clean framing is: the front-end agent manages live understanding and executable query hops; the back-end agent manages memory distributions and returns evidence. Flow matching is a cueing and navigation mechanism, not the final memory or final answer.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-011" data-status="active">
+      <h3 class="idea-title">Training and test-time learning</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The training plan should separate what can actually be updated. If the system uses API-based large models, such as Qwen models above 72B parameters, we should assume the model weights are fixed. Test-time adaptation then happens through memory, prompts, tool-use traces, retrieval policies, schema design, and agent instructions rather than direct model fine-tuning.</p>
+        <p class="idea-body">If we use smaller controllable back-end models, such as 7B-scale models, we may optionally update the back-end model when needed. This should be treated as a separate engineering choice: useful for cheaper local adaptation, but riskier for stability. The default design should still keep the front-end API model stable and put most learning pressure on memory management and the memory-distribution model.</p>
+        <p class="idea-body"><strong>What on-policy distillation means.</strong> Ordinary distillation trains a student on a fixed offline dataset: sample an input from <code>D_offline</code>, ask the teacher, and imitate the teacher output. On-policy distillation instead trains on the states induced by the student’s current policy. The student first runs in the real task, producing its own queries, memory trajectories, retrieval paths, memory updates, and mistakes. A teacher, verifier, or reward model then corrects those states, and the student learns from the states it actually visits.</p>
+        <p class="idea-body">In the memory-agent setting, the student is not the whole memory. It is the memory controller: <code>pi_theta(a_t | h_t, M_t, q_t)</code>, where <code>h_t</code> is interaction history, <code>M_t</code> is the current memory buffer or memory distribution, <code>q_t</code> is the current query, and <code>a_t</code> is a memory operation such as retrieve, update, forget, compress, merge, split, navigate, verify, or stop. The teacher provides a better action distribution or corrected action sequence for the exact memory states the student created.</p>
+        <p class="idea-body">This matters because long-term memory failures are distribution-dependent. The dangerous cases are not only clean benchmark queries, but agent-induced failures: vague queries, stale memories, conflicting memories, over-compressed events, memories that should have been forgotten, details that were forgotten too early, and multi-hop retrieval paths that get stuck in the wrong region. On-policy memory distillation trains directly on these self-induced failure modes.</p>
+        <p class="idea-body">The clean architectural separation is: memory storage / representation is the explicit hierarchical buffer; memory dynamics / distribution modeling is the query-conditioned latent memory field learned by flow matching or diffusion; memory control is the policy that decides how to use memory. OPD trains the memory controller. It is not the memory architecture, and it does not by itself create infinite memory.</p>
+        <p class="idea-body">A practical pipeline is: the student memory controller runs during interaction; the system logs a trajectory such as query → memory navigation → retrieved memories → answer; a teacher or verifier checks support, freshness, efficiency, and correctness; the teacher proposes corrected operations; then the controller is distilled with behavior cloning, KL to teacher actions, or preference learning over better and worse trajectories. The reward can combine answer accuracy, evidence support, efficiency, freshness, and penalties for stale or unsupported memory.</p>
+        <p class="idea-body">Flow matching / diffusion and OPD are therefore not competing ideas. The flow or diffusion model learns a query-conditioned memory belief or transition field in latent memory space. The controller learns how to use that field: whether to follow the flow, jump to a higher hierarchy node, expand a memory region, reject stale evidence, update a node, compress a segment, or stop retrieval. On-policy trajectories can also provide auxiliary supervision for improving the cue field, but the safest claim is that OPD is the training mechanism for the memory controller.</p>
+        <ul class="key-points">
+          <li><strong>Large API models:</strong> keep weights fixed; update memory, prompts, schemas, and tool-use policies.</li>
+          <li><strong>Small 7B models:</strong> optional back-end adaptation if local control is needed.</li>
+          <li><strong>OPD role:</strong> train the memory controller on trajectories induced by its own current policy.</li>
+          <li><strong>Not the memory itself:</strong> storage remains an explicit buffer; distribution modeling remains the flow/diffusion memory field.</li>
+          <li><strong>Learning target:</strong> improve retrieve, update, forget, compress, navigate, and verify operations.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Learning loop: fixed API planner, explicit memory, latent field, and on-policy distilled controller.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>API agent</strong><span>Qwen &gt;72B planning and judging</span></li>
+            <li><strong>Student trajectory</strong><span>queries, hops, retrieval, updates</span></li>
+            <li><strong>Teacher correction</strong><span>better memory operations</span></li>
+            <li><strong>OPD update</strong><span>distill memory controller</span></li>
+            <li><strong>Better memory use</strong><span>routing, compression, verification</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>test-time learning</li>
+          <li>on-policy distillation</li>
+          <li>Qwen API</li>
+          <li>flow matching</li>
+          <li>memory distribution</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://thinkingmachines.ai/blog/on-policy-distillation/" target="_blank" rel="noopener">On-Policy Distillation (Thinking Machines Lab)</a> — <span class="relevance">Trains a student on its own on-policy trajectories with dense teacher feedback (per-token KL); the direct basis for distilling the memory controller on self-induced failure states.</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04620" target="_blank" rel="noopener">Learning to (Learn at Test Time): RNNs with Expressive Hidden States</a> — <span class="relevance">Updates model state at test time; reference for test-time adaptation when the API model's weights are fixed.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> The safest claim is not “OPD is the memory.” It is: OPD is a training procedure for the memory controller, while memory itself is stored in an explicit hierarchical buffer and modeled by a query-conditioned latent memory field.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-012" data-status="active">
+      <h3 class="idea-title">Evaluation: datasets and benchmarks</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The method narrative is fairly complete, but the weakest part is evaluation. Before claiming that a continuous memory field beats retrieval baselines, we need to pin down datasets, metrics, and baselines, and ideally a setting that actually stresses unbounded streaming and multi-hop memory rather than borrowing short pre-segmented clip QA.</p>
+        <p class="idea-body"><strong>Datasets.</strong> Egocentric long video is the most natural fit: Ego4D for raw long-form egocentric streams, EgoSchema for long-form understanding, and QAEgo4D for egocentric question answering. For streaming and long-form general video, MovieChat-1K and long vlogs give hour-scale continuous content. We can also reuse memory-centric agent benchmarks such as M3-Bench, which provides robot-perspective videos (M3-Bench-robot) and web videos (M3-Bench-web) with QA targeting human understanding, cross-modal reasoning, and multi-hop memory.</p>
+        <p class="idea-body"><strong>Desired setting: unbounded stream + multi-hop.</strong> The ideal evaluation is not a short pre-segmented clip with a single question. It should simulate continuous agent perception over a long horizon, then ask questions that require evidence across multiple time points, entity states, and modalities. If no existing benchmark fully matches this, we can construct one by concatenating long egocentric streams and annotating multi-hop, temporally grounded questions with verifiable evidence chains.</p>
+        <p class="idea-body"><strong>Metrics.</strong> Beyond answer accuracy: multi-hop accuracy, evidence-chain completeness or F1, temporal grounding (does the answer return correct timestamps or clip pointers), freshness, a forgetting curve over the horizon (how old-question accuracy degrades), retrieval latency, and memory or storage footprint. Graceful degradation is itself a metric: old answers should keep gist with calibrated confidence rather than hallucinate.</p>
+        <p class="idea-body"><strong>Baselines.</strong> Long-context LLMs that stuff the whole stream into context, caption-RAG, video-RAG, memory-buffer agents such as Flash-VStream and MovieChat, and entity-centric memory agents such as M3-Agent. The comparison should highlight what these miss: bounded storage under unbounded intake, verifiable multi-hop evidence, and stable behavior as the horizon grows.</p>
+        <ul class="key-points">
+          <li><strong>Datasets:</strong> Ego4D, EgoSchema, QAEgo4D, MovieChat-1K, long vlogs, plus M3-Bench (robot + web).</li>
+          <li><strong>Target setting:</strong> unbounded stream + multi-hop, not short pre-segmented clip QA.</li>
+          <li><strong>Metrics:</strong> multi-hop accuracy, evidence-chain F1, temporal grounding, freshness, forgetting curve, latency, memory footprint.</li>
+          <li><strong>Baselines:</strong> long-context LLM, caption/video-RAG, memory-buffer agents, and M3-Agent.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: evaluation plan from datasets to the unbounded-stream multi-hop setting.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Datasets</strong><span>Ego4D, EgoSchema, QAEgo4D, MovieChat-1K, M3-Bench</span></li>
+            <li><strong>Setting</strong><span>unbounded stream + multi-hop questions</span></li>
+            <li><strong>Metrics</strong><span>multi-hop, evidence chain, grounding, forgetting</span></li>
+            <li><strong>Baselines</strong><span>long-context, RAG, memory buffers, M3-Agent</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>evaluation</li>
+          <li>long-video QA</li>
+          <li>multi-hop benchmark</li>
+          <li>M3-Bench</li>
+          <li>baselines</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2110.07058" target="_blank" rel="noopener">Ego4D: Around the World in 3,000 Hours of Egocentric Video</a> — <span class="relevance">Massive long-form egocentric streams with an episodic-memory benchmark; raw material for an unbounded-stream setting.</span></li>
+            <li><a href="https://arxiv.org/abs/2308.09126" target="_blank" rel="noopener">EgoSchema</a> — <span class="relevance">Long-form egocentric video QA with long temporal certificates; a probe for long-horizon understanding.</span></li>
+            <li><a href="https://arxiv.org/abs/2312.06505" target="_blank" rel="noopener">Grounded QA in Long Egocentric Videos (QAEgo4D)</a> — <span class="relevance">Open-ended, temporally grounded egocentric QA; a fit for evidence-chain and temporal-grounding metrics.</span></li>
+            <li><a href="https://arxiv.org/abs/2307.16449" target="_blank" rel="noopener">MovieChat-1K</a> — <span class="relevance">Hour-scale long-video QA with global and breakpoint questions; both a long-form benchmark and a memory-buffer baseline.</span></li>
+            <li><a href="https://arxiv.org/abs/2508.09736" target="_blank" rel="noopener">M3-Agent: Seeing, Listening, Remembering, and Reasoning (M3-Bench)</a> — <span class="relevance">Entity-centric multimodal long-term memory agent with episodic and semantic memory; its M3-Bench (robot + web long videos, multi-hop and cross-modal QA) is a strong evaluation target and a baseline to compare against.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> Evaluation is the missing pillar. The cleanest framing is to make the unbounded-stream multi-hop setting the headline benchmark, report graceful-degradation curves, and compare against both retrieval and memory-agent baselines like M3-Agent.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-013" data-status="active">
+      <h3 class="idea-title">Trainable spec: turning the memory field into a model</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The continuous field stays a metaphor until it is written as a trainable model. This section pins down the latent space, the query conditioning, the supervision, and the cold-start, and it makes one positioning explicit: the field is a learned retrieval prior over an explicit memory buffer, not the store itself.</p>
+        <p class="idea-body"><strong>Buffer tokens and the field over them.</strong> The buffer stores per-clip tokens <code>m_i = (z_i^sem, z_i^app, tau_i, entity_i, ptr_i)</code>: <code>z_i^sem</code> is a VLM-encoder embedding aligned with text queries; <code>z_i^app</code> is an optional video-diffusion (VAE) latent for dense appearance and dynamics; <code>tau_i</code> is the timestamp; <code>entity_i</code> is an entity id; <code>ptr_i</code> points back to the raw clip. These tokens are the actual long-term memory. The continuous field is a learned, query-conditioned prior over this buffer — it models where relevant tokens are likely to be, so retrieval becomes sampling from the buffer rather than scanning it. The discrete tokens are the evidence; the field is only the density used to navigate them. Storage is per-clip, indexed by time and entity, with the temporal-semantic graph from Difficulty 1 on top.</p>
+        <p class="idea-body"><strong>VLM encoder vs diffusion encoder.</strong> A VLM encoder gives semantic, language-aligned latents that make query conditioning and grounding easy and cheap; it is the natural retrieval key. A diffusion (VAE / denoiser) encoder gives a generative latent where “sampling memory” is literal and dense visual detail survives, which matters for hard multi-hop hops. The recommended design is dual-channel: VLM latents for semantics and query alignment, diffusion latents as the substrate the field actually models and samples. The minimal viable version uses only the VLM latent plus contrastive alignment and a conditioned flow; the diffusion reconstruction head is added later.</p>
+        <p class="idea-body"><strong>Query conditioning and flow I/O.</strong> The query text is encoded by the same VLM text encoder into <code>q</code> in the shared space. The flow velocity network <code>v_theta(z_t, t | q, h)</code> is conditioned on <code>q</code>, the reasoning history <code>h</code> (current anchors, found evidence), and a coarse time prior via cross-attention or FiLM. Input is the flow-time noisy latent <code>z_t</code> plus conditioning; output is the velocity (flow matching) or score (diffusion). Sampling integrates a base sample to <code>z_1</code>, which is snapped to the nearest real token to fetch a clip. For multi-hop, each hop re-conditions the field on updated <code>h</code>, so traversal becomes a conditional distribution moving step by step.</p>
+        <p class="idea-body"><strong>Supervision (the crux).</strong> Supervision stacks three layers. (1) Unconditional density: a standard flow-matching / diffusion objective on all memory latents learns <code>p(z)</code> directly from the stream with no labels, which also bootstraps cold-start. (2) Conditioned targets toward supporting-evidence latents, with pairs from self-supervised pretext (mask a future segment, use its caption / event as a pseudo-query), from a strong VLM that auto-generates multi-hop QA and evidence chains over the crafted stream dataset, and from on-policy retrieval hits where verified-correct answers turn their supporting clips into positives (this ties back to the on-policy controller training). (3) Contrastive alignment keeps query and supporting-clip latents close. A compact loss: <code>L = L_density + L_cond + L_align + lambda * L_recon</code> (optional diffusion reconstruction for dense detail).</p>
+        <p class="idea-body"><strong>Cold-start.</strong> Cold-start is handled by offline pretraining the field on the crafted stream-video dataset, so the velocity network already knows what video-memory latents look like. At deployment a fresh stream starts with an empty buffer; while the buffer is small the system degrades to direct retrieval over the few tokens and leans on the front-end context window, and entity / time priors from the recent window warm-start the conditioning. As the stream grows, the field takes over.</p>
+        <p class="idea-body"><strong>Why not neural-field as storage.</strong> A pure neural-field memory — fitting the memory distribution into a network's weights — is tempting for the bounded-storage thesis, but it is the wrong primary store for a grounding-heavy, multi-hop, real-time setting: weights return reconstructed latents, not verifiable clip pointers; online continual fitting risks catastrophic forgetting; and deletion / unlearning is hard. So the buffer stays the memory and the only source of grounded evidence, and a network that fits the distribution is deployed as a sampler / router over the buffer (where to look) — at most an optional compact cold-tier gist with confidence, never the system we ground answers on. The open research problem is controlled sampling and forgetting: which region to sample, what to compress, and how importance is set.</p>
+        <p class="idea-body"><strong>Crafting the dataset.</strong> Concatenate long egocentric and web streams into hour-scale continuous streams keeping raw frames, audio, and timestamps; encode clips with the VLM encoder into semantic latents and an auto schema, plus optional diffusion latents; auto-generate multi-hop QA, evidence chains, and temporal-grounding labels with a strong VLM and human-verify a subset; add pretext tasks; store query / evidence / answer / timestamp tuples as conditioned targets and all clip latents as unconditional density targets.</p>
+        <ul class="key-points">
+          <li><strong>Buffer = memory:</strong> per-clip tokens in the buffer are the evidence; the field is only a learned prior over them.</li>
+          <li><strong>Encoder choice:</strong> VLM for query alignment and grounding, diffusion for generative sampling and dense detail; start VLM-only.</li>
+          <li><strong>Conditioning:</strong> shared-space query plus history conditions <code>v_theta</code>; multi-hop re-conditions each hop.</li>
+          <li><strong>Supervision:</strong> unconditional density + conditioned evidence targets + contrastive; teacher-generated QA needs a verifier.</li>
+          <li><strong>Cold-start:</strong> offline-pretrain the prior; degrade to direct retrieval until the buffer grows.</li>
+          <li><strong>Neural-field memory:</strong> not the primary store; used as a sampler / router, at most an optional cold-tier gist — grounding always from the buffer.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: encoder to buffer tokens to a query-conditioned prior, then sample and snap to real evidence.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Encode</strong><span>VLM + diffusion latents, schema</span></li>
+            <li><strong>Buffer tokens</strong><span>per-clip evidence, time + entity</span></li>
+            <li><strong>Field prior</strong><span>query-conditioned, where to sample</span></li>
+            <li><strong>Sample</strong><span>conditioned location z*</span></li>
+            <li><strong>Snap to evidence</strong><span>nearest clip from buffer into context</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>trainable spec</li>
+          <li>VLM encoder</li>
+          <li>diffusion encoder</li>
+          <li>flow matching</li>
+          <li>per-stream adapter</li>
+          <li>cold-start</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2210.02747" target="_blank" rel="noopener">Flow Matching for Generative Modeling</a> — <span class="relevance">The conditional generative objective that can model and transport query-conditioned memory latents; the natural training target for the field.</span></li>
+            <li><a href="https://arxiv.org/abs/2008.02217" target="_blank" rel="noopener">Hopfield Networks is All You Need</a> — <span class="relevance">Associative-memory view where a network retrieves stored patterns from partial cues; a precedent for weight-memory recall.</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04620" target="_blank" rel="noopener">Learning to (Learn at Test Time): RNNs with Expressive Hidden States</a> — <span class="relevance">Continually updates model state / weights at test time; relevant to controlled online fitting of cold-tier weight memory.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> The safest claim is that the buffer is the memory and the only source of grounded evidence, while the field is a query-conditioned retrieval prior that says where to sample. A network fitting the distribution is a sampler / router (and at most an optional cold-tier gist), not the store. Evaluate the field directly with snap recall@k, navigation steps, and calibration.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-014" data-status="open">
+      <h3 class="idea-title">Buffer construction: distribution-faithful + importance sampling</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">Since the buffer is the memory and the only grounded-evidence source, how it is built, compressed, and pruned is now the core of the method. Two principles drive it: (1) the buffer should reflect the actual distribution of the stream, and (2) actually essential events must be remembered, via importance sampling.</p>
+        <p class="idea-body"><strong>Principle 1: reflect the actual distribution.</strong> The buffer should be a faithful, compressed sample of the stream, so its density matches what really happened — not an arbitrary recency window. Redundant, high-density regions (the agent sitting at a desk for an hour) get compressed and merged; rare regions keep coverage. Concretely, the field's learned <code>p(z)</code> should match the stream's true distribution, which only holds if the buffer it is trained on is itself distribution-faithful. This is the streaming-sample view: like reservoir sampling, keep a bounded sample whose statistics track the full stream.</p>
+        <p class="idea-body"><strong>Principle 2: remember essential events (importance sampling).</strong> Pure frequency or recency would drop rare-but-essential events (a one-second handover, a key promise, a safety incident). So retention is importance-weighted: essential events are over-retained at high fidelity even when infrequent, and we store their importance weight so the field and retrieval can debias. This is literally importance sampling — sample from a proposal that over-weights essential events, and carry the weights to stay unbiased.</p>
+        <p class="idea-body"><strong>Reconciling the tension.</strong> Reflecting the distribution (sample by frequency) and remembering rare essentials (over-sample by importance) pull in opposite directions. The resolution is stratified, importance-weighted retention: keep a distribution-faithful base sample, plus an over-retained set of high-importance events, with weights recorded so query-time sampling stays a correct importance-sampling estimate rather than a biased one.</p>
+        <p class="idea-body"><strong>Where importance comes from.</strong> The importance signal is a mixture: novelty / surprise read from the field (low density under the current <code>p(z)</code> means new, worth keeping), recency, actual usage frequency (clips that were retrieved and supported correct answers), a learned future-utility predictor (will this be needed by later queries?), and explicit user or task signals. Start with a heuristic mixture, then learn the weights.</p>
+        <p class="idea-body"><strong>Tiers, summaries, dedup.</strong> A clip enters hot; time, capacity, and importance trigger demotion. Hot keeps raw clips and dense features (exact grounding); warm keeps schema (entities, relations, timestamps) plus a low-dim latent and a pointer; cold keeps a short gist plus a few keyframe latents and a confidence, raw dropped. Cold can therefore only ground coarse, gist-level answers — if a query needs cold-tier detail, the system should abstain or flag low confidence. Near-duplicate clips merge in latent space into an event node (representative + count + time span); entity tracks merge by appearance, co-occurrence, and name.</p>
+        <p class="idea-body"><strong>Training the policy safely.</strong> Importance is best learned as deferred-utility prediction: log which clips were later retrieved and supported correct answers, and train importance to predict future need — supervised, not sparse RL. During training, destructive demotion / compression is made reversible via a shadow store, so we can compute the counterfactual "would this query have succeeded if we had not compressed this?" and get dense supervision without permanently destroying evidence. On-policy distillation then refines only the failure modes heuristics miss. A falsifiable bar: at a fixed storage budget, the learned policy must beat FIFO, LRU, frequency, and uniform compression on the forgetting curve and multi-hop accuracy.</p>
+        <ul class="key-points">
+          <li><strong>Reflect distribution:</strong> the buffer is a faithful, compressed sample of the stream, not a recency window.</li>
+          <li><strong>Remember essentials:</strong> importance sampling over-retains rare-but-essential events and stores their weights to debias.</li>
+          <li><strong>Reconcile:</strong> distribution-faithful base sample + over-retained high-importance set, with weights kept for correct sampling.</li>
+          <li><strong>Importance signal:</strong> field surprise + recency + usage frequency + learned future-utility + user/task.</li>
+          <li><strong>Tiers + dedup:</strong> hot raw → warm schema → cold gist; merge near-duplicates; cold grounds only gist, else abstain.</li>
+          <li><strong>Train safely:</strong> deferred-utility supervision + shadow-store counterfactuals; must beat LRU / frequency at a fixed budget.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: importance sampling keeps a distribution-faithful, essentials-preserving buffer.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Stream</strong><span>full intake, true distribution</span></li>
+            <li><strong>Importance</strong><span>surprise + recency + usage + utility + user</span></li>
+            <li><strong>Importance sampling</strong><span>over-retain essentials, keep weights</span></li>
+            <li><strong>Tiered buffer</strong><span>hot raw, warm schema, cold gist</span></li>
+            <li><strong>Faithful + essential</strong><span>distribution-matched, rare events kept</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>buffer construction</li>
+          <li>importance sampling</li>
+          <li>distribution-faithful</li>
+          <li>tiered compression</li>
+          <li>dedup / merge</li>
+          <li>deferred utility</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/1511.05952" target="_blank" rel="noopener">Prioritized Experience Replay</a> — <span class="relevance">Importance-sampling of essential transitions with weights to debias; a direct precedent for importance-weighted memory retention and sampling.</span></li>
+            <li><a href="https://arxiv.org/abs/1711.10563" target="_blank" rel="noopener">Reservoir-style streaming memory for continual learning</a> — <span class="relevance">Maintaining a bounded sample whose statistics track an unbounded stream; the distribution-faithful side of the buffer. <em>Open question: placeholder reference — the exact streaming-sample / reservoir citation to anchor this is still uncertain.</em></span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> The buffer is an importance-weighted sample of the stream: distribution-faithful so the field's density is real, and essentials over-retained so rare evidence survives. Keep the weights, or query-time sampling becomes biased. Learn importance as deferred utility, not sparse RL, and keep destructive ops reversible during training.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-015" data-status="open">
+      <h3 class="idea-title">Difficulty 3: the two-head seam (short-term context ↔ long-term buffer)</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">The design has two memory heads: a short head — the front-end context window holding live video, the current goal, and working reasoning state — and a long head — the back-end buffer holding consolidated long-term memory. Most real queries need both at once, fusing “what is happening now” with “what happened earlier.” Whether the current buffer and agent actually support this two-head query is still open; this section records the seams where they do not.</p>
+        <p class="idea-body"><strong>Seam 1: the recent boundary.</strong> In interactive use the most-queried memory is the last seconds to minutes, but that is the least-processed region of the buffer: not yet schema-extracted, deduped, indexed, or importance-scored. The buffer is tuned for aged memory, so it is weakest exactly where the two heads meet. There is no defined warm-recent handoff between the context window and the consolidated buffer.</p>
+        <p class="idea-body"><strong>Seam 2: the fusion contract.</strong> The short head is not a buffer at all; it is LLM attention over tokens. A two-head query therefore means querying context (implicit, in-model) and the buffer (ANN / field) and then fusing them — but the fusion is unspecified: how retrieved evidence re-enters context, how it is deduped against what is already there, and how to keep the long head from contradicting the short head. A well-built buffer does not solve this, because fusion lives in the seam.</p>
+        <p class="idea-body"><strong>Seam 3: stateful retrieval.</strong> Two-head multi-hop is iterative: each hop carries forward found anchors. But a one-shot <code>retrieve(query, k)</code> is stateless, so every hop re-pays full retrieval latency and loses context. Multi-hop needs a retrieval session on the back-end (carried anchors, visited regions, partial evidence chain). The reasoning workspace in idea 009 lives on the front-end, so today neither side cleanly owns iteration.</p>
+        <p class="idea-body"><strong>Agent-side risks.</strong> Two more. First, the trainable part is downstream of the hard part: query decomposition — turning a vague two-head question into executable hops and deciding when to hit long-term memory — sits in the frozen API front-end, while on-policy distillation only trains the controller. Second, the back-end lumps three workloads with opposite profiles: ingest (always-on), maintenance (heavy, batchable), and serve (latency-critical). On an always-on stream these contend, and field retraining can stall a query.</p>
+        <p class="idea-body"><strong>Working directions (none settled).</strong> (1) Add a shared staging / warm-recent tier between context and buffer as the explicit seam. (2) Define a fusion contract where long-head evidence enters the short head as typed, deduped, timestamped, provenance-tagged tokens. (3) Make retrieval stateful via a <code>RetrievalSession</code>. (4) Move query decomposition into the trainable lane: the controller proposes hops, the frozen model judges and answers. (5) Split the back-end into three decoupled lanes — ingest, maintenance, serve.</p>
+        <ul class="key-points">
+          <li><strong>Two heads:</strong> short = front-end context window; long = back-end buffer; real queries need both.</li>
+          <li><strong>Recent boundary:</strong> the buffer is weakest where the heads meet; no warm-recent handoff.</li>
+          <li><strong>Fusion unspecified:</strong> how retrieved evidence re-enters context and is deduped is undefined.</li>
+          <li><strong>Stateful multi-hop:</strong> retrieval is one-shot; it needs a carried-anchor session.</li>
+          <li><strong>Agent risk:</strong> the trainable controller is downstream of frozen query decomposition; ingest / maintain / serve contend.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: the seam between the short head (context) and the long head (buffer).</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Short head</strong><span>context window: live video, goal</span></li>
+            <li><strong>Seam</strong><span>warm-recent staging (missing)</span></li>
+            <li><strong>Long head</strong><span>tiered buffer, consolidated memory</span></li>
+            <li><strong>Fusion</strong><span>typed, deduped evidence tokens</span></li>
+            <li><strong>Stateful hops</strong><span>carried anchors, evidence chain</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>open difficulty</li>
+          <li>two-head query</li>
+          <li>short vs long memory</li>
+          <li>fusion contract</li>
+          <li>stateful retrieval</li>
+          <li>real-time lanes</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> Do not assume the buffer alone delivers two-head querying. The buffer is a strong long head, but the seam — warm-recent handoff, fusion contract, stateful multi-hop, and putting decomposition in the trainable lane — is the load-bearing open problem.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-016" data-status="open">
+      <h3 class="idea-title">Working direction: query-quality critic over a frozen proposer</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">This is a candidate fix for the agent-side risk in Difficulty 3 (the trainable part sitting downstream of query decomposition), but it is itself still open. Query decomposition seems to belong in the trainable lane, yet a generative decomposer is hard to train: there is no single correct hop decomposition — many sequences are valid — so teacher-signed gold decompositions are brittle. They reflect the teacher's style, overfit to one reference, and do not know what the buffer actually holds. So decomposition may not be cleanly supervisable.</p>
+        <p class="idea-body"><strong>Reframe: train a critic, not the actor.</strong> Keep the frozen API model as the proposer of candidate decompositions / next hops, and train a lightweight query-quality critic that ranks the candidates and decides whether to accept or re-propose. The actor needs no training; the critic needs only ranking / reward signals, not gold decompositions. This also promotes the “cue quality” idea from ideas 008 and 010 from an evaluation metric into a trainable objective.</p>
+        <p class="idea-body"><strong>What query quality is.</strong> A hop is high-quality if it is groundable (the buffer returns evidence with small snap distance and high confidence, not empty or vague), advances the chain (reduces answer uncertainty / yields information gain), is necessary (not already answerable from the short head — this directly serves two-head), and non-redundant with prior hops. Roughly <code>quality(h) = w1·groundability + w2·advance + w3·necessity − w4·redundancy</code>.</p>
+        <p class="idea-body"><strong>Signals without gold (teacher as judge, not labeler).</strong> Retrieval feedback — immediate and self-supervised (top-k margin, snap distance, whether groundable evidence returned), good for cold-start. Answer outcome — deferred and weak (a verified-correct chain gives positive credit to its hops, a wrong one negative). LLM-as-judge — the strong model judges whether a hop was useful given the retrieved evidence (judging, not generating gold). Counterfactual via the shadow store — would the answer have succeeded without this hop? Train the critic by ranking loss or regression to credit — a critic-only setup, far more tractable than a generative decomposer.</p>
+        <p class="idea-body"><strong>Why it stays open.</strong> Two risks keep this a question rather than a method. (1) Query quality must be separated from buffer recall: a hop can be right while the buffer fails to retrieve it; if only retrieval feedback is used, good hops get punished for buffer failures, so credit assignment must distinguish “asked wrong” from “asked right but not found,” which needs answer outcome and counterfactuals to anchor. (2) Reward hacking: rewarding groundability alone favors easy-but-useless hops, so the answer-level outcome must anchor the signal.</p>
+        <ul class="key-points">
+          <li><strong>Don't train a generative decomposer:</strong> it needs gold and overfits style; freeze the proposer, train a critic.</li>
+          <li><strong>Query quality:</strong> groundability + advance + necessity − redundancy.</li>
+          <li><strong>Signals without gold:</strong> retrieval feedback + answer outcome + LLM-as-judge + counterfactual.</li>
+          <li><strong>Reuses cue quality:</strong> promotes the 008/010 cue-quality metric into a trainable objective.</li>
+          <li><strong>Open risks:</strong> separate query quality from buffer recall; anchor on answer-level outcome to avoid reward hacking.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: a frozen proposer suggests hops; a trainable critic ranks them by predicted utility.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Question + state</strong><span>short head + long head</span></li>
+            <li><strong>Frozen proposer</strong><span>N candidate hops</span></li>
+            <li><strong>Query-quality critic</strong><span>groundability, advance, necessity</span></li>
+            <li><strong>Select / re-propose</strong><span>best hop, or ask again</span></li>
+            <li><strong>Outcome signal</strong><span>retrieval + answer + judge → train critic</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>open question</li>
+          <li>query-quality critic</li>
+          <li>frozen proposer</li>
+          <li>cue quality</li>
+          <li>critic-only training</li>
+          <li>credit assignment</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> The decomposer stays frozen; what becomes trainable is a query-quality critic over its proposals. Still open because credit assignment must separate query quality from buffer recall, and the reward must be anchored on answer-level outcomes to avoid hacking.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-017" data-status="active">
+      <h3 class="idea-title">Unified memory architecture: buffer, graph, field, and session</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">This section fixes a coherence risk in the current design: buffer, graph, and field are not three competing memory systems. They are layers in one architecture. The buffer stores evidence. The graph organizes evidence. The field guides navigation over the buffer / graph. The retrieval session controls multi-hop state. The front-end context answers only from returned evidence.</p>
+        <p class="idea-body"><strong>Layer 1 — evidence buffer (storage).</strong> The buffer is the memory body and the only grounding source. Each entry keeps a clip pointer, timestamp, modality features, entity / schema fields, latent keys, tier, importance, and confidence. Hot / warm / cold only change fidelity; they do not change the rule that answers must snap back to real buffer evidence.</p>
+        <p class="idea-body"><strong>Layer 2 — temporal-semantic graph (structure).</strong> The graph is an index over buffer entries, not a separate memory store. Nodes can be clips, events, entities, places, goals, or summaries; edges encode temporal order, same entity, state transition, co-occurrence, likely causality, co-retrieval, or repeated usefulness for similar queries. The graph makes multi-hop traversal inspectable and gives the back-end explicit relations to follow.</p>
+        <p class="idea-body"><strong>Layer 3 — query-conditioned field (navigation).</strong> The field is a learned navigation prior over buffer tokens and graph nodes. Formally it can score or sample <code>p_theta(m | q, h, B_t, G_t)</code>, where <code>h</code> is the current retrieval session. It does not store evidence, write answers, or replace graph structure. Its job is to decide which region, node, edge, tier, or next hop should be activated.</p>
+        <p class="idea-body"><strong>Layer 4 — retrieval session (control).</strong> A session holds anchors found so far, visited nodes, rejected candidates, uncertainty, and partial evidence chains. This is where multi-hop becomes stateful rather than repeated one-shot retrieval. The back-end agent owns this layer: it uses the field to propose directions, the graph to expand relations, and the buffer to snap every candidate back to concrete evidence.</p>
+        <p class="idea-body"><strong>Layer 5 — front-end context (reasoning / answer).</strong> The front-end receives typed evidence packets: clips, timestamps, schemas, confidence, provenance, and missing-evidence flags. It may decompose the next query step in-context, but it should answer only from retrieved evidence, not from the field's latent belief. This keeps the system auditable.</p>
+        <ul class="key-points">
+          <li><strong>Buffer:</strong> storage layer; stores grounded evidence and tiers.</li>
+          <li><strong>Graph:</strong> structure layer; organizes buffer evidence into traversable relations.</li>
+          <li><strong>Field:</strong> navigation layer; scores / samples where to look next over buffer + graph.</li>
+          <li><strong>Session:</strong> control layer; keeps anchors, visited regions, uncertainty, and evidence chains.</li>
+          <li><strong>Frontend:</strong> answer layer; reasons over returned evidence, not over latent field guesses.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: one memory architecture, five layers.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Raw stream</strong><span>video, audio, OCR, metadata</span></li>
+            <li><strong>Evidence buffer</strong><span>storage: grounded entries</span></li>
+            <li><strong>Temporal-semantic graph</strong><span>structure: nodes and edges</span></li>
+            <li><strong>Query-conditioned field</strong><span>navigation: where to search</span></li>
+            <li><strong>Retrieval session + frontend</strong><span>stateful hops, evidence answer</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>unified architecture</li>
+          <li>buffer graph field</li>
+          <li>storage structure navigation</li>
+          <li>retrieval session</li>
+          <li>evidence grounding</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> This is the architectural spine reviewers will need: buffer = storage, graph = structure, field = navigation, session = control, front-end = evidence-based reasoning. It should reduce confusion across 005, 007, 013, 014, 015, and 016.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-018" data-status="open">
+      <h3 class="idea-title">Open questions toward an ICLR-ready method</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">After adding the paper-level thesis (006) and the unified architecture (017), the remaining gaps are no longer new ideas to add randomly. They are open-ended questions that decide whether the project becomes a rigorous method paper. These should be treated as a checklist for moving from research notes to an ICLR-ready submission.</p>
+        <p class="idea-body"><strong>Q1: What are the executable algorithms?</strong> The architecture needs a reproducible protocol: Algorithm 1 for online memory ingest, Algorithm 2 for stateful multi-hop query / <code>RetrievalSession</code>, and Algorithm 3 for training the field / navigation prior. A reviewer should be able to trace what happens when a clip arrives, when a query arrives, and when the field is updated.</p>
+        <p class="idea-body"><strong>Q2: What is trained, frozen, online-updated, or only evaluated?</strong> Current notes still mix several possibilities. The likely boundary is: frozen front-end LLM and ICL decomposer; trainable back-end field / navigation prior and possibly importance / utility predictor; online-updated buffer, graph, and sessions; optional query-quality critic as an eval / gate rather than a core training objective unless explicitly evaluated.</p>
+        <p class="idea-body"><strong>Q3: What exactly is the evidence-chain annotation protocol?</strong> Streaming Multi-hop Memory QA needs more than answer labels. We need to decide whether gold evidence chains are clip-level, event-level, or frame-level; whether each hop is annotated; how questions are generated and verified; what fraction needs human checking; and whether the benchmark supports answers-only versus answers-plus-evidence-chain supervision.</p>
+        <p class="idea-body"><strong>Q4: What is the baseline and ablation matrix?</strong> The experiment plan should map each claim to a test: long-context VLM / LLM, caption-RAG, ANN over clip embeddings, graph-only traversal, buffer-only without field, MovieChat / Flash-VStream-style memory, and M3-Agent-style memory. Ablations should remove graph, field, importance sampling, <code>RetrievalSession</code>, warm-recent staging, and VLM+diffusion channels.</p>
+        <p class="idea-body"><strong>Q5: Are audio, ASR, speaker identity, and OCR first-class evidence?</strong> Many egocentric multi-hop questions, including “who did I talk to?”, require ASR, speaker diarization, audio events, face / voice identity, and OCR. These should enter the buffer and graph as evidence, not remain informal side inputs.</p>
+        <p class="idea-body"><strong>Q6: What are the failure modes and risk controls?</strong> The system needs a limits section: privacy / de-identification, deletion or forgetting requests, wrong entity merges, compressed evidence that can no longer ground, cold-tier gist hallucination, field overconfidence, and sensitive queries about people or conversations.</p>
+        <p class="idea-body"><strong>Q7: What is the hero result?</strong> A highlight-level paper needs a clear main figure: as stream horizon grows (for example 10 minutes → 1 hour → 4 hours → 8 hours) under a fixed memory budget, our method should retain higher evidence-chain recall and multi-hop accuracy than caption-RAG, ANN, graph-only, and memory-agent baselines, while keeping latency controlled.</p>
+        <ul class="key-points">
+          <li><strong>Protocol:</strong> write ingest, retrieval, and training algorithms.</li>
+          <li><strong>Boundaries:</strong> freeze front-end ICL; train back-end navigation / importance; update buffer and graph online.</li>
+          <li><strong>Data:</strong> define evidence-chain annotation, not only answer labels.</li>
+          <li><strong>Experiments:</strong> align baselines and ablations with every method claim.</li>
+          <li><strong>Modalities + risks:</strong> make audio / ASR / speaker / OCR and privacy / failure modes explicit.</li>
+          <li><strong>Hero result:</strong> show horizon-scaling gains under fixed memory budget.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: open questions that turn the idea into a method paper.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Algorithms</strong><span>ingest, query, training</span></li>
+            <li><strong>Boundaries</strong><span>frozen, trainable, online</span></li>
+            <li><strong>Dataset</strong><span>evidence-chain protocol</span></li>
+            <li><strong>Experiments</strong><span>baselines, ablations, hero result</span></li>
+            <li><strong>Risks</strong><span>modalities, privacy, failure cases</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>open questions</li>
+          <li>paper readiness</li>
+          <li>algorithms</li>
+          <li>evidence-chain annotation</li>
+          <li>ablation matrix</li>
+          <li>hero result</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> These are intentionally marked open. The highest-priority next step is the executable protocol: without algorithms and train/inference boundaries, the project still reads as an architecture note rather than a method paper.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-019" data-status="open">
+      <h3 class="idea-title">Repositioning: the field is access and management, not storage</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">This refines 005, 006, 013, and 017 and fixes the most attackable claim in the project: do not justify the continuous field as "we need it to store infinite memory." Storage is, and stays, discrete: the grounded evidence buffer, the index, the graph, gist tokens, product quantization (PQ), and coresets. The field only earns its place if it adds value <em>on top of</em> that discrete storage — never by claiming it solves "can't store it all."</p>
+        <p class="idea-body"><strong>Cleanest positioning.</strong> Don't say "we need a continuous field to hold infinite memory." Say: "we need a grounded evidence buffer to store verifiable memory; on top of it we explore a query-conditioned continuous field that models which memories are likely relevant, which regions are worth retrieving, and which memories to retain or compress." The division of labor: the <strong>buffer</strong> answers <em>where the evidence is and whether it is traceable</em>; the <strong>graph</strong> answers <em>how evidence connects</em>; the <strong>field</strong> answers <em>where to look, what to keep, what to degrade</em>. The field is a navigation and management layer, not a warehouse.</p>
+        <p class="idea-body"><strong>Justification A — field as retrieval prior (stateful navigation).</strong> Long-video multi-hop QA is usually not a one-shot top-k problem: find anchor → walk temporal / entity / event relations → verify intermediate evidence → update query → retrieve again. The field predicts, given the query, found anchors, visited regions, and uncertainty, which memory region / graph node / tier to visit next: <code>p_theta(m | q, h, B_t, G_t)</code>. Its value is not "store more" but "make retrieval stateful navigation rather than one ANN top-k." Risk to be honest about: this function does not require a generative field — a discriminative learned next-hop policy (a conditioned GNN / reranker over the graph) is simpler and likely stronger. So A must beat not only ANN-only, ANN + graph, graph-only, and M3-Agent-style memory, but specifically a <strong>learned discrete next-hop policy</strong>. That ablation is what isolates the field's generative <em>form</em> from its <em>function</em>. A is the role most at risk of being dominated by a discriminative policy.</p>
+        <p class="idea-body"><strong>Justification B — field as retention / compression prior (the strongest fit).</strong> Retention is genuinely a density / novelty problem, which is exactly what a generative model of <code>p(z)</code> is good at: low density under the current field = novel = worth keeping. So the field can decide what enters the hot layer, what events merge, what is compressed to a gist token, what degrades to cold, what low-value clips are dropped, and what rare-but-future-useful events must be kept. It models memory density / novelty / retention importance and <em>manages the storage budget</em> instead of becoming storage. Important split: "future utility" should be a supervised deferred-utility predictor (see 014), which is discriminative; the field's unique contribution here is only the density / novelty signal. This is a far stronger claim than "the field stores infinite memory."</p>
+        <p class="idea-body"><strong>Justification C — field as lossy semantic recall / reminder (downgraded).</strong> This is the only place close to "field as memory," and it must stay downgraded. When raw evidence has been compressed, dropped, or reduced to a cold gist, the field may generate a low-confidence semantic reminder ("there was probably a phone-related interaction here"). This is never a grounded answer — only a hypothesis / cue / reminder. The system must then check the buffer for a matching gist token, summary, event node, or time range; if no evidence is found, it answers with low confidence or abstains. So C is graceful degradation, not the main line. The irony to state openly: C is the <em>only</em> role that intrinsically needs generativity; A and B can both be done discriminatively. So the most "field-like" role is the one we deliberately keep non-core.</p>
+        <p class="idea-body"><strong>Reviewer-safe thesis.</strong> "We do not claim that a continuous field replaces external memory storage. Instead, long-horizon video memory needs two complementary components: a discrete evidence buffer for grounded storage, and a continuous query-conditioned field for modeling retrieval, retention, and degradation over that buffer. The buffer stores what can be verified; the field predicts where to search, what to preserve, and how to gracefully degrade under bounded memory."</p>
+        <p class="idea-body"><strong>Arguments to retire.</strong> Stop using: "ANN can't scale to long video," "the vector index overflows," "the continuous field is the infinite-memory body," "the field stores what the buffer can't," "context is limited so the field is necessary," and "long video is long, so a continuous field is naturally necessary." The safe chain is instead: context is limited → we need external memory → the external-memory body is a bounded evidence buffer → on that buffer the field is only a learned retrieval / retention / degradation prior whose necessity is empirical.</p>
+        <p class="idea-body"><strong>Recommendation (updated by 021).</strong> The field is the chosen high-risk, high-reward <em>core</em> contribution, and its "necessity is empirical" clause is made concrete as the discrete ↔ amortized bit-budget crossover (021). The discrete-first discipline in this section is not a demotion of the field but its honest guard rail: build the strong discrete baselines (ANN + graph + gist tokens) that share the same bit budget, because they are exactly what the crossover must beat. The stable fallback — Streaming Multi-hop Memory QA + a grounded buffer / graph / session architecture + evidence-chain evaluation — is what keeps the paper alive only if the crossover fails (the kill criterion in 021).</p>
+        <ul class="key-points">
+          <li><strong>Storage stays discrete:</strong> buffer / index / graph / gist token / PQ / coreset are the store; the field is not.</li>
+          <li><strong>Three justifications:</strong> A retrieval prior, B retention prior, C lossy gist recall — value is always on top of discrete storage.</li>
+          <li><strong>Form vs function:</strong> A and B can be discriminative, so the field must beat a learned discrete next-hop policy; C is the only role that needs generativity.</li>
+          <li><strong>B is the strongest fit:</strong> retention is a density / novelty problem; split future-utility off to a supervised predictor.</li>
+          <li><strong>Necessity is empirical:</strong> made concrete as the discrete ↔ amortized bit-budget crossover (021), with a committed kill criterion.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: discrete storage stays the warehouse; the field is the access / management layer above it.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Discrete store</strong><span>buffer, index, graph, gist, PQ, coreset</span></li>
+            <li><strong>A: retrieval prior</strong><span>stateful next-hop navigation</span></li>
+            <li><strong>B: retention prior</strong><span>density / novelty / budget management</span></li>
+            <li><strong>C: lossy recall</strong><span>low-confidence cue, then verify or abstain</span></li>
+            <li><strong>Empirical necessity</strong><span>must beat discrete baselines</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>repositioning</li>
+          <li>access vs storage</li>
+          <li>retrieval prior</li>
+          <li>retention prior</li>
+          <li>lossy recall</li>
+          <li>reviewer-safe thesis</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> One-liner — the continuous field is not a general replacement for memory storage, but it becomes necessary in the extreme regime identified in 021: under a fixed bit budget, past the discrete ↔ amortized crossover. The "arguments to retire" still hold for normal regimes (do not claim "ANN can't scale" in general); the precise, defensible claim is the crossover. The three justifications here (A retrieval, B retention, C lossy recall) are the mechanisms; 021 is the necessity proof and hero experiment.</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-020" data-status="open">
+      <h3 class="idea-title">Empirical plan and attribution traps for the field</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">Following the repositioning in 019, this fixes what must actually be proven and the credit-assignment traps that could make a "win" meaningless. What we should <em>not</em> try to prove: that the field beats FAISS at single nearest-neighbor lookup — that almost certainly fails. The field has to earn its place on horizon scaling, retention, or forgotten-memory recall, under a fixed memory budget.</p>
+        <p class="idea-body"><strong>Experiment 1 — fixed-budget horizon scaling.</strong> Grow the stream (10 min → 1 h → 4 h → 8 h → 24 h) with a fixed memory budget measured in <em>bits</em>, not token count, so amortized (weight) memory is compared fairly; this is the setup whose crossover is the hero result in 021. Baselines: ANN over retained embeddings; ANN + graph traversal; ANN + PQ / coreset / gist token; caption-RAG; M3-Agent-style memory; a <strong>learned discrete next-hop policy (non-generative)</strong>; field-guided graph / buffer navigation; field-guided retention + navigation. Metrics: evidence-chain recall, multi-hop accuracy, retrieval steps, latency, old-memory forgetting curve, hallucination rate. A field win should show up as <em>more stable multi-hop evidence-chain recovery as the horizon grows</em>, not as single-hop top-k.</p>
+        <p class="idea-body"><strong>Experiment 2 — retention policy.</strong> Fixed memory budget, same incoming stream, vary only retention: FIFO, LRU, reservoir sampling, frequency-based, novelty-based, heuristic importance, learned importance predictor, field-guided retention. The storage-related justification (B) holds only if field-guided retention keeps more of the evidence that future queries actually need at the same capacity.</p>
+        <p class="idea-body"><strong>Experiment 3 — forgotten-memory gist recall (riskiest, most unique).</strong> Deliberately drop a fraction of raw clips, keeping only compressed cold memory. Compare ANN over gist tokens, PQ / coreset, summary buffer, graph summary, field-generated gist, and field + snap-to-nearest cold token. Metrics: gist correctness, calibration, hallucination rate, deletion compliance, abstention quality. This is the only place the field's generative nature could be uniquely useful (justification C) — but a strong ANN + gist / PQ baseline will be hard to beat, so treat a positive result as the high-reward, not the expected, outcome.</p>
+        <p class="idea-body"><strong>Attribution trap 1 — horizon scaling mostly measures retention, not navigation.</strong> Under a fixed budget the buffer holds a bounded set; as the horizon grows, more is dropped, so old-evidence recall falls. ANN and field then search the <em>same</em> retained set: if the evidence was kept, ANN (with graph) finds it; if it was dropped, neither does. So Experiment 1's curve is dominated by what was retained (Experiment 2 / B), not by the navigation field (A). Do not attribute horizon-scaling gains to navigation. Isolate cleanly: to test navigation, feed every method the <em>same</em> retained buffer (retention fixed) and vary only the navigation strategy; to test retention, fix navigation and vary retention; if the hero figure uses horizon scaling, label and attribute it as a retention / whole-system result, not a navigation-prior result.</p>
+        <p class="idea-body"><strong>Attribution trap 2 — form vs function.</strong> Without the learned discrete next-hop baseline in Experiment 1, a navigation "win" cannot be attributed to the continuous / generative form rather than to "any learned navigation." That baseline is mandatory.</p>
+        <p class="idea-body"><strong>Attribution trap 3 — query quality vs buffer recall.</strong> A hop can be correct while the buffer simply fails to retrieve it; with retrieval-only feedback, good hops get punished for buffer failures. Credit assignment must separate "asked wrong" from "asked right but not found," anchored on answer outcome and shadow-store counterfactuals (ties to 016).</p>
+        <p class="idea-body"><strong>Attribution trap 4 — density vs future-utility.</strong> In retention (B), keep the field's density / novelty signal separate from a supervised deferred-utility predictor; otherwise a retention win cannot be credited to the field rather than to the utility predictor.</p>
+        <ul class="key-points">
+          <li><strong>Don't test:</strong> field vs FAISS on single nearest-neighbor — it loses.</li>
+          <li><strong>Three experiments:</strong> horizon scaling, retention policy, forgotten-gist recall, all at fixed budget.</li>
+          <li><strong>Trap 1:</strong> horizon scaling is dominated by retention; isolate navigation by fixing the retained buffer.</li>
+          <li><strong>Trap 2:</strong> include a learned discrete next-hop baseline to isolate the generative form.</li>
+          <li><strong>Traps 3–4:</strong> separate query quality from buffer recall, and density from future-utility.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: three experiments and the isolation that keeps attribution honest.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Exp 1</strong><span>fixed-budget horizon scaling</span></li>
+            <li><strong>Exp 2</strong><span>retention policy at fixed capacity</span></li>
+            <li><strong>Exp 3</strong><span>forgotten-memory gist recall</span></li>
+            <li><strong>Isolate</strong><span>fix retention to test navigation</span></li>
+            <li><strong>Attribute</strong><span>form vs function, density vs utility</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>empirical plan</li>
+          <li>horizon scaling</li>
+          <li>retention policy</li>
+          <li>gist recall</li>
+          <li>attribution traps</li>
+          <li>ablation isolation</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> The single most common way this project could fool itself is reporting a horizon-scaling gain (driven by retention) as evidence for the navigation field. Fix the retained buffer to isolate navigation, include the discrete next-hop baseline, and anchor every claim on answer-level evidence chains. <em>The hero experiment for the field-as-core thesis is the bit-budget crossover in 021; Experiment 1 below should fix the budget in bits (not token count) to stay fair to amortized memory.</em></p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-021" data-status="active">
+      <h3 class="idea-title">Core thesis: the discrete ↔ amortized memory crossover (where the field becomes necessary)</h3>
+      <details class="foldable idea-details" open>
+        <summary>Show full description</summary>
+        <p class="idea-body">This is the core contribution. It upgrades the positioning in 006 and gives the "necessity is empirical" clause in 019 a concrete, falsifiable form, with the continuous flow / diffusion field as the center of the paper, not an optional module. The non-negotiable rule: for the field to be core and to clear an ICLR bar, it must claim what discrete retrieval <strong>fundamentally cannot do</strong> — not what it does slightly worse. If the pitch is "the field retrieves more accurately than ANN," a strong ANN + graph + learned-reranker baseline will dominate or tie, and the contribution collapses. The field must therefore stand on the capability boundary of discrete memory.</p>
+        <p class="idea-body"><strong>Four things discrete retrieval fundamentally cannot do.</strong> (1) <em>Return what was never stored.</em> ANN can only return stored tokens; after compression / forgetting the clip is gone, so ANN returns nothing or a wrong neighbor, whereas a model of <code>p(z | q)</code> can interpolate a latent hypothesis on the manifold (associative-memory / pattern completion). (2) <em>Model density.</em> Distribution-faithful retention and novelty / surprise (low density = novel = keep) require a density model; a discriminative importance predictor needs labels, while the field gives unsupervised density for free. (3) <em>Bridge an incomplete graph.</em> Discrete multi-hop needs the right edges to exist (cross-hour entity re-ID and causal edges are never fully built); continuous transport along the manifold can bridge missing edges, so the field's relative advantage grows as the graph gets sparser. (4) <em>Give a posterior, not a point.</em> The field yields a distribution over where evidence is, enabling calibrated abstention ("does this evidence even exist, and how sure am I?"); ANN returns distances, not a calibrated posterior.</p>
+        <p class="idea-body"><strong>The information-theoretic wedge.</strong> Frame memory under a <strong>fixed bit budget</strong> with unbounded intake. With budget <code>B</code> bits and per-token cost <code>c</code> bits, a discrete store holds at most <code>B / c</code> tokens. As the number of distinct events <code>N</code> grows without bound, eventually <code>N &gt; B / c</code>: you cannot keep even one token per event, and discrete recall on the dropped events falls toward zero. An amortized model spends the same <code>B</code> bits on <em>weights</em> that approximate <code>p(z)</code>; its per-event fidelity should degrade <em>smoothly</em> with <code>N</code> rather than collapsing to zero. The scientific claim is a <strong>crossover / phase transition</strong>: below some events-per-budget ratio discrete memory wins (this is exactly the regime 019 protects — do not claim "ANN can't scale" in general), but past the crossover, amortized distributional memory is necessary, not merely convenient. The contribution is locating and characterizing that crossover.</p>
+        <p class="idea-body"><strong>Hybrid, not a reversal.</strong> This partially re-admits the "neural-field as storage" idea that 013 rejected — but only for the long tail. The architecture stays hybrid: the discrete buffer exactly grounds recent / important evidence; the field's weights cover the long tail lossily and with calibrated confidence. Grounding is preserved because the field's output is a <em>proposal</em>, not an answer: the field generates a latent hypothesis → the system verifies it against whatever residual evidence exists (gist tokens, graph neighbors, time ranges) → if verifiable it answers grounded, otherwise it abstains with calibrated low confidence. The field expands recall; verification keeps answers traceable.</p>
+        <p class="idea-body"><strong>Core thesis statement.</strong> "We model unbounded video memory as a continuous, query-conditioned distribution learned by flow matching, giving a single mechanism for retention (density), retrieval (transport), and graceful degradation (sampling under uncertainty). Under a fixed bit budget, discrete retrieval is information-theoretically capped once events exceed storable tokens, whereas amortized distributional memory degrades gracefully — establishing a regime where a continuous memory field is necessary, not merely convenient."</p>
+        <p class="idea-body"><strong>Hero experiment (the crossover).</strong> Fix the budget in <em>bits</em> (fair to generative memory), grow the horizon until storable tokens per event drop below one, and plot evidence-chain recall / multi-hop accuracy against the events-per-bit-budget ratio. Baselines must spend the same bits: ANN + gist tokens, PQ / coreset, graph summary, and "more-but-coarser tokens." A field win is a visible <strong>crossover</strong>: past it, all discrete methods collapse while the field holds a meaningfully higher (lossy but non-zero) curve. <strong>Kill criterion (commit to it up front):</strong> if no crossover appears — i.e. discrete + gist tokens stay sufficient at every tested ratio — the field has no moat and the project falls back to the task + system + evaluation contribution.</p>
+        <p class="idea-body"><strong>Honest risk account.</strong> (1) <em>The long tail may never be queried.</em> If useful queries always land on recent / important evidence that the discrete buffer already holds, the field's long-tail coverage is academic. The benchmark must therefore deliberately include multi-hop questions that <em>require</em> hitting compressed / dropped evidence; without that, the crossover figure cannot be produced. (2) <em>Hallucination.</em> Generation-as-proposal + verification + abstention contains it, but calibrated confidence needs its own mechanism and its own experiment (currently unspecified). (3) <em>Cost.</em> This is the high-risk, high-reward path; a 10-week window likely yields only an early crossover signal on a dataset subset, not the full paper.</p>
+        <ul class="key-points">
+          <li><strong>Field as core:</strong> it must claim what discrete retrieval fundamentally cannot do, not what it does slightly worse.</li>
+          <li><strong>Four fundamental limits:</strong> return-only-stored, no density, needs a complete graph, no calibrated posterior.</li>
+          <li><strong>The wedge:</strong> under a fixed bit budget, discrete recall is capped once events exceed storable tokens; amortized memory degrades gracefully — a crossover.</li>
+          <li><strong>Hybrid grounding:</strong> discrete buffer grounds recent / important; field covers the long tail as a proposal, verified or abstained.</li>
+          <li><strong>Kill criterion:</strong> no crossover ⇒ no moat ⇒ fall back to task + system + evaluation.</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>Figure: the hero claim — a crossover where discrete memory collapses and amortized memory holds.</figcaption>
+          <ol class="memory-flow">
+            <li><strong>Fixed bit budget</strong><span>B bits, unbounded intake</span></li>
+            <li><strong>Discrete cap</strong><span>≤ B/c tokens; recall → 0 past N &gt; B/c</span></li>
+            <li><strong>Amortized field</strong><span>weights model p(z); graceful decay</span></li>
+            <li><strong>Crossover</strong><span>regime where the field is necessary</span></li>
+            <li><strong>Proposal → verify</strong><span>grounded answer or calibrated abstain</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>core thesis</li>
+          <li>discrete vs amortized</li>
+          <li>bit-budget crossover</li>
+          <li>associative memory</li>
+          <li>graceful degradation</li>
+          <li>kill criterion</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>Related work</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2008.02217" target="_blank" rel="noopener">Hopfield Networks is All You Need</a> — <span class="relevance">Associative memory / pattern completion in weights: the mechanism behind "return what was never stored," central to the amortized side of the crossover.</span></li>
+            <li><a href="https://arxiv.org/abs/2210.02747" target="_blank" rel="noopener">Flow Matching for Generative Modeling</a> — <span class="relevance">The generative objective for the query-conditioned distribution that does retention (density) and retrieval (transport) in one model.</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04620" target="_blank" rel="noopener">Learning to (Learn at Test Time)</a> — <span class="relevance">Amortizing a growing stream into bounded model state / weights; precedent for the long-tail weight-memory tier.</span></li>
+            <li><a href="https://arxiv.org/pdf/2203.08913" target="_blank" rel="noopener">Memorizing Transformers</a> — <span class="relevance">The discrete kNN-memory side of the crossover and the baseline whose recall is capped under a fixed token budget.</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>Notes:</strong> This is the spine if the field must be the core ICLR contribution. The whole paper then lives or dies on the crossover figure, so design the benchmark to force long-tail multi-hop queries, fix the budget in bits, build the discrete + gist baselines that share that budget, and commit to the kill criterion before running. Supersedes the "demote the field" recommendation in 019: the field is the chosen high-risk core, with 019's discrete-first discipline kept as the fallback if the crossover fails.</p>
+      </details>
+    </article>
+
+  </section>
+
+  <section class="changelog">
+    <h2>Discussion log</h2>
+    <ol>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Promoted the continuous field to the core ICLR contribution (021): the discrete ↔ amortized memory crossover under a fixed bit budget — discrete retrieval is information-theoretically capped once events exceed storable tokens, while amortized distributional memory degrades gracefully; with the four fundamental limits of discrete retrieval, a hybrid grounding rule (generate proposal → verify → ground or abstain), the crossover hero experiment, and a committed kill criterion. Upgraded the 006 thesis to this crossover claim, reconciled 019 (necessity made concrete as the crossover; discrete-first kept as guard rail and fallback), and fixed 020 Experiment 1 to budget in bits.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Repositioned the continuous field as an access / management layer rather than storage (019): the discrete buffer / index / graph / gist token / PQ / coreset is the store, the field must add value on top via retrieval prior (A), retention prior (B), or lossy gist recall (C), and its necessity is empirical. Added the empirical plan and attribution traps (020): fixed-budget horizon-scaling, retention-policy, and forgotten-gist experiments, the learned-discrete-next-hop baseline that isolates the generative form, and the retention-vs-navigation attribution isolation. Cross-linked 005 and 006 to the new framing.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added open-ended paper-readiness questions (018): executable algorithms, train/freeze/online boundaries, evidence-chain annotation, baseline/ablation matrix, multimodal evidence, risk controls, and hero result.</li>
+    </ol>
+    <details class="foldable changelog-archive">
+      <summary>Earlier entries (29)</summary>
+      <ol>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added unified memory architecture (017): buffer as storage, graph as structure, field as navigation, retrieval session as control, and front-end context as evidence-based reasoning.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added core contribution and ICLR positioning (006): frames the project as Streaming Multi-hop Memory QA and distribution-guided evidence navigation over a grounded buffer, with a two-agent loop, minimum viable contribution, and horizon-scaling evaluation claim.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added working direction (016) as an open question: a query-quality critic over a frozen proposer — keep the decomposition proposer frozen, train a critic on retrieval feedback, answer outcome, LLM-as-judge, and counterfactuals; promotes cue quality (008/010) to a trainable objective.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added Difficulty 3 (015) as an open problem: the two-head seam between short-term context and the long-term buffer — recent boundary, fusion contract, stateful multi-hop, and moving query decomposition into the trainable lane.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Cited missing related work: graph memory (007: HippoRAG, AriGraph), streaming/long-video memory (008: MovieChat, Flash-VStream), multi-hop VideoQA (009: NExT-QA, Grounded egocentric QA), on-policy distillation (011), and datasets Ego4D / EgoSchema / QAEgo4D / MovieChat-1K (012); marked buffer construction (014) as an open question.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Repositioned the continuous field as a retrieval prior over an explicit buffer (005, 013): the buffer is the memory and the only grounded evidence; neural-field weight memory is at most a sampler / cold-tier gist.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added trainable memory-field spec (013): latent tokens, VLM/diffusion encoders, query conditioning, supervision and loss, cold-start, and neural-field cold-tier weight memory.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added buffer-construction section (014): distribution-faithful retention plus importance sampling for essential events, tiering, dedup, and deferred-utility training.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added evaluation section (012): datasets, the unbounded-stream multi-hop setting, metrics, baselines, and M3-Agent / M3-Bench.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Added “why continuous” to idea 005: bounded-parameter compression for unbounded video intake, with hot/warm/cold tiers and graceful degradation.</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — Clarified on-policy memory distillation as controller training, not memory representation.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added training and test-time learning section with API-model and distillation strategy.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added highlighted key-point bullets across major sections.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added methodology section for the two-agent memory loop.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Polished shared CSS: dark mode, numbered cards, status pills, and stepped figures.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Split multi-hop QA into a separate evidence-chain retrieval block.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added multi-hop QA examples and clarified schema/clip storage with flow cues.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added Difficulty 2 on efficient storage, retrieval, and front/back memory agents.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Expanded Difficulty 1 with graph/flow decomposition and a concept figure.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added open Difficulty 1 on memory structure, hierarchy, and query navigation.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Highlighted that most baselines use explicit text/caption memory and lose detail in streaming video.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Clarified that memory fields guide retrieval rather than replacing concrete memory evidence.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added continuous memory field contribution with figure and related works.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added missing related-work context from old files.</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — Added related-work summaries for RIVER, ReMEmbR, and StreamBridge.</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — Cited Thinking Machines Lab Interaction Models as related work for the interactive-agent architecture.</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — Added agentic interactive memory architecture notes and sub-goals.</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — Added key notes to the full continuous-memory project document.</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — Initial problem formulation drafted from internship brief and literature notes.</li>
+    </ol>
+    </details>
+  </section>
+</body>
+</html>

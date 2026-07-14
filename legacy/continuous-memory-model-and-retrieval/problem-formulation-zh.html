@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>连续记忆模型与检索 — 问题表述</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="doc-header">
+    <h1>连续记忆模型与检索</h1>
+    <p class="meta">最后更新：<time datetime="2026-06-15">2026-06-15</time></p>
+    <nav class="lang-nav">
+      <a href="problem-formulation-en.html">English version</a> |
+      <a href="../../.cursor/skills/nec-brainstorming/ideas/index.html">头脑风暴首页</a>
+    </nav>
+  </header>
+
+  <section class="project" data-project="continuous-memory-model-and-retrieval" id="problem-formulation">
+    <h2>研究方向</h2>
+    <p class="project-summary">暑期实习项目<em>Streaming Video LLM with Infinite Memory（流式视频大模型与无限记忆）</em>的第 2 部分：如何在连续视频流上存储、组织并检索记忆，而无需将所有历史帧放入 LLM 上下文窗口。</p>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-001" data-status="active">
+      <h3 class="idea-title">问题表述</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+
+        <p class="idea-body"><strong>背景。</strong> 总项目分为两部分：（1）高效流式处理；（2）高效记忆存储与检索。本方向负责（2）。已有工作提出了多种记忆与流式架构改造，但<strong>尚无任何方案能在支持丰富自然语言查询的同时，承载真正意义上的无限视频上下文</strong>。</p>
+
+        <p class="idea-body"><strong>问题定义。</strong> 给定实时到达的连续视频流 <code>V = {f₁, f₂, …}</code>，设计记忆模块 <code>M</code>，使其能够：</p>
+        <ol class="problem-list">
+          <li><strong>增量写入</strong> — 帧或片段到达时即写入，无需事先拥有完整视频。</li>
+          <li><strong>选择性存储</strong> — 在单帧计算与存储成本有界的前提下，保留关键信息。</li>
+          <li><strong>按需检索</strong> — 对自然语言查询 <code>Q</code>，检索相关时间证据作答，而非将全部历史重新编码进上下文。</li>
+          <li><strong>时间尺度可扩展</strong> — 支持数小时至数天的第一人称或流式视频，检索成本不随朴素全上下文注意力线性增长。</li>
+          <li><strong>证据可溯源</strong> — 返回的时间区间、事件或摘要可追溯到已存储的帧、片段或结构化记忆条目。</li>
+        </ol>
+
+        <div class="example-query">
+          <cite>示例查询</cite>
+          <p>「从拿出手机到放回口袋之间，我做了什么？」</p>
+          <p class="expected"><strong>示意回答：</strong> 你打开了 Instagram 刷了一会儿 meme，然后玩了 Candy Crush 并拍了几张自拍。</p>
+        </div>
+
+        <p class="idea-body"><strong>难点。</strong> 该查询不是单次最近邻检索，而需要<strong>多跳时序推理</strong>：</p>
+        <ol class="problem-list">
+          <li>定位锚点事件：拿出手机。</li>
+          <li>定位结束锚点：手机放回口袋。</li>
+          <li>以流式兼容的方式遍历并总结两锚点之间的片段。</li>
+        </ol>
+        <p class="idea-body">仅依赖标准视觉–语言嵌入（如 CLIP 类模型）不够。系统很可能需要<strong>智能体式循环</strong>：查询 → 规划 → 搜索记忆 → 检查证据 → 精炼 → 作答。存储整日视频并在查询时高效检索，仍是开放的系统与建模问题。</p>
+
+        <p class="idea-body"><strong>起步方向。</strong> 可优先探索的具体基线：</p>
+        <ol class="problem-list">
+          <li>从入站流中提取帧或片段嵌入。</li>
+          <li>写入外部索引（如 FAISS），并附带时间元数据。</li>
+          <li>查询时由 LLM 智能体导航索引 — 搜索、浏览摘要、检查帧（DVD 式工具调用是相关范式）。</li>
+        </ol>
+
+        <p class="idea-body"><strong>评估框架。</strong> 改造现有时序视频基准（如 Ego4D）与流式交互基准（如 RIVER 的回顾性记忆任务）。成功标准不仅是生成合理文本，而是能在长流上回答区间与事件类查询，且证据可检查。</p>
+
+        <ul class="key-points">
+          <li><strong>核心任务：</strong>为几乎不会结束的视频流设计可持续运行的记忆模块。</li>
+          <li><strong>主要难点：</strong>回答区间和事件问题时必须回到证据，而不是只做一次最近邻检索。</li>
+          <li><strong>第一版基线：</strong>结合 clip embedding、时间元数据、向量检索和能检查证据的 LLM agent。</li>
+        </ul>
+
+        <ul class="idea-tags">
+          <li>无限记忆</li>
+          <li>流式视频</li>
+          <li>检索</li>
+          <li>多跳推理</li>
+          <li>智能体检索</li>
+        </ul>
+
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/pdf/2203.08913" target="_blank" rel="noopener">Memorizing Transformers</a> — <span class="relevance">显式外部 key–value 记忆与 kNN 检索；在嵌入上做 FAISS 式索引的基线。</span></li>
+            <li><a href="https://proceedings.neurips.cc/paper_files/paper/2025/file/8190b210e9808e54ee16263b673a847d-Paper-Conference.pdf" target="_blank" rel="noopener">Deep Video Discovery (DVD)</a> — <span class="relevance">在多粒度视频库上进行智能体检索；查询时记忆导航的强范式。</span></li>
+            <li><a href="https://github.com/OpenGVLab/RIVER" target="_blank" rel="noopener">RIVER</a> — <span class="relevance">流式基准，区分回顾性记忆、实时感知与前瞻响应。</span></li>
+            <li><a href="https://microsoft.github.io/LatentSpatialMemory/" target="_blank" rel="noopener">Mirage</a> — <span class="relevance">视频世界模型中的隐式空间记忆；不仅限于字幕 + 向量检索的架构思路。</span></li>
+            <li><a href="https://github.com/Victorwz/LongMem" target="_blank" rel="noopener">LongMem</a> — <span class="relevance">LLM 长上下文记忆架构；NLP 侧外部记忆设计参考。</span></li>
+          </ul>
+        </details>
+
+        <p class="idea-notes"><strong>备注：</strong> 待决问题 — 索引粒度（帧 / 片段 / 事件）、何时巩固或遗忘、直播流中如何更新记忆、如何结合显式检索与隐式记忆场。配套方向：智能体原子技能分解与组装。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-002" data-status="active">
+      <h3 class="idea-title">关键备注</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">核心研究备注是：“无限记忆”不应只被理解为扩大上下文窗口。它更像是一个记忆管理问题：写入什么、如何压缩或巩固、之后如何检索，以及如何让答案能够通过时间证据被审查。</p>
+        <p class="idea-body"><strong>近期里程碑。</strong> 在探索隐式或生成式记忆之前，先建立一个显式、证据可追溯的记忆基线：</p>
+        <ol class="problem-list">
+          <li>将流式观察转为帧、片段或事件嵌入。</li>
+          <li>为每条记忆附加时间元数据与轻量摘要。</li>
+          <li>把记忆条目写入向量索引，并配合具有时间线意识的元数据存储。</li>
+          <li>使用 LLM 智能体进行搜索、检查与迭代检索，直到答案能够引用具体时间区间或事件。</li>
+        </ol>
+        <p class="idea-body"><strong>研究重点。</strong> 重要贡献不只是检索准确率，而是记忆策略：决定哪些观察会成为长期记忆、何时合并记忆，以及检索如何恢复长视频流中的多跳时序结构。</p>
+        <ul class="key-points">
+          <li><strong>不要把无限记忆等同于更大 context：</strong>重点是写入、保留、压缩、检索和验证。</li>
+          <li><strong>先测显式基线：</strong>等可追溯 baseline 能跑通后，再比较隐式或生成式记忆。</li>
+          <li><strong>策略本身是贡献：</strong>系统要学习哪些观察值得成为长期记忆。</li>
+        </ul>
+        <ul class="idea-tags">
+          <li>关键备注</li>
+          <li>记忆管理</li>
+          <li>证据支撑</li>
+          <li>基线设计</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong> 等显式基线能够在区间查询、锚点事件检索与证据可追溯性上被衡量后，再将隐式或生成式记忆作为后续对比方向。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-003" data-status="active">
+      <h3 class="idea-title">智能体式交互记忆架构</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">我们处理的是无限长的流式视频，因此系统必须在视频持续到达时运行，而不是等固定片段结束后再离线处理。预期方向是利用具备工具调用、策略改进与训练能力的智能体，让系统能够决定何时交互、检索什么，以及如何妥善保存记忆。</p>
+        <p class="idea-body"><strong>问题轴。</strong></p>
+        <ul class="idea-tags">
+          <li>流式视频</li>
+          <li>智能体</li>
+          <li>交互</li>
+          <li>记忆</li>
+        </ul>
+        <p class="idea-body"><strong>子目标。</strong></p>
+        <ol class="problem-list">
+          <li>设计交互式智能体：前端智能体实时与用户交互，后端智能体负责维护和更新记忆。</li>
+          <li>探索基于扩散模型的可导航记忆：将记忆表示为由查询条件化的分布，而不仅是离散文本或向量条目。</li>
+          <li>训练智能体高精度地管理记忆查询与检索，包括何时调用工具、检查证据并优化搜索。</li>
+          <li>比较短期显式记忆（上下文窗口内、通常是文本形式）与长期参数化记忆（以神经网络函数或分布形式表示）。</li>
+        </ol>
+        <p class="idea-body"><strong>架构备注。</strong> 前端智能体应追踪用户实时事件，并判断何时提问、提醒或请求澄清。后端智能体应负责保存和巩固记忆、暴露检索工具，并学习查询或更新记忆的策略。</p>
+        <ul class="key-points">
+          <li><strong>前端 agent：</strong>贴近用户、近期视频流和实时交互。</li>
+          <li><strong>后端 agent：</strong>维护记忆、工具、巩固策略和检索策略。</li>
+          <li><strong>训练目标：</strong>学会何时存储、何时查询、何时检查证据、何时保持安静。</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://thinkingmachines.ai/blog/interaction-models/" target="_blank" rel="noopener">Thinking Machines Lab：Interaction Models</a> — <span class="relevance">一种实时多模态交互架构，使用时间对齐的 micro-turn，前端交互模型负责实时存在感，异步后台模型负责工具调用与长程推理。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> 交互式智能体对于跟踪用户实时事件是必要的，并需要判断哪些记忆应被保留、查询、总结或压缩。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-004" data-status="active">
+      <h3 class="idea-title">相关工作基线：RIVER、ReMEmbR、StreamBridge</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>RIVER。</strong> RIVER 是 OpenGVLab 提出的面向 Video LLM 的实时交互评测 benchmark。它不是评估模型看完整个视频后再回答问题，而是评估模型在视频流持续输入时，能否边看边记、即时感知，并在未来线索出现时主动响应。其 retrospective memory、live perception、proactive response 三类任务，非常适合作为本项目的实时视频记忆评测参考。</p>
+        <p class="idea-body"><strong>ReMEmbR。</strong> NVIDIA ReMEmbR 是面向具身机器人的 long-horizon memory 系统。它用 VLM 为视频片段生成 caption，并将语义描述、embedding、时间信息、机器人位置信息和图像/视频证据写入向量数据库；查询阶段由 LLM agent 多轮检索，回答空间、时间和导航问题。它适合作为 caption-level RAG memory 的强系统基线。</p>
+        <p class="idea-body"><strong>StreamBridge。</strong> Apple StreamBridge 的目标是把 offline Video-LLM 改造成 proactive streaming assistant。它通过 memory buffer、round-decayed compression 和 activation model 支持长视频、多轮交互与主动响应。它与 streaming Video-LLM 方向直接相关，但其 memory 更接近上下文压缩，还不是可持久、可查询的无限外部记忆。</p>
+        <p class="idea-body"><strong>主要局限。</strong> 这些已有方法大多还是显式记忆表示：text query、caption、summary、caption embedding，或者写出来的 memory body。这样做的好处是容易检查，但会丢掉很多视觉细节、时间细节和弱信号。在流式视频里，这种压缩很容易让系统忘掉以后真正需要的小事件。</p>
+        <p class="idea-body"><strong>来自旧文件的补充。</strong> 最初项目简报还提到 Flash-VStream 作为流式视频处理参考，LongMem / Memorizing Transformers 作为长上下文或外部记忆参考。文献笔记进一步补充了 DVD 式智能体视频搜索、Mirage 式隐式空间记忆，以及 diffusion-style associative memory 作为潜在对比方向。</p>
+        <ul class="key-points">
+          <li><strong>RIVER：</strong>最适合作为实时交互评测参考。</li>
+          <li><strong>ReMEmbR：</strong>强 caption-level 具身记忆系统基线。</li>
+          <li><strong>StreamBridge：</strong>强 streaming assistant 基线，但更接近上下文压缩。</li>
+          <li><strong>关键缺口：</strong>文本 / caption 记忆会丢失稠密视觉和时间细节。</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://github.com/OpenGVLab/RIVER" target="_blank" rel="noopener">RIVER</a> — <span class="relevance">定义实时视频交互中的回顾性记忆、实时感知和主动响应任务。</span></li>
+            <li><a href="https://nvidia-ai-iot.github.io/remembr/" target="_blank" rel="noopener">NVIDIA ReMEmbR</a> — <span class="relevance">VLM caption、向量数据库和 LLM agent 结合的具身长期记忆系统。</span></li>
+            <li><a href="https://github.com/apple/ml-streambridge" target="_blank" rel="noopener">Apple StreamBridge</a> — <span class="relevance">通过压缩记忆和响应触发模型，将离线 Video-LLM 转为主动流式助手。</span></li>
+            <li><a href="https://github.com/IVGSZ/Flash-VStream/tree/main" target="_blank" rel="noopener">Flash-VStream</a> — <span class="relevance">最初项目简报中的流式视频 / 视觉参考，和高效视频流处理相关。</span></li>
+            <li><a href="https://github.com/Victorwz/LongMem" target="_blank" rel="noopener">LongMem</a> — <span class="relevance">NLP 侧长上下文记忆架构参考，可用于思考上下文窗口之外的外部记忆设计。</span></li>
+            <li><a href="https://arxiv.org/pdf/2203.08913" target="_blank" rel="noopener">Memorizing Transformers</a> — <span class="relevance">外部 kNN 记忆基线，可启发帧、片段或 caption embedding 的向量库检索。</span></li>
+            <li><a href="https://proceedings.neurips.cc/paper_files/paper/2025/file/8190b210e9808e54ee16263b673a847d-Paper-Conference.pdf" target="_blank" rel="noopener">Deep Video Discovery</a> — <span class="relevance">长视频上的智能体搜索范式，包括浏览、片段搜索和帧检查工具。</span></li>
+            <li><a href="https://microsoft.github.io/LatentSpatialMemory/" target="_blank" rel="noopener">Mirage</a> — <span class="relevance">隐式空间记忆参考，提示记忆表示不必局限于 caption + 向量检索。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> 可以将 RIVER 作为评测参考，将 ReMEmbR 作为具身长期记忆系统基线，将 StreamBridge 作为 Video-LLM 流式化框架基线。旧文件还提示应保留显式检索基线与隐式 / 生成式记忆基线作为对比族。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-005" data-status="active">
+      <h3 class="idea-title">关键贡献：连续记忆场</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">一个核心设计选择是：连续场到底是什么。显式 memory buffer 才是真正的长期记忆——它存证据，并建模这条流到底包含了什么的真实分布。连续场不是这个存储——它是 buffer 上一个学出来的、有界大小的检索先验。给定 query，它建模相关记忆大概在哪，让智能体可以从 buffer 采样、而不是扫全部，然后一步步走：先找锚点，再沿时间或语义方向走，检查证据，修正路径。</p>
+        <p class="idea-body"><strong>buffer 是记忆，场是先验。</strong>buffer 分层存证据——热层存原始片段，温层存 schema 和指针，冷层存紧凑摘要——并通过采样来查询。场从不存储或重建证据，它只预测该去哪采样。所以查询长期记忆，就是在场的引导下从 buffer 做重要性采样，而答案始终 ground 在从 buffer 取出的具体证据上。</p>
+        <p class="idea-body"><strong>那为什么还要一个连续先验？</strong>流式视频是无限摄入。我们靠对 buffer 分层和压缩把存储控制在有界，靠在它之上学一个固定大小的连续先验、而不是扫扁平向量库来保持检索可控。视频记忆本来就不确定、稠密、连续——事件重叠，物体状态渐变，有用证据藏在明显片段之间——所以一个连续的、以 query 为条件的先验（flow matching 或 diffusion）是建模“该往哪看”、并把 query 推向 buffer 正确区域的自然方式。</p>
+        <p class="idea-body"><strong>分层与优雅降级。</strong>所有层都活在 buffer 里，只是保真度不同。热记忆保留原始片段和稠密特征，用于精确 grounding；温记忆保留 schema 和指针，部分可被重新检视；冷记忆保留紧凑摘要。场只引导该采样哪一层、哪个区域，不决定答案本身。最近的问题仍能精确回答，久远的问题降级为带置信度的要点，目标是优雅遗忘，而不是灾难性幻觉。</p>
+        <figure class="memory-figure">
+          <figcaption>图：buffer 分层存证据，场是“该去哪采样”的先验。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>热</strong><span>最近/重要的原始片段，精确 grounding</span></li>
+            <li><strong>温</strong><span>schema + 指针，部分可重新检视</span></li>
+            <li><strong>冷</strong><span>留在 buffer 里的紧凑摘要</span></li>
+            <li><strong>场 + 采样</strong><span>该去哪采样的先验；要点 + 置信度</span></li>
+          </ol>
+        </figure>
+        <ul class="key-points">
+          <li><strong>buffer = 记忆：</strong>显式分层 buffer 存证据，并建模真实的长期分布。</li>
+          <li><strong>场 = 先验：</strong>buffer 上学出来的、有界大小的检索先验；从不存储或重建证据。</li>
+          <li><strong>查询 = 采样：</strong>查询长期记忆就是在场的引导下从 buffer 做重要性采样。</li>
+          <li><strong>为什么连续：</strong>固定大小的连续先验让在无限、分层 buffer 上的检索保持可控。</li>
+          <li><strong>证据原则：</strong>答案始终 ground 在从 buffer 取出的具体证据上。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：在场先验引导下，对 buffer 做 query 导向的采样。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>视频流</strong><span>视频、音频、文本、时间</span></li>
+            <li><strong>buffer</strong><span>分层证据，真实分布</span></li>
+            <li><strong>场先验</strong><span>以 query 为条件，该去哪采样</span></li>
+            <li><strong>结构化查询</strong><span>锚点、实体、时间范围</span></li>
+            <li><strong>采样 + grounding</strong><span>从 buffer 取出的具体片段</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>检索先验</li>
+          <li>导航场</li>
+          <li>memory buffer</li>
+          <li>flow matching</li>
+          <li>结构化查询</li>
+          <li>优雅遗忘</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/pdf/2604.26841" target="_blank" rel="noopener">Language Diffusion Models are Associative Memories</a> — <span class="relevance">支持 diffusion-style language model 可以像 associative memory 一样工作，和 query-conditioned memory reconstruction 很接近。</span></li>
+            <li><a href="https://openreview.net/forum?id=KpaKtbGgUa" target="_blank" rel="noopener">MemoryField: Exploiting Gravitational Field for Long-term Memory Management</a> — <span class="relevance">可能相关的“场”式记忆管理思路；需要再仔细读，判断它是否能迁移到视频记忆。</span></li>
+            <li><a href="https://arxiv.org/abs/2606.09828" target="_blank" rel="noopener">Latent Spatial Memory for Video World Models</a> — <span class="relevance">展示视频模型可以维护 latent spatial memory，是 caption 或 vector chunk 之外的重要参考。</span></li>
+            <li><a href="https://rotalabs.ai/blog/field-theoretic-memory-for-ai-agents/" target="_blank" rel="noopener">Field-Theoretic Memory for AI Agents</a> — <span class="relevance">把 agent memory 看作连续场而不是离散存储的概念参考。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> 场是学出来的检索先验，不是记忆本身。buffer 才是真正的长期记忆、也是 grounding 的唯一证据来源；场只是让从 buffer 采样这件事变得可导航。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-006" data-status="active">
+      <h3 class="idea-title">核心贡献与 ICLR 定位</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>核心论点。</strong>流式视频记忆不应该被表述成“更大的 context window”或“不断增长的 caption 库”。更强的表述是：它是一个<strong>分布引导的证据导航问题</strong>。显式 evidence buffer 才是真正的记忆；在这个 buffer 上学习一个以 query 为条件的检索分布；交互式双 agent 系统负责实时构建、导航并从记忆中回答。<strong>核心、ICLR 级的主张（在 021 升级）</strong>把它收成一个可证伪的陈述：在固定 bit 预算 + 无界摄入下，一旦事件数超过可存 token 数，离散检索就被信息论封顶，而 amortized 连续记忆场优雅退化——所以过了一个可测量的 discrete ↔ amortized crossover 之后，场是必要的、而非仅仅方便的。</p>
+        <p class="idea-body"><strong>任务定义。</strong>如果目标是 ICLR 级别，问题本身要说清楚：<em>Streaming Multi-hop Memory QA</em>。视频流在线进入，记作 <code>S_t = {x_1, ..., x_t}</code>；模型不能假设一开始就看到完整视频；用户 query <code>q</code> 可以在任意时刻到来；答案必须由跨时间 evidence chain <code>E* = (m_a, m_b, m_c, ...)</code> 支撑，并返回 timestamp 或 clip pointer。评测要压力测试 horizon 增长、有界记忆、延迟，以及答案是否真的 grounded。</p>
+        <p class="idea-body"><strong>方法主张。</strong>显式 buffer <code>B_t = {m_i}</code> 存真实证据单元：clip pointer、timestamp、entity、schema、latent key、tier 和 importance。可学习组件不是记忆本身，而是导航先验 <code>p_theta(m | q, h, B_t)</code>；这里 <code>h</code> 是当前 retrieval session，包括已找到的 anchors、已访问区域、部分证据链和不确定性。多跳检索就是在这个分布下重复采样 / 导航，再 snap 回 buffer 里的真实证据。</p>
+        <p class="idea-body"><strong>系统主张。</strong>前端 agent 靠近用户：负责实时 context、交互、以及通过 in-context learning 做 query decomposition。后端 agent 拥有记忆构建和多跳导航：接收证据、维护 buffer / graph / field、运行有状态 retrieval session、把带类型和时间戳的证据返回给前端。前端不能直接相信 field 回答；它只能基于检索回来的真实证据回答。</p>
+        <p class="idea-body"><strong>新意在哪里。</strong>相比 caption-RAG 或 ReMEmbR 式记忆，它不是把长视频压成文本 caption。相比 MovieChat / Flash-VStream 式 memory compression，它不只是上下文管理，而是持久、可查询、可接地的长期记忆。相比 M3-Agent 式实体记忆，关键新增点是在 grounded buffer / graph 上学习连续导航分布。相比离线长视频 QA，这里的设定是在线、无界、交互式。</p>
+        <p class="idea-body"><strong>最小可成立贡献。</strong>如果连续先验最终没有打赢强 ANN / graph traversal baseline，paper 仍应该能站在任务和系统上：一个 streaming multi-hop memory benchmark、一个可接地的双 agent 记忆架构、以及严谨的 evidence-chain / forgetting-curve 评测。高风险高回报的主张是：在固定 memory budget 下，distribution-guided navigation 会随着 horizon 增长表现出更好的 scaling。</p>
+        <ul class="key-points">
+          <li><strong>核心 thesis：</strong>无界视频记忆是分布引导的证据导航，不是更大 context 或 caption 存储。</li>
+          <li><strong>新任务：</strong>Streaming Multi-hop Memory QA，在线摄入、有界记忆、答案带证据链。</li>
+          <li><strong>方法：</strong>显式 buffer 存证据；<code>p_theta(m | q, h, B_t)</code> 指导去哪采样和导航。</li>
+          <li><strong>系统：</strong>前端负责交互和 ICL 拆解；后端负责记忆构建和有状态多跳导航。</li>
+          <li><strong>ICLR 标准：</strong>在固定预算下证明 horizon-scaling 优势：evidence recall、多跳准确率、遗忘曲线和延迟。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：从流式输入到可接地答案的 paper-level 主张。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>流式输入</strong><span>在线视频、音频、元数据</span></li>
+            <li><strong>证据 buffer</strong><span>grounded 记忆单元和分层</span></li>
+            <li><strong>导航分布</strong><span><code>p_theta(m | q, h, B_t)</code></span></li>
+            <li><strong>双 agent 循环</strong><span>前端交互、后端导航</span></li>
+            <li><strong>证据链答案</strong><span>时间戳、片段、置信度</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>核心贡献</li>
+          <li>ICLR 定位</li>
+          <li>streaming multi-hop memory QA</li>
+          <li>分布引导导航</li>
+          <li>双 agent 系统</li>
+          <li>证据链</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://nvidia-ai-iot.github.io/remembr/" target="_blank" rel="noopener">ReMEmbR</a> — <span class="relevance">强显式 embodied-memory baseline，但主要是 caption / vector memory，而不是分布引导的视频证据导航。</span></li>
+            <li><a href="https://arxiv.org/abs/2307.16449" target="_blank" rel="noopener">MovieChat</a> — <span class="relevance">长视频记忆压缩 baseline；它能管理上下文，但没有定义持久的、分布引导的证据链检索。</span></li>
+            <li><a href="https://arxiv.org/abs/2508.09736" target="_blank" rel="noopener">M3-Agent / M3-Bench</a> — <span class="relevance">最接近的记忆 agent baseline，包含实体中心的 episodic / semantic memory；核心差异是学习导航分布和无界流式协议。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong>如果要冲 ICLR highlight，这一节应该作为主线：新任务、一个清晰方法主张、一个系统循环、一个 scaling story。不要让可选模块（OPD、query critic）在没有实验支撑时变成同等贡献。<em>核心主张是 021 的 discrete ↔ amortized crossover（场当核心）；019 提供"离散先行"的纪律，以及在 crossover 失败时（021 的 kill criterion）让论文活下来的兜底（任务 + 系统 + 评测）。</em></p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-007" data-status="active">
+      <h3 class="idea-title">难点 1：记忆结构与层级</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">这里的问题还没有结束：视频记忆在存储和查询时，到底应该怎样建模结构和层级？完全扁平的 memory field 对时序关系、多跳推理和证据定位都不够；但手工规定 episode → event → clip → frame 这种固定层级，又可能太僵硬，不适合开放式流式视频。</p>
+        <p class="idea-body">目前更自然的方向是：用 temporal-semantic graph 做脚手架，但让有用结构从视频流和 query 中长出来。状态变化、prediction error、实体连续性、时间邻近、反复共同检索、未来查询效用，都可以创建或强化节点和边。记忆场在这里提供粗粒度导航信号：告诉智能体应该往哪里看，但不直接给最终答案。</p>
+        <p class="idea-body">导航之后，trace 可以变成 cue / reminder：这些锚点、实体、时间范围和关系值得检查。智能体再把真实证据取回 context window，并视情况更新记忆：新建 event node，连接两个 clip，强化实体关系，压缩冗余片段，或者归档低效用 trace。这个讨论仍然是开放的；关键问题是哪些结构应该学习出来，哪些结构需要人为指定。</p>
+        <p class="idea-body">一个比较合理的拆法是：graph 负责存可解释结构，diffusion / flow matching 负责结构之上的不确定动态。节点可以是 frame、clip、event、entity、place、user goal 或 summary memory；边可以表示时间顺序、同一实体、状态转移、可能因果、共同检索，或者“经常被同一类 query 用到”。Flow 模块则可以分别管 node activation、edge update、retention state 和 hierarchy proposal。</p>
+        <p class="idea-body">关键不是把所有 graph 操作都生成化。有些操作应该保持确定、可审查，比如原始证据指针的保存。学习出来的 flow 更适合处理软决策：哪些节点应该被激活、哪些边应该增强、哪些记忆应该压缩、下一步应该探索图里的哪个区域。</p>
+        <ul class="key-points">
+          <li><strong>Graph 作用：</strong>用节点、边和证据指针保持记忆结构可检查。</li>
+          <li><strong>Flow 作用：</strong>处理激活、导航、保留和压缩等不确定软决策。</li>
+          <li><strong>开放问题：</strong>哪些层级需要人为指定，哪些应该从视频流和 query 使用中长出来。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：graph 负责结构，flow 负责导航与更新动态。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>流式证据</strong><span>帧、片段、音频、元数据</span></li>
+            <li><strong>记忆图</strong><span>节点、边、证据指针</span></li>
+            <li><strong>Flow 模块</strong><span>激活、边更新、保留状态</span></li>
+            <li><strong>Cue packet</strong><span>锚点、实体、候选路径</span></li>
+            <li><strong>上下文</strong><span>给智能体看的真实证据</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>开放难点</li>
+          <li>记忆层级</li>
+          <li>查询导航</li>
+          <li>时序图</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2502.17436" target="_blank" rel="noopener">Towards Hierarchical Rectified Flow</a> — <span class="relevance">在 flow dynamics 中建模层级；可启发 hierarchical memory distribution，但不是直接的记忆方法。</span></li>
+            <li><a href="https://arxiv.org/abs/2410.05954" target="_blank" rel="noopener">Pyramidal Flow Matching for Efficient Video Generative Modeling</a> — <span class="relevance">用空间和时间金字塔做视频生成；和长视频记忆的 coarse-to-fine 组织有关。</span></li>
+            <li><a href="https://arxiv.org/abs/2502.15855" target="_blank" rel="noopener">THFlow: Temporally Hierarchical Flow Matching</a> — <span class="relevance">展示不同模态或状态可以按不同节奏演化，可借鉴到记忆激活和证据细化的不同时间尺度。</span></li>
+            <li><a href="https://arxiv.org/pdf/2604.00236" target="_blank" rel="noopener">Hierarchical Discrete Flow Matching for Graph Generation</a> — <span class="relevance">coarse-to-fine 的离散图 flow；如果记忆结构是节点、边和保留状态的变化，这个方向很相关。</span></li>
+            <li><a href="https://arxiv.org/abs/2405.14831" target="_blank" rel="noopener">HippoRAG: Neurobiologically Inspired Long-Term Memory for LLMs</a> — <span class="relevance">用 LLM 构建无模式知识图 + Personalized PageRank 做单步多跳检索；是支持多跳推理的图结构记忆先例。</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04363" target="_blank" rel="noopener">AriGraph: Knowledge Graph World Models with Episodic Memory</a> — <span class="relevance">在探索中增量构建、融合语义与情景记忆的记忆图 agent；和这里提的时间-语义图脚手架很接近。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> 不要把层级说成已经解决。更谨慎的说法是：显式 graph 让记忆可检查，diffusion / flow 学习 activation、navigation、compression 和 forgetting 的策略，最后仍由 retrieved evidence 验证每条有用路径。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-008" data-status="active">
+      <h3 class="idea-title">难点 2：如何高效存储与检索</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">下一个关键问题是效率：系统不能把整个视频流都塞进一个 context window，但又要在用户实时交互时保持可用。一个比较自然的拆法是：前端 agent 靠近用户和实时视频，后端 memory agent 靠近长期记忆库。</p>
+        <p class="idea-body">前端 agent 负责即时交互。它维护一个小的 context window，主要放三类内容：最近的视频输入、从长期 buffer 检索回来的证据、以及当前用户目标。它不需要永久记住所有东西，而是要理解当下，并在需要时向后端请求正确的记忆证据。</p>
+        <p class="idea-body">后端 agent 负责维护长期记忆分布。新视频进入后，系统先把原始输入转成可管理的 evidence units 和 schema：clip、候选 event、entity track、关系、summary，以及指向原始证据的 pointer。然后 diffusion 或 flow matching 模块更新“到目前为止”的记忆分布：哪些记忆是活跃的，哪些未来可能有用，哪些应该压缩，哪些可以冷存但仍然可检索。</p>
+        <p class="idea-body">因为视频本身信息密度很高，schema 和 video clip 应该被看成简洁查询和存储的 handle，而不是完整记忆本体。比如 schema 可以记录“人物 A 在桌边拿起手机”，clip pointer 则保留真正的视觉证据。schema 让检索便宜，关联的 clip 让回答在视觉细节、时间顺序和物体状态上仍然有依据。</p>
+        <p class="idea-body"><strong>Flow matching vs diffusion。</strong> Diffusion 更成熟，也更适合作为 generator / denoiser。Flow matching 在这个记忆问题里可能更自然，因为它更像 latent transport：把 query 或 memory state 快速移动到有用区域。所以这里不应该说“flow 一定更好”，而是说：如果目标是实时 memory navigation 和 buffer management，flow matching 可能更贴合；如果目标是重建、去噪、补全缺失上下文，diffusion 仍然很有价值。</p>
+        <ul class="key-points">
+          <li><strong>前端上下文：</strong>近期视频、检索证据和当前用户目标。</li>
+          <li><strong>存储 handle：</strong>schema 和 clip pointer 让高密度视频可查询，但不替代原始证据。</li>
+          <li><strong>模型取舍：</strong>flow matching 更像导航器 / 更新器，diffusion 更像去噪器 / 重建器。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：面向高效检索的实时记忆循环。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>前端 agent</strong><span>最近视频流 + 用户交互</span></li>
+            <li><strong>Schema + clips</strong><span>简洁 handle + 真实证据</span></li>
+            <li><strong>范围分布</strong><span>事件、实体、不确定时间段</span></li>
+            <li><strong>Flow cue</strong><span>证据导航的粗路线</span></li>
+            <li><strong>Context window</strong><span>近期视频 + 检索证据</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>高效检索</li>
+          <li>前端 agent</li>
+          <li>后端记忆</li>
+          <li>重要性采样</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2307.16449" target="_blank" rel="noopener">MovieChat: From Dense Token to Sparse Memory</a> — <span class="relevance">Atkinson–Shiffrin 式的短期到长期记忆压缩，用于长视频；是在算力和内存受限下做分层压缩记忆的先例。</span></li>
+            <li><a href="https://github.com/IVGSZ/Flash-VStream/tree/main" target="_blank" rel="noopener">Flash-VStream</a> — <span class="relevance">带记忆机制的实时流式视频理解；是前端循环效率与延迟一侧的参考。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> 这里可能需要一个实时 memory evaluation 信号：不仅事后看检索准不准，还要看系统能否在延迟和 memory budget 约束下，把真正有用的记忆采样进 context window。Field / flow 的输出应该按 cue quality 来评估：它有没有把 agent 指向所需的证据范围？</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-009" data-status="active">
+      <h3 class="idea-title">Multi-hop QA：证据链式检索</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">Multi-hop QA 会让这个 memory design 更有必要。长视频里的问题往往不是“找一个片段回答”，而是要跨多个时间点、实体状态和事件关系组合证据。</p>
+        <p class="idea-body">例如：“我把手机从桌上拿起来之后，到放进口袋之前，中间跟谁说过话？”这至少需要几跳：找到“手机在桌上”的初始状态；找到“用户拿起手机”的事件；沿时间线追踪手机 / 用户；找到“放进口袋”的结束事件；在这个时间区间内检索 social interaction；最后聚合证据回答。</p>
+        <p class="idea-body">所以 retrieval 不能只是 top-k similarity search。更合理的是 query-guided memory traversal：query → 找 anchor events → 展开 temporal/entity graph → 检索中间证据 → 验证路径 → 放入 context window。这里 graph/schema 很重要，因为 multi-hop 需要显式关系：before / after、same entity、state transition、inside time interval、causal / likely caused by、co-occurred with、user goal related、object ownership / possession。</p>
+        <p class="idea-body">Flow matching 或 memory field 可以负责 soft navigation。它不是直接回答，而是预测下一跳应该往哪里走。一个更准确的设计说法是：memory field handles where to search; graph handles how evidence is connected; raw evidence handles whether the answer is true.</p>
+        <p class="idea-body">对于 multi-hop QA，前端 agent 的 context window 也不应该是一次塞 top-k，而应该维护一个 small reasoning workspace：当前 query、已找到的 anchor events、当前 candidate path、每一跳的 evidence snippet、缺失证据 / uncertainty，以及下一步 retrieval action。后端也不只是返回“相关片段”，而是返回 evidence chain，例如 anchor A → relation → anchor B → relation → clip C → answer support。</p>
+        <p class="idea-body">这也说明为什么视频高信息密度很关键。如果早期压缩只保留 caption，很多中间 hop 会丢掉。Multi-hop QA 需要保留 raw pointers 和 dense features，否则第二跳、第三跳可能根本走不下去。</p>
+        <ul class="key-points">
+          <li><strong>检索模式：</strong>query-guided traversal，而不是一次性 top-k search。</li>
+          <li><strong>推理工作区：</strong>在 context 中保留 anchor、候选路径、每跳证据和下一步动作。</li>
+          <li><strong>评测驱动：</strong>要求可验证证据链，而不只是合理文本答案。</li>
+        </ul>
+        <ul class="idea-tags">
+          <li>multi-hop QA</li>
+          <li>证据链</li>
+          <li>query-guided traversal</li>
+          <li>reasoning workspace</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2105.08276" target="_blank" rel="noopener">NExT-QA: Explaining Temporal Actions</a> — <span class="relevance">围绕因果和时序推理（而非单帧描述）的 VideoQA 基准；和这里关注的 before/after、多跳问题很接近。</span></li>
+            <li><a href="https://arxiv.org/abs/2312.06505" target="_blank" rel="noopener">Grounded Question-Answering in Long Egocentric Videos</a> — <span class="relevance">在长第一人称视频上联合做时间定位和回答（QAEgo4D / Ego4D-NLQ）；是证据接地、时间定位多跳答案的先例。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> Multi-hop QA 应该成为这个项目的核心 evaluation 和设计驱动力。它能很好地区分这个方向和普通 caption-RAG / memory buffer 方法，因为真正困难的不是“召回一个相关片段”，而是在无限视频记忆中构造可验证的证据路径。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-010" data-status="active">
+      <h3 class="idea-title">方法论：双 agent 记忆循环</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">方法上可以借鉴 interaction model framework 的思路：一个 front-end agent 靠近实时用户交互，另一个 back-end agent 靠近长期记忆系统。前端负责 presence、context window 和 query decomposition；后端负责 memory management、distribution update 和 evidence retrieval。</p>
+        <p class="idea-body">前端 agent 看到两类视觉上下文：一类是实时进入的近期视频，另一类是从长期记忆里检索回来的证据。它维护一个有限的 context window，里面放当前用户目标、最近视频观察、检索回来的 clip/schema，以及当前推理状态。新视频进入时，前端会把它转成简洁的 query handles：clip pointer、候选 event、entity track、object state、temporal anchor，以及 raw-evidence reference。这些 schema 是为了存储和查询方便，不应该替代高密度的视频证据本身。</p>
+        <p class="idea-body">当用户提出高层 goal 或 multi-hop question 时，前端 agent 要把它拆成可执行的 hops。比如“我刚才拿起手机之后，到放进口袋之前，中间跟谁说过话？”可以拆成：找到 phone entity，找到拿起手机事件，找到放进口袋事件，确定中间时间段，在这个时间段里搜索 conversation events，最后请求支持答案的视频片段。前端不是把一个模糊 query 丢给后端，而是把这些 hops 作为结构化查询发给后端。</p>
+        <p class="idea-body">后端 agent 维护长期记忆库和持续变化的 memory distribution。随着 schema 和视频证据进入，diffusion 或 flow matching 更新 event scope、entity scope、temporal range 和 memory importance 的分布。这里的目标不是直接生成答案，而是提供 coarse cue：哪部分记忆应该被激活，哪个证据范围应该被采样，哪些旧记忆应该压缩，哪些 clip 应该进入前端 context window。</p>
+        <figure class="memory-figure">
+          <figcaption>方法循环：前端交互、后端记忆分布、证据返回。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>实时输入</strong><span>近期视频、用户目标、context window</span></li>
+            <li><strong>Schema handles</strong><span>片段、事件、实体、原始证据指针</span></li>
+            <li><strong>可执行 hops</strong><span>高层问题变成结构化查询</span></li>
+            <li><strong>后端更新</strong><span>flow/diffusion 记忆分布</span></li>
+            <li><strong>证据返回</strong><span>采样 clip 和 schema 进入上下文</span></li>
+          </ol>
+        </figure>
+        <p class="idea-body"><strong>中文对话例子。</strong> 用户：“我刚才从桌上拿起手机之后，到放进口袋之前，中间跟谁说过话？” 前端 agent：“我先把这个问题拆成几个检索步骤：找手机实体、找拿起手机事件、找放进口袋事件、确定中间时间段，再检索这段里的对话事件。” 后端 agent：“我会根据这些 hops 激活对应的事件和实体分布，返回候选时间段、相关人物、以及可检查的视频片段。” 前端 agent：“我把返回的证据放进 context window，再基于具体 clip 回答，而不是只依赖 memory field 的猜测。”</p>
+        <p class="idea-body">这个方法还需要一个实时 memory evaluation 信号。系统要评估：后端分布和 importance sampler 是否能在延迟和预算约束下，把正确证据送进前端 context window。因此评测目标不只是 answer accuracy，还包括 cue quality、evidence-chain completeness、retrieval latency，以及高信息密度视频细节是否在 schema 压缩后仍然可恢复。</p>
+        <ul class="key-points">
+          <li><strong>前端 agent：</strong>把实时视频和高层目标转成可执行 query hops。</li>
+          <li><strong>后端 agent：</strong>更新记忆分布，并返回具体证据范围。</li>
+          <li><strong>重要性采样：</strong>决定哪些 clip 和 schema 值得进入前端 context window。</li>
+          <li><strong>评测指标：</strong>cue quality、证据链完整性、延迟，以及细节保留能力。</li>
+        </ul>
+        <ul class="idea-tags">
+          <li>方法论</li>
+          <li>双 agent 架构</li>
+          <li>context window</li>
+          <li>memory distribution</li>
+          <li>重要性采样</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong> 最干净的表述是：前端 agent 管实时理解和可执行 query hops；后端 agent 管记忆分布和证据返回。Flow matching 是 cueing / navigation 机制，不是最终记忆，也不是最终答案。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-011" data-status="active">
+      <h3 class="idea-title">训练与 test-time learning</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">训练方案首先要区分哪些东西真的能更新。如果系统使用 API 形式的大模型，例如 72B 以上的 Qwen 模型，就应该默认模型权重是固定的。Test-time adaptation 主要发生在 memory、prompt、tool-use trace、retrieval policy、schema 设计和 agent instructions 上，而不是直接 fine-tune 大模型本体。</p>
+        <p class="idea-body">如果后端使用较小、可控的模型，例如 7B 级别模型，则可以在需要时考虑更新后端模型。这应被看作一个独立的工程选择：它有利于低成本本地适应，但也带来稳定性风险。默认设计仍应保持前端 API 模型稳定，把主要学习压力放在 memory management 和 memory-distribution model 上。</p>
+        <p class="idea-body"><strong>On-policy distillation 的含义。</strong> 普通 distillation 通常是在固定离线数据集上训练：从 <code>D_offline</code> 采样输入，让 teacher 给输出，再让 student 模仿。On-policy distillation 则是在 student 当前策略自己诱导出来的状态分布上训练。也就是说，student 先在真实任务里跑起来，产生自己的 query、memory trajectory、retrieval path、memory update 和错误决策；然后 teacher、verifier 或 reward model 对这些真实访问到的状态进行修正，student 再从这些状态中学习。</p>
+        <p class="idea-body">在 agent memory 设定里，student 不是整个记忆系统，而是 memory controller：<code>pi_theta(a_t | h_t, M_t, q_t)</code>。其中 <code>h_t</code> 是历史交互，<code>M_t</code> 是当前 memory buffer 或 memory distribution，<code>q_t</code> 是当前 query，<code>a_t</code> 是 retrieve、update、forget、compress、merge、split、navigate、verify 或 stop 等 memory operation。Teacher 给出的不是“记忆本身”，而是在这些 student 自己造成的 memory state 上更好的动作分布或修正后的动作序列。</p>
+        <p class="idea-body">这对长期记忆很重要，因为 memory failure 很依赖分布。真正危险的不是干净 benchmark query，而是 agent 自己会遇到的失败模式：模糊 query、过期 memory、冲突 memory、过度压缩的事件、该忘没忘、不该忘却忘了，以及多跳检索走到错误区域。On-policy memory distillation 的价值，就是直接在这些自身策略诱导出的失败模式上训练。</p>
+        <p class="idea-body">因此架构上要分清三层：memory storage / representation 是显式层级 buffer；memory dynamics / distribution modeling 是由 flow matching 或 diffusion 学到的 query-conditioned latent memory field；memory control 是决定如何使用记忆的策略。OPD 训练的是 memory controller。它不是 memory architecture，也不能单独带来 infinite memory。</p>
+        <p class="idea-body">一个实际 pipeline 是：student memory controller 在交互中运行；系统记录 query → memory navigation → retrieved memories → answer 这样的轨迹；teacher 或 verifier 检查证据支撑、新鲜度、效率和正确性；teacher 给出修正后的 memory operations；最后用 behavior cloning、对 teacher action 的 KL、或 preference learning 来蒸馏 controller。Reward 可以综合 answer accuracy、evidence support、efficiency、freshness，并惩罚 stale 或 unsupported memory。</p>
+        <p class="idea-body">Flow matching / diffusion 和 OPD 不是竞争关系。Flow 或 diffusion 学的是 query-conditioned memory belief / transition field，也就是 latent memory space 里相关记忆应该如何移动、聚合或收缩。Controller 学的是如何使用这个 field：是否沿着 flow 继续搜索，是否跳到更高层级节点，是否展开某个 memory region，是否拒绝 stale evidence，是否更新节点，是否压缩片段，或是否停止检索。On-policy 轨迹也可以作为辅助监督改进 cue field，但最稳的说法仍然是：OPD 是 memory controller 的训练机制。</p>
+        <ul class="key-points">
+          <li><strong>大 API 模型：</strong>权重保持固定，只更新 memory、prompt、schema 和 tool-use policy。</li>
+          <li><strong>小 7B 模型：</strong>如果需要本地控制，可以选择性更新后端模型。</li>
+          <li><strong>OPD 角色：</strong>在当前策略诱导出的轨迹上训练 memory controller。</li>
+          <li><strong>不是记忆本身：</strong>存储仍由显式 buffer 完成，分布建模仍由 flow/diffusion memory field 完成。</li>
+          <li><strong>学习目标：</strong>改进 retrieve、update、forget、compress、navigate 和 verify 等操作。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>学习循环：固定 API planner、显式记忆、潜在记忆场，以及在策略蒸馏后的 controller。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>API agent</strong><span>Qwen &gt;72B 规划与判断</span></li>
+            <li><strong>Student trajectory</strong><span>query、hops、检索、更新</span></li>
+            <li><strong>Teacher correction</strong><span>更好的 memory operations</span></li>
+            <li><strong>OPD update</strong><span>蒸馏 memory controller</span></li>
+            <li><strong>更好用记忆</strong><span>路由、压缩、验证</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>test-time learning</li>
+          <li>on-policy distillation</li>
+          <li>Qwen API</li>
+          <li>flow matching</li>
+          <li>memory distribution</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://thinkingmachines.ai/blog/on-policy-distillation/" target="_blank" rel="noopener">On-Policy Distillation (Thinking Machines Lab)</a> — <span class="relevance">在 student 自己的 on-policy 轨迹上、用 teacher 的密集反馈（逐 token KL）训练；是在自诱导失败状态上蒸馏 memory controller 的直接依据。</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04620" target="_blank" rel="noopener">Learning to (Learn at Test Time): RNNs with Expressive Hidden States</a> — <span class="relevance">在测试时更新模型状态；是 API 模型权重固定时做 test-time adaptation 的参考。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong> 最稳的说法不是“OPD 就是记忆”，而是：OPD 是 memory controller 的训练过程；记忆本身由显式层级 buffer 保存，并由 query-conditioned latent memory field 建模。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-012" data-status="active">
+      <h3 class="idea-title">评测：数据集与基准</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">方法叙述已经比较完整，但最薄弱的环节是评测。在声称连续记忆场优于检索 baseline 之前，必须先把数据集、指标和 baseline 钉死，并且最好有一个真正考验“无限流 + 多跳记忆”的设定，而不是借用现成的短片段 QA。</p>
+        <p class="idea-body"><strong>数据集。</strong>egocentric 长视频最贴合：Ego4D 提供原始长时第一人称流，EgoSchema 面向长视频理解，QAEgo4D 面向第一人称问答。streaming / 长片方面，MovieChat-1K 和长 vlog 提供小时级连续内容。还可以复用以记忆为核心的 agent benchmark，比如 M3-Bench，它包含机器人视角视频（M3-Bench-robot）和网络视频（M3-Bench-web），其 QA 针对人物理解、跨模态推理和多跳记忆。</p>
+        <p class="idea-body"><strong>目标设定：无限流 + 多跳。</strong>理想的评测不是一段预切好的短片配一个问题，而应该模拟长时程的连续 agent 感知，再提出需要跨多个时间点、实体状态和模态来组合证据的问题。如果没有现成 benchmark 完全符合，可以自己构造：把长第一人称流拼接起来，标注带可验证 evidence chain 的多跳、时间定位问题。</p>
+        <p class="idea-body"><strong>指标。</strong>除了答案准确率，还要测：多跳准确率、evidence-chain 完整率或 F1、时间定位（答案能否给出正确 timestamp 或 clip 指针）、freshness、随时程的遗忘曲线（旧问题准确率如何退化）、检索延迟、记忆/存储占用。优雅降级本身就是一个指标：旧问题应保留要点并带校准置信度，而不是幻觉。</p>
+        <p class="idea-body"><strong>Baseline。</strong>把整段流塞进上下文的 long-context LLM、caption-RAG、video-RAG、memory-buffer agent（如 Flash-VStream、MovieChat）、以及以实体为中心的记忆 agent（如 M3-Agent）。对比要突出它们缺什么：无限摄入下的有界存储、可验证的多跳证据、以及时程增长时的稳定表现。</p>
+        <ul class="key-points">
+          <li><strong>数据集：</strong>Ego4D、EgoSchema、QAEgo4D、MovieChat-1K、长 vlog，外加 M3-Bench（robot + web）。</li>
+          <li><strong>目标设定：</strong>无限流 + 多跳，而不是预切短片段 QA。</li>
+          <li><strong>指标：</strong>多跳准确率、evidence-chain F1、时间定位、freshness、遗忘曲线、延迟、存储占用。</li>
+          <li><strong>Baseline：</strong>long-context LLM、caption/video-RAG、memory-buffer agent、以及 M3-Agent。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：从数据集到“无限流 + 多跳”设定的评测规划。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>数据集</strong><span>Ego4D、EgoSchema、QAEgo4D、MovieChat-1K、M3-Bench</span></li>
+            <li><strong>设定</strong><span>无限流 + 多跳问题</span></li>
+            <li><strong>指标</strong><span>多跳、证据链、定位、遗忘</span></li>
+            <li><strong>Baseline</strong><span>long-context、RAG、memory buffer、M3-Agent</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>评测</li>
+          <li>长视频 QA</li>
+          <li>多跳基准</li>
+          <li>M3-Bench</li>
+          <li>baseline</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2110.07058" target="_blank" rel="noopener">Ego4D: Around the World in 3,000 Hours of Egocentric Video</a> — <span class="relevance">海量长时第一人称流，带 episodic-memory 基准；是无限流设定的原材料。</span></li>
+            <li><a href="https://arxiv.org/abs/2308.09126" target="_blank" rel="noopener">EgoSchema</a> — <span class="relevance">长视频第一人称 QA，时间 certificate 很长；考验长时程理解。</span></li>
+            <li><a href="https://arxiv.org/abs/2312.06505" target="_blank" rel="noopener">Grounded QA in Long Egocentric Videos (QAEgo4D)</a> — <span class="relevance">开放式、时间定位的第一人称 QA；契合证据链和时间定位指标。</span></li>
+            <li><a href="https://arxiv.org/abs/2307.16449" target="_blank" rel="noopener">MovieChat-1K</a> — <span class="relevance">小时级长视频 QA，含 global 和 breakpoint 问题；既是长视频基准也是 memory-buffer baseline。</span></li>
+            <li><a href="https://arxiv.org/abs/2508.09736" target="_blank" rel="noopener">M3-Agent：Seeing, Listening, Remembering, and Reasoning（M3-Bench）</a> — <span class="relevance">以实体为中心的多模态长期记忆 agent，包含 episodic 与 semantic memory；其 M3-Bench（机器人 + 网络长视频，多跳与跨模态 QA）既是很好的评测目标，也是要对比的 baseline。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong>评测是缺失的支柱。最干净的做法是把“无限流 + 多跳”设定作为主打 benchmark，报告优雅降级曲线，并同时对比检索类和记忆 agent 类（如 M3-Agent）baseline。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-013" data-status="active">
+      <h3 class="idea-title">可训练规格：把记忆场写成模型</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">连续场不写成一个能训练的模型，就只是比喻。这一节把 latent 空间、query 条件、监督信号和 cold-start 钉死，并明确一个定位：场是显式 memory buffer 之上学出来的检索先验，而不是存储本身。</p>
+        <p class="idea-body"><strong>buffer token 与其上的场。</strong>buffer 存一组 per-clip token <code>m_i = (z_i^sem, z_i^app, tau_i, entity_i, ptr_i)</code>：<code>z_i^sem</code> 是和文本 query 对齐的 VLM encoder embedding；<code>z_i^app</code> 是可选的 video-diffusion（VAE）latent，保留稠密外观和动态；<code>tau_i</code> 是时间戳；<code>entity_i</code> 是实体 id；<code>ptr_i</code> 指回原始 clip。这些 token 才是真正的长期记忆。连续场是这个 buffer 上、以 query 为条件、学出来的先验——它建模相关 token 大概在哪，使检索变成“从 buffer 采样”而不是“扫 buffer”。离散 token 是证据，场只是用来导航它们的密度。存储按 per-clip、用 time + entity 索引，难点 1 的时间-语义 graph 长在它上面。</p>
+        <p class="idea-body"><strong>VLM encoder vs diffusion encoder。</strong>VLM encoder 给的是语义、语言对齐的 latent，query 条件和 grounding 都便宜又自然，是天然的检索 key。diffusion（VAE / 去噪器）encoder 给的是生成式 latent，“采样记忆”字面成立、稠密视觉细节能保留，对困难的 multi-hop 跳很重要。建议双通道：VLM latent 管语义和 query 对齐，diffusion latent 当场真正建模与采样的底座。最小可行版只用 VLM latent + 对比对齐 + 条件 flow，diffusion 重建头之后再加。</p>
+        <p class="idea-body"><strong>query 条件与 flow 输入输出。</strong>query 文本由同一个 VLM text encoder 编码成共享空间里的 <code>q</code>。flow 速度网络 <code>v_theta(z_t, t | q, h)</code> 用 cross-attention 或 FiLM 注入 <code>q</code>、推理历史 <code>h</code>（当前 anchor、已找到的证据）和粗时间先验。输入是 flow-time 的带噪 latent <code>z_t</code> 加条件；输出是速度（flow matching）或 score（diffusion）。采样把 base 样本积分到 <code>z_1</code>，再 snap 到最近的真实 token 取 clip。multi-hop 时每跳用更新后的 <code>h</code> 重新 condition 场，于是 traversal 变成一个逐步移动的条件分布。</p>
+        <p class="idea-body"><strong>监督信号（最硬的部分）。</strong>监督分三层叠：（1）无条件密度：在所有记忆 latent 上做标准 flow-matching / diffusion 目标，直接从 stream 学 <code>p(z)</code>，免标注，也顺带 bootstrap cold-start。（2）指向支持证据 latent 的条件目标，配对来自自监督 pretext（mask 掉未来一段，用它的 caption / event 当伪 query）、强 VLM 在 craft 的 stream 数据集上自动造的 multi-hop QA + evidence chain、以及 on-policy 命中（答案被验证正确时，把支持 clip 变成正样本，接回 on-policy controller 训练）。（3）对比对齐让 query 和支持 clip 的 latent 拉近。紧凑 loss：<code>L = L_density + L_cond + L_align + lambda * L_recon</code>（可选 diffusion 重建稠密细节）。</p>
+        <p class="idea-body"><strong>cold-start。</strong>用 craft 好的 stream-video 数据集离线预训记忆场，速度网络先“见过”视频记忆 latent 的样子。部署时新流从空 buffer 开始；buffer 小的时候系统退化成对少量 token 的直接检索，并依赖前端 context window，同时用最近窗口的 entity / time 先验暖启动条件。随着流变长，场逐渐接管。</p>
+        <p class="idea-body"><strong>为什么不把 neural-field 当存储。</strong>纯 neural-field 记忆——把记忆分布拟合进网络权重——对“有界存储”论点很诱人，但对 grounding 重、multi-hop、实时的设定它是错的主存储：权重返回的是重建 latent，不是可验证的 clip 指针；在线持续拟合有 catastrophic forgetting 风险；删除 / unlearning 也很难。所以 buffer 始终是记忆、也是 grounding 的唯一证据来源；一个拟合分布的网络被部署成 buffer 上的采样器 / router（指方向），至多当一个可选的、带置信度的紧凑冷层 gist，绝不是我们用来 ground 答案的系统。开放问题是受控的采样与遗忘：采样哪个区域、压缩什么、importance 怎么定。</p>
+        <p class="idea-body"><strong>craft 数据集。</strong>把长 egocentric 和 web 流拼成小时级连续流，保留原始帧、音频和时间戳；用 VLM encoder 把 clip 编码成语义 latent + 自动 schema，外加可选 diffusion latent；用强 VLM 自动生成 multi-hop QA、evidence chain 和时间定位标签，人工抽检一部分；加 pretext 任务；把 query / 证据 / answer / timestamp 元组当条件目标，所有 clip latent 当无条件密度目标。</p>
+        <ul class="key-points">
+          <li><strong>buffer = 记忆：</strong>buffer 里的 per-clip token 才是证据；场只是它们上学出来的先验。</li>
+          <li><strong>encoder 选型：</strong>VLM 管 query 对齐和 grounding，diffusion 管生成式采样和稠密细节；先只用 VLM。</li>
+          <li><strong>条件：</strong>共享空间 query 加历史一起 condition <code>v_theta</code>；multi-hop 每跳重新 condition。</li>
+          <li><strong>监督：</strong>无条件密度 + 条件证据目标 + 对比；teacher 造的 QA 需要 verifier。</li>
+          <li><strong>cold-start：</strong>离线预训先验；buffer 变大前退化为直接检索。</li>
+          <li><strong>neural-field 记忆：</strong>不是主存储；当采样器 / router，至多一个可选冷层 gist——grounding 始终来自 buffer。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：encoder → buffer token → query 条件先验 → 采样 → snap 回真实证据。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>编码</strong><span>VLM + diffusion latent、schema</span></li>
+            <li><strong>buffer token</strong><span>per-clip 证据、time + entity</span></li>
+            <li><strong>场先验</strong><span>以 query 为条件，该去哪采样</span></li>
+            <li><strong>采样</strong><span>条件位置 z*</span></li>
+            <li><strong>snap 回证据</strong><span>从 buffer 取最近 clip 进入 context</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>可训练规格</li>
+          <li>VLM encoder</li>
+          <li>diffusion encoder</li>
+          <li>flow matching</li>
+          <li>per-stream adapter</li>
+          <li>cold-start</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2210.02747" target="_blank" rel="noopener">Flow Matching for Generative Modeling</a> — <span class="relevance">能建模并传输 query 条件记忆 latent 的条件生成目标，是记忆场天然的训练目标。</span></li>
+            <li><a href="https://arxiv.org/abs/2008.02217" target="_blank" rel="noopener">Hopfield Networks is All You Need</a> — <span class="relevance">联想记忆视角：网络从部分线索召回存储模式，是权重记忆召回的先例。</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04620" target="_blank" rel="noopener">Learning to (Learn at Test Time): RNNs with Expressive Hidden States</a> — <span class="relevance">在测试时持续更新模型状态 / 权重，和冷层权重记忆的受控在线拟合相关。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong>最稳的说法是：buffer 才是记忆、也是 grounding 的唯一证据来源，而场是以 query 为条件、指明该去哪采样的检索先验。拟合分布的网络是采样器 / router（至多一个可选冷层 gist），不是存储。场本身用 snap recall@k、导航步数和置信度校准来单独评测。<em>见 019：场被论证成访问 / 管理层，而不是"存不下"的解法；"固定大小先验让检索可行"不能读成"ANN 撑不住"——其必要性靠实验（020）。</em></p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-014" data-status="open">
+      <h3 class="idea-title">buffer 构建：忠实分布 + 重要性采样</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">既然 buffer 是记忆本体、也是唯一 grounding 证据来源，那它怎么 build、compress、prune 就是方法核心。两条原则驱动它：（1）buffer 要反映流的真实分布；（2）真正关键的事件必须记住——靠 importance sampling。</p>
+        <p class="idea-body"><strong>原则 1：反映真实分布。</strong>buffer 应该是流的一个忠实的压缩样本，密度要匹配真实发生过的东西，而不是一个任意的 recency 窗口。冗余、高密度的区域（在桌前坐了一小时）被压缩合并；稀有区域保留覆盖。具体说，场学到的 <code>p(z)</code> 应该匹配流的真实分布，而这只有在它训练所用的 buffer 本身分布忠实时才成立。这就是流式采样的视角：像 reservoir sampling 一样，维护一个统计量能跟踪整条流的有界样本。</p>
+        <p class="idea-body"><strong>原则 2：记住关键事件（重要性采样）。</strong>纯频率或纯 recency 会丢掉稀有但关键的事件（一秒的交接、一句关键承诺、一次安全事故）。所以保留是按重要性加权的：关键事件即使不频繁也要高保真过采保留，并记下它的 importance 权重，好让场和检索去偏。这字面上就是重要性采样——从一个过采关键事件的 proposal 里采样，并携带权重保持无偏。</p>
+        <p class="idea-body"><strong>调和张力。</strong>反映分布（按频率采）和记住稀有关键事件（按重要性过采）方向相反。解法是分层、按重要性加权的保留：保留一个分布忠实的基础样本，再加一个过采保留的高重要性集合，并记录权重，使 query 时的采样仍是一个正确的重要性采样估计，而不是有偏估计。</p>
+        <p class="idea-body"><strong>importance 从哪来。</strong>importance 是个混合信号：从场读出的 novelty / surprise（当前 <code>p(z)</code> 下密度低=新颖=该留）、recency、真实使用频率（被检索且支持了正确答案的 clip）、一个学出来的 future-utility 预测器（后续 query 会不会需要它）、以及显式的用户或任务信号。先用启发式混合，再学权重。</p>
+        <p class="idea-body"><strong>分层、摘要、去重。</strong>clip 先进热层；时间、容量、importance 触发降级。热层存原始 clip 和稠密特征（精确 grounding）；温层存 schema（实体、关系、时间戳）+ 低维 latent + 指针；冷层存短 gist + 几个关键帧 latent + 置信度，raw 丢弃。所以冷层只能 ground 粗粒度、要点级答案——如果 query 需要冷层细节，系统应该 abstain 或标低置信度。近重复 clip 在 latent 空间合并成一个 event node（代表向量 + 计数 + 时间跨度）；entity track 按外观、共现、名字合并。</p>
+        <p class="idea-body"><strong>安全地训练策略。</strong>importance 最好当成延迟效用预测来学：记录哪些 clip 后来被检索、且支持了正确答案，训 importance 去预测未来需求——有监督，而不是稀疏 RL。训练时，破坏性的降级 / 压缩通过 shadow store 做成可逆，这样能算反事实"如果没压它，这个 query 会不会成功？"，拿到密集监督而不永久销毁证据。on-policy distillation 只精修启发式兜不住的失败模式。一条可证伪红线：固定存储预算下，学出来的策略必须在遗忘曲线和多跳准确率上打赢 FIFO、LRU、frequency、均匀压缩。</p>
+        <ul class="key-points">
+          <li><strong>反映分布：</strong>buffer 是流的忠实压缩样本，不是 recency 窗口。</li>
+          <li><strong>记住关键：</strong>重要性采样过采保留稀有但关键事件，并存权重去偏。</li>
+          <li><strong>调和：</strong>分布忠实的基础样本 + 过采保留的高重要性集合，保留权重保证采样正确。</li>
+          <li><strong>importance 信号：</strong>场 surprise + recency + 使用频率 + 学出的 future-utility + 用户/任务。</li>
+          <li><strong>分层 + 去重：</strong>热原始 → 温 schema → 冷 gist；合并近重复；冷层只 ground gist，否则 abstain。</li>
+          <li><strong>安全训练：</strong>延迟效用监督 + shadow-store 反事实；固定预算下必须打赢 LRU / frequency。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：重要性采样维护一个分布忠实、且保留关键事件的 buffer。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>视频流</strong><span>完整摄入，真实分布</span></li>
+            <li><strong>importance</strong><span>surprise + recency + 使用 + 效用 + 用户</span></li>
+            <li><strong>重要性采样</strong><span>过采保留关键事件，存权重</span></li>
+            <li><strong>分层 buffer</strong><span>热原始、温 schema、冷 gist</span></li>
+            <li><strong>忠实 + 关键</strong><span>分布匹配，稀有事件保住</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>buffer 构建</li>
+          <li>重要性采样</li>
+          <li>分布忠实</li>
+          <li>分层压缩</li>
+          <li>去重 / 合并</li>
+          <li>延迟效用</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/1511.05952" target="_blank" rel="noopener">Prioritized Experience Replay</a> — <span class="relevance">对关键 transition 做重要性采样并用权重去偏，是按重要性保留与采样记忆的直接先例。</span></li>
+            <li><a href="https://arxiv.org/abs/1711.10563" target="_blank" rel="noopener">Reservoir-style streaming memory for continual learning</a> — <span class="relevance">维护一个统计量能跟踪无限流的有界样本，对应 buffer 分布忠实的一面。<em>开放问题：这里只是占位引用——具体该锚定哪篇 streaming-sample / reservoir 文献还不确定。</em></span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong>buffer 是流的一个重要性加权样本：分布忠实让场的密度是真的，关键事件过采保留让稀有证据存活。一定要保留权重，否则 query 时采样会有偏。importance 当延迟效用来学，而不是稀疏 RL，训练期让破坏性操作可逆。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-015" data-status="open">
+      <h3 class="idea-title">难点 3：two-head 的缝（短期 context ↔ 长期 buffer）</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">这个设计有两个记忆 head：短头是前端 context window，装实时视频、当前目标和工作推理状态；长头是后端 buffer，装固化的长期记忆。多数真实 query 需要同时用两头——把“现在在发生什么”和“之前发生过什么”融合起来。当前的 buffer 和 agent 到底支不支持这种 two-head query，仍是开放问题；这一节记录那些缝。</p>
+        <p class="idea-body"><strong>缝 1：近期边界。</strong>交互场景里被查得最多的是最近几秒到几分钟，但这恰是 buffer 处理得最少的区域：还没抽 schema、没去重、没进索引、importance 没打分。buffer 是为陈旧记忆调的，所以它最弱的地方正是两头交汇处。context window 和固化 buffer 之间没有定义“温-近期”的交接。</p>
+        <p class="idea-body"><strong>缝 2：融合契约。</strong>短头根本不是 buffer，而是 LLM 对 token 的 attention。所以 two-head query 实际是查 context（隐式、在模型里）+ 查 buffer（ANN / field）再融合，但融合没定义：检索回来的证据怎么重新进 context、怎么和已经在里面的去重、怎么不让长头和短头互相矛盾。buffer 建得好也解决不了，因为融合住在缝里。</p>
+        <p class="idea-body"><strong>缝 3：有状态检索。</strong>two-head 多跳是迭代的：每跳带着已找到的锚点往前。但一次性的 <code>retrieve(query, k)</code> 是无状态的，于是每跳重付完整检索延迟、还丢上下文。多跳需要后端有一个检索会话（携带锚点、已访问区域、部分证据链）。009 的 reasoning workspace 在前端，所以现在两边都没干净拥有迭代。</p>
+        <p class="idea-body"><strong>agent 侧的风险。</strong>还有两个。第一，能训的部分在难的部分下游：query 拆解——把模糊的 two-head 问题拆成可执行 hops、决定何时打长期记忆——坐在冻结的 API 前端里，而 on-policy distillation 只训 controller。第二，后端把三种 profile 相反的工作揉一起：ingest（常开）、maintenance（重、可批）、serve（延迟敏感）。常开流上它们争用，field 重训可能卡住 query。</p>
+        <p class="idea-body"><strong>工作方向（都未定）。</strong>(1) 在 context 和 buffer 之间加一个共享的 staging / 温-近期层，作为显式的缝。(2) 定义融合契约：长头证据以带类型、去重、带时间戳和出处的 token 进入短头。(3) 用 <code>RetrievalSession</code> 让检索有状态。(4) 把 query 拆解挪进可训练的 lane：controller 提 hops，冻结模型判断并回答。(5) 把后端拆成 ingest、maintenance、serve 三条解耦 lane。</p>
+        <ul class="key-points">
+          <li><strong>两个 head：</strong>短头 = 前端 context window；长头 = 后端 buffer；真实 query 两头都要。</li>
+          <li><strong>近期边界：</strong>buffer 在两头交汇处最弱；没有温-近期交接。</li>
+          <li><strong>融合未定义：</strong>检索证据怎么重进 context、怎么去重还没说。</li>
+          <li><strong>有状态多跳：</strong>检索是一次性的；需要携带锚点的会话。</li>
+          <li><strong>agent 风险：</strong>可训练 controller 在冻结 query 拆解的下游；ingest / maintain / serve 争用。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：短头（context）和长头（buffer）之间的缝。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>短头</strong><span>context window：实时视频、目标</span></li>
+            <li><strong>缝</strong><span>温-近期 staging（缺失）</span></li>
+            <li><strong>长头</strong><span>分层 buffer、固化记忆</span></li>
+            <li><strong>融合</strong><span>带类型、去重的证据 token</span></li>
+            <li><strong>有状态多跳</strong><span>携带锚点、证据链</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>开放难点</li>
+          <li>two-head query</li>
+          <li>短期 vs 长期记忆</li>
+          <li>融合契约</li>
+          <li>有状态检索</li>
+          <li>实时 lane</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong>不要假设 buffer 自己就能做 two-head 查询。buffer 是个强长头，但这道缝——温-近期交接、融合契约、有状态多跳、以及把拆解放进可训练 lane——才是吃重的开放问题。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-016" data-status="open">
+      <h3 class="idea-title">工作方向：对冻结 proposer 的 query-quality critic</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">这是针对难点 3 里"agent 侧风险"（可训练部分坐在 query 拆解下游）的一个候选解法，但它本身也还没定。拆解看起来该放进可训练 lane，可生成式 decomposer 很难训：拆解没有唯一正确答案——很多 hop 序列都合法——所以 teacher 签的金标准拆解很脆。它们反映的是 teacher 自己的风格、会过拟合到单一参考、而且不知道 buffer 里到底有什么。所以拆解可能根本不可干净监督。</p>
+        <p class="idea-body"><strong>转念：训 critic，不训 actor。</strong>让冻结的 API 模型继续当 proposer，负责提候选拆解 / 下一跳；我们训一个轻量的 query-quality critic，负责对候选排序、并决定是接受还是重提。actor 不需要训；critic 只需要排序 / reward 信号，不需要金标准拆解。这也把 008 和 010 里的"cue quality"从一个评测指标升级成一个可训练目标。</p>
+        <p class="idea-body"><strong>query quality 到底是什么。</strong>一个 hop 质量高，是指：可接地（buffer 返回 snap 距离小、置信度高的证据，而不是空或模糊）、能推进证据链（降低答案不确定性 / 有信息增益）、有必要（短头还答不了——这条直接服务 two-head）、且和已走过的 hop 非冗余。大致 <code>quality(h) = w1·可接地 + w2·推进 + w3·必要性 − w4·冗余</code>。</p>
+        <p class="idea-body"><strong>不需要金标准的信号（teacher 当裁判，不当标注员）。</strong>检索反馈——即时、自监督（top-k margin、snap 距离、是否返回可接地证据），适合 cold-start。答案结局——延迟、弱监督（整条链被验证为对，路径上的 hop 拿正信用，错则负）。LLM-as-judge——强模型在看到检索回来的证据后判断这个 hop 有没有用（判断，不出 gold）。反事实（shadow store）——没有这一跳，答案还成不成？用 ranking loss 或回归到信用值训 critic——只训 critic，比生成式 decomposer 可解得多。</p>
+        <p class="idea-body"><strong>为什么仍是开放问题。</strong>两个风险让它还停在"问题"而不是"方法"。(1) query quality 必须和 buffer recall 分开：一个 hop 可能问得对，但 buffer 没召回；如果只用检索反馈，好 hop 会因为 buffer 的失败被惩罚，所以信用分配必须区分"问错了"和"问对了但没找到"，这得靠答案结局 + 反事实来锚。(2) reward hacking：只奖励可接地会偏爱"容易检索但没用"的 hop，所以必须用答案级结局来压住信号。</p>
+        <ul class="key-points">
+          <li><strong>别训生成式 decomposer：</strong>它需要 gold、还过拟合风格；冻结 proposer，训 critic。</li>
+          <li><strong>query quality：</strong>可接地 + 推进 + 必要性 − 冗余。</li>
+          <li><strong>无 gold 信号：</strong>检索反馈 + 答案结局 + LLM-as-judge + 反事实。</li>
+          <li><strong>复用 cue quality：</strong>把 008/010 的 cue-quality 指标升级为可训练目标。</li>
+          <li><strong>开放风险：</strong>把 query quality 和 buffer recall 分开；用答案级结局锚住，避免 reward hacking。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：冻结 proposer 提 hops，可训练 critic 按预测效用排序。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>问题 + 状态</strong><span>短头 + 长头</span></li>
+            <li><strong>冻结 proposer</strong><span>N 个候选 hop</span></li>
+            <li><strong>query-quality critic</strong><span>可接地、推进、必要性</span></li>
+            <li><strong>选择 / 重提</strong><span>选最好的 hop，或重问</span></li>
+            <li><strong>结局信号</strong><span>检索 + 答案 + judge → 训 critic</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>开放问题</li>
+          <li>query-quality critic</li>
+          <li>冻结 proposer</li>
+          <li>cue quality</li>
+          <li>只训 critic</li>
+          <li>信用分配</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong>decomposer 保持冻结；变成可训练的是它提议之上的 query-quality critic。仍是开放问题，因为信用分配必须把 query quality 和 buffer recall 分开，且 reward 必须锚在答案级结局上以避免 hacking。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-017" data-status="active">
+      <h3 class="idea-title">统一记忆架构：buffer、graph、field 与 session</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">这一节解决当前设计里的一个连贯性风险：buffer、graph、field 不是三套互相竞争的 memory system，而是一套架构里的不同层。buffer 存证据；graph 组织证据；field 在 buffer / graph 上引导导航；retrieval session 控制多跳状态；前端 context 只能基于返回证据回答。</p>
+        <p class="idea-body"><strong>第 1 层 — evidence buffer（存储层）。</strong>buffer 是记忆本体，也是唯一 grounding 来源。每个 entry 保存 clip pointer、timestamp、模态特征、entity / schema 字段、latent key、tier、importance 和 confidence。hot / warm / cold 只改变保真度，不改变答案必须 snap 回真实 buffer 证据这一原则。</p>
+        <p class="idea-body"><strong>第 2 层 — temporal-semantic graph（结构层）。</strong>graph 是 buffer entries 之上的索引，不是另一套独立记忆。节点可以是 clip、event、entity、place、goal 或 summary；边表示时间顺序、同一实体、状态转移、共现、可能因果、共同检索，或对相似 query 的反复有用性。graph 让多跳路径可检查，也给后端明确关系可走。</p>
+        <p class="idea-body"><strong>第 3 层 — query-conditioned field（导航层）。</strong>field 是 buffer token 和 graph node 上学出来的导航先验。形式上可以打分或采样 <code>p_theta(m | q, h, B_t, G_t)</code>，其中 <code>h</code> 是当前 retrieval session。field 不存证据、不写答案、也不替代 graph 结构；它只决定哪个区域、节点、边、tier 或下一跳应该被激活。</p>
+        <p class="idea-body"><strong>第 4 层 — retrieval session（控制层）。</strong>session 保存当前找到的 anchors、访问过的节点、被拒候选、不确定性和部分证据链。多跳在这里从一次性 retrieval 变成有状态导航。后端 agent 拥有这一层：用 field 提方向，用 graph 展开关系，用 buffer 把每个候选 snap 回具体证据。</p>
+        <p class="idea-body"><strong>第 5 层 — front-end context（推理 / 回答层）。</strong>前端接收 typed evidence packets：clip、timestamp、schema、confidence、provenance 和 missing-evidence flags。它可以用 in-context learning 拆下一步 query，但只能基于检索回来的证据回答，不能基于 field 的 latent belief 直接回答。这样系统才可审查。</p>
+        <ul class="key-points">
+          <li><strong>Buffer：</strong>存储层，保存 grounded evidence 与分层。</li>
+          <li><strong>Graph：</strong>结构层，把 buffer 证据组织成可遍历关系。</li>
+          <li><strong>Field：</strong>导航层，在 buffer + graph 上打分 / 采样下一步该去哪。</li>
+          <li><strong>Session：</strong>控制层，保存 anchors、访问区域、不确定性和证据链。</li>
+          <li><strong>前端：</strong>回答层，只基于返回证据推理，不基于 latent field 猜测。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：一套记忆架构，五个层次。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>原始流</strong><span>视频、音频、OCR、元数据</span></li>
+            <li><strong>Evidence buffer</strong><span>存储：grounded entries</span></li>
+            <li><strong>Temporal-semantic graph</strong><span>结构：节点与边</span></li>
+            <li><strong>Query-conditioned field</strong><span>导航：该去哪找</span></li>
+            <li><strong>Retrieval session + 前端</strong><span>有状态 hops，证据回答</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>统一架构</li>
+          <li>buffer graph field</li>
+          <li>存储 结构 导航</li>
+          <li>retrieval session</li>
+          <li>evidence grounding</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong>这是 reviewer 需要看到的架构主干：buffer = 存储，graph = 结构，field = 导航，session = 控制，前端 = 基于证据推理。它应该能消除 005、007、013、014、015、016 之间的模块关系混乱。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-018" data-status="open">
+      <h3 class="idea-title">走向 ICLR-ready 方法的开放问题</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">在加入 paper-level thesis（006）和统一架构（017）之后，剩下的缺口不应该再被当成随手添加的新想法，而应该作为开放问题来处理。它们决定这个项目能不能从研究笔记变成严谨的方法论文，也可以作为冲 ICLR-ready 的 checklist。</p>
+        <p class="idea-body"><strong>Q1：可执行算法到底是什么？</strong>当前架构还需要可复现协议：Algorithm 1 写 online memory ingest，Algorithm 2 写有状态 multi-hop query / <code>RetrievalSession</code>，Algorithm 3 写 field / navigation prior 的训练。reviewer 应该能追踪一条 clip 进来发生什么、一个 query 来了发生什么、field 什么时候更新。</p>
+        <p class="idea-body"><strong>Q2：哪些东西训练、冻结、在线更新，哪些只评测？</strong>目前笔记里仍然混着几种可能。较合理的边界是：前端 LLM 和 ICL decomposer 冻结；后端 field / navigation prior 可训练，importance / utility predictor 也可能训练；buffer、graph、session 在线更新；query-quality critic 如果没有明确实验，先作为 eval / gate，而不是核心训练目标。</p>
+        <p class="idea-body"><strong>Q3：evidence-chain 标注协议到底是什么？</strong>Streaming Multi-hop Memory QA 不能只有 answer label。需要决定 gold evidence chain 是 clip-level、event-level 还是 frame-level；每一跳是否标注；问题如何生成与验证；人工检查比例多少；benchmark 是否同时支持 answers-only 和 answers-plus-evidence-chain 两种监督。</p>
+        <p class="idea-body"><strong>Q4：baseline 和 ablation matrix 是什么？</strong>实验计划应该把每个 claim 对到一个测试：long-context VLM / LLM、caption-RAG、clip embedding 上的 ANN、graph-only traversal、没有 field 的 buffer-only、MovieChat / Flash-VStream 式 memory、M3-Agent 式 memory。消融应该包括移除 graph、field、importance sampling、<code>RetrievalSession</code>、warm-recent staging，以及 VLM+diffusion 通道。</p>
+        <p class="idea-body"><strong>Q5：audio、ASR、speaker identity 和 OCR 是否是一等证据？</strong>很多第一人称 multi-hop 问题，比如“我刚才跟谁说过话”，需要 ASR、speaker diarization、audio event、face / voice identity 和 OCR。这些应该进入 buffer 和 graph 成为证据，而不是停留在非正式 side input。</p>
+        <p class="idea-body"><strong>Q6：失败模式和风险控制是什么？</strong>系统需要 limits section：隐私 / 去标识化、删除或遗忘请求、错误 entity merge、压缩后无法 grounding 的证据、冷层 gist 幻觉、field 过度自信，以及涉及人物或对话的敏感查询。</p>
+        <p class="idea-body"><strong>Q7：hero result 长什么样？</strong>highlight 级论文需要清楚主图：随着 stream horizon 增长（例如 10 分钟 → 1 小时 → 4 小时 → 8 小时），在固定 memory budget 下，我们的方法应该比 caption-RAG、ANN、graph-only 和 memory-agent baselines 保持更高 evidence-chain recall 和 multi-hop accuracy，同时延迟可控。</p>
+        <ul class="key-points">
+          <li><strong>协议：</strong>写清 ingest、retrieval、training 三个 algorithm。</li>
+          <li><strong>边界：</strong>前端 ICL 冻结；后端 navigation / importance 可训练；buffer 和 graph 在线更新。</li>
+          <li><strong>数据：</strong>定义 evidence-chain 标注，而不只是答案标签。</li>
+          <li><strong>实验：</strong>让 baseline 和 ablation 对齐每个 method claim。</li>
+          <li><strong>模态 + 风险：</strong>明确 audio / ASR / speaker / OCR，以及隐私和失败模式。</li>
+          <li><strong>主结果：</strong>在固定 memory budget 下展示 horizon-scaling 优势。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：把 idea 变成方法论文的开放问题。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>算法</strong><span>ingest、query、training</span></li>
+            <li><strong>边界</strong><span>冻结、可训、在线更新</span></li>
+            <li><strong>数据集</strong><span>证据链标注协议</span></li>
+            <li><strong>实验</strong><span>baseline、ablation、hero result</span></li>
+            <li><strong>风险</strong><span>模态、隐私、失败案例</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>开放问题</li>
+          <li>paper readiness</li>
+          <li>算法协议</li>
+          <li>证据链标注</li>
+          <li>ablation matrix</li>
+          <li>hero result</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong>这些问题是有意标成 open。最高优先级是可执行协议：如果没有 algorithms 和 train/inference 边界，这个项目仍然更像架构笔记，而不是方法论文。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-019" data-status="open">
+      <h3 class="idea-title">重定位：场是访问与管理层，不是存储</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">这一节细化 005、006、013、017，并修掉项目里最容易被攻击的论点：不要把连续场论证成"我们需要它来存无限记忆"。存储是、也始终是离散的：grounded evidence buffer、index、graph、gist token、product quantization（PQ）、coreset。场只有在<em>离散存储之上</em>带来额外价值时才站得住——绝不能靠声称它解决了"存不下"。</p>
+        <p class="idea-body"><strong>最干净的定位。</strong>不要说"我们需要连续场来装无限记忆"。要说："我们需要一个 grounded evidence buffer 来存储可验证记忆；在它之上，我们探索一个 query-conditioned 连续场，用来建模哪些记忆更可能相关、哪些区域值得检索、哪些记忆该保留或压缩。"分工是：<strong>buffer</strong> 回答<em>证据在哪、能不能被追溯</em>；<strong>graph</strong> 回答<em>证据之间怎么连接</em>；<strong>field</strong> 回答<em>该往哪找、什么值得保留、什么可以降级</em>。场是导航与管理层，不是仓库。</p>
+        <p class="idea-body"><strong>Justification A — 场作为检索先验（有状态导航）。</strong>长视频多跳 QA 通常不是一次性 top-k 问题：找 anchor → 沿时间 / 实体 / 事件关系走 → 验证中间证据 → 更新 query → 再检索。场在给定 query、已找到 anchors、已访问区域和不确定性时，预测下一步该访问哪个 memory region / graph node / tier：<code>p_theta(m | q, h, B_t, G_t)</code>。它的价值不是"存更多"，而是"让检索变成有状态导航，而不是一次 ANN top-k"。要诚实承认的风险：这个功能并不需要生成式场——一个判别式的学习下一跳策略（在 graph 上做条件化的 GNN / reranker）更简单、大概率更强。所以 A 不仅要打赢 ANN-only、ANN + graph、graph-only 和 M3-Agent 式 memory，还必须专门打赢一个<strong>学习的离散下一跳策略</strong>。正是这个消融把场的生成式<em>形式</em>和它的<em>功能</em>隔离开。A 是最可能被判别式策略碾压的角色。</p>
+        <p class="idea-body"><strong>Justification B — 场作为保留 / 压缩先验（最契合）。</strong>保留本质就是密度 / 新颖性问题，而这正是生成式 <code>p(z)</code> 模型擅长的：当前场下密度低 = 新颖 = 值得留。所以场可以决定什么进热层、什么 event 合并、什么压成 gist token、什么降级到冷层、什么低价值 clip 丢弃、什么稀有但未来有用的事件必须保留。它建模的是 memory 密度 / 新颖性 / 保留重要性，<em>管理存储预算</em>，而不是自己成为存储。重要的切分："future utility"应该是一个有监督的延迟效用预测器（见 014），那是判别式的；场在这里独有的贡献只是密度 / 新颖性信号。这比"场存无限记忆"强得多。</p>
+        <p class="idea-body"><strong>Justification C — 场作为有损语义 recall / reminder（降级）。</strong>这是唯一接近"场即记忆"的地方，且必须保持降级。当原始证据已被压缩、丢弃，或只剩冷层 gist 时，场也许能生成一个低置信度语义 reminder（"这里可能发生过一次和手机相关的交互"）。这绝不是 grounded answer——只是 hypothesis / cue / reminder。系统随后必须去 buffer 里找匹配的 gist token、summary、event node 或时间范围；若找不到证据，就低置信度回答或 abstain。所以 C 是优雅降级，不是主线。要公开说出的反讽：C 是<em>唯一</em>内在需要生成的角色；A 和 B 都能用判别式做掉。所以最像"场"的角色，恰恰是我们刻意保持非核心的那个。</p>
+        <p class="idea-body"><strong>reviewer-safe thesis。</strong>"我们不声称连续场替代外部记忆存储。相反，长程视频记忆需要两个互补对象：一个离散 evidence buffer 负责 grounded 存储，一个 query-conditioned 连续场负责在这个 buffer 之上建模检索、保留和降级。buffer 存储可验证证据；场预测应该去哪里找、什么值得保留、在固定记忆预算下如何优雅降级。"</p>
+        <p class="idea-body"><strong>要废弃的论证。</strong>停止使用："ANN 撑不住长视频"、"vector index 会溢出"、"连续场是无限记忆本体"、"场能存 buffer 存不下的东西"、"context 有限所以场必要"、"长视频太长所以连续场自然必要"。安全的链条是：context 有限 → 需要外部记忆 → 外部记忆本体是有界 evidence buffer → 在这个 buffer 上，场只是一个学出来的检索 / 保留 / 降级先验，其必要性靠实验确立。</p>
+        <p class="idea-body"><strong>建议（被 021 更新）。</strong>场是被选定的 high-risk high-reward <em>核心</em>贡献，它的"必要性靠实验"被具体化为 discrete ↔ amortized 的 bit-budget crossover（021）。本节的"离散先行"纪律不是对场的降级，而是它诚实的护栏：把共享同一 bit 预算的强离散 baseline（ANN + graph + gist token）搭出来，因为它们正是 crossover 必须打赢的对象。稳的兜底——Streaming Multi-hop Memory QA + grounded buffer / graph / session 架构 + 证据链评测——只在 crossover 失败时（021 的 kill criterion）让论文活下来。</p>
+        <ul class="key-points">
+          <li><strong>存储保持离散：</strong>buffer / index / graph / gist token / PQ / coreset 才是存储，场不是。</li>
+          <li><strong>三种 justification：</strong>A 检索先验、B 保留先验、C 有损 gist recall——价值永远是在离散存储之上。</li>
+          <li><strong>形式 vs 功能：</strong>A 和 B 都能判别式做，所以场必须打赢学习的离散下一跳策略；C 是唯一需要生成式的角色。</li>
+          <li><strong>B 最契合：</strong>保留是密度 / 新颖性问题；把 future-utility 切给有监督预测器。</li>
+          <li><strong>必要性靠实验：</strong>具体化为 discrete ↔ amortized 的 bit-budget crossover（021），并认下一个 kill criterion。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：离散存储仍是仓库；场是它之上的访问 / 管理层。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>离散存储</strong><span>buffer、index、graph、gist、PQ、coreset</span></li>
+            <li><strong>A：检索先验</strong><span>有状态下一跳导航</span></li>
+            <li><strong>B：保留先验</strong><span>密度 / 新颖性 / 预算管理</span></li>
+            <li><strong>C：有损 recall</strong><span>低置信 cue，再验证或 abstain</span></li>
+            <li><strong>必要性靠实验</strong><span>必须打赢离散 baseline</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>重定位</li>
+          <li>访问 vs 存储</li>
+          <li>检索先验</li>
+          <li>保留先验</li>
+          <li>有损 recall</li>
+          <li>reviewer-safe thesis</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong>一句话——连续场不是记忆存储的通用替代,但它在 021 指出的极端区间里变得必要:固定 bit 预算下、过了 discrete ↔ amortized crossover 之后。"要废弃的论证"在正常区间仍然成立(不要笼统说"ANN 撑不住");精确、守得住的主张是那个 crossover。这里的三种 justification(A 检索、B 保留、C 有损 recall)是机制,021 是必要性证明和 hero 实验。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-020" data-status="open">
+      <h3 class="idea-title">场的实验计划与归因陷阱</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">承接 019 的重定位，这一节定下到底要证明什么，以及哪些信用分配陷阱会让"赢"变得没意义。<em>不</em>该去证的：场在单个最近邻查找上打赢 FAISS——这几乎必败。场必须在固定记忆预算下，靠 horizon scaling、保留、或被遗忘记忆的 recall 来挣到位置。</p>
+        <p class="idea-body"><strong>实验 1 — 固定预算的 horizon scaling。</strong>把流拉长（10 分钟 → 1 小时 → 4 小时 → 8 小时 → 24 小时），预算用 <em>bit</em> 固定（而不是 token 数，这样对 amortized/权重 记忆才公平）；这正是 021 里 crossover 作为 hero 结果的设置。Baseline：对留存 embedding 做 ANN；ANN + graph traversal；ANN + PQ / coreset / gist token；caption-RAG；M3-Agent 式 memory；一个<strong>学习的离散下一跳策略（非生成式）</strong>；场引导的 graph / buffer 导航；场引导的保留 + 导航。指标：evidence-chain recall、多跳准确率、检索步数、延迟、老记忆遗忘曲线、幻觉率。场要赢，应体现为 <em>horizon 变长后更稳定地恢复多跳证据链</em>，而不是单跳 top-k。</p>
+        <p class="idea-body"><strong>实验 2 — 保留策略。</strong>固定记忆预算、同一条输入流，只换保留策略：FIFO、LRU、reservoir sampling、frequency、novelty、启发式 importance、学习的 importance 预测器、场引导保留。和存储相关的 justification（B）成立，当且仅当场引导保留在相同容量下保住了更多未来 query 真正需要的证据。</p>
+        <p class="idea-body"><strong>实验 3 — 被遗忘记忆的 gist recall（最 risky、最独特）。</strong>故意丢掉一部分原始 clip，只留压缩后的冷记忆。比较：对 gist token 做 ANN、PQ / coreset、summary buffer、graph summary、场生成的 gist、场 + snap 到最近冷 token。指标：gist 正确性、校准、幻觉率、删除合规性、abstention 质量。这是场的生成式本性唯一可能独特有用的地方（justification C）——但强 ANN + gist / PQ baseline 很难打，所以把正结果当成 high-reward，而不是预期结果。</p>
+        <p class="idea-body"><strong>归因陷阱 1 — horizon scaling 主要测保留，不测导航。</strong>固定预算下 buffer 只装有界集合；horizon 越长丢得越多，老证据 recall 越低。此时 ANN 和场搜的是<em>同一个</em>留存集：留下了，ANN（配 graph）就找得到；丢了，谁都找不到。所以实验 1 的曲线由"留下了什么"（实验 2 / B）主导，而不是导航场（A）。不要把 horizon-scaling 的增益归功于导航。干净隔离：测导航时，给所有方法喂<em>同一个</em>留存 buffer（保留固定），只换导航策略；测保留时，导航固定，只换保留；如果 hero figure 用 horizon scaling，要把它标注并归因为保留 / 整系统结果，而不是导航先验结果。</p>
+        <p class="idea-body"><strong>归因陷阱 2 — 形式 vs 功能。</strong>实验 1 里若没有学习的离散下一跳 baseline，导航"赢了"就无法归因到连续 / 生成式形式，而非"任意学习导航"。这个 baseline 是必须的。</p>
+        <p class="idea-body"><strong>归因陷阱 3 — query quality vs buffer recall。</strong>一个 hop 可能问对了，但 buffer 就是没召回；只用检索反馈时，好 hop 会因 buffer 失败被惩罚。信用分配必须区分"问错了"和"问对了但没找到"，并锚在答案结局和 shadow-store 反事实上（接 016）。</p>
+        <p class="idea-body"><strong>归因陷阱 4 — 密度 vs future-utility。</strong>在保留（B）里，把场的密度 / 新颖性信号和有监督的延迟效用预测器分开；否则保留赢了也无法归因到场，而非效用预测器。</p>
+        <ul class="key-points">
+          <li><strong>别去测：</strong>场 vs FAISS 单最近邻——会输。</li>
+          <li><strong>三个实验：</strong>horizon scaling、保留策略、被遗忘 gist recall，全在固定预算下。</li>
+          <li><strong>陷阱 1：</strong>horizon scaling 由保留主导；固定留存 buffer 才能隔离导航。</li>
+          <li><strong>陷阱 2：</strong>加入学习的离散下一跳 baseline 来隔离生成式形式。</li>
+          <li><strong>陷阱 3–4：</strong>把 query quality 和 buffer recall 分开，把密度和 future-utility 分开。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：三个实验，以及让归因诚实的隔离方式。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>实验 1</strong><span>固定预算 horizon scaling</span></li>
+            <li><strong>实验 2</strong><span>固定容量下的保留策略</span></li>
+            <li><strong>实验 3</strong><span>被遗忘记忆 gist recall</span></li>
+            <li><strong>隔离</strong><span>固定保留以测导航</span></li>
+            <li><strong>归因</strong><span>形式 vs 功能，密度 vs 效用</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>实验计划</li>
+          <li>horizon scaling</li>
+          <li>保留策略</li>
+          <li>gist recall</li>
+          <li>归因陷阱</li>
+          <li>消融隔离</li>
+        </ul>
+        <p class="idea-notes"><strong>备注：</strong>这个项目最容易自欺的方式，就是把（由保留驱动的）horizon-scaling 增益报告成导航场的证据。固定留存 buffer 来隔离导航，加入离散下一跳 baseline，并把每个主张锚在答案级证据链上。<em>field 当核心的 hero 实验是 021 的 bit-budget crossover；下面的实验 1 应该用 bit（而不是 token 数）来定预算，才对 amortized 记忆公平。</em></p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="continuous-memory-model-and-retrieval-021" data-status="active">
+      <h3 class="idea-title">核心主张：discrete ↔ amortized 记忆的 crossover（场在何处变得必要）</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">这是核心贡献。它升级了 006 的定位，把 019 里"必要性靠实验"那句话具体化成一个可证伪的形式，并把连续 flow / diffusion 场摆到论文正中心，而不是可选模块。不可让步的原则：要让场当核心、并过 ICLR 的线，它必须 claim 离散检索<strong>根本做不到</strong>的事——而不是它做得差一点的事。如果 pitch 是"场检索得比 ANN 更准"，那么一个强 ANN + graph + 学习 reranker 的 baseline 会碾压或打平，贡献就崩了。所以场必须站在离散记忆的能力边界之外。</p>
+        <p class="idea-body"><strong>离散检索根本做不到的四件事。</strong>(1)<em>返回从没存过的东西。</em>ANN 只能返回存过的 token；压缩 / 遗忘之后 clip 没了，ANN 要么空、要么返回错邻居，而 <code>p(z | q)</code> 模型能在流形上插值出一个 latent 假设（associative-memory / pattern completion）。(2)<em>建模密度。</em>分布忠实的保留和 novelty / surprise（低密度=新=该留）需要一个密度模型；判别式 importance 预测器要标签，而场免费给你无监督密度。(3)<em>桥接不完整的图。</em>离散多跳要求对的边真的存在（跨小时实体 re-ID、因果边永远建不全）；沿流形的连续 transport 能桥接缺失的边，所以图越稀疏，场的相对优势越大。(4)<em>给后验，而不是一个点。</em>场给出 evidence 位置上的分布，从而能做有校准的弃答（"这个证据到底存不存在、我有多确定？"）；ANN 只给距离，给不了校准后验。</p>
+        <p class="idea-body"><strong>信息论的楔子。</strong>把记忆放在<strong>固定 bit 预算</strong> + 无界摄入下来框。预算 <code>B</code> bit、每 token 成本 <code>c</code> bit，离散存储最多存 <code>B / c</code> 个 token。当不同事件数 <code>N</code> 无界增长，最终 <code>N &gt; B / c</code>：你连每事件存一个 token 都做不到，被丢事件上的离散召回趋于零。amortized 模型把同样的 <code>B</code> bit 花在逼近 <code>p(z)</code> 的<em>权重</em>上；它的每事件保真度应该随 <code>N</code> <em>平滑</em>退化，而不是塌到零。科学主张是一个 <strong>crossover / 相变</strong>：在某个 事件/预算 比值之下离散记忆赢（这正是 019 守护的区间——不要笼统地说"ANN 撑不住"），但过了 crossover，amortized 分布记忆就是必要的、而非仅仅方便的。贡献就是定位并刻画这个 crossover。</p>
+        <p class="idea-body"><strong>混合，而非反转。</strong>这部分地把 013 否决过的"neural-field as storage"重新请回来——但只请回长尾那一段。架构保持混合：离散 buffer 精确 ground 近期 / 重要证据；场的权重以有损、带校准置信度的方式覆盖长尾。grounding 不破，因为场的输出是<em>提案（proposal）</em>，不是答案：场生成一个 latent 假设 → 系统拿它去和任何残留证据（gist token、graph 邻居、时间范围）<em>验证</em> → 验证得了就 grounded 回答，否则以校准的低置信度弃答。场扩大召回；验证守住可追溯。</p>
+        <p class="idea-body"><strong>核心主张句。</strong>"我们把无界视频记忆建模成一个由 flow matching 学出的连续、query-conditioned 分布，用单一机制同时做保留（密度）、检索（transport）和优雅降级（不确定性下的采样）。在固定 bit 预算下，一旦事件数超过可存 token 数，离散检索就被信息论封顶，而 amortized 分布记忆优雅退化——由此确立一个连续记忆场必要、而非仅仅方便的区间。"</p>
+        <p class="idea-body"><strong>Hero 实验（crossover）。</strong>用 <em>bit</em> 定预算（对生成式记忆公平），把 horizon 拉长到每事件可存 token 数掉到 1 以下，画 evidence-chain recall / 多跳准确率 对 事件/bit-预算 比值的曲线。baseline 必须花同样的 bit：ANN + gist token、PQ / coreset、graph summary，以及"更多但更粗的 token"。场赢就是一个看得见的 <strong>crossover</strong>：过了它，所有离散方法塌掉，而场维持一条显著更高（有损但非零）的曲线。<strong>kill criterion（提前写死）：</strong>如果没有 crossover——即在所有测试比值上离散 + gist token 一直够用——场就没有护城河，项目回退到任务 + 系统 + 评测的贡献。</p>
+        <p class="idea-body"><strong>诚实的风险账。</strong>(1)<em>长尾可能根本没人查。</em>如果有用的 query 永远落在离散 buffer 已经握着的近期 / 重要证据上，场的长尾覆盖就是学术性的。所以 benchmark 必须刻意包含<em>必须</em>命中被压缩 / 被丢证据的多跳问题；没有这个，crossover 图就做不出来。(2)<em>幻觉。</em>generation-as-proposal + 验证 + 弃答能压住，但校准置信度需要自己的机制和自己的实验（现在还没定）。(3)<em>代价。</em>这是 high-risk high-reward 路线；10 周大概率只能在数据集子集上跑出一个早期 crossover 信号，而非整篇论文。</p>
+        <ul class="key-points">
+          <li><strong>场当核心：</strong>它必须 claim 离散检索根本做不到的事，而不是做得差一点的事。</li>
+          <li><strong>四个根本局限：</strong>只能返回存过的、没有密度、需要完整图、没有校准后验。</li>
+          <li><strong>楔子：</strong>固定 bit 预算下，事件超过可存 token 后离散召回被封顶；amortized 记忆优雅退化——一个 crossover。</li>
+          <li><strong>混合 grounding：</strong>离散 buffer ground 近期 / 重要；场以提案覆盖长尾，验证或弃答。</li>
+          <li><strong>kill criterion：</strong>没有 crossover ⇒ 没有护城河 ⇒ 回退到任务 + 系统 + 评测。</li>
+        </ul>
+        <figure class="memory-figure">
+          <figcaption>图：hero 主张——一个 crossover，离散记忆塌掉而 amortized 记忆维持。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>固定 bit 预算</strong><span>B bit，无界摄入</span></li>
+            <li><strong>离散封顶</strong><span>≤ B/c 个 token；N &gt; B/c 后 recall → 0</span></li>
+            <li><strong>amortized 场</strong><span>权重建模 p(z)；优雅退化</span></li>
+            <li><strong>crossover</strong><span>场变得必要的区间</span></li>
+            <li><strong>提案 → 验证</strong><span>grounded 回答或校准弃答</span></li>
+          </ol>
+        </figure>
+        <ul class="idea-tags">
+          <li>核心主张</li>
+          <li>discrete vs amortized</li>
+          <li>bit-budget crossover</li>
+          <li>associative memory</li>
+          <li>优雅降级</li>
+          <li>kill criterion</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2008.02217" target="_blank" rel="noopener">Hopfield Networks is All You Need</a> — <span class="relevance">权重里的 associative memory / pattern completion：支撑"返回从没存过的东西"，是 crossover 中 amortized 一侧的机制。</span></li>
+            <li><a href="https://arxiv.org/abs/2210.02747" target="_blank" rel="noopener">Flow Matching for Generative Modeling</a> — <span class="relevance">query-conditioned 分布的生成式目标，用一个模型同时做保留（密度）和检索（transport）。</span></li>
+            <li><a href="https://arxiv.org/abs/2407.04620" target="_blank" rel="noopener">Learning to (Learn at Test Time)</a> — <span class="relevance">把增长的流摊销进有界的模型状态 / 权重；长尾权重记忆层的先例。</span></li>
+            <li><a href="https://arxiv.org/pdf/2203.08913" target="_blank" rel="noopener">Memorizing Transformers</a> — <span class="relevance">crossover 中离散 kNN-memory 一侧，也是固定 token 预算下召回被封顶的 baseline。</span></li>
+          </ul>
+        </details>
+        <p class="idea-notes"><strong>备注：</strong>如果场必须当核心 ICLR 贡献，这就是主干。整篇论文于是成败系于那张 crossover 图，所以要把 benchmark 设计成强制长尾多跳 query、用 bit 定预算、搭出共享该预算的离散 + gist baseline，并在跑之前就认下 kill criterion。本条覆盖 019 里"降级场"的建议：场是被选定的 high-risk 核心，019 的"离散先行"纪律作为 crossover 失败时的兜底。</p>
+      </details>
+    </article>
+
+  </section>
+
+  <section class="changelog">
+    <h2>讨论记录</h2>
+    <ol>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 把连续场提升为核心 ICLR 贡献（021）：固定 bit 预算下的 discrete ↔ amortized 记忆 crossover——一旦事件数超过可存 token 数，离散检索被信息论封顶，而 amortized 分布记忆优雅退化；含离散检索的四个根本局限、混合 grounding 规则（生成提案 → 验证 → grounded 或弃答）、crossover hero 实验，以及认下的 kill criterion。把 006 论点升级为该 crossover 主张，调和 019（必要性具体化为 crossover；离散先行保留为护栏与兜底），并把 020 实验 1 改成按 bit 定预算。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 把连续场重定位为访问 / 管理层而非存储（019）：离散的 buffer / index / graph / gist token / PQ / coreset 才是存储，场必须在其之上经由检索先验（A）、保留先验（B）或有损 gist recall（C）带来额外价值，且必要性靠实验。新增实验计划与归因陷阱（020）：固定预算 horizon-scaling、保留策略、被遗忘 gist 三个实验，隔离生成式形式的"学习离散下一跳"baseline，以及保留 vs 导航的归因隔离。并把 005、006 交叉链接到新框架。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增面向 paper-readiness 的开放问题清单（018）：可执行算法、训练/冻结/在线边界、证据链标注、baseline/ablation matrix、多模态证据、风险控制，以及 hero result。</li>
+    </ol>
+    <details class="foldable changelog-archive">
+      <summary>较早记录（29）</summary>
+      <ol>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增统一记忆架构（017）：buffer 是存储层，graph 是结构层，field 是导航层，retrieval session 是控制层，前端 context 是基于证据的推理层。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增核心贡献与 ICLR 定位（006）：将项目收敛为 Streaming Multi-hop Memory QA 和 grounded buffer 上的分布引导证据导航，明确双 agent 循环、最小可成立贡献，以及 horizon-scaling 评测主张。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增工作方向（016）作为开放问题：对冻结 proposer 的 query-quality critic——proposer 冻结，用检索反馈、答案结局、LLM-as-judge 和反事实训练 critic；把 cue quality（008/010）从指标升级为训练目标。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增难点 3（015）作为开放问题：短期 context 与长期 buffer 之间的 two-head 缝——近期边界、融合契约、有状态多跳，以及把 query 拆解挪进可训练 lane。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 补全缺失的相关工作：图记忆（007：HippoRAG、AriGraph）、流式 / 长视频记忆（008：MovieChat、Flash-VStream）、多跳 VideoQA（009：NExT-QA、长第一人称 grounded QA）、on-policy distillation（011），以及数据集 Ego4D / EgoSchema / QAEgo4D / MovieChat-1K（012）；把 buffer 构建（014）标记为开放问题。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 把连续场重新定位为显式 buffer 上的检索先验（005、013）：buffer 才是记忆和唯一 grounding 证据；neural-field 权重记忆至多是采样器 / 冷层 gist。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增记忆场可训练规格（013）：latent token、VLM/diffusion encoder、query 条件、监督与 loss、cold-start，以及 neural-field 冷层权重记忆。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增 buffer 构建 section（014）：分布忠实保留 + 对关键事件做重要性采样，含分层、去重与延迟效用训练。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 新增评测 section（012）：数据集、无限流 + 多跳设定、指标、baseline，以及 M3-Agent / M3-Bench。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 在 005 加入“为什么连续”：面对无限视频摄入用有界参数压缩，配合 hot/warm/cold 分层与优雅降级。</li>
+      <li><time datetime="2026-06-15">2026-06-15</time> — 澄清 on-policy memory distillation 是 controller 训练机制，不是记忆表示本身。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 添加训练与 test-time learning section，区分 API 模型更新和蒸馏策略。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 为主要 section 添加高亮重点 bullet，便于快速阅读。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 添加双 agent 记忆循环的方法论 section。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 优化共享样式：暗色模式、卡片编号、状态标签，以及带步骤编号的概念图。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 将 multi-hop QA 拆成独立的证据链式检索 block。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 补充 multi-hop QA 例子，并澄清 schema/clip 存储与 flow cue 的关系。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 添加难点 2：高效存储、检索以及前后端记忆 agent 分工。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 扩展难点 1：补充 graph/flow 拆分和概念图。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 添加关于记忆结构、层级和查询导航的开放难点 1。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 强调多数基线依赖显式文本 / caption 记忆，容易在流式视频中丢失细节。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 澄清记忆场用于引导检索，而不是替代具体记忆证据。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 添加连续记忆场关键贡献、概念图与相关工作。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 补充旧文件中缺失的相关工作上下文。</li>
+      <li><time datetime="2026-06-14">2026-06-14</time> — 添加 RIVER、ReMEmbR、StreamBridge 的中文相关工作总结。</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — 将 Thinking Machines Lab Interaction Models 作为交互式智能体架构的相关工作引用。</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — 添加智能体式交互记忆架构备注与子目标。</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — 为完整连续记忆项目文档添加关键备注。</li>
+      <li><time datetime="2026-06-13">2026-06-13</time> — 根据实习简报与文献笔记起草初始问题表述。</li>
+    </ol>
+    </details>
+  </section>
+</body>
+</html>

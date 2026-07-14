@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EviCtrl — 问题设定</title>
+  <style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #1a1d23;
+  --muted: #5c6570;
+  --border: #e2e6ec;
+  --accent: #2563eb;
+  --accent-soft: #e8f0ff;
+  --draft: #94a3b8;
+  --active: #2563eb;
+  --parked: #d97706;
+  --done: #16a34a;
+  --rejected: #dc2626;
+  --open: #7c3aed;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141b;
+    --surface: #171d26;
+    --surface-2: #1f2731;
+    --text: #e6e9ef;
+    --muted: #9aa4b2;
+    --border: #2a313c;
+    --accent: #6ba2ff;
+    --accent-soft: #18283f;
+    --draft: #6b7686;
+    --active: #6ba2ff;
+    --parked: #e0a648;
+    --done: #46c275;
+    --rejected: #f06868;
+    --open: #a78bfa;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 53rem;
+  margin-inline: auto;
+  padding: 1.5rem 1.25rem 4rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.doc-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.8rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.lang-nav {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.project {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+  counter-reset: idea-counter;
+  scroll-margin-top: 1rem;
+}
+
+.project h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.project-summary {
+  color: var(--muted);
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.idea {
+  position: relative;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--draft);
+  padding: 0.9rem 1.1rem;
+  margin: 0.85rem 0;
+  background: var(--bg);
+  border-radius: 0 10px 10px 0;
+  scroll-margin-top: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.idea:hover {
+  box-shadow: var(--shadow);
+}
+
+.idea:target {
+  border-left-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.idea[data-status="active"] {
+  border-left-color: var(--active);
+}
+
+.idea[data-status="parked"] {
+  border-left-color: var(--parked);
+}
+
+.idea[data-status="done"] {
+  border-left-color: var(--done);
+}
+
+.idea[data-status="rejected"] {
+  border-left-color: var(--rejected);
+  opacity: 0.75;
+}
+
+.idea[data-status="open"] {
+  border-left-color: var(--open);
+}
+
+.idea {
+  counter-increment: idea-counter;
+}
+
+.idea-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  letter-spacing: -0.005em;
+}
+
+.idea-title::before {
+  content: counter(idea-counter, decimal-leading-zero);
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 0.05rem 0.4rem;
+  line-height: 1.5;
+}
+
+.idea-title::after {
+  margin-left: auto;
+  align-self: center;
+  font-weight: 600;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.idea[data-status="draft"] .idea-title::after {
+  content: "draft";
+  color: var(--draft);
+}
+
+.idea[data-status="active"] .idea-title::after {
+  content: "active";
+  color: var(--active);
+}
+
+.idea[data-status="parked"] .idea-title::after {
+  content: "parked";
+  color: var(--parked);
+}
+
+.idea[data-status="done"] .idea-title::after {
+  content: "done";
+  color: var(--done);
+}
+
+.idea[data-status="rejected"] .idea-title::after {
+  content: "rejected";
+  color: var(--rejected);
+}
+
+.idea[data-status="open"] .idea-title::after {
+  content: "open question";
+  color: var(--open);
+}
+
+.idea-body {
+  margin: 0 0 0.6rem;
+}
+
+.key-points {
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.85rem 0.65rem 1.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.key-points li {
+  margin-bottom: 0.35rem;
+  padding-left: 0.1rem;
+}
+
+.key-points li:last-child {
+  margin-bottom: 0;
+}
+
+.key-points strong {
+  color: var(--accent);
+}
+
+.idea-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0;
+}
+
+.idea-tags li {
+  font-size: 0.74rem;
+  padding: 0.15rem 0.55rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.idea-notes {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.idea-notes strong {
+  color: var(--text);
+}
+
+.problem-list,
+.problem-list ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.problem-list li {
+  margin-bottom: 0.4rem;
+}
+
+.example-query {
+  margin: 0.85rem 0;
+  padding: 0.8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.95rem;
+}
+
+.example-query cite {
+  display: block;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+.example-query p {
+  margin: 0.3rem 0;
+}
+
+.example-query .expected {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.changelog h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.changelog ol {
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog li {
+  margin-bottom: 0.3rem;
+}
+
+.changelog time {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Foldable sections (<details class="foldable">) */
+.foldable {
+  margin: 0.5rem 0;
+}
+
+.foldable > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+  padding: 0.15rem 0;
+}
+
+.foldable > summary::-webkit-details-marker {
+  display: none;
+}
+
+.foldable > summary::before {
+  content: "▸";
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.foldable[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.foldable > summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foldable.idea-details {
+  margin-top: 0.25rem;
+}
+
+.foldable.idea-details > summary {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.foldable.changelog-archive {
+  margin-top: 0.5rem;
+}
+
+/* Related work */
+.related-work {
+  margin: 0.85rem 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.related-work > summary {
+  font-size: 0.85rem;
+}
+
+.related-work-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.related-work-list li {
+  margin-bottom: 0.45rem;
+}
+
+.related-work-list .relevance {
+  color: var(--text);
+}
+
+/* Lightweight concept figures */
+.memory-figure {
+  margin: 1.1rem 0;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.memory-figure figcaption {
+  margin-bottom: 0.85rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.memory-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: flow-step;
+}
+
+.memory-flow li {
+  position: relative;
+  counter-increment: flow-step;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+.memory-flow li::before {
+  content: counter(flow-step);
+  position: absolute;
+  top: 0.45rem;
+  right: 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.memory-flow strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  padding-right: 1rem;
+}
+
+.memory-flow span {
+  color: var(--muted);
+}
+
+@media (max-width: 32rem) {
+  body {
+    padding: 1.25rem 0.9rem 3rem;
+  }
+
+  .project {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .doc-header h1 {
+    font-size: 1.5rem;
+  }
+}
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <h1>EviCtrl：证据状态记忆控制</h1>
+    <p class="meta">最后更新：<time datetime="2026-06-16">2026-06-16</time> · <a href="../continuous-memory-model-and-retrieval/problem-formulation-zh.html">连续记忆建模与检索</a>的第 2 版</p>
+    <nav class="lang-nav">
+      <a href="problem-formulation-en.html">English</a> |
+      <a href="../../.cursor/skills/nec-brainstorming/ideas/index.html">头脑风暴主页</a>
+    </nav>
+  </header>
+
+  <section class="project" data-project="evidience-continous-memory-rag" id="problem-formulation">
+    <h2>研究方向</h2>
+    <p class="project-summary"><strong>有损长视频记忆还能支持什么？</strong>EviCtrl 将流式长视频问答重写为<strong>证据状态记忆控制</strong>：在固定记忆预算下，系统显式追踪回答所需的每个证据角色是否仍被幸存记忆支持，并据此控制检索、验证、回答粒度与拒答。RAG 是执行循环，不再是核心贡献本身。</p>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-001" data-status="active">
+      <h3 class="idea-title">问题：有损连续视频记忆问答</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">给定连续到达的视频流 <code>V = {f1, f2, ...}</code>，构建一个有界记忆模块 <code>M_t</code>，能够增量摄入、持续巩固，并用证据回答自然语言查询。和普通 streaming QA 的关键区别是：记忆被压缩后，answerability 会变化。原始视频里可能有答案，但当前记忆状态里未必还保留了支持每个 factual claim 的证据。</p>
+        <p class="idea-body">论文级问题是：<em>有损连续视频记忆还能支持什么，以及 agent 应该如何根据幸存证据状态控制检索与生成？</em> 这把 v2 从“分层记忆 + RAG + verifier”的系统路线，收紧成一个方法贡献：在不确定的 evidence-role state 上做主动证据获取。</p>
+        <div class="example-query">
+          <cite>示例查询</cite>
+          <p>“我从掏出手机到把它放回口袋之间做了些什么？”</p>
+          <p class="expected"><strong>所需证据角色：</strong>手机拿出锚点、手机放回锚点、两者之间的区间证据、应用交互证据，以及能支持具体活动的视觉/OCR 证据。如果只保留了锚点和摘要，系统只能给粗粒度有据答案，而不能编出精确细节。</p>
+        </div>
+        <ul class="key-points">
+          <li><strong>核心变量：</strong>answerability 由幸存证据决定，而不是由原始视频中实际发生过什么决定。</li>
+          <li><strong>方法核心：</strong>检索过程中维护 role-level evidence-state belief，而不是只在最后拼一条 evidence chain。</li>
+          <li><strong>ICLR 定位：</strong>有损记忆下的证据状态控制；RAG 只是控制循环的一种实现。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-002" data-status="active">
+      <h3 class="idea-title">核心抽象：证据角色与证据状态</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body">对查询 <code>q</code>，EviCtrl 解析出一组 required evidence roles：<code>R(q) = {r1, ..., rn}</code>。role 是一个带类型的证据需求；只有它被当前记忆支持时，对应的 answer claim 才允许生成。内部控制变量是 <code>State(ri, M_t)</code>，不是最终答案上的单个置信度。</p>
+        <p class="idea-body"><strong>Role-state belief。</strong>每个 role 的状态属于 <code>{supported, missing, insufficient_fidelity, ambiguous, contradicted, not_yet_found}</code>。EviCtrl 不应该只维护一个硬标签，例如“missing”；它维护 belief distribution：<code>b_t(ri)=P(si | q, M_t, h_t)</code>。这个区别很重要：如果是 stored but not found yet，应该继续搜索；如果是 probably missing，应该停止、降级或拒答。</p>
+        <p class="idea-body"><strong>Bayesian-style filtering。</strong>检索和验证返回 observation，例如 <code>FOUND_EVIDENCE</code>、<code>NO_RESULT</code>、<code>MODALITY_MISSING</code>、<code>LOW_FIDELITY</code>、<code>CONTRADICTION</code> 和 <code>ENTITY_AMBIGUOUS</code>。controller 用 <code>b_{t+1}=F_theta(b_t, a_t, o_t)</code> 更新 belief，使 EviCtrl 变成 partially observable evidence-state control problem，而不是确定性状态机。</p>
+        <p class="idea-body"><strong>多模态 role schema。</strong>角色类型包括 <code>TemporalAnchor</code>、<code>ObjectState</code>、<code>ActionEvent</code>、<code>EntityIdentity</code>、<code>SpeakerIdentity</code>、<code>SpeechContent</code>、<code>OCRText</code>、<code>SpatialRelation</code>、<code>CausalTransition</code> 和 <code>IntervalSummary</code>。不同 role 对模态和保真度有不同要求：SpeakerIdentity 需要 diarization / voice / face 证据；OCRText 需要裁剪图或帧证据；ObjectState 需要关键帧或原始视觉证据；TemporalAnchor 需要带时间戳事件。</p>
+        <p class="idea-body"><strong>Failure code。</strong>失败 role 要输出具体代码，例如 <code>NO_EVIDENCE_POINTER</code>、<code>MODALITY_MISSING</code>、<code>FIDELITY_TOO_LOW</code>、<code>ENTITY_AMBIGUOUS</code>、<code>TEMPORAL_ANCHOR_MISSING</code>、<code>CONTRADICTION_FOUND</code> 和 <code>BUDGET_EXHAUSTED</code>。这样拒答不是泛泛“不知道”，而是可诊断的证据状态报告。</p>
+        <ul class="key-points">
+          <li><strong>证据链变成 belief state：</strong>证据链通过 retrieve-verify-act 过程中的 role-state belief 更新逐步形成，而不是最后才拼出来。</li>
+          <li><strong>回答粒度跟随保真度：</strong>原始 clip 支持细粒度视觉 claim；summary 只能支持粗粒度 claim；belief/gist 只能支持 hypothesis。</li>
+          <li><strong>诊断式拒答：</strong>系统报告失败 role 和 failure code，例如“我能确认你使用了手机，但无法确认具体 app，因为 OCR/屏幕证据未保留”。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-003" data-status="active">
+      <h3 class="idea-title">方法：作为 evidence-state MDP 的 EviCtrl</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>序贯决策视角。</strong>EviCtrl 是一个 partially observable evidence-state MDP。隐藏状态是：当前有损记忆中，每个 required role 到底是 supported、missing、insufficient、ambiguous 还是 contradicted。belief <code>b_t</code> 汇总了先前检索和验证 observation 之后 controller 知道什么。控制目标是 <code>max_pi E[AnswerUtility(b_T) - lambda SearchCost - mu UnsupportedRisk]</code>。</p>
+        <p class="idea-body"><strong>Algorithm 1：Evidence-State Belief Filter。</strong>给定 query，解析 roles <code>R(q)</code>，初始化 <code>b_0</code>，执行 evidence-seeking actions，并用 verifier observations 更新 <code>b_{t+1}=F_theta(b_t, a_t, o_t)</code>。这个 filter 区分 <em>not found yet</em> 与 <em>probably missing</em>，并把 contradiction probability 表示进 belief，而不是把 contradiction 当成事后 flag。</p>
+        <p class="idea-body"><strong>Algorithm 2：Value-of-Evidence Controller。</strong>候选动作包括 <code>search_ASR(role)</code>、<code>search_visual(role)</code>、<code>expand_temporal(role)</code>、<code>retrieve_schema(role)</code>、<code>check_contradiction(role)</code>、<code>stop_and_answer</code> 和 <code>abstain</code>。每一步选择 expected value of evidence 最大的动作：<code>VoE(a)=E_o[U(F_theta(b_t,a,o))-U(b_t)]-lambda C(a)</code>。当 <code>max_a VoE(a) &lt;= tau</code> 时停止。</p>
+        <p class="idea-body"><strong>Algorithm 3：Risk-Constrained Claim Generation。</strong>停止后，在 <code>{precise, coarse, hypothesis, abstain}</code> 中用 risk-sensitive decision rule 选择回答层级。只有当 claim <code>c_j</code> 的 role-level support risk 低于阈值时才允许生成：<code>Risk(c_j | b_T) &lt;= epsilon</code>。contradiction probability 和 ambiguity probability 直接进入 risk，所以在高风险 claim 前做 contradiction check 可以有很高 VoE。</p>
+        <figure class="memory-figure">
+          <figcaption>图：EviCtrl 在 typed role-state beliefs 上做主动证据获取。</figcaption>
+          <ol class="memory-flow">
+            <li><strong>查询</strong><span>长视频自然语言问题</span></li>
+            <li><strong>角色</strong><span>带类型的证据需求</span></li>
+            <li><strong>Belief</strong><span>P(s_i | query, memory, history)</span></li>
+            <li><strong>VoE 控制</strong><span>检索、验证、精化、停止、拒答</span></li>
+            <li><strong>Risk Gate</strong><span>精确 / 粗粒度 / 假设 / 拒答</span></li>
+          </ol>
+        </figure>
+        <ul class="key-points">
+          <li><strong>新意：</strong>controller 在 role-state beliefs 上主动获取证据，而不是固定 top-k 检索。</li>
+          <li><strong>自适应停止：</strong>只有当期望 answerability gain 高于证据获取成本时，系统才继续搜索。</li>
+          <li><strong>构造式防幻觉：</strong>高风险 roles 在生成前就屏蔽 unsupported claims。</li>
+          <li><strong>RAG 降级：</strong>retrieval 是 state-control loop 里的一个 action，不是论文主抽象。</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://proceedings.neurips.cc/paper_files/paper/2025/file/8190b210e9808e54ee16263b673a847d-Paper-Conference.pdf" target="_blank" rel="noopener">Deep Video Discovery (DVD)</a> — <span class="relevance">多粒度视频智能体检索；最接近的读取路径 baseline。</span></li>
+            <li><a href="https://github.com/OSU-NLP-Group/HippoRAG" target="_blank" rel="noopener">HippoRAG</a> — <span class="relevance">图结构多跳 RAG；可作为 warm-tier graph traversal 参考。</span></li>
+            <li><a href="https://arxiv.org/abs/2310.11511" target="_blank" rel="noopener">Self-RAG</a> — <span class="relevance">检索与自反思 baseline；EviCtrl 的差异是有损视频记忆下的 role-level evidence state control。</span></li>
+            <li><a href="https://github.com/OpenGVLab/RIVER" target="_blank" rel="noopener">RIVER</a> — <span class="relevance">流式视频记忆和实时感知基准；适合 mid-stream queryability。</span></li>
+          </ul>
+        </details>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-004" data-status="active">
+      <h3 class="idea-title">学习目标</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>统一的 role-coverage objective。</strong>Retention 和 query-time retrieval 应该优化同一个抽象：预算下的 typed evidence-role coverage。长期记忆预算选择 <code>M_B</code> 来最大化 <code>E_q RoleCoverage(q, M_B)</code>；查询时预算选择 actions <code>A_{1:T}</code> 来最大化 <code>RoleCoverage(q, Retrieved(A_{1:T})) - lambda Cost(A)</code>。</p>
+        <p class="idea-body"><strong>Budgeted retention as coverage maximization。</strong>每个 memory item <code>e</code> 以 fidelity-dependent capacity <code>Support(e,r)</code> 支持若干 role types。Retention objective 可以写成 knapsack / submodular coverage 问题：<code>max_{Cost(M)&lt;=B} sum_r w_r max_{e in M} Support(e,r) - lambda Redundancy(M)</code>。实际在线近似可以在预算允许时不断加入 marginal answerability gain <code>Delta(e | M)</code> 最大的条目。</p>
+        <p class="idea-body"><strong>训练 controller。</strong>采用两阶段。第一阶段用 teacher-trace imitation，从 oracle evidence chains 和 verifier-labeled trajectories 学 <code>pi_theta(a_t | q, b_t, M)</code>。第二阶段用 offline preference learning / DPO，以 <code>RoleRecall + alpha Answerability - beta UnsupportedClaims - lambda Cost</code> 给 trajectory 打分，偏好能用更少步骤找到足够证据、且不生成 unsupported precise claims 的轨迹。</p>
+        <p class="idea-body"><strong>Counterfactual compression supervision。</strong>比较 full memory、keyframe-only、schema-only、summary-only、gist-only 和 missing-evidence 状态。模型应学习输出粒度跟随 survivability：full 支持 precise，schema 支持 coarse，gist 支持 hypothesis，missing 支持 abstention。</p>
+        <ul class="key-points">
+          <li><strong>保留目标：</strong>最大化未来 evidence-role coverage，而不是保留视觉显著片段。</li>
+          <li><strong>控制目标：</strong>学习 value-of-evidence action selection 和 adaptive stopping。</li>
+          <li><strong>生成目标：</strong>重罚 unsupported factual answer，同时奖励标定良好的 precise、coarse、hypothesis 或 abstain 输出。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-005" data-status="active">
+      <h3 class="idea-title">评测协议</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>设定。</strong>固定预算、增长时域、真实有损层级下的长视频 QA。改造 Ego4D、QAEgo4D、EgoSchema、MovieChat-1K、RIVER 式回溯任务和 M3 式长期记忆任务。benchmark 应包含 gold answer、evidence roles、evidence-chain labels、surviving evidence crumbs、allowed answer granularity 以及 ambiguity / failure labels。</p>
+        <p class="idea-body"><strong>指标。</strong>报告 Evidence-Role Recall@K、Evidence-Chain Completion@K、Role Recall@Budget、Search Steps to Answerability、Answer Accuracy with Support、Unsupported Answer Rate、False Support Rate、Correct Abstention、Stop Decision Accuracy、Missing-vs-Not-Found Separation、Risk-Coverage AUC、Granularity Calibration、Role-State Belief Accuracy、遗忘曲线、延迟、存储成本和删除合规率。</p>
+        <p class="idea-body"><strong>基线。</strong>加入 long-context VLM/LLM with sampled frames、caption-RAG、ANN over retained clips、ANN + graph traversal、MMR + reranker、same-tools LLM planner、RAG + verifier + abstention classifier、M3-Agent-style memory、可比的 RIVER/StreamBridge-style streaming memory、DVD-style agentic search、LongMem-style SideNet 记忆融合（不可归因残差注入）、oracle decomposition、oracle retention 和 oracle evidence chain。</p>
+        <ul class="key-points">
+          <li><strong>Hero result：</strong>在固定 answer coverage 和 search budget 下，unsupported-answer rate 更低，而不是靠过度拒答取胜。</li>
+          <li><strong>Algorithm result：</strong>VoE control 应在每步搜索的 role recall 上打赢 random unresolved-role search、greedy semantic retrieval、uncertainty-only search 和 LLM planner。</li>
+          <li><strong>Scaling result：</strong>时域增长、预算固定时，比强 retrieval / memory baselines 保持更高 evidence-role recall 和更好 risk-coverage。</li>
+          <li><strong>Oracle baselines：</strong>定位瓶颈来自 retention、decomposition、retrieval 还是 generation。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-006" data-status="active">
+      <h3 class="idea-title">消融与归因</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>Retention experiment。</strong>固定 controller，比较 FIFO、reservoir、saliency、summary-only、graph memory、learned survivability policy 和 oracle retention。这个实验验证 survivability-aware consolidation 是否真的有用。</p>
+        <p class="idea-body"><strong>Retrieval/control experiment。</strong>固定 memory store，让所有方法看到同一批 retained evidence。比较 EviCtrl VoE search、random unresolved-role search、greedy semantic retrieval、uncertainty-only search、graph traversal、reranker、verifier-only system、LLM tool planner 和 oracle VoE。这个实验隔离 belief-state tracking 与 value-of-evidence action selection 的价值。</p>
+        <p class="idea-body"><strong>Belief-filter experiment。</strong>比较 hard state labels、answer-level confidence、role-level belief state 和 oracle role state。指标包括 belief calibration、missing-vs-not-found separation、contradiction detection 和 stop decision accuracy。</p>
+        <p class="idea-body"><strong>Generation/gating experiment。</strong>固定 evidence chain，比较 direct LLM answering、LLM + verifier、answer-level abstention classifier、claim-level binding、risk-constrained claim generation 和 oracle claim binding。这个实验验证幻觉降低是否来自 risk-constrained generation，而不是更好检索。</p>
+        <ul class="key-points">
+          <li><strong>移除组件：</strong>role decomposition、belief filter、VoE controller、adaptive stopping、fidelity labels、failure codes、risk gate、contradiction check 和 claim-level binding。</li>
+          <li><strong>归因纪律：</strong>分开 retention、retrieval、generation，才能解释方法为什么赢。</li>
+          <li><strong>失败分析：</strong>报告失败来自 not stored、not found、insufficient fidelity、ambiguity 还是 contradiction。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-007" data-status="active">
+      <h3 class="idea-title">与 v1 的关系和贡献列表</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>与 v1 的关系。</strong>v1 研究生成式连续记忆场。EviCtrl 做更稳但更尖锐的 v2 主张：有界长视频记忆的核心问题不是 latent field 能否存储过去，而是幸存证据是否仍能支持 claims。v1 的 field 可以作为 proposal prior 或 cold-tier add-on 回归，但不是主贡献。</p>
+        <p class="idea-body"><strong>精炼贡献。</strong>(1) Evidence-state belief formulation：把长视频 QA 建模为 partially observable role-state tracking。(2) Budgeted role-coverage retention：在记忆成本下保留最大化未来 answerability 的 evidence crumbs。(3) Value-of-evidence controller：当期望 answerability gain 高于搜索成本时主动获取证据。(4) Risk-constrained claim generation：以 claim-level support-risk 阈值控制 precise/coarse/hypothesis/abstain，并报告 failed role。(5) Controlled evaluation protocol：分离 retention、retrieval/control、belief tracking 和 generation。</p>
+        <p class="idea-body"><strong>面向 reviewer 的定位。</strong>这不是“hierarchical memory + RAG + verifier + abstention”。EviCtrl 将长视频记忆问答转化为 typed role-state beliefs 上的主动证据获取问题，用 value of evidence 优化检索/验证动作，并用 claim-level support risk 约束最终生成。</p>
+        <ul class="idea-tags">
+          <li>EviCtrl</li>
+          <li>证据状态控制</li>
+          <li>有损长视频记忆</li>
+          <li>survivability-aware consolidation</li>
+          <li>claim-level answerability</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-008" data-status="active">
+      <h3 class="idea-title">ICLR reviewer scoring 视角</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>推荐分目标。</strong>这里的目标不应该写成泛泛的“8/10”。按 ICLR reviewer 语境，当前概念如果没有强实验，大概是 borderline；正式的 EviCtrl 算法 + 强 baseline 可以到 <em>Overall 6 = Weak Accept</em>；如果 risk-coverage 和 role-recall 结果非常强，可以到 <em>Overall 7 = Accept</em>。<em>Overall 8+ = Strong Accept</em> 需要一个更清楚的新现象，并且结果要让 reviewer 觉得现有 RAG / verifier / selective-answering 系统很难复现。</p>
+        <p class="idea-body"><strong>Reviewer 维度。</strong>EviCtrl 应按 soundness、significance、novelty、empirical rigor、clarity、prior-work positioning 和 reproducibility 来评估。bounded long-video memory 是真问题，所以 significance 有潜力；novelty 取决于 role-state belief control 能否和 RAG sufficiency / verifier baselines 清楚区分；最终 accept/reject 最大变量是 empirical rigor。</p>
+        <p class="idea-body"><strong>分数阶梯。</strong>如果只是 role parser + retriever + verifier + answerability gate 的 pipeline，很可能是 <em>Overall 5</em>：有趣但太像系统拼装。加入 belief tracking、value-of-evidence acquisition、adaptive stopping、risk-constrained generation 和归因实验后，像 <em>Overall 6</em>。要到 <em>Overall 7</em>，必须在 risk-coverage、unsupported claim rate、role recall under budget 和 granularity calibration 上打赢强 baseline。<em>Overall 8+</em> 需要一个普遍且清楚的新现象，以及对强 baseline 的大幅优势。</p>
+        <ul class="key-points">
+          <li><strong>不要 claim：</strong>“EviCtrl solves hallucination。”应 claim：“EviCtrl 在 bounded/lossy memory 下通过 role-level evidence states 约束生成，降低 unsupported factual claims。”</li>
+          <li><strong>不要 claim：</strong>“EviCtrl remembers better。”应 claim：“EviCtrl 在固定 memory / retrieval budget 下更好地保留并恢复 query-required evidence roles。”</li>
+          <li><strong>Reviewer 会买的指标：</strong>RoleRecall@Budget、UnsupportedClaimRate@Coverage、Coverage@FixedRisk、Risk-Coverage AUC、Granularity Calibration 和 Missing-vs-Not-Found Separation。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-009" data-status="active">
+      <h3 class="idea-title">8+ 策略：有界记忆下的 support collapse</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>Killer phenomenon。</strong>如果要有 ICLR 8+ 潜力，EviCtrl 需要识别并控制一个有界视频记忆特有的 failure mode：<strong>support collapse under relevance preservation</strong>。记忆压缩后，某条 memory 仍然和 query 语义相关，但支持细粒度 factual claim 所需的具体 evidence roles 已经丢失或降保真。这不是普通 retrieval failure，也不是普通 hallucination，而是 bounded-memory support-degradation 问题。</p>
+        <p class="idea-body"><strong>例子。</strong>压缩摘要说“用户中午使用了手机”。查询问：“我打开了哪个 app？” baseline 会检索到这个相关摘要并猜一个 app。EviCtrl 会发现 OCR / 屏幕 / app-interaction 证据 missing 或 insufficient-fidelity，因此只能给粗粒度回答，或拒绝生成具体 app claim。</p>
+        <p class="idea-body"><strong>Controlled Support Decay experiment。</strong>对同一批 video-query 构造不同 memory tiers：full clip、keyframe、ASR/OCR、schema、summary、gist/latent 和 missing。展示三条曲线：(1) semantic relevance 仍高，但 role-level support 急剧下降；(2) unsupported claim rate versus coverage 中，EviCtrl 在同等 coverage 下风险更低、同等 risk 下 coverage 更高；(3) RoleRecall@Budget 中，EviCtrl 比 RAG、LLM planner、reranker 和 selective sufficiency baseline 每次 memory access 找到更多 required evidence。</p>
+        <p class="idea-body"><strong>Standout paper 的定量门槛。</strong>不能只是平均 QA 小涨。一个有说服力的 8+ 版本应显示：Unsupported Claim Rate 大幅降低、Coverage@FixedRisk 更高、RoleRecall@Budget 更好、summary/schema memory 下 fine-detail hallucination 更少、granularity calibration 更准，并且 baseline 包括 RAG + verifier + abstention、MMR + reranker + verifier、same-tools LLM planner、SURE-RAG-style selective sufficiency，以及可比的 long-video memory systems。</p>
+        <ul class="key-points">
+          <li><strong>8+ thesis：</strong>相关记忆在有界压缩后可能不再支持具体 claims；EviCtrl 控制的是 support，而不只是 relevance。</li>
+          <li><strong>标题方向：</strong><em>EviCtrl: Active Support Control for Bounded Long-Video Memory</em>，副标题可用 “When Relevant Memories No Longer Support the Answer”。</li>
+          <li><strong>诚实目标：</strong>用 8+ 的野心设计实验，但用 7 分论文的克制写作：不 overclaim，只用强证据支持 support collapse 和 active support control。</li>
+        </ul>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-010" data-status="active">
+      <h3 class="idea-title">高保真特征 tier：latent/KV 证据 vs 语义特征</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>一个 tier，三种候选特征来源。</strong>近期多个记忆工作存的是学到的特征而非文本/像素：Mirage 在 3D 点上缓存 diffusion VAE latent，LongMem 在外部 bank 里缓存冻结 LLM 的 KV。我们把它们统一为 EviCtrl fidelity 层级里一个可选的<em>高保真特征 tier</em>：存储单元可以是 diffusion latent、VLM 视觉 token 或 LLM KV。这个 tier 用来支持 caption/summary 层会丢失的细粒度 role（OCRText、ObjectState、精确 SpatialRelation）。</p>
+        <p class="idea-body"><strong>为什么它只能是奢侈 tier，不是默认存储。</strong>原始 latent 和 KV 高维且昂贵，和固定比特预算直接冲突。LongMem 假设 bank 无界，EviCtrl 不行。所以特征级证据只能为少量预算内条目保留，这正是它处于保真度阶梯顶端（raw/feature &gt; keyframe &gt; schema &gt; summary &gt; gist &gt; missing）、而非作为骨架的原因。</p>
+        <p class="idea-body"><strong>表征不匹配风险（决定成败的赌注）。</strong>生成 latent（diffusion VAE）和冻结模型 KV 是为重建/下一 token 预测优化的，不是 query 对齐的语义。LLaVA 式推理吃的是语义、语言对齐的特征（CLIP/SigLIP）。所以把 raw latent 直接喂进 VLM 做导航或推理是未经验证的，可能不如语义特征。我们把它当作可证伪命题，而非默认假设。</p>
+        <p class="idea-body"><strong>决定性消融。</strong>对同一批长视频 QA，把三种视觉 token 来源喂进同一个 VLM，并各自用于 where-to-look 导航：(1) SigLIP 语义特征，(2) 裸 diffusion/KV latent，(3) latent + 训练的语义 adapter。只有当 (2)/(3) 在细粒度/OCR/空间 role 和 RoleRecall 上打赢 (1)，这个 tier 才值得纳入；否则它退化为 baseline，而非组件。</p>
+        <p class="idea-body"><strong>LongMem 真正的贡献。</strong>它真正的礼物是解耦原则——冻结 reasoner + 一个小的可训练记忆侧模块——这背书了 EviCtrl 在冻结 VLM 之上用 fixed-policy controller + filtering belief state 的做法。但 LongMem 的 SideNet 把记忆当成不透明的 hidden-state 残差融合，这与 EviCtrl 的 claim-level 归因和拒答直接冲突。因此不透明融合只允许用在 coarse/gist tier（不需要归因），或保留为不可归因 baseline。</p>
+        <ul class="key-points">
+          <li><strong>合并而非堆叠：</strong>diffusion latent / VLM token / LLM KV 是同一个高保真 tier 的不同特征来源，不是三个独立模块。</li>
+          <li><strong>预算张力：</strong>特征/KV 存储是预算下的奢侈顶层 tier，永远不是默认存储。</li>
+          <li><strong>归因 vs 融合：</strong>SideNet 式残差融合与 role-level support gating 冲突；需要归因 claim 的地方，证据必须显式保留。</li>
+          <li><strong>缝合怪警告：</strong>EviCtrl 始终是脊柱；latent/KV 想法只能作为已验证的 tier 或 baseline 进入。</li>
+        </ul>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://github.com/Victorwz/LongMem" target="_blank" rel="noopener">LongMem</a> — <span class="relevance">冻结 LLM + 可训练 SideNet，外部无界 KV bank（NeurIPS 2023）；解耦记忆的先例，在有界预算与可归因性上形成对照。</span></li>
+            <li><a href="https://arxiv.org/abs/2606.09828" target="_blank" rel="noopener">Mirage（Latent Spatial Memory）</a> — <span class="relevance">面向视频生成的 diffusion-latent 3D cache；高保真 latent tier 的来源，也是生成-vs-理解表征风险的来源。</span></li>
+          </ul>
+        </details>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-011" data-status="active">
+      <h3 class="idea-title">两分布有损记忆 buffer：事件分布 × 重要性分布</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>把 buffer 拆成"在哪里存" × "存多细"。</strong>有损记忆 buffer 由两个职责正交的分布支配,这正是为什么单个标量打分不够。<em>事件分布</em> <code>p_E</code> 回答"流里哪里有一个值得记的单元、密度多大":它控制 support(锚点放在哪、分段、粒度),自监督地从预测惊讶度 / 边界 / 新颖度学到,query 无关。<em>重要性分布</em> <code>p_I</code> 回答"这个单元对未来回答有多大价值":它控制每个锚点的比特 / fidelity 分配,弱监督地从 teacher 证据链学成 value-of-evidence。一句话:事件分布决定在哪里、采多密;重要性分布决定每个采样点存多高保真。</p>
+        <p class="idea-body"><strong>形式化一 —— 有标记点过程。</strong>基过程 = 非齐次强度 <code>λ_E(t)</code>(Poisson/Hawkes;Hawkes 能建模"一个事件让短时间内更可能有后续"),放置锚点,期望数 <code>N ≈ ∫ λ_E ≤ N_max</code>。标记 = 重要性采样 <code>m(e) ~ p_I</code>,映射到 fidelity tier <code>f(e) ∈ {raw, keyframe, schema, summary, gist}</code>(idea-010 的阶梯)。保留因子化为 <code>keep_and_fidelity(e) ∝ p_E(e) · p_I(f | e)</code>。重要性以事件为条件、而非独立,因为重要的东西常常本身就是事件边界,条件化能避免重复计数。</p>
+        <p class="idea-body"><strong>形式化二 —— 率失真比特分配。</strong>"有损"就是有损压缩:事件分布定义源符号集合(怎么切流),重要性分布给权重 <code>w(e)=p_I(e)</code>,在预算 <code>Σ b(e) ≤ B</code> 下解 <code>min_b Σ w(e) D(b(e))</code>。最优解是反向注水:重要性高 → 更多比特 → 更高 fidelity tier;重要性低 → 压到 summary/gist 或丢弃。这让 buffer 成为 idea-004 submodular role-coverage 保留目标的一个在线、可采样的因子化近似(idea-004 是目标,这个 buffer 是高效实现)。</p>
+        <p class="idea-body"><strong>为什么它是 support collapse 的生成式模型(8+ 命题)。</strong>relevance ≈ 在 <code>p_E</code> 中存活(事件仍被表示、仍可检索)。support ≈ <code>p_I</code> 为该 role 所需 fidelity 分够了比特。<em>support collapse 恰恰是两个分布之间的错配</em>:事件在 <code>p_E</code> 里活着(相关),但 <code>p_I</code> 没给未来 query 需要的 role 分够比特(细节被压没)→ 相关但无法支撑。两个旋钮(采样密度 vs fidelity 分配)可独立拨动,画出 idea-009 的 support-decay 曲线。</p>
+        <p class="idea-body"><strong>在线遗忘 = 两个分布同时随时间退化。</strong>随着 horizon 变长、预算压力上升:(1) 重要性衰减 —— 给 <code>p_I</code> 加 recency / 已回答 衰减,旧锚点沿 fidelity 阶梯下滑(raw→summary→gist);(2) 事件粗化 —— 把旧事件合并成 IntervalSummary,使 <code>p_E</code> 变粗。两者一起,自然得到"近精远糊"的 buffer。</p>
+        <p class="idea-body"><strong>学习。</strong><code>p_E</code>:自监督边界/新颖度模型,无需标注。<code>p_I</code>:从 teacher 证据链学 <code>importance(e)=E_q[Δ RoleCoverage(q) | 保留 e]</code>;保留时 query 未知,所以对 query 先验取期望,并拆成内在证据密度先验(人脸、文字、物体状态变化、交互天生证据密集)+ 可学 query 边际项,以抵抗 train/test query 漂移。</p>
+        <ul class="key-points">
+          <li><strong>职责正交:</strong>事件分布 = support / 在哪、采多密;重要性分布 = fidelity / 每个锚点多少比特。</li>
+          <li><strong>两个干净数学视角:</strong>有标记点过程(锚点 + fidelity 标记),与比特预算下的率失真反向注水。</li>
+          <li><strong>support collapse 显式化:</strong>它是可度量的 <code>p_E</code>-存活 / <code>p_I</code>-欠分配 错配,给出两个独立实验旋钮。</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> 风险 —— (1) 重要性在保留时 query-blind,必须用 query 边际 + 内在先验,否则 test query 漂移即崩;(2) 两分布相关,要把重要性建成 <code>p_I(·|e)</code> 而非独立;(3) 事件分段错误会传染给比特分配(漏掉边界 → 合并两个事件 → 丢证据),所以分段应可恢复/可回溯。开放问题:<code>p_E</code> 与 <code>p_I</code> 联合学还是顺序学,是否共享 encoder。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-012" data-status="active">
+      <h3 class="idea-title">可训练的 buffer 管理 agent,以及学习信号从哪来</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>难点不在策略,而在 credit assignment。</strong>buffer agent 在"当下、query 无关"地做决策,而唯一的真值奖励(answerability)却"以 query 为条件、且晚得多"才到来。整个设计问题就是把延迟的下游 answerability 转成保留时刻的信号。因此 EviCtrl 有两个共享同一目标(预算下 role coverage)的 controller:query-time value-of-evidence controller(idea-003,快、query-aware、有直接奖励),与新的 <em>buffer 管理 agent</em>(慢、query-blind、在 consolidation 时运行)。</p>
+        <p class="idea-body"><strong>buffer agent 作为 memory-control MDP。</strong>State = 当前记忆 <code>M_t</code>(汇总统计 + 每条目 fidelity)+ 进入的条目 + 剩余预算 + 内在证据密度特征。Action = <code>admit</code>(<code>p_E</code> 门)、<code>fidelity_tier</code>(<code>p_I</code> 比特分配)、<code>merge</code>/<code>coarsen</code>、<code>demote</code>、<code>evict</code>。架构 = 冻结 VLM encoder(idea-010 / LongMem 解耦)+ 小的可训练记忆侧 head;只训练 manager,不训练 reasoner。</p>
+        <p class="idea-body"><strong>学习信号,按耦合从弱到强。</strong>(1) <em><code>p_E</code> 自监督</em>:下一特征预测 / 重建 / 边界预测,预测惊讶度 = 边界 = 高强度,完全不需要 query。(2) <em><code>p_I</code> 回溯 oracle 标签</em>(最干净):用无界记忆 + oracle 证据链跑(idea-005),对每个未来 query 你都知道哪些条目落在所需链上,于是 <code>importance(e)=E_q[1(e ∈ evidence_chain(q))] ≈ E_q[Δ RoleCoverage(q) | 保留 e]</code> —— 一个监督回归目标,首版不需要 RL。(3) <em>fidelity head 的反事实压缩</em>:把每个条目消融到各 tier,标注"claim 仍被支撑的最低 tier"(idea-004)。(4) <em>联合策略的 hindsight 最优模仿</em>(最实用):给定完整未来 + 完整 query 集,解离线 submodular/knapsack 最优保留集,再在线 DAgger 模仿它,把棘手的在线 credit assignment 转成对可解离线 oracle 的监督模仿。(5) <em>最后才 RL / 偏好微调</em>:奖励 <code>R = RoleRecall@Budget + α Answerability − β UnsupportedClaims − λ Cost</code>,用 trajectory DPO,query-time controller 冻结作 evaluator。</p>
+        <p class="idea-body"><strong>对抗延迟与稀疏。</strong>重要性模型<em>就是</em> critic:<code>p_I</code> 预测未来 role-coverage 价值,因此天然充当保留时刻的稠密、query-blind 奖励(先监督预训,再用下游奖励 refine)。逐条目 credit 来自 claim-level 归因 —— 当一个 query 被回答,证据链把功劳归到具体被保留的条目,复用 EviCtrl risk-gate 的归因作为 credit-assignment 机制。Hindsight relabeling(HER 式)把实际到来的 query 当作已实现的 goal 分布。</p>
+        <p class="idea-body"><strong>建议的 4 阶段配方。</strong>Stage 0:在原始视频上自监督 <code>p_E</code>。Stage 1:用回溯证据链 importance + 反事实压缩 fidelity 标签监督 <code>p_I</code>。Stage 2:DAgger 模仿 hindsight 最优 buffer,学预算下的联合 admit/fidelity/merge 策略。Stage 3:trajectory DPO / RL,下游 answerability 奖励,query-time controller 冻结作 evaluator。</p>
+        <ul class="key-points">
+          <li><strong>两个 controller、一个目标:</strong>buffer agent(保留、query-blind)与 VoE controller(query-time)在预算下 role coverage 上共训。</li>
+          <li><strong>信号阶梯:</strong>自监督 <code>p_E</code> → 回溯 oracle 重要性 → 反事实 fidelity 标签 → hindsight 最优模仿 → 下游奖励 RL。</li>
+          <li><strong>重要性 = critic:</strong>同一个 <code>p_I</code> head 提供稠密保留时刻奖励,由监督标签 bootstrap、再由下游 answerability refine。</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> 坑 —— query 分布漂移(用内在证据密度先验正则 + query 类型随机化)、奖励黑客倾向"全留"(用硬预算 / Lagrangian,而非软 cost)、以及 agent 改变自身未来状态分布带来的非平稳(on-policy + trajectory replay,或 off-policy 校正)。开放问题:buffer agent 与 query-time controller 是否共享权重/encoder,还是分开的 head。</p>
+      </details>
+    </article>
+
+    <article class="idea" data-id="evidience-continous-memory-rag-013" data-status="active">
+      <h3 class="idea-title">在记忆分布上做 diffusion 证据导航 agent(impact 判断)</h3>
+      <details class="foldable idea-details" open>
+        <summary>展开完整描述</summary>
+        <p class="idea-body"><strong>先给诚实结论。</strong>在 <code>p_E</code>/<code>p_I</code> 地形上训练一个导航 agent 很有前途,diffusion 是一个强的实例化;但它"更 impactful"的前提是:它要在某个 step-wise VoE 控制搞不定的现象上挣到位置。否则 reviewer 会读成 method-for-method's-sake 的方法替换 —— 即 idea-010 警告的缝合怪风险。</p>
+        <p class="idea-body"><strong>重构:把检索看成在地形上的轨迹导航。</strong>两个分布已经定义了一片结构化地形:<code>λ_E(t)</code> 说事件在哪密集,<code>p_I</code> 说哪里仍有存活的 fidelity/价值。当前 controller(idea-003)是贪心地、一次一个离散动作地走这片地形。<em>Diffusion Evidence Navigator</em>(类 Diffuser / Decision Diffuser)则在 <code>(query, role 集 R(q), belief b_t, 地形 (λ_E, p_I))</code> 条件下,生成一整条记忆访问 waypoint 轨迹,用 VoE 目标作为奖励训练。</p>
+        <p class="idea-body"><strong>为什么 diffusion 合适。</strong>(1) 它建模多峰的"去哪看"分布 —— 一个 query 的证据常常分散(phone-out anchor、app-interaction、OCR 各在一处),贪心 top-k / 单步 VoE 会卡在一个 mode,而 diffusion planner 能采样多条连贯的多目标轨迹、一次覆盖多个 role。(2) 它能在预算下规划非贪心的组合式搜索顺序,且天然 anytime:采样 K 条候选 plan,各按期望 role coverage − cost 打分,执行最好的那条。</p>
+        <p class="idea-body"><strong>与主线(support collapse)的 impact 连接。</strong>一个读两个分布的导航器,能探测 support-collapse 区域 —— <code>p_E</code> 存活(相关、可检索)但 <code>p_I</code> fidelity 已崩(role 证据没了)的区域。贪心语义检索会走进去、拉出相关但无法支撑的记忆、然后幻觉;地形感知导航器学会绕开或触发拒答。这把 diffusion 导航从 bolt-on 变成直接控制 support collapse 的机制。它也是 v1 diffusion 场(idea-007)的非幻觉归宿:用作"降级证据大概在哪"的导航 proposal prior,而非答案生成器。</p>
+        <p class="idea-body"><strong>诚实的风险。</strong>(1) method-for-method's-sake:EviCtrl 内核不需要 diffusion,所以任何增益都必须归因于 trajectory-level 生成式规划 + 地形感知,而非 diffusion 这块招牌 —— 强制 baseline 是非 diffusion 的轨迹 planner(AR-transformer planner、同地形上的 MCTS)。(2) 延迟:去噪步数与流式/延迟指标冲突,要报告 cost 曲线。(3) 表征不匹配(idea-010):导航必须在语义、query 对齐空间里跑,而非裸 diffusion-latent 空间,除非 SigLIP-vs-latent-vs-latent+adapter 消融通过。</p>
+        <p class="idea-body"><strong>决定性实验。</strong>在固定记忆存储上(idea-006 retrieval/control 协议),比较贪心语义检索、step-wise VoE、AR-transformer planner、MCTS planner、diffusion 导航器 —— 后两者各做 有/无 <code>(λ_E, p_I)</code> 地形条件,以及语义 vs latent 空间。指标:每搜索步 RoleRecall、Coverage@FixedRisk,尤其是贪心会失败的"分散多 role / 多峰证据"query 子集。只有当 diffusion 在该子集和 anytime 预算曲线上赢,它才值得纳入;若 transformer/MCTS 打平,结论优雅退化为"trajectory-level 地形感知导航胜过贪心检索",diffusion 只是其中一种实现。</p>
+        <ul class="key-points">
+          <li><strong>有条件的 yes:</strong>它抬高上限(多峰多 role 覆盖、support-collapse 感知路由、v1 场的安全归宿),但必须配诚实的非 diffusion planner baseline。</li>
+          <li><strong>归因纪律:</strong>把功劳记给想法(轨迹 + 地形感知),而非机器(diffusion)。</li>
+          <li><strong>能强化 8+ 故事的前提:</strong>导航器可证地避开 support-collapse 区域,并在分散证据 query 上抬高 Coverage@FixedRisk。</li>
+        </ul>
+        <p class="idea-notes"><strong>Notes:</strong> 开放问题 —— 导航器与 buffer agent(idea-012)、VoE controller 在共享 role-coverage 目标上联合训练,还是分阶段?地形条件需要显式 (λ_E, p_I) 场输入,还是能从记忆特征里读出?diffusion 始终从属于 EviCtrl 脊柱,作为一个已验证的导航 tier,绝不当头条机制。</p>
+        <details class="foldable related-work">
+          <summary>相关工作</summary>
+          <ul class="related-work-list">
+            <li><a href="https://arxiv.org/abs/2205.09991" target="_blank" rel="noopener">Diffuser（Planning with Diffusion）</a> — <span class="relevance">轨迹级 diffusion 规划;采样多 waypoint 证据搜索 plan 的基础。</span></li>
+            <li><a href="https://arxiv.org/abs/2211.15657" target="_blank" rel="noopener">Decision Diffuser</a> — <span class="relevance">条件 diffusion 策略;把导航条件在 query/belief/地形上的先例。</span></li>
+          </ul>
+        </details>
+      </details>
+    </article>
+
+  </section>
+
+  <section class="changelog">
+    <h2>讨论记录</h2>
+    <ol>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 新增在记忆分布上的 diffusion 证据导航 agent（idea-013）并给出诚实 impact 判断:把检索重构为在 <code>(λ_E, p_I)</code> 地形上的轨迹级导航,论证 diffusion 适配多峰分散多 role 证据与 anytime 预算规划,并通过"避开 support-collapse 区域"和"作为 v1 diffusion 场的非幻觉归宿(proposal prior 而非答案生成器)"与 8+ 主线挂钩。用强制的非 diffusion planner baseline(AR-transformer / MCTS)与 idea-010 语义-vs-latent 消融把关,使增益归因于轨迹 + 地形感知,而非 diffusion 招牌。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 新增可训练 buffer 管理 agent 及其学习信号（idea-012）：把 buffer 管理建成 query-blind 的 memory-control MDP,与 query-time VoE controller 在同一 role-coverage 目标上共训,并给出信号阶梯(自监督 <code>p_E</code> → <code>p_I</code> 回溯 oracle 重要性 → 反事实压缩 fidelity 标签 → hindsight 最优 DAgger 模仿 → 下游奖励 trajectory DPO)。通过让重要性模型兼任稠密 critic、并复用 claim-level 归因做逐条目 credit,解决延迟/query-blind 的 credit-assignment 问题。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 新增两分布有损记忆 buffer（idea-011）：把保留因子化为事件分布 <code>p_E</code>（support / 锚点放在哪、采多密,自监督自惊讶度/边界）与重要性分布 <code>p_I</code>（fidelity / 每个锚点多少比特,value-of-evidence）。用有标记点过程与比特预算下的率失真反向注水两种方式形式化,定位为 idea-004 role-coverage 目标的在线可采样近似,并证明它是 support collapse 的生成式模型(事件在 <code>p_E</code> 存活,而 <code>p_I</code> 对所需 role 欠分配比特)。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 将 LongMem 与 Mirage 收敛为 EviCtrl 的一个可选高保真特征 tier（idea-010）：diffusion latent / VLM token / LLM KV 作为统一的特征来源，由 SigLIP-vs-latent-vs-latent+adapter 消融把关，在比特预算下作为奢侈 tier 保留。采纳 LongMem 的冻结-reasoner 解耦作为先例，但指出 SideNet 式不透明融合与 claim-level 归因冲突，因此只限于 coarse tier 或作为不可归因 baseline。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 新增 ICLR reviewer scoring 视角和 8+ 策略。更新后的目标是从 <em>Overall 5</em>（pipeline-like RAG + verifier）推进到 <em>Overall 6</em>（formal evidence-state control），强 risk-coverage / role-recall 结果下可冲 <em>Overall 7</em>。<em>Overall 8+</em> 需要证明有界视频记忆下的 support collapse：语义相关记忆仍可检索，但 claim-support evidence roles 已丢失或降保真，并且 EviCtrl 比强 baseline 更好地控制这个 failure mode。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 将项目从“证据连续记忆 RAG”重构为 <strong>EviCtrl：证据状态记忆控制</strong>。页面现在围绕有损长视频 answerability、证据角色与 role state、online consolidation、evidence-state retrieval session、claim-level answerability-gated generation、survivability-aware learning objectives、更强 baseline、oracle controls，以及 retention/retrieval/generation 三类归因实验展开。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 新增“幻觉缓解”为核心想法：区分巩固时幻觉与生成时幻觉，并加入保真度感知拒答、删除合规、忠实度/归因/拒答/标定等指标。</li>
+      <li><time datetime="2026-06-16">2026-06-16</time> — 将连续记忆方向的第 2 版作为新项目创建，原始表述为“证据连续记忆 RAG”：沿用 v1 的流式多跳记忆问答问题，但以分层、持续巩固的离散存储之上的证据检索作为核心，取代生成式连续记忆场。</li>
+    </ol>
+  </section>
+</body>
+</html>
