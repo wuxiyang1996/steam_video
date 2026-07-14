@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>固定流式语义记忆中的支持渐进式导航</title><link rel="stylesheet" href="styles.css"></head><body>
-<header><h1>固定流式语义记忆中的支持渐进式导航</h1><p class="subtitle">Support-Progressive Semantic Navigation over Fixed Latent History for Streaming Video QA</p><p class="meta">Problem formulation · 2026-07-12 · <a href="problem-formulation-en.html">English</a></p></header>
+<header><h1>固定流式语义记忆中的支持渐进式导航</h1><p class="subtitle">Support-Progressive Semantic Navigation over Fixed Latent History for Streaming Video QA</p><p class="meta">Problem formulation · 2026-07-14 · <a href="problem-formulation-en.html">English</a></p></header>
 
 <section class="card thesis"><span class="label">核心问题</span><h2>Question 如何在不可检索的连续历史状态中逐步找到答案？</h2><p>流式 Video-LLM 必须在固定预算下压缩 video 与 caption 历史。我们不保留 frames、segments、nodes 或 graph；历史只存在于单一固定的 LLM-aligned embedding state 中。问题到来后，系统无法检索一条显式 evidence chain，只能在连续状态中逐步变换问题表示。</p><div class="equation">How can a streaming Video-LLM navigate a fixed, query-independent multimodal
 semantic state to progressively acquire answer-supporting information,
@@ -57,4 +57,51 @@ Net Memory Value=Historical Gain−λ·Current Interference</div><ul><li>step-wi
 <section class="card warning"><span class="label">Go / No-Go</span><h2>14. 论文成立门槛</h2><p><strong>Go：</strong>等 FLOP 下 semantic navigator 显著优于 deeper one-shot、普通 recurrent attention 与 latent deliberation；operations 对问题类型有稳定对应，打乱会降点；support margin 随 step 提升；并在 historical questions 上接近或超过 SelectStream，同时保持 current perception。</p><p><strong>No-Go：</strong>收益由 Qwen embeddings 或更多 depth 解释；operations 可任意打乱；progress loss 等价于普通 deep supervision；或 fixed state 无法接近 SelectStream 的 graph retrieval。此时方法只是旧 recurrent attention 加现代 backbone。</p></section>
 
 <section class="card"><h2>一句话定位</h2><p><strong>We introduce support-progressive semantic navigation over a fixed, query-independent, LLM-aligned multimodal history state, progressively transforming the question without retrieving discrete video evidence.</strong></p></section>
+
+<section class="card thesis"><span class="label">备选路线</span><h2>15. Causality-aware latent memory（贴近 SelectStream）</h2>
+<p>统一 framing：节点保存局部视觉证据；带不确定性的 latent relation 表示解释依赖；consolidation 保护推理路径；query 随已读证据与当前因果假设演化。</p>
+<div class="equation">How can a bounded latent memory preserve temporal and explanatory reasoning paths
+under continual consolidation, while supporting closed-loop query-dependent navigation?</div>
+<p><strong>表述要克制：</strong>latent explanatory dependency / causal-support graph——不要声称从 observational streaming video 学到真实因果图。</p>
+
+<h3>15.1 节点记忆 + latent causality</h3>
+<div class="equation">m_i=(h_i,τ_i,p_i)
+c_ij=(r_ij,u_ij,d_ij)=f_causal(h_i,h_j,Δτ_ij,…)
+G=(M,C)</div>
+<p><span class="math">r</span>：关系嵌入；<span class="math">u</span>：不确定性；<span class="math">d</span>：方向。不要做全量 <span class="math">O(N²)</span> 两两因果推断。在线：cheap Top-K 候选（recency / entity / semantic / state / causal frontier）→ 只对 <span class="math">P_j</span> 做 relation inference → <span class="math">O(NK)</span>，<span class="math">K≪N</span>。长程依赖靠 causal landmarks + hierarchical summaries，而不是扫全部节点。</p>
+
+<h3>15.2 Consolidation：不是“按因果性最低删除”</h3>
+<p>因果效用有用，但孤立/未决/事实节点仍可能有价值；关系模型会错；很多 QA 只需视觉事实而非因果链。多目标重要性 + 三种操作：</p>
+<div class="equation">I_i=λ_s I_i^sem+λ_t I_i^temp+λ_c I_i^causal+λ_q I_i^query+λ_u I_i^unc
+ops ∈ {keep, merge, abstract, delete}</div>
+<ul>
+<li><strong>Delete</strong> — 冗余、因果贡献低、不确定性低、非唯一观察。</li>
+<li><strong>Merge</strong> — 同状态持续；保留时间跨度。</li>
+<li><strong>Abstract</strong> — 把因果 motif 压成带 provenance 的 summary node（最强新操作）。</li>
+</ul>
+<p>保护 bridge、唯一状态转移、高影响 cause、未解决 hypothesis。三点中最强 novelty：<strong>reasoning-preserving consolidation</strong>。</p>
+
+<h3>15.3 Query 随时间：不要拼成一个 embedding</h3>
+<div class="equation">z_t=[z_t^q; z_t^e; z_t^c; z_t^r]
+z_t^c=PathEncoder(current evidence path)
+a_t∈{retrieve-sem, follow-cause/effect, find-bridge, seek-counter, backtrack, stop}</div>
+<p>拆分：问题 / 已收集证据 / 当前因果路径假设 / 缺失需求。轨迹：match → anchor effect → search cause → complete bridge → verify / counter。下一跳依赖真实 retrieval outcome（闭环），而非一次性 symbolic program。</p>
+
+<h3>15.4 贡献排序与相关工作</h3>
+<ol>
+<li>固定预算下的 causality-aware consolidation（主贡献）。</li>
+<li>Causal-path-conditioned closed-loop navigation。</li>
+<li>可修订、带不确定性的 latent relation memory（支撑前两者）。</li>
+</ol>
+<table><thead><tr><th>工作</th><th>对我们的定位</th></tr></thead><tbody>
+<tr><td>Event-Causal RAG</td><td>仅 broader RW：硬文本 SES + TEMPORAL_NEXT、fixed-hop 遍历；不是最近邻</td></tr>
+<tr><td>MECD+</td><td>离线 event causal discovery teacher；无流式 consolidation / navigation</td></tr>
+<tr><td>RAVU</td><td>实体-事件图上的 symbolic operators；无不确定边 / 固定预算 consolidation</td></tr>
+<tr><td>SelectStream + MERLIN + latent relation models</td><td>我们真正延伸的交叉点</td></tr>
+</tbody></table>
+<div class="equation">They discretize events into hard SES topology;
+we maintain uncertain latent temporal-causal relations that can be revised,
+compressed, and navigated as new evidence arrives.</div>
+<p><strong>一句话：</strong>在流式视频中维护可修订的事件依赖，按解释链价值压缩记忆，并让查询随已观察证据与当前因果假设持续演化。</p>
+</section>
 </body></html>

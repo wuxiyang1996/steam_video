@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Support-Progressive Navigation over Fixed Streaming Semantic Memory</title><link rel="stylesheet" href="styles.css"></head><body>
-<header><h1>Support-Progressive Navigation over Fixed Streaming Semantic Memory</h1><p class="subtitle">Semantic-state navigation without discrete evidence retrieval for streaming Video QA</p><p class="meta">Problem formulation · 2026-07-12 · <a href="problem-formulation-zh.html">中文</a></p></header>
+<header><h1>Support-Progressive Navigation over Fixed Streaming Semantic Memory</h1><p class="subtitle">Semantic-state navigation without discrete evidence retrieval for streaming Video QA</p><p class="meta">Problem formulation · 2026-07-14 · <a href="problem-formulation-zh.html">中文</a></p></header>
 
 <section class="card thesis"><span class="label">Core problem</span><h2>How can a question progressively find an answer inside a non-retrievable continuous history state?</h2><p>A streaming Video-LLM must compress video-caption history under a fixed budget. We retain no frames, segments, nodes, or graph: history exists only in one fixed, LLM-aligned embedding state. Once a question arrives, the system cannot retrieve an explicit evidence chain; it must progressively transform the question representation within the continuous state.</p><div class="equation">How can a streaming Video-LLM navigate a fixed, query-independent multimodal
 semantic state to progressively acquire answer-supporting information,
@@ -57,4 +57,51 @@ Net Memory Value=Historical Gain−λ·Current Interference</div><ul><li>step-wi
 <section class="card warning"><span class="label">Go / No-Go</span><h2>14. Evidence threshold</h2><p><strong>Go:</strong> under equal FLOPs, the semantic navigator beats deeper one-shot, recurrent attention, and latent deliberation; operations align with question types and shuffling hurts; support margin increases by step; and historical performance approaches or exceeds SelectStream while current perception is preserved.</p><p><strong>No-Go:</strong> gains are explained by Qwen embeddings or depth; operations can be shuffled; progress loss is ordinary deep supervision; or the fixed state cannot approach SelectStream graph retrieval. Then the method is an old recurrent-attention network with a modern backbone.</p></section>
 
 <section class="card"><h2>One-sentence position</h2><p><strong>We introduce support-progressive semantic navigation over a fixed, query-independent, LLM-aligned multimodal history state, progressively transforming the question without retrieving discrete video evidence.</strong></p></section>
+
+<section class="card thesis"><span class="label">Alternative track</span><h2>15. Causality-aware latent memory (SelectStream-adjacent)</h2>
+<p>Unified framing: nodes store local visual evidence; uncertain latent relations encode explanatory dependencies; consolidation preserves reasoning paths; the query evolves with observed evidence and the current causal hypothesis.</p>
+<div class="equation">How can a bounded latent memory preserve temporal and explanatory reasoning paths
+under continual consolidation, while supporting closed-loop query-dependent navigation?</div>
+<p><strong>Claim carefully:</strong> latent explanatory dependency / causal-support graph — not a true causal graph from observational video.</p>
+
+<h3>15.1 Node memory + latent causality</h3>
+<div class="equation">m_i=(h_i,τ_i,p_i)
+c_ij=(r_ij,u_ij,d_ij)=f_causal(h_i,h_j,Δτ_ij,…)
+G=(M,C)</div>
+<p><span class="math">r</span>: relation embedding; <span class="math">u</span>: uncertainty; <span class="math">d</span>: direction. Do <strong>not</strong> build full <span class="math">O(N²)</span> pairwise causality. Online: cheap Top-K candidates (recency, entity, semantic, state, causal frontier) → relation inference only on <span class="math">P_j</span> → <span class="math">O(NK)</span>, <span class="math">K≪N</span>. Long-range needs: causal landmarks + hierarchical summaries, not all-node scans.</p>
+
+<h3>15.2 Consolidation: not “delete lowest causality”</h3>
+<p>Causal utility helps, but isolated / unresolved / factual nodes can still matter; the relation model errs; many QA types need facts, not chains. Multi-objective importance + three ops:</p>
+<div class="equation">I_i=λ_s I_i^sem+λ_t I_i^temp+λ_c I_i^causal+λ_q I_i^query+λ_u I_i^unc
+ops ∈ {keep, merge, abstract, delete}</div>
+<ul>
+<li><strong>Delete</strong> — redundant, low causal contribution, low uncertainty, non-unique.</li>
+<li><strong>Merge</strong> — same-state persistence; keep time span.</li>
+<li><strong>Abstract</strong> — compress a causal motif into a summary node with provenance (strongest new op).</li>
+</ul>
+<p>Protect bridges, unique state transitions, high-influence causes, and unresolved hypotheses. Strongest novelty among the three: <strong>reasoning-preserving consolidation</strong>.</p>
+
+<h3>15.3 Query over time: do not glue one embedding</h3>
+<div class="equation">z_t=[z_t^q; z_t^e; z_t^c; z_t^r]
+z_t^c=PathEncoder(current evidence path)
+a_t∈{retrieve-sem, follow-cause/effect, find-bridge, seek-counter, backtrack, stop}</div>
+<p>Parts: question / collected evidence / current causal-path hypothesis / missing requirement. Trajectory: match → anchor effect → search cause → complete bridge → verify / counter. Next hop depends on the actual retrieval outcome (closed-loop), not a one-shot symbolic program.</p>
+
+<h3>15.4 Contribution order &amp; related work</h3>
+<ol>
+<li>Causality-aware consolidation under fixed budget (primary).</li>
+<li>Causal-path-conditioned closed-loop navigation.</li>
+<li>Uncertain revisable latent relation memory (supports 1–2).</li>
+</ol>
+<table><thead><tr><th>Work</th><th>Role for us</th></tr></thead><tbody>
+<tr><td>Event-Causal RAG</td><td>Broader RW only: hard textual SES + TEMPORAL_NEXT, fixed-hop traversal; not nearest neighbor</td></tr>
+<tr><td>MECD+</td><td>Offline event causal discovery teacher; no streaming consolidation / navigation</td></tr>
+<tr><td>RAVU</td><td>Symbolic operators on entity-event graph; no learned uncertain edges / budgeted consolidation</td></tr>
+<tr><td>SelectStream + MERLIN + latent relation models</td><td>Nearest intersection we extend</td></tr>
+</tbody></table>
+<div class="equation">They discretize events into hard SES topology;
+we maintain uncertain latent temporal-causal relations that can be revised,
+compressed, and navigated as new evidence arrives.</div>
+<p><strong>One-line:</strong> Augment latent streaming-video memory with uncertain event dependencies, consolidate to preserve explanatory paths, and condition iterative retrieval on the evolving causal hypothesis and observed evidence.</p>
+</section>
 </body></html>
