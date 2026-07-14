@@ -1,0 +1,20 @@
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+device cuda
+`torch_dtype` is deprecated! Use `dtype` instead!
+encoding 30066 unique paragraphs
+encoding 4608 direct queries
+direct {
+  "hop_recall_at_1": 0.20949074074074073,
+  "path_exact_match": 0.01953125,
+  "by_hop": {
+    "1": 0.447265625,
+    "2": 0.12109375,
+    "3": 0.1171875,
+    "4": 0.057291666666666664
+  }
+}
+
+=== qwen_lora ===
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]

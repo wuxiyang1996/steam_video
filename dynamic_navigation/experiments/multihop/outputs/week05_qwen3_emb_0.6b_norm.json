@@ -1,0 +1,67 @@
+{
+  "config": {
+    "encoder": "qwen3-emb-0.6b",
+    "policy": "mlp",
+    "n_train": 512,
+    "n_val": 256,
+    "epochs": 5,
+    "batch_size": 8,
+    "d_model": 256,
+    "n_tokens": 16,
+    "k_steps": 4,
+    "lr": 0.0003,
+    "seed": 0,
+    "out": "outputs/week05_qwen3_emb_0.6b_norm.json",
+    "hf_home": "/fs/gamma-projects/vlm-robot/hf_cache"
+  },
+  "device": "cuda",
+  "in_dim": 1024,
+  "note": "Week 0.5 soft-mixture + baselines on HotpotQA distractor. Accuracy = select gold among [gold + 3 distractors] (proxy EM). Action policy backbone requested=mlp; soft-mixture uses MLP on (u,r). BERT/Qwen3.5-2B policy reserved for discrete-action main method.",
+  "models": [
+    {
+      "model": "one_shot",
+      "acc": 0.6015625,
+      "n": 256,
+      "m_0": 1.9445563554763794,
+      "m_last": 1.9445563554763794,
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "bridge": 0.5643564356435643,
+        "comparison": 0.7407407407407407
+      }
+    },
+    {
+      "model": "plain_recurrent",
+      "acc": 0.59375,
+      "n": 256,
+      "m_0": 1.3214726448059082,
+      "m_1": 1.413744568824768,
+      "m_2": 1.4583959579467773,
+      "m_3": 1.484722375869751,
+      "m_last": 1.484722375869751,
+      "m_gain": 0.16324973106384277,
+      "mono_rate": 0.59765625,
+      "by_type": {
+        "bridge": 0.5643564356435643,
+        "comparison": 0.7037037037037037
+      }
+    },
+    {
+      "model": "soft_mixture",
+      "acc": 0.5703125,
+      "n": 256,
+      "m_0": 1.4107859134674072,
+      "m_1": 1.4716322422027588,
+      "m_2": 1.5034047365188599,
+      "m_3": 1.5575910806655884,
+      "m_last": 1.5575910806655884,
+      "m_gain": 0.14680516719818115,
+      "mono_rate": 0.5729166865348816,
+      "by_type": {
+        "bridge": 0.5297029702970297,
+        "comparison": 0.7222222222222222
+      }
+    }
+  ]
+}

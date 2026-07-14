@@ -1,0 +1,249 @@
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+device=cuda encoder=qwen3-emb-0.6b
+gpu= NVIDIA A100 80GB PCIe
+synthetic train=2048 val=512 cands=8
+example Q: Where is the object Ivan first picked up?
+example A: near the window
+example ctx:
+ Ivan picked up the yellow hat in the garden.
+Alice moved the blue box to the desk.
+Ivan left the yellow hat near the window.
+encoding...
+  encoded 50/2048
+  encoded 100/2048
+  encoded 150/2048
+  encoded 200/2048
+  encoded 250/2048
+  encoded 300/2048
+  encoded 350/2048
+  encoded 400/2048
+  encoded 450/2048
+  encoded 500/2048
+  encoded 550/2048
+  encoded 600/2048
+  encoded 650/2048
+  encoded 700/2048
+  encoded 750/2048
+  encoded 800/2048
+  encoded 850/2048
+  encoded 900/2048
+  encoded 950/2048
+  encoded 1000/2048
+  encoded 1050/2048
+  encoded 1100/2048
+  encoded 1150/2048
+  encoded 1200/2048
+  encoded 1250/2048
+  encoded 1300/2048
+  encoded 1350/2048
+  encoded 1400/2048
+  encoded 1450/2048
+  encoded 1500/2048
+  encoded 1550/2048
+  encoded 1600/2048
+  encoded 1650/2048
+  encoded 1700/2048
+  encoded 1750/2048
+  encoded 1800/2048
+  encoded 1850/2048
+  encoded 1900/2048
+  encoded 1950/2048
+  encoded 2000/2048
+  encoded 50/512
+  encoded 100/512
+  encoded 150/512
+  encoded 200/512
+  encoded 250/512
+  encoded 300/512
+  encoded 350/512
+  encoded 400/512
+  encoded 450/512
+  encoded 500/512
+
+=== one_shot ===
+  epoch 1/10 loss=1.1990 lambda_a=0.0
+  epoch 2/10 loss=1.1249 lambda_a=0.0
+  epoch 3/10 loss=1.1161 lambda_a=0.0
+  epoch 4/10 loss=1.1182 lambda_a=0.0
+  epoch 5/10 loss=1.1080 lambda_a=0.0
+  epoch 6/10 loss=1.1084 lambda_a=0.0
+  epoch 7/10 loss=1.1033 lambda_a=0.0
+  epoch 8/10 loss=0.8356 lambda_a=0.0
+  epoch 9/10 loss=0.1286 lambda_a=0.0
+  epoch 10/10 loss=0.0088 lambda_a=0.0
+{
+  "model": "one_shot",
+  "acc": 0.9921875,
+  "n": 512,
+  "m_0": 16.737327575683594,
+  "m_last": 16.737327575683594,
+  "m_gain": 0.0,
+  "mono_rate": 0.0,
+  "by_type": {
+    "two-hop": 0.99609375,
+    "three-hop": 0.98828125
+  }
+}
+
+=== plain_recurrent ===
+  epoch 1/10 loss=1.2327 lambda_a=0.0
+  epoch 2/10 loss=1.1373 lambda_a=0.0
+  epoch 3/10 loss=1.1339 lambda_a=0.0
+  epoch 4/10 loss=1.1318 lambda_a=0.0
+  epoch 5/10 loss=1.1359 lambda_a=0.0
+  epoch 6/10 loss=1.1320 lambda_a=0.0
+  epoch 7/10 loss=1.1306 lambda_a=0.0
+  epoch 8/10 loss=1.1290 lambda_a=0.0
+  epoch 9/10 loss=1.1256 lambda_a=0.0
+  epoch 10/10 loss=0.6691 lambda_a=0.0
+{
+  "model": "plain_recurrent",
+  "acc": 0.822265625,
+  "n": 512,
+  "m_0": 2.733798027038574,
+  "m_1": 3.443439483642578,
+  "m_2": 3.7759580612182617,
+  "m_3": 3.9535574913024902,
+  "m_last": 3.9535574913024902,
+  "m_gain": 1.219759464263916,
+  "mono_rate": 0.8072916865348816,
+  "by_type": {
+    "two-hop": 0.8203125,
+    "three-hop": 0.82421875
+  }
+}
+
+=== discrete_action (LoRA, weak L_action) ===
+  epoch 1/10 loss=1.2379 lambda_a=0.05
+  epoch 2/10 loss=1.1497 lambda_a=0.05
+  epoch 3/10 loss=1.0546 lambda_a=0.0
+  epoch 4/10 loss=1.0481 lambda_a=0.0
+  epoch 5/10 loss=1.0499 lambda_a=0.0
+  epoch 6/10 loss=1.0420 lambda_a=0.0
+  epoch 7/10 loss=1.0414 lambda_a=0.0
+  epoch 8/10 loss=1.0410 lambda_a=0.0
+  epoch 9/10 loss=1.0426 lambda_a=0.0
+  epoch 10/10 loss=1.0390 lambda_a=0.0
+{
+  "model": "discrete_action",
+  "acc": 0.291015625,
+  "n": 512,
+  "m_0": -0.13867667317390442,
+  "m_1": -0.13840609788894653,
+  "m_2": -0.1356402337551117,
+  "m_3": -0.13335080444812775,
+  "m_last": -0.13335080444812775,
+  "m_gain": 0.005325868725776672,
+  "mono_rate": 0.5162760615348816,
+  "by_type": {
+    "two-hop": 0.2578125,
+    "three-hop": 0.32421875
+  },
+  "action_freq": {
+    "GROUND": 0.0,
+    "RESOLVE": 0.0,
+    "TRACE": 0.0,
+    "LINK": 1.0,
+    "CHECK": 0.0,
+    "COMPOSE": 0.0,
+    "STOP": 0.0
+  }
+}
+{
+  "model": "discrete_action/shuffle_temporal",
+  "acc": 0.291015625,
+  "n": 512,
+  "m_0": -0.13867667317390442,
+  "m_1": -0.13840609788894653,
+  "m_2": -0.1356402337551117,
+  "m_3": -0.13335080444812775,
+  "m_last": -0.13335080444812775,
+  "m_gain": 0.005325868725776672,
+  "mono_rate": 0.5162760615348816,
+  "by_type": {
+    "two-hop": 0.2578125,
+    "three-hop": 0.32421875
+  }
+}
+{
+  "model": "discrete_action/random_actions",
+  "acc": 0.314453125,
+  "n": 512,
+  "m_0": -0.13710929453372955,
+  "m_1": -0.13762283325195312,
+  "m_2": -0.13684555888175964,
+  "m_3": -0.13609811663627625,
+  "m_last": -0.13609811663627625,
+  "m_gain": 0.001011177897453308,
+  "mono_rate": 0.322265625,
+  "by_type": {
+    "two-hop": 0.29296875,
+    "three-hop": 0.3359375
+  }
+}
+{
+  "model": "discrete_action/force_GROUND",
+  "acc": 0.314453125,
+  "n": 512,
+  "m_0": -0.14469045400619507,
+  "m_1": -0.14712917804718018,
+  "m_2": -0.14724916219711304,
+  "m_3": -0.14720571041107178,
+  "m_last": -0.14720571041107178,
+  "m_gain": -0.002515256404876709,
+  "mono_rate": 0.4876302182674408,
+  "by_type": {
+    "two-hop": 0.28515625,
+    "three-hop": 0.34375
+  }
+}
+{
+  "model": "discrete_action/force_TRACE",
+  "acc": 0.30078125,
+  "n": 512,
+  "m_0": -0.15588513016700745,
+  "m_1": -0.16763795912265778,
+  "m_2": -0.17966842651367188,
+  "m_3": -0.1928122639656067,
+  "m_last": -0.1928122639656067,
+  "m_gain": -0.03692713379859924,
+  "mono_rate": 0.40234375,
+  "by_type": {
+    "two-hop": 0.265625,
+    "three-hop": 0.3359375
+  }
+}
+{
+  "model": "discrete_action/force_COMPOSE",
+  "acc": 0.298828125,
+  "n": 512,
+  "m_0": -0.144131600856781,
+  "m_1": -0.14954525232315063,
+  "m_2": -0.1527688205242157,
+  "m_3": -0.15526992082595825,
+  "m_last": -0.15526992082595825,
+  "m_gain": -0.011138319969177246,
+  "mono_rate": 0.4420572817325592,
+  "by_type": {
+    "two-hop": 0.26953125,
+    "three-hop": 0.328125
+  }
+}
+
+==== GO / NO-GO ====
+{
+  "discrete_acc": 0.291015625,
+  "one_shot_acc": 0.9921875,
+  "shuffle_acc": 0.291015625,
+  "shuffle_drop": 0.0,
+  "m_gain": 0.005325868725776672,
+  "mono_rate": 0.5162760615348816,
+  "criteria": {
+    "discrete_gt_oneshot": false,
+    "shuffle_drop_ge_2pts": false,
+    "m_k_rises": true
+  },
+  "verdict": "NO-GO"
+}
+Wrote outputs/rescue_synth_go_nogo.json

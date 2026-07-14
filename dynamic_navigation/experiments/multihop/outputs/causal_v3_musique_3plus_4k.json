@@ -1,0 +1,217 @@
+{
+  "config": {
+    "dataset": "musique",
+    "encoder": "qwen3-emb-0.6b",
+    "n_train": 4096,
+    "n_val": 512,
+    "n_distractors": 7,
+    "min_hops": 3,
+    "max_length": 2048,
+    "epochs": 8,
+    "batch_size": 8,
+    "encode_batch_size": 8,
+    "d_model": 256,
+    "n_latents": 32,
+    "k_steps": 4,
+    "lr": 0.0003,
+    "seed": 0,
+    "out": "outputs/causal_v3_musique_3plus_4k.json",
+    "hf_home": "/fs/gamma-projects/vlm-robot/hf_cache"
+  },
+  "models": [
+    {
+      "model": "pooled_token_probe",
+      "acc": 0.603515625,
+      "n": 512,
+      "margin_curve": [
+        1.872523307800293
+      ],
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "4hop": 0.5842696629213483,
+        "3hop": 0.6137724550898204
+      }
+    },
+    {
+      "model": "token_one_shot",
+      "acc": 0.6328125,
+      "n": 512,
+      "margin_curve": [
+        2.475085496902466
+      ],
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "4hop": 0.6235955056179775,
+        "3hop": 0.6377245508982036
+      }
+    },
+    {
+      "model": "causal_navigation_v2",
+      "acc": 0.611328125,
+      "n": 512,
+      "margin_curve": [
+        1.4252686500549316,
+        1.8617104291915894,
+        2.4250779151916504,
+        3.362882137298584
+      ],
+      "m_gain": 1.9376134872436523,
+      "mono_rate": 0.6276041865348816,
+      "by_type": {
+        "4hop": 0.6067415730337079,
+        "3hop": 0.6137724550898204
+      },
+      "causal_gain_mean": 2.7353649139404297,
+      "causal_positive_rate": 0.69287109375,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.34147799015045166,
+      "direction_positive_rate": 0.64453125
+    }
+  ],
+  "interventions": [
+    {
+      "model": "causal_navigation_v2/zero_read",
+      "acc": 0.01953125,
+      "n": 512,
+      "margin_curve": [
+        -6.451358795166016,
+        -6.698873519897461,
+        -6.489971160888672,
+        -6.036708831787109
+      ],
+      "m_gain": 0.41464996337890625,
+      "mono_rate": 0.6354166865348816,
+      "by_type": {
+        "4hop": 0.0,
+        "3hop": 0.029940119760479042
+      },
+      "causal_gain_mean": 0.0,
+      "causal_positive_rate": 0.0,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": -7.423425674438477,
+      "direction_positive_rate": 0.11767578125
+    },
+    {
+      "model": "causal_navigation_v2/random_direction",
+      "acc": 0.623046875,
+      "n": 512,
+      "margin_curve": [
+        1.2331538200378418,
+        1.6177873611450195,
+        2.102853775024414,
+        2.510958671569824
+      ],
+      "m_gain": 1.2778048515319824,
+      "mono_rate": 0.6328125,
+      "by_type": {
+        "4hop": 0.6348314606741573,
+        "3hop": 0.6167664670658682
+      },
+      "causal_gain_mean": 2.269514322280884,
+      "causal_positive_rate": 0.69775390625,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.0034074659924954176,
+      "direction_positive_rate": 0.4970703125
+    },
+    {
+      "model": "causal_navigation_v2/shuffle_direction",
+      "acc": 0.6171875,
+      "n": 512,
+      "margin_curve": [
+        1.4239671230316162,
+        1.8449231386184692,
+        2.33856201171875,
+        3.261155128479004
+      ],
+      "m_gain": 1.8371880054473877,
+      "mono_rate": 0.6256510615348816,
+      "by_type": {
+        "4hop": 0.6123595505617978,
+        "3hop": 0.6197604790419161
+      },
+      "causal_gain_mean": 2.721644639968872,
+      "causal_positive_rate": 0.69970703125,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.29859739542007446,
+      "direction_positive_rate": 0.6416015625
+    },
+    {
+      "model": "causal_navigation_v2/causal_gate",
+      "acc": 0.408203125,
+      "n": 512,
+      "margin_curve": [
+        -1.0831677913665771,
+        -0.6539037227630615,
+        -0.18918025493621826,
+        0.4701789617538452
+      ],
+      "m_gain": 1.5533467531204224,
+      "mono_rate": 0.6673176884651184,
+      "by_type": {
+        "4hop": 0.42696629213483145,
+        "3hop": 0.39820359281437123
+      },
+      "causal_gain_mean": 5.005971908569336,
+      "causal_positive_rate": 0.78369140625,
+      "gate_mean": 0.4982128143310547,
+      "direction_advantage_mean": 0.2856767773628235,
+      "direction_positive_rate": 0.64501953125
+    },
+    {
+      "model": "causal_navigation_v2/reject_all",
+      "acc": 0.09375,
+      "n": 512,
+      "margin_curve": [
+        -3.9480838775634766,
+        -3.9480838775634766,
+        -3.9480838775634766,
+        -3.9480838775634766
+      ],
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "4hop": 0.06179775280898876,
+        "3hop": 0.11077844311377245
+      },
+      "causal_gain_mean": 7.87516450881958,
+      "causal_positive_rate": 0.861328125,
+      "gate_mean": 0.0,
+      "direction_advantage_mean": 0.19493244588375092,
+      "direction_positive_rate": 0.63916015625
+    },
+    {
+      "model": "causal_navigation_v2/accept_all",
+      "acc": 0.611328125,
+      "n": 512,
+      "margin_curve": [
+        1.4252686500549316,
+        1.8617104291915894,
+        2.4250779151916504,
+        3.362882137298584
+      ],
+      "m_gain": 1.9376134872436523,
+      "mono_rate": 0.6276041865348816,
+      "by_type": {
+        "4hop": 0.6067415730337079,
+        "3hop": 0.6137724550898204
+      },
+      "causal_gain_mean": 2.7353649139404297,
+      "causal_positive_rate": 0.69287109375,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.3446918725967407,
+      "direction_positive_rate": 0.64453125
+    }
+  ],
+  "go_nogo": {
+    "criteria": {
+      "causal_gt_token_one_shot": false,
+      "zero_read_drop_ge_2pts": true,
+      "shuffle_direction_drop_ge_2pts": false,
+      "random_direction_reduces_margin": true,
+      "margin_rises": true
+    },
+    "verdict": "NO-GO"
+  }
+}

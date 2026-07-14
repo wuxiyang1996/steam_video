@@ -1,0 +1,214 @@
+{
+  "config": {
+    "encoder": "qwen3-emb-0.6b",
+    "n_train": 4096,
+    "n_val": 512,
+    "n_distractors": 7,
+    "max_length": 256,
+    "epochs": 8,
+    "batch_size": 8,
+    "d_model": 256,
+    "n_latents": 32,
+    "k_steps": 4,
+    "lr": 0.0003,
+    "seed": 0,
+    "out": "outputs/causal_v3_final_hotpot_4k.json",
+    "hf_home": "/fs/gamma-projects/vlm-robot/hf_cache"
+  },
+  "models": [
+    {
+      "model": "pooled_token_probe",
+      "acc": 0.634765625,
+      "n": 512,
+      "margin_curve": [
+        0.9393930435180664
+      ],
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "bridge": 0.6142506142506142,
+        "comparison": 0.7142857142857143
+      }
+    },
+    {
+      "model": "token_one_shot",
+      "acc": 0.630859375,
+      "n": 512,
+      "margin_curve": [
+        1.4647502899169922
+      ],
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "bridge": 0.5872235872235873,
+        "comparison": 0.8
+      }
+    },
+    {
+      "model": "causal_navigation_v2",
+      "acc": 0.650390625,
+      "n": 512,
+      "margin_curve": [
+        1.950880765914917,
+        2.008263111114502,
+        2.052858829498291,
+        2.089397430419922
+      ],
+      "m_gain": 0.13851666450500488,
+      "mono_rate": 0.6614583134651184,
+      "by_type": {
+        "bridge": 0.6117936117936118,
+        "comparison": 0.8
+      },
+      "causal_gain_mean": 1.9439163208007812,
+      "causal_positive_rate": 0.7509765625,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.05304770544171333,
+      "direction_positive_rate": 0.66748046875
+    }
+  ],
+  "interventions": [
+    {
+      "model": "causal_navigation_v2/zero_read",
+      "acc": 0.00390625,
+      "n": 512,
+      "margin_curve": [
+        -5.615569591522217,
+        -6.005228519439697,
+        -6.079975128173828,
+        -6.10784912109375
+      ],
+      "m_gain": -0.4922795295715332,
+      "mono_rate": 0.4108072817325592,
+      "by_type": {
+        "bridge": 0.004914004914004914,
+        "comparison": 0.0
+      },
+      "causal_gain_mean": 0.0,
+      "causal_positive_rate": 0.0,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": -7.641349792480469,
+      "direction_positive_rate": 0.048828125
+    },
+    {
+      "model": "causal_navigation_v2/random_direction",
+      "acc": 0.646484375,
+      "n": 512,
+      "margin_curve": [
+        1.8805875778198242,
+        1.9334450960159302,
+        1.9633911848068237,
+        1.9879307746887207
+      ],
+      "m_gain": 0.10734319686889648,
+      "mono_rate": 0.6881510615348816,
+      "by_type": {
+        "bridge": 0.6093366093366094,
+        "comparison": 0.7904761904761904
+      },
+      "causal_gain_mean": 1.801401138305664,
+      "causal_positive_rate": 0.751953125,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.0005406004493124783,
+      "direction_positive_rate": 0.50048828125
+    },
+    {
+      "model": "causal_navigation_v2/shuffle_direction",
+      "acc": 0.64453125,
+      "n": 512,
+      "margin_curve": [
+        1.9589616060256958,
+        1.990771770477295,
+        2.0293993949890137,
+        2.045077323913574
+      ],
+      "m_gain": 0.08611571788787842,
+      "mono_rate": 0.6061198115348816,
+      "by_type": {
+        "bridge": 0.6044226044226044,
+        "comparison": 0.8
+      },
+      "causal_gain_mean": 1.922448754310608,
+      "causal_positive_rate": 0.7529296875,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.03657016158103943,
+      "direction_positive_rate": 0.60693359375
+    },
+    {
+      "model": "causal_navigation_v2/causal_gate",
+      "acc": 0.390625,
+      "n": 512,
+      "margin_curve": [
+        -0.3244643807411194,
+        -0.1689998358488083,
+        -0.11416428536176682,
+        -0.06701315939426422
+      ],
+      "m_gain": 0.25745123624801636,
+      "mono_rate": 0.603515625,
+      "by_type": {
+        "bridge": 0.37346437346437344,
+        "comparison": 0.45714285714285713
+      },
+      "causal_gain_mean": 4.370609283447266,
+      "causal_positive_rate": 0.83154296875,
+      "gate_mean": 0.3938257098197937,
+      "direction_advantage_mean": 0.07754579186439514,
+      "direction_positive_rate": 0.67626953125
+    },
+    {
+      "model": "causal_navigation_v2/reject_all",
+      "acc": 0.140625,
+      "n": 512,
+      "margin_curve": [
+        -2.7812867164611816,
+        -2.7812867164611816,
+        -2.7812867164611816,
+        -2.7812867164611816
+      ],
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "bridge": 0.14496314496314497,
+        "comparison": 0.12380952380952381
+      },
+      "causal_gain_mean": 7.472107410430908,
+      "causal_positive_rate": 0.951171875,
+      "gate_mean": 0.0,
+      "direction_advantage_mean": 0.08775568753480911,
+      "direction_positive_rate": 0.6640625
+    },
+    {
+      "model": "causal_navigation_v2/accept_all",
+      "acc": 0.650390625,
+      "n": 512,
+      "margin_curve": [
+        1.950880765914917,
+        2.008263111114502,
+        2.052858829498291,
+        2.089397430419922
+      ],
+      "m_gain": 0.13851666450500488,
+      "mono_rate": 0.6614583134651184,
+      "by_type": {
+        "bridge": 0.6117936117936118,
+        "comparison": 0.8
+      },
+      "causal_gain_mean": 1.9439163208007812,
+      "causal_positive_rate": 0.7509765625,
+      "gate_mean": 1.0,
+      "direction_advantage_mean": 0.052848346531391144,
+      "direction_positive_rate": 0.66552734375
+    }
+  ],
+  "go_nogo": {
+    "criteria": {
+      "causal_gt_token_one_shot": true,
+      "zero_read_drop_ge_2pts": true,
+      "shuffle_direction_drop_ge_2pts": false,
+      "random_direction_reduces_margin": true,
+      "margin_rises": true
+    },
+    "verdict": "NO-GO"
+  }
+}

@@ -1,0 +1,228 @@
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+device=cuda encoder=qwen3-emb-0.6b policy=mlp
+gpu=NVIDIA A100 80GB PCIe
+Loading HotpotQA distractor...
+train=512 val=256
+Building frozen encoder qwen3-emb-0.6b...
+encoder ready in 2.0s dim=1024
+Precomputing embeddings (train)...
+  encoded 50/512
+  encoded 100/512
+  encoded 150/512
+  encoded 200/512
+  encoded 250/512
+  encoded 300/512
+  encoded 350/512
+  encoded 400/512
+  encoded 450/512
+  encoded 500/512
+Precomputing embeddings (val)...
+  encoded 50/256
+  encoded 100/256
+  encoded 150/256
+  encoded 200/256
+  encoded 250/256
+
+=== training one_shot ===
+  epoch 1/8 loss=1.1579
+  epoch 2/8 loss=0.8039
+  epoch 3/8 loss=0.6611
+  epoch 4/8 loss=0.5721
+  epoch 5/8 loss=0.5180
+  epoch 6/8 loss=0.4513
+  epoch 7/8 loss=0.3954
+  epoch 8/8 loss=0.3845
+{
+  "model": "one_shot",
+  "acc": 0.5859375,
+  "n": 256,
+  "m_0": 2.0363380908966064,
+  "m_last": 2.0363380908966064,
+  "m_gain": 0.0,
+  "mono_rate": 0.0,
+  "by_type": {
+    "bridge": 0.5396039603960396,
+    "comparison": 0.7592592592592593
+  }
+}
+
+=== training plain_recurrent ===
+  epoch 1/8 loss=1.1449
+  epoch 2/8 loss=0.8220
+  epoch 3/8 loss=0.6700
+  epoch 4/8 loss=0.6058
+  epoch 5/8 loss=0.5607
+  epoch 6/8 loss=0.5057
+  epoch 7/8 loss=0.4515
+  epoch 8/8 loss=0.3970
+{
+  "model": "plain_recurrent",
+  "acc": 0.578125,
+  "n": 256,
+  "m_0": 1.586918830871582,
+  "m_1": 1.6852269172668457,
+  "m_2": 1.7397186756134033,
+  "m_3": 1.771575689315796,
+  "m_last": 1.771575689315796,
+  "m_gain": 0.18465685844421387,
+  "mono_rate": 0.5638020634651184,
+  "by_type": {
+    "bridge": 0.5396039603960396,
+    "comparison": 0.7222222222222222
+  }
+}
+
+=== training soft_mixture ===
+  epoch 1/8 loss=1.6776
+  epoch 2/8 loss=1.2033
+  epoch 3/8 loss=1.0260
+  epoch 4/8 loss=0.9832
+  epoch 5/8 loss=0.9116
+  epoch 6/8 loss=0.8610
+  epoch 7/8 loss=0.8259
+  epoch 8/8 loss=0.8023
+{
+  "model": "soft_mixture",
+  "acc": 0.5703125,
+  "n": 256,
+  "m_0": 1.4800704717636108,
+  "m_1": 1.557016134262085,
+  "m_2": 1.6131840944290161,
+  "m_3": 1.6751830577850342,
+  "m_last": 1.6751830577850342,
+  "m_gain": 0.19511258602142334,
+  "mono_rate": 0.5677083134651184,
+  "by_type": {
+    "bridge": 0.5297029702970297,
+    "comparison": 0.7222222222222222
+  }
+}
+
+=== training discrete_action ===
+  epoch 1/8 loss=1.6724
+  epoch 2/8 loss=1.1979
+  epoch 3/8 loss=1.0550
+  epoch 4/8 loss=0.9602
+  epoch 5/8 loss=0.8792
+  epoch 6/8 loss=0.8505
+  epoch 7/8 loss=0.8289
+  epoch 8/8 loss=0.7650
+{
+  "model": "discrete_action",
+  "acc": 0.58203125,
+  "n": 256,
+  "m_0": 1.6509915590286255,
+  "m_1": 1.7134206295013428,
+  "m_2": 1.767979383468628,
+  "m_3": 1.767979383468628,
+  "m_last": 1.767979383468628,
+  "m_gain": 0.11698782444000244,
+  "mono_rate": 0.3802083432674408,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.7037037037037037
+  },
+  "action_freq": {
+    "GROUND": 0.25,
+    "RESOLVE": 0.0,
+    "TRACE": 0.25,
+    "LINK": 0.0,
+    "CHECK": 0.0,
+    "COMPOSE": 0.25,
+    "STOP": 0.25
+  }
+}
+
+=== interventions on discrete_action ===
+{
+  "model": "discrete_action/shuffle_actions",
+  "acc": 0.58203125,
+  "n": 256,
+  "m_0": 1.6509915590286255,
+  "m_1": 1.7134206295013428,
+  "m_2": 1.767979383468628,
+  "m_3": 1.767979383468628,
+  "m_last": 1.767979383468628,
+  "m_gain": 0.11698782444000244,
+  "mono_rate": 0.3802083432674408,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.7037037037037037
+  },
+  "action_freq": {
+    "GROUND": 0.25,
+    "RESOLVE": 0.0,
+    "TRACE": 0.25,
+    "LINK": 0.0,
+    "CHECK": 0.0,
+    "COMPOSE": 0.25,
+    "STOP": 0.25
+  }
+}
+{
+  "model": "discrete_action/force_GROUND",
+  "acc": 0.58203125,
+  "n": 256,
+  "m_0": 1.6509915590286255,
+  "m_1": 1.7352229356765747,
+  "m_2": 1.753179907798767,
+  "m_3": 1.760364294052124,
+  "m_last": 1.760364294052124,
+  "m_gain": 0.10937273502349854,
+  "mono_rate": 0.5807291865348816,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.7037037037037037
+  }
+}
+{
+  "model": "discrete_action/force_TRACE",
+  "acc": 0.58203125,
+  "n": 256,
+  "m_0": 1.2825191020965576,
+  "m_1": 1.5905077457427979,
+  "m_2": 1.6769840717315674,
+  "m_3": 1.7075620889663696,
+  "m_last": 1.7075620889663696,
+  "m_gain": 0.425042986869812,
+  "mono_rate": 0.5768229365348816,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.7037037037037037
+  }
+}
+{
+  "model": "discrete_action/force_COMPOSE",
+  "acc": 0.58203125,
+  "n": 256,
+  "m_0": 1.658241868019104,
+  "m_1": 1.7559523582458496,
+  "m_2": 1.7671536207199097,
+  "m_3": 1.7694964408874512,
+  "m_last": 1.7694964408874512,
+  "m_gain": 0.11125457286834717,
+  "mono_rate": 0.5859375,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.7037037037037037
+  }
+}
+{
+  "model": "discrete_action/force_teacher_sketch",
+  "acc": 0.58203125,
+  "n": 256,
+  "m_0": 1.6509915590286255,
+  "m_1": 1.7126619815826416,
+  "m_2": 1.7668211460113525,
+  "m_3": 1.7668211460113525,
+  "m_last": 1.7668211460113525,
+  "m_gain": 0.11582958698272705,
+  "mono_rate": 0.3776041567325592,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.7037037037037037
+  }
+}
+
+Wrote outputs/discrete_action_qwen06.json

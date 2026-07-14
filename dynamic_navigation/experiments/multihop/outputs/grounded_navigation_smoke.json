@@ -1,0 +1,172 @@
+{
+  "config": {
+    "n_train": 64,
+    "n_val": 32,
+    "min_hops": 3,
+    "epochs": 1,
+    "qwen_batch_size": 4,
+    "bert_batch_size": 8,
+    "encode_batch_size": 64,
+    "seed": 0,
+    "cache": "outputs/grounded_embeddings_smoke.pt",
+    "out": "outputs/grounded_navigation_smoke.json"
+  },
+  "data": {
+    "train_examples": 64,
+    "train_trajectories": 201,
+    "val_examples": 32,
+    "val_trajectories": 111
+  },
+  "direct_qwen": {
+    "hop_recall_at_1": 0.17117117117117117,
+    "path_exact_match": 0.03125,
+    "by_hop": {
+      "1": 0.40625,
+      "2": 0.125,
+      "3": 0.0625,
+      "4": 0.0
+    }
+  },
+  "models": {
+    "qwen_lora": {
+      "teacher_forced": {
+        "hop_recall_at_1": 0.5675675675675675,
+        "conditioned_hop_recall_at_1": 0.5189873417721519,
+        "path_exact_match": 0.125,
+        "by_hop": {
+          "1": 0.6875,
+          "2": 0.375,
+          "3": 0.65625,
+          "4": 0.5333333333333333
+        }
+      },
+      "free_running": {
+        "hop_recall_at_1": 0.36936936936936937,
+        "path_exact_match": 0.125,
+        "by_hop": {
+          "1": 0.6875,
+          "2": 0.25,
+          "3": 0.28125,
+          "4": 0.13333333333333333
+        }
+      },
+      "interventions": {
+        "question_only": {
+          "hop_recall_at_1": 0.3783783783783784,
+          "conditioned_hop_recall_at_1": 0.25316455696202533,
+          "path_exact_match": 0.0,
+          "by_hop": {
+            "1": 0.6875,
+            "2": 0.28125,
+            "3": 0.25,
+            "4": 0.2
+          }
+        },
+        "shuffle_evidence": {
+          "hop_recall_at_1": 0.46846846846846846,
+          "conditioned_hop_recall_at_1": 0.379746835443038,
+          "path_exact_match": 0.09375,
+          "by_hop": {
+            "1": 0.6875,
+            "2": 0.3125,
+            "3": 0.53125,
+            "4": 0.2
+          }
+        },
+        "wrong_evidence": {
+          "hop_recall_at_1": 0.5945945945945946,
+          "conditioned_hop_recall_at_1": 0.5569620253164557,
+          "path_exact_match": 0.21875,
+          "by_hop": {
+            "1": 0.6875,
+            "2": 0.75,
+            "3": 0.46875,
+            "4": 0.3333333333333333
+          }
+        }
+      },
+      "causal_drops": {
+        "remove_evidence": 0.26582278481012656,
+        "shuffle_evidence": 0.1392405063291139,
+        "wrong_evidence": -0.03797468354430378
+      }
+    },
+    "bert_base": {
+      "teacher_forced": {
+        "hop_recall_at_1": 0.0990990990990991,
+        "conditioned_hop_recall_at_1": 0.11392405063291139,
+        "path_exact_match": 0.0,
+        "by_hop": {
+          "1": 0.0625,
+          "2": 0.125,
+          "3": 0.125,
+          "4": 0.06666666666666667
+        }
+      },
+      "free_running": {
+        "hop_recall_at_1": 0.0990990990990991,
+        "path_exact_match": 0.0,
+        "by_hop": {
+          "1": 0.0625,
+          "2": 0.125,
+          "3": 0.09375,
+          "4": 0.13333333333333333
+        }
+      },
+      "interventions": {
+        "question_only": {
+          "hop_recall_at_1": 0.0990990990990991,
+          "conditioned_hop_recall_at_1": 0.11392405063291139,
+          "path_exact_match": 0.0,
+          "by_hop": {
+            "1": 0.0625,
+            "2": 0.0625,
+            "3": 0.15625,
+            "4": 0.13333333333333333
+          }
+        },
+        "shuffle_evidence": {
+          "hop_recall_at_1": 0.14414414414414414,
+          "conditioned_hop_recall_at_1": 0.17721518987341772,
+          "path_exact_match": 0.03125,
+          "by_hop": {
+            "1": 0.0625,
+            "2": 0.1875,
+            "3": 0.21875,
+            "4": 0.06666666666666667
+          }
+        },
+        "wrong_evidence": {
+          "hop_recall_at_1": 0.11711711711711711,
+          "conditioned_hop_recall_at_1": 0.13924050632911392,
+          "path_exact_match": 0.0,
+          "by_hop": {
+            "1": 0.0625,
+            "2": 0.21875,
+            "3": 0.09375,
+            "4": 0.06666666666666667
+          }
+        }
+      },
+      "causal_drops": {
+        "remove_evidence": 0.0,
+        "shuffle_evidence": -0.06329113924050633,
+        "wrong_evidence": -0.025316455696202528
+      }
+    }
+  },
+  "go_nogo": {
+    "qwen_lora": {
+      "beats_direct": true,
+      "shuffle_drop_ge_5pts": true,
+      "wrong_drop_ge_5pts": false,
+      "verdict": "NO-GO"
+    },
+    "bert_base": {
+      "beats_direct": false,
+      "shuffle_drop_ge_5pts": false,
+      "wrong_drop_ge_5pts": false,
+      "verdict": "NO-GO"
+    }
+  }
+}

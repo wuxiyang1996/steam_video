@@ -1,0 +1,203 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dynamic Navigation in Semantic Space</title><link rel="stylesheet" href="styles.css"></head><body>
+<header><h1>Dynamic Navigation in Semantic Space</h1><p class="subtitle">Operation-conditioned reads over fixed latent memory</p><p class="meta">Discussion notes · 2026-07-14 · <a href="dynamic-navigation-zh.html">中文</a> · aligned with <a href="../steam_video_new/problem-formulation-en.html">steam_video_new</a></p></header>
+
+<section class="card thesis"><span class="label">Narrow definition</span><h2>Not embedding retrieval — previous-step-conditioned semantic read actions</h2><p>Feasible, but define it narrowly: not nearest-neighbor search in embedding space, and not an implicit graph. The <strong>query state</strong> executes a sequence of <strong>semantic read actions</strong> over fixed latent memory tokens, each conditioned on the previous step (test-time latent reasoning).</p><div class="equation">previous-step-conditioned action policy
++ action-specific read over fixed semantic memory
++ support-progress reward</div><p>Dynamics live in the <strong>query state</strong> and <strong>action / reader control</strong>, not in the memory structure: <span class="math">M_t</span> is fixed — no nodes, edges, timestamps, or Top-K evidence items.</p></section>
+
+<section class="card benchmark"><span class="label">SelectStream · Key Idea</span><h2>0. SelectStream — Core Idea</h2>
+<p><strong>EN — Core idea.</strong> SelectStream is not about “how to store more video.” Under a fixed memory and context budget, it decides online <em>when to write</em>, <em>what to keep</em>, <em>what to read at query time</em>, and <em>how much historical evidence to expose to the VLM</em>.</p>
+<p><strong>ZH — 核心想法。</strong> SelectStream 的核心不是“如何保存更多视频”，而是：在固定的 memory 和 context budget 下，在线决定何时写入、保留什么、查询时读取什么，以及最终向 VLM 暴露多少历史证据。</p>
+<p>Prior methods usually sit at two extremes:</p>
+<ul>
+<li><strong>Recent-window:</strong> only the latest video — sharp current perception, but early critical events are easy to forget.</li>
+<li><strong>Large memory / replay:</strong> store and inject lots of history — longer coverage, but irrelevant past dilutes the current scene and raises compute.</li>
+</ul>
+<p>SelectStream’s fix: the current frame always goes straight into the VLM; history is compressed into a fixed-capacity latent evidence graph; only a small, query-relevant slice of historical evidence is retrieved.</p>
+<div class="equation">current frame → VLM (full perception, always)
+history → fixed-capacity latent evidence graph
+      → query-conditioned retrieve small evidence
+      → inject few latent tokens into frozen VLM</div>
+</section>
+
+<section class="card"><span class="label">SelectStream · Method</span><h2>0b. SelectStream — Overall Method</h2>
+<div class="equation">Streaming video
+     ↓
+1. Surprise-driven Adaptive Windowing     — When to write?
+     ↓
+2. Latent Visual Memory Graph             — What to write / keep under capacity?
+     ↓
+3. Query-conditioned Graph Reasoning      — Which historical evidence for this query?
+     ↓
+4. Latent Evidence Injection              — Compress &amp; inject into frozen VLM
+     ↓
+Answer</div>
+<p>The system maintains a dynamic memory graph <span class="math">G_t = (M_t, E_t)</span>:</p>
+<ul>
+<li><span class="math">M_t</span>: fixed-capacity memory nodes;</li>
+<li><span class="math">E_t</span>: temporal and semantic relations among nodes;</li>
+<li>each node stores projected visual embeddings for a video segment, plus time range, surprise, and other metadata.</li>
+</ul>
+<p>What is stored is neither raw frames nor text summaries, but latent embeddings already passed through a frozen VLM visual encoder and multimodal projector — so they live directly in the language model’s embedding space.</p>
+
+<h3>1. Surprise-driven Adaptive Windowing — when to write</h3>
+<p>Not every moment in a continuous video is equally important: ten seconds of a static scene need not become ten memory entries; a person entering, an object-state change, or a scene cut should be stored at finer grain. Per-timestep surprise:</p>
+<div class="equation">s_t = λ s_t^attn + (1−λ) s_t^feat
+
+s_t^attn = JS(A_t ∥ A_{t−1})          # attention shift
+s_t^feat = 1 − cos(g_t, g_{t−1})      # feature change</div>
+<p>Low surprise → longer windows that fuse stable content into one memory entry; high surprise → early window close and finer nodes near the change. Result: <strong>coarse for stable segments, fine for critical turns</strong> — not “pick the top-k surprise frames,” but surprise-driven temporal segmentation and memory resolution.</p>
+
+<h3>2. Latent Visual Memory — what to keep when full</h3>
+<p>When an adaptive window ends, visual tokens are aggregated into the graph. A node may be a stable interval, an important state change, or a short high-surprise event. Capacity <span class="math">N</span> is fixed, so SelectStream does <strong>priority-aware consolidation</strong>: keep / merge / evict.</p>
+<p>Priority mixes surprise, novelty, temporal relevance / recency, redundancy with other nodes, and whether a node already carries important relations. Low-priority similar nodes merge more readily; high-surprise, unique, or well-connected nodes are protected. Not FIFO and not “last N segments only”:</p>
+<div class="equation">new evidence
+    ↓
+compare with existing nodes
+    ↓
+preserve important nodes
+merge redundant nodes
+remove low-value evidence</div>
+<p>Long video is compressed into a non-uniform-resolution latent evidence graph: dense on important events, sparse on stable background.</p>
+
+<h3>3. Graph Attention Reasoning — what to read after a question</h3>
+<p>The full memory graph is not fed to the VLM. The question is encoded as a query; nodes are scored in a query-conditioned way to find seed nodes; then graph relations expand them into a small evidence subgraph under budget <span class="math">B</span>.</p>
+<p>Example: “Where did this person put down the cup earlier?” may seed on “cup reappears,” then expand to earlier cup appearance, picking up the cup, and putting it down. Relations include temporal adjacency / overlap, semantic similarity, and event or state continuity.</p>
+<p><strong>Key difference:</strong> top-k retrieval finds several independent similar clips; GAR tries to find a related set that forms an evidence chain — more important for multi-hop and temporal reasoning.</p>
+
+<h3>4. Latent Evidence Injection — how a frozen VLM uses history</h3>
+<p>Retrieved nodes are graph-aware aggregated, compressed to a fixed count <span class="math">M</span> of evidence tokens, calibrated by query and evidence confidence, then injected into the frozen VLM input embedding sequence:</p>
+<div class="equation">[query tokens]
+[current visual tokens]
+[small set of retrieved historical latent tokens]
+
+# NOT: [query] + [all previous frames] + [current frames]</div>
+<p>Design rule: the current frame stays fully visible (not replaced by memory compression); history is selectively visible only via a few query-conditioned latent tokens — less historical noise on the current scene.</p>
+
+<h3>Three essential decisions</h3>
+<table><thead><tr><th>Module</th><th>Decision</th><th>Role</th></tr></thead><tbody>
+<tr><td>SAW</td><td>When to write</td><td>Allocate temporal resolution via surprise</td></tr>
+<tr><td>LVM</td><td>What to preserve</td><td>Keep important evidence / merge redundancy under fixed capacity</td></tr>
+<tr><td>GAR</td><td>What to retrieve</td><td>Retrieve a relation-coherent evidence subgraph for the query</td></tr>
+<tr><td>Evidence injection</td><td>How much to expose</td><td>Inject only a fixed number of historical latent tokens into the VLM</td></tr>
+</tbody></table>
+<p>The real contribution is not only “graph memory,” but casting streaming memory as a <strong>budgeted online evidence allocation problem</strong> under budgets <span class="math">N</span> (memory), <span class="math">B</span> (subgraph), and <span class="math">M</span> (injected tokens).</p>
+<div class="equation">One-liner / 一句话：
+SelectStream uses surprise to set storage granularity, a fixed-capacity latent graph
+to merge/keep evidence, retrieves a small multi-hop evidence subgraph for the query,
+and compresses it into latent tokens injected into a frozen VLM.
+
+SelectStream 用 surprise 决定视频历史的存储粒度，用固定容量 latent graph 动态合并和保留证据，
+再根据问题检索一个小型多跳证据子图，并将其压缩成 latent tokens 注入冻结 VLM。</div>
+<p style="border-left:5px solid var(--red);padding-left:12px"><strong>Boundary vs. this dynamic-navigation work:</strong> SelectStream navigates <em>where</em> evidence lives (addressable nodes + graph edges); this work navigates <em>which transformation</em> to apply over a fixed continuous semantic state (no nodes/edges; operation-conditioned soft read).</p>
+</section>
+
+<section class="card"><h2>1. Most stable implementation path</h2><div class="equation">context / stream → fixed memory M ∈ R^{N×d}
+
+u_0 = E_Q(q)
+r_0 = ∅; a_0 = START
+
+for k = 1..K:                         # test-time unrolling
+    choose action a_k | (u_{k-1}, r_{k-1}, a_{k-1}, q)
+    action-specific read of fixed M → r_k
+    update query state → u_k
+    optional: if a_k = STOP: break
+
+answer from u_K</div><p>What changes at each step:</p><ul><li><span class="math">u_{k-1}</span>: current question state</li><li><span class="math">a_k</span>: semantic read action conditioned on the previous step</li><li>reader: action-specific CrossAttn / FiLM / LoRA</li><li><span class="math">u_k</span>: updated question state after the read</li></ul></section>
+
+<section class="card benchmark"><span class="label">Encoder</span><h2>1b. Text embeddings: frozen Qwen3-Embedding-2B</h2><p>For the multi-hop Text QA proxy, all context / question embeddings come from <strong>frozen Qwen3-Embedding-2B</strong> (HF: <code>Qwen/Qwen3-VL-Embedding-2B</code>, text mode; dim = 2048). The encoder is an implementation choice, not the contribution; trainable parts are the resampler / navigator / answer head.</p><div class="equation">E = Qwen3-Embedding-2B   # frozen
+
+# paragraph- or sentence-level tokens → fixed memory
+Z = E(context paragraphs)
+M = Resampler(Z) ∈ R^{N×2048}   # N fixed, e.g. 16/32/64
+
+u_0 = Proj(E(q))                # same frozen encoder
+a_emb = E(answer candidates)    # for m_k scoring</div><ul><li>Week 0.5: keep the encoder <strong>fully frozen</strong>; first verify EM/F1, <span class="math">m_k</span>, and hop/type breakdown are computable.</li><li>Do not collapse memory to a single mean-pooled vector; keep <span class="math">N</span> latent tokens.</li><li>No Top-K passage retrieval; compress the full distractor context into fixed <span class="math">M</span>.</li><li>Later video work can stay in the same Qwen embedding family so text-proxy gains transfer cleanly.</li></ul><p><strong>Action policy backbone (separate from frozen encoder):</strong></p><ul><li><strong>MLP (default / Week 0.5)</strong>: small <span class="math">π(a|u,r)</span> head.</li><li><strong>BERT</strong>: good lightweight choice for the discrete-action main method.</li><li><strong>Qwen3.5-2B</strong>: optional stronger policy; usually overkill once state is already continuous embeddings — use as a control, prefer BERT/MLP by default.</li></ul></section>
+
+<section class="card"><h2>2. Two-phase method: Week 0.5 soft mixture → main action policy</h2>
+
+<h3>Week 0.5 (metric smoke) — soft action mixture</h3><p>First use a differentiable soft mixture to verify the data pipeline, EM/F1, <span class="math">m_k</span>, and hop/type breakdown. No hard discrete decisions yet.</p><div class="equation">u_0 = E_Q(q)
+
+π_k = softmax(g(u_{k-1}, r_{k-1}, q))
+e_k = Σ_a π_{k,a} e_a
+
+α_k = softmax(Q(u_{k-1}+e_k) K(M)^T / √d)
+r_k = α_k V(M)
+u_k = GRU(u_{k-1}, r_k, e_k)</div>
+
+<h3>Main method (paper claim) — action policy + action-specific read + progress reward</h3><p>After metrics work, upgrade to previous-step-conditioned discrete read actions (optional <code>STOP</code>). This is test-time latent reasoning — not text CoT, not a retrieval agent.</p><div class="equation">A = {GROUND_ENTITY, RESOLVE_EVENT, TRACE_STATE,
+     LINK_TEMPORAL, CHECK_CONFLICT, COMPOSE, STOP}
+
+state_k = [u_{k-1}; r_{k-1}; a_{k-1}; E(q)]
+π_k = softmax(W state_k)
+a_k ~ π_k                         # train: soft / ST-Gumbel; test: argmax or sample
+
+K_k, V_k = FiLM_{a_k}(K(M), V(M))  # or LoRA_{a_k}
+r_k = CrossAttn(Q(u_{k-1}), K_k, V_k)
+u_k = GRU(u_{k-1}, r_k, e_{a_k})
+# if a_k = STOP: break</div><p>Actions only decide <strong>how to read fixed M</strong> — not which passage to retrieve, and not external tools.</p></section>
+
+<section class="card"><h2>3. Training signal: progress reward drives action switches</h2><p>Do not claim “multi-step attention” alone. Each step must make the answer more discriminable; that is also the main reason to switch actions.</p><div class="equation">m_k = s(a⁺ | u_k) − max s(a⁻ | u_k)
+
+L_progress = Σ_k max(0, m_{k-1} + δ − m_k)   # progress reward / hinge
+
+L = L_QA + λ_p L_progress + λ_a L_action + λ_c L_comp</div><ol><li><strong>L_action</strong>: weak imitation from question type / teacher sketches (bridge: <code>GROUND→TRACE→COMPOSE</code>; comparison: <code>GROUND→CHECK→COMPOSE</code>). Shuffled sketches are negatives.</li><li><strong>L_progress</strong>: force rising <span class="math">m_k</span>; encourage switching after new useful semantics are read.</li><li><strong>L_comp</strong>: discourage repeating the same action / latent direction.</li></ol><p>Key interventions: shuffle actions, force one action, remove action-specific FiLM/LoRA. If these do not hurt, the action claim fails.</p></section>
+
+<section class="card"><h2>4. Correct claim in our setting</h2><p>Dynamic navigation = <strong>previous-step-conditioned semantic read actions</strong> over fixed latent history — not path search in embedding space, and not text CoT.</p><ul><li>fixed history semantic state;</li><li>action policy conditioned on <span class="math">(u_{k-1}, r_{k-1}, a_{k-1}, q)</span>;</li><li>action-specific reader over the same <span class="math">M</span>;</li><li>progress reward drives step-wise answer support.</li></ul><div class="equation">M = fixed semantic memory tokens
+u_0 = question embedding
+
+a_1=GROUND,  u_1 = read(M, u_0, a_1)
+a_2=TRACE,   u_2 = read(M, u_1, a_2)   # conditioned on step 1
+a_3=LINK,    u_3 = read(M, u_2, a_3)
+a_4=COMPOSE, u_4 = read(M, u_3, a_4)</div><div class="equation">Support-progressive semantic navigation via previous-step-conditioned
+read actions over fixed latent history</div></section>
+
+<section class="card"><h2>5. Video example</h2><p><strong>Question:</strong> Who finally took the red bag that was initially on the table?</p><ol><li><code>GROUND_ENTITY</code>: bind the latent “red bag” entity.</li><li><code>RESOLVE_EVENT</code>: recover early on-table state and later moves.</li><li><code>TRACE_STATE</code>: track possession / location changes.</li><li><code>LINK_TEMPORAL</code>: lock the last handoff / pickup.</li><li><code>COMPOSE</code>: assemble person, object, and order into the answer.</li></ol><p>Not retrieving a “red-bag frame,” but recovering complementary latent semantics from <span class="math">M_t</span>.</p><div class="equation">The navigator progressively transforms the query state to extract
+complementary answer-supporting semantics from a fixed latent history state.</div><p style="border-left:5px solid var(--red);padding-left:12px"><strong>Do not say:</strong> The navigator retrieves evidence chains.<br>Return answer-supporting latent semantics, not source-traceable evidence.</p></section>
+
+<section class="card benchmark"><span class="label">Validation plan</span><h2>6. Multi-hop QA plan (HF benchmark + Qwen3-Embedding-2B)</h2><p>Do not start with real Video QA. Use Hugging Face multi-hop QA as the main data; all text embeddings come from <strong>frozen Qwen3-Embedding-2B</strong>.</p>
+
+<h3>Stage 1: HF Multi-hop Text QA</h3><p>Data: prefer <code>hotpotqa/hotpot_qa</code> (distractor); then 2WikiMultihopQA; MuSiQue as the hard set.</p><div class="equation">context paragraphs --[frozen Qwen3-Embedding-2B]→ Z → Resampler → M
+question           --[frozen Qwen3-Embedding-2B]→ u_0
+candidates         --[frozen Qwen3-Embedding-2B]→ {a⁺, a⁻}
+
+Week 0.5: soft action mixture → score(a | u_K)
+Main: action policy + action-specific read → score(a | u_K)</div><p>Matched-<span class="math">N</span> / FLOPs readers: one-shot / deeper one-shot / plain recurrent / soft mixture / full action policy / shuffle actions.</p><p>Metrics: EM/F1, <span class="math">m_k</span> curves, hop/type breakdown. Primary signal is <span class="math">m_0 &lt; m_1 &lt; … &lt; m_K</span>, not overall accuracy alone.</p>
+
+<h3>Stage 2: Action intervention</h3><p>On the same Hotpot/2Wiki setup: shuffle actions, replace <code>TRACE_STATE</code>, remove action-specific FiLM/LoRA, force one action every step. If interventions do not hurt, the action claim fails.</p>
+
+<h3>Stage 3: Image QA proxy → Video</h3><p>Only after the Go gate: caption-memory Image QA → image embedding QA → streaming video QA. Stay in the same Qwen embedding family so encoder swaps do not confound navigation gains.</p><div class="equation">HF multi-hop Text QA (Qwen3-Embedding-2B)
+→ caption-based image QA
+→ real image embedding QA
+→ streaming video QA</div></section>
+
+<section class="card"><h2>7. Experiment matrix</h2><table><thead><tr><th>Axis</th><th>Values</th></tr></thead><tbody>
+<tr><td>Data</td><td>HotpotQA distractor / 2Wiki / MuSiQue</td></tr>
+<tr><td>Encoder</td><td>frozen Qwen3-Embedding-2B (<code>Qwen/Qwen3-VL-Embedding-2B</code>)</td></tr>
+<tr><td>Task difficulty</td><td>bridge / comparison / multi-hop / distractor-heavy</td></tr>
+<tr><td>Controller</td><td>soft mixture (Week 0.5) → discrete action policy + FiLM/LoRA (main)</td></tr>
+<tr><td>Reader</td><td>one-shot / deep one-shot / plain recurrent / soft mixture / full action policy</td></tr>
+<tr><td>Ablation</td><td>shuffle actions / force one action / remove progress reward / remove diversity / vary K / vary N</td></tr>
+</tbody></table></section>
+
+<section class="card warning"><span class="label">Risks &amp; gates</span><h2>8. Three real risks + Go / No-Go</h2><ol><li>If shuffling operations does not hurt, operations are decoration.</li><li>If a deeper one-shot reader matches, navigation is unnecessary.</li><li>If fixed <span class="math">M_t</span> already lost temporal handoff / object continuity, no navigator recovers it.</li></ol>
+<p><strong>Go:</strong> full navigator &gt; plain recurrent &gt; one-shot; shuffle hurts; margins rise step-wise; gains concentrate on multi-hop / temporal / distractor cases.</p>
+<p><strong>No-Go:</strong> deeper one-shot matches full navigator; shuffle is harmless; progress loss adds nothing; only synthetic text works and image proxy fails completely.</p>
+<p>Hard bar: matched FLOPs, full navigator must beat deeper one-shot, plain recurrent attention, and latent deliberation; and <span class="math">m_0…m_K</span> must show rising step-wise support margin. Otherwise the idea collapses to “Qwen embedding + recurrent attention.”</p></section>
+
+<section class="card benchmark"><span class="label">Causal Navigation</span><h2>9. Counterfactual causal navigation (V3 implemented)</h2><p>V3 preserves frozen token hidden states and writes them into 32 fixed latent slots with a masked Perceiver. It replaces discrete actions with answer-contrast-conditioned continuous directions and uses low-temperature cosine routing, making direction the only addressing signal:</p><div class="equation">d_k = E(a_k^1) − E(a_k^2)
+z_k = Policy(u_{k-1}, r_{k-1}, d_k, C_{k-1})
+r_k = softmax(cos(z_k, K(M))/τ)V(M)</div><p>Training includes do-removal causal necessity and a contrastive intervention requiring a learned direction to beat a random direction from the same state. Evaluation also uses in-distribution batch-shuffled learned directions.</p><p><strong>Final Hotpot 8-candidate result (4096 train / 512 validation):</strong> causal navigator 65.04%, token one-shot 63.09%; four-step margin rises from 1.951 to 2.089. <span class="math">do(r=0)</span> collapses accuracy to 0.39%, proving that reads are necessary for the trained mechanism. But shuffled directions retain 64.45%, a drop of only 0.59 points, below the preregistered 2-point gate. The gain therefore comes mainly from recurrent contextual reading, not causally necessary semantic direction selection. Verdict: <strong>NO-GO for causal navigation</strong>.</p></section>
+
+<section class="card benchmark"><span class="label">Prior Work</span><h2>10. MERLIN: from interactive embedding refinement to autonomous evidence-space navigation</h2><p><a href="https://aclanthology.org/2024.emnlp-industry.41/">MERLIN (Han et al., EMNLP Industry 2024)</a> is close prior work. For text-video retrieval, it generates a clarification question from current top-1 anchor-video metadata; a human-simulating agent that can observe the user's “video in mind” answers it. The answer embedding is merged with the previous query by SLERP:</p><div class="equation">e_answer^r = Enc(answer_r)
+θ = arccos(e_answer^r · e^{r-1})
+e^r = sin((1−α)θ)/sinθ · e_answer^r
+    + sin(αθ)/sinθ · e^{r-1},    α = 0.8</div><p>A high <span class="math">α</span> preserves earlier query semantics and mitigates drift. MERLIN is training-free and fixed-round: no learned transition, reward, stopping, branching/backtracking, or cross-step credit assignment. It reports five-round R@1 gains of 44.40→78.00 on MSR-VTT, 52.39→77.61 on MSVD, and 56.58→68.44 on ActivityNet. However, candidate pools contain only 500 / 670 / 919 videos, and each round receives new information from an oracle-like agent observing the ground-truth target. The evidence therefore supports continuous aggregation for interactive single-target reranking, not autonomous evidence-chain discovery; its ablation also does not fully isolate SLERP from question selection and repeated feedback.</p><h3>Boundary relative to our work</h3><ul><li><strong>MERLIN:</strong> one fixed hidden target; feedback progressively completes its description; an external user injects information.</li><li><strong>Multi-hop QA:</strong> the evidence target changes by hop; the system must derive the next subgoal from evidence already read; no oracle user exists.</li><li><strong>Novelty boundary:</strong> iterative movement of an embedding is already prior work. A defensible claim requires learned autonomous transitions across multiple evidence targets with causal direction/path interventions.</li></ul><h3>Direct insight for the failed V3 experiment</h3><p>Every MERLIN move is anchored by a semantically grounded external answer. V3 generates direction mainly from its own state and candidate contrast, without hop-specific grounded feedback, so direction can collapse into a shared step code. This matches the observation that Gaussian noise lowers margin while shuffling valid directions across examples barely changes accuracy.</p><div class="equation">r_k = Read(M, z_k)
+f_k = EncodeEvidence(r_k / bridge entity)
+η_k = Trust(state, entropy, consistency)
+z_{k+1} = GeoUpdate(z_k, f_k; η_k)
+
+operation_k ∈ {REFINE, TRANSITION, BRANCH, BACKTRACK, VERIFY, STOP}</div><ol><li>Add matched-feedback baselines: one-shot, passage-concatenation re-encoding, query rewriting, linear interpolation, MERLIN-style SLERP, and learned transition.</li><li>Use direction only for addressing; do not feed it directly into the answer GRU. State should change through evidence actually read.</li><li>Train with in-distribution counterfactuals: another example's same-hop direction, a wrong support paragraph, or a wrong bridge entity—not Gaussian noise alone.</li><li>Learn a trust weight <span class="math">η_k</span> and retain an original-query anchor to control drift and permit backtracking.</li><li>Condition operations on top-k disagreement and entropy rather than one anchor, enabling branch and verify behavior.</li><li>Evaluate hop support recall, bridge-entity accuracy, wrong→correct transitions, and path validity; rising answer margin alone is insufficient.</li></ol><p><strong>Research shift:</strong> preserve MERLIN's causal pattern of grounded feedback followed by conservative geometric update, but replace its oracle user with source-locatable, intervenable evidence read autonomously from memory. This moves from <em>interactive embedding refinement</em> to <em>autonomous evidence-space navigation</em>.</p></section>
+
+<section class="card"><h2>One-liner</h2><p><strong>MERLIN shows that external feedback can refine one target embedding; we still need to show that, without an oracle, real evidence drives transitions across changing targets rather than direction becoming a fixed step code.</strong></p></section>
+</body></html>

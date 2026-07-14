@@ -1,0 +1,182 @@
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+device=cuda encoder=qwen3-emb-0.6b
+gpu= NVIDIA RTX A5000
+precompute train...
+  token encoding 1024 contexts...
+  question embeddings...
+  candidate embeddings (8192)...
+precompute validation...
+  token encoding 256 contexts...
+  question embeddings...
+  candidate embeddings (2048)...
+
+=== pooled_token_probe ===
+  epoch 1/8 loss=1.4999 qa=1.4999 progress=0.0000 causal=0.0000
+  epoch 2/8 loss=1.1645 qa=1.1645 progress=0.0000 causal=0.0000
+  epoch 3/8 loss=0.9285 qa=0.9285 progress=0.0000 causal=0.0000
+  epoch 4/8 loss=0.6606 qa=0.6606 progress=0.0000 causal=0.0000
+  epoch 5/8 loss=0.4135 qa=0.4135 progress=0.0000 causal=0.0000
+  epoch 6/8 loss=0.2528 qa=0.2528 progress=0.0000 causal=0.0000
+  epoch 7/8 loss=0.1363 qa=0.1363 progress=0.0000 causal=0.0000
+  epoch 8/8 loss=0.0670 qa=0.0670 progress=0.0000 causal=0.0000
+{
+  "model": "pooled_token_probe",
+  "acc": 0.5703125,
+  "n": 256,
+  "margin_curve": [
+    1.271216630935669
+  ],
+  "m_gain": 0.0,
+  "mono_rate": 0.0,
+  "by_type": {
+    "bridge": 0.5198019801980198,
+    "comparison": 0.7592592592592593
+  }
+}
+
+=== token_one_shot ===
+  epoch 1/8 loss=1.5055 qa=1.5055 progress=0.0000 causal=0.0000
+  epoch 2/8 loss=1.2040 qa=1.2040 progress=0.0000 causal=0.0000
+  epoch 3/8 loss=1.1314 qa=1.1314 progress=0.0000 causal=0.0000
+  epoch 4/8 loss=1.0765 qa=1.0765 progress=0.0000 causal=0.0000
+  epoch 5/8 loss=1.0211 qa=1.0211 progress=0.0000 causal=0.0000
+  epoch 6/8 loss=0.9143 qa=0.9143 progress=0.0000 causal=0.0000
+  epoch 7/8 loss=0.8320 qa=0.8320 progress=0.0000 causal=0.0000
+  epoch 8/8 loss=0.7318 qa=0.7318 progress=0.0000 causal=0.0000
+{
+  "model": "token_one_shot",
+  "acc": 0.5625,
+  "n": 256,
+  "margin_curve": [
+    1.4824148416519165
+  ],
+  "m_gain": 0.0,
+  "mono_rate": 0.0,
+  "by_type": {
+    "bridge": 0.5247524752475248,
+    "comparison": 0.7037037037037037
+  }
+}
+
+=== causal_navigation_v2 ===
+  epoch 1/8 loss=1.3515 qa=1.2514 progress=0.0414 causal=0.2110
+  epoch 2/8 loss=0.9967 qa=0.9362 progress=0.0599 causal=0.0698
+  epoch 3/8 loss=0.9086 qa=0.8661 progress=0.0552 causal=0.0217
+  epoch 4/8 loss=0.7647 qa=0.7239 progress=0.0547 causal=0.0203
+  epoch 5/8 loss=0.6098 qa=0.5720 progress=0.0442 causal=0.0256
+  epoch 6/8 loss=0.5369 qa=0.4995 progress=0.0470 causal=0.0239
+  epoch 7/8 loss=0.4629 qa=0.4266 progress=0.0440 causal=0.0285
+  epoch 8/8 loss=0.4059 qa=0.3730 progress=0.0419 causal=0.0231
+{
+  "model": "causal_navigation_v2",
+  "acc": 0.03125,
+  "n": 256,
+  "margin_curve": [
+    -9.092195510864258,
+    -9.52646541595459,
+    -9.636070251464844,
+    -9.559856414794922
+  ],
+  "m_gain": -0.46766090393066406,
+  "mono_rate": 0.3046875,
+  "by_type": {
+    "bridge": 0.039603960396039604,
+    "comparison": 0.0
+  },
+  "causal_gain_mean": -0.2779684066772461,
+  "causal_positive_rate": 0.1845703125,
+  "gate_mean": 0.2842945158481598
+}
+{
+  "model": "causal_navigation_v2/zero_read",
+  "acc": 0.03125,
+  "n": 256,
+  "margin_curve": [
+    -9.607087135314941,
+    -11.372672080993652,
+    -12.79331111907959,
+    -13.925224304199219
+  ],
+  "m_gain": -4.318137168884277,
+  "mono_rate": 0.03125,
+  "by_type": {
+    "bridge": 0.039603960396039604,
+    "comparison": 0.0
+  },
+  "causal_gain_mean": 0.0,
+  "causal_positive_rate": 0.0,
+  "gate_mean": 0.5
+}
+{
+  "model": "causal_navigation_v2/random_direction",
+  "acc": 0.03515625,
+  "n": 256,
+  "margin_curve": [
+    -8.656488418579102,
+    -8.76148796081543,
+    -8.599559783935547,
+    -8.266145706176758
+  ],
+  "m_gain": 0.39034271240234375,
+  "mono_rate": 0.4934895932674408,
+  "by_type": {
+    "bridge": 0.04455445544554455,
+    "comparison": 0.0
+  },
+  "causal_gain_mean": -0.3014800548553467,
+  "causal_positive_rate": 0.1640625,
+  "gate_mean": 0.2574644982814789
+}
+{
+  "model": "causal_navigation_v2/reject_all",
+  "acc": 0.03125,
+  "n": 256,
+  "margin_curve": [
+    -7.50910758972168,
+    -7.50910758972168,
+    -7.50910758972168,
+    -7.50910758972168
+  ],
+  "m_gain": 0.0,
+  "mono_rate": 0.0,
+  "by_type": {
+    "bridge": 0.039603960396039604,
+    "comparison": 0.0
+  },
+  "causal_gain_mean": -0.13177570700645447,
+  "causal_positive_rate": 0.41015625,
+  "gate_mean": 0.0
+}
+{
+  "model": "causal_navigation_v2/accept_all",
+  "acc": 0.34765625,
+  "n": 256,
+  "margin_curve": [
+    -11.131147384643555,
+    -10.349126815795898,
+    -7.1782402992248535,
+    -1.4782493114471436
+  ],
+  "m_gain": 9.652897834777832,
+  "mono_rate": 0.8580729365348816,
+  "by_type": {
+    "bridge": 0.3069306930693069,
+    "comparison": 0.5
+  },
+  "causal_gain_mean": -0.43523889780044556,
+  "causal_positive_rate": 0.2529296875,
+  "gate_mean": 1.0
+}
+
+=== V2 GO / NO-GO ===
+{
+  "criteria": {
+    "causal_gt_token_one_shot": false,
+    "zero_read_drop_ge_2pts": false,
+    "random_direction_drop_ge_2pts": false,
+    "margin_rises": false
+  },
+  "verdict": "NO-GO"
+}
+Wrote outputs/causal_v2_hotpot_qwen06.json

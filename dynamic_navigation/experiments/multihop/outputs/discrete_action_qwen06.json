@@ -1,0 +1,184 @@
+{
+  "config": {
+    "encoder": "qwen3-emb-0.6b",
+    "policy": "mlp",
+    "n_train": 512,
+    "n_val": 256,
+    "epochs": 8,
+    "batch_size": 8,
+    "d_model": 256,
+    "n_tokens": 16,
+    "k_steps": 4,
+    "lr": 0.0003,
+    "seed": 0,
+    "out": "outputs/discrete_action_qwen06.json",
+    "hf_home": "/fs/gamma-projects/vlm-robot/hf_cache",
+    "skip_baselines": false
+  },
+  "device": "cuda",
+  "in_dim": 1024,
+  "note": "Discrete action policy + FiLM read + progress reward on HotpotQA distractor. Policy conditioned on (u,r,a_prev,q). Train with Gumbel-Softmax hard; test argmax. policy=mlp (MLP head; BERT/Qwen3.5-2B reserved for heavier policy ablations).",
+  "models": [
+    {
+      "model": "one_shot",
+      "acc": 0.5859375,
+      "n": 256,
+      "m_0": 2.0363380908966064,
+      "m_last": 2.0363380908966064,
+      "m_gain": 0.0,
+      "mono_rate": 0.0,
+      "by_type": {
+        "bridge": 0.5396039603960396,
+        "comparison": 0.7592592592592593
+      }
+    },
+    {
+      "model": "plain_recurrent",
+      "acc": 0.578125,
+      "n": 256,
+      "m_0": 1.586918830871582,
+      "m_1": 1.6852269172668457,
+      "m_2": 1.7397186756134033,
+      "m_3": 1.771575689315796,
+      "m_last": 1.771575689315796,
+      "m_gain": 0.18465685844421387,
+      "mono_rate": 0.5638020634651184,
+      "by_type": {
+        "bridge": 0.5396039603960396,
+        "comparison": 0.7222222222222222
+      }
+    },
+    {
+      "model": "soft_mixture",
+      "acc": 0.5703125,
+      "n": 256,
+      "m_0": 1.4800704717636108,
+      "m_1": 1.557016134262085,
+      "m_2": 1.6131840944290161,
+      "m_3": 1.6751830577850342,
+      "m_last": 1.6751830577850342,
+      "m_gain": 0.19511258602142334,
+      "mono_rate": 0.5677083134651184,
+      "by_type": {
+        "bridge": 0.5297029702970297,
+        "comparison": 0.7222222222222222
+      }
+    },
+    {
+      "model": "discrete_action",
+      "acc": 0.58203125,
+      "n": 256,
+      "m_0": 1.6509915590286255,
+      "m_1": 1.7134206295013428,
+      "m_2": 1.767979383468628,
+      "m_3": 1.767979383468628,
+      "m_last": 1.767979383468628,
+      "m_gain": 0.11698782444000244,
+      "mono_rate": 0.3802083432674408,
+      "by_type": {
+        "bridge": 0.5495049504950495,
+        "comparison": 0.7037037037037037
+      },
+      "action_freq": {
+        "GROUND": 0.25,
+        "RESOLVE": 0.0,
+        "TRACE": 0.25,
+        "LINK": 0.0,
+        "CHECK": 0.0,
+        "COMPOSE": 0.25,
+        "STOP": 0.25
+      }
+    }
+  ],
+  "interventions": [
+    {
+      "model": "discrete_action/shuffle_actions",
+      "acc": 0.58203125,
+      "n": 256,
+      "m_0": 1.6509915590286255,
+      "m_1": 1.7134206295013428,
+      "m_2": 1.767979383468628,
+      "m_3": 1.767979383468628,
+      "m_last": 1.767979383468628,
+      "m_gain": 0.11698782444000244,
+      "mono_rate": 0.3802083432674408,
+      "by_type": {
+        "bridge": 0.5495049504950495,
+        "comparison": 0.7037037037037037
+      },
+      "action_freq": {
+        "GROUND": 0.25,
+        "RESOLVE": 0.0,
+        "TRACE": 0.25,
+        "LINK": 0.0,
+        "CHECK": 0.0,
+        "COMPOSE": 0.25,
+        "STOP": 0.25
+      }
+    },
+    {
+      "model": "discrete_action/force_GROUND",
+      "acc": 0.58203125,
+      "n": 256,
+      "m_0": 1.6509915590286255,
+      "m_1": 1.7352229356765747,
+      "m_2": 1.753179907798767,
+      "m_3": 1.760364294052124,
+      "m_last": 1.760364294052124,
+      "m_gain": 0.10937273502349854,
+      "mono_rate": 0.5807291865348816,
+      "by_type": {
+        "bridge": 0.5495049504950495,
+        "comparison": 0.7037037037037037
+      }
+    },
+    {
+      "model": "discrete_action/force_TRACE",
+      "acc": 0.58203125,
+      "n": 256,
+      "m_0": 1.2825191020965576,
+      "m_1": 1.5905077457427979,
+      "m_2": 1.6769840717315674,
+      "m_3": 1.7075620889663696,
+      "m_last": 1.7075620889663696,
+      "m_gain": 0.425042986869812,
+      "mono_rate": 0.5768229365348816,
+      "by_type": {
+        "bridge": 0.5495049504950495,
+        "comparison": 0.7037037037037037
+      }
+    },
+    {
+      "model": "discrete_action/force_COMPOSE",
+      "acc": 0.58203125,
+      "n": 256,
+      "m_0": 1.658241868019104,
+      "m_1": 1.7559523582458496,
+      "m_2": 1.7671536207199097,
+      "m_3": 1.7694964408874512,
+      "m_last": 1.7694964408874512,
+      "m_gain": 0.11125457286834717,
+      "mono_rate": 0.5859375,
+      "by_type": {
+        "bridge": 0.5495049504950495,
+        "comparison": 0.7037037037037037
+      }
+    },
+    {
+      "model": "discrete_action/force_teacher_sketch",
+      "acc": 0.58203125,
+      "n": 256,
+      "m_0": 1.6509915590286255,
+      "m_1": 1.7126619815826416,
+      "m_2": 1.7668211460113525,
+      "m_3": 1.7668211460113525,
+      "m_last": 1.7668211460113525,
+      "m_gain": 0.11582958698272705,
+      "mono_rate": 0.3776041567325592,
+      "by_type": {
+        "bridge": 0.5495049504950495,
+        "comparison": 0.7037037037037037
+      }
+    }
+  ]
+}

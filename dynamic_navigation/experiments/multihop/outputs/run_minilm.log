@@ -1,0 +1,98 @@
+GPU 0: NVIDIA A100 80GB PCIe (UUID: GPU-6f4ee91b-c955-4f27-347a-7c71f06219f8)
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/fs/gamma-projects/vlm-robot/conda/envs/swift/lib/python3.10/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+device=cuda encoder=minilm policy=mlp
+gpu=NVIDIA A100 80GB PCIe
+Loading HotpotQA distractor...
+Generating train split:   0%|          | 0/90447 [00:00<?, ? examples/s]Generating train split:   1%|          | 1000/90447 [00:00<00:12, 7409.63 examples/s]Generating train split:  10%|▉         | 9000/90447 [00:00<00:02, 39205.60 examples/s]Generating train split:  20%|█▉        | 18000/90447 [00:00<00:01, 52228.62 examples/s]Generating train split:  30%|██▉       | 27000/90447 [00:00<00:01, 59306.77 examples/s]Generating train split:  40%|███▉      | 36000/90447 [00:00<00:00, 64662.11 examples/s]Generating train split:  51%|█████     | 46224/90447 [00:00<00:00, 65158.92 examples/s]Generating train split:  60%|█████▉    | 54224/90447 [00:00<00:00, 66423.93 examples/s]Generating train split:  70%|██████▉   | 63224/90447 [00:01<00:00, 67957.43 examples/s]Generating train split:  80%|███████▉  | 72224/90447 [00:01<00:00, 66640.71 examples/s]Generating train split:  90%|████████▉ | 81224/90447 [00:01<00:00, 67791.25 examples/s]Generating train split: 100%|██████████| 90447/90447 [00:02<00:00, 26355.37 examples/s]Generating train split: 100%|██████████| 90447/90447 [00:02<00:00, 40948.04 examples/s]
+Generating validation split:   0%|          | 0/7405 [00:00<?, ? examples/s]Generating validation split:  81%|████████  | 6000/7405 [00:00<00:00, 51491.76 examples/s]Generating validation split: 100%|██████████| 7405/7405 [00:00<00:00, 36984.39 examples/s]
+train=512 val=256
+Building frozen encoder minilm...
+encoder ready in 8.8s dim=384
+Precomputing embeddings (train)...
+  encoded 50/512
+  encoded 100/512
+  encoded 150/512
+  encoded 200/512
+  encoded 250/512
+  encoded 300/512
+  encoded 350/512
+  encoded 400/512
+  encoded 450/512
+  encoded 500/512
+Precomputing embeddings (val)...
+  encoded 50/256
+  encoded 100/256
+  encoded 150/256
+  encoded 200/256
+  encoded 250/256
+
+=== training one_shot ===
+  epoch 1/5 loss=1.1873
+  epoch 2/5 loss=0.2768
+  epoch 3/5 loss=0.0669
+  epoch 4/5 loss=0.0250
+  epoch 5/5 loss=0.0096
+{
+  "model": "one_shot",
+  "acc": 0.6015625,
+  "n": 256,
+  "m_0": 1.5965782403945923,
+  "m_last": 1.5965782403945923,
+  "m_gain": 0.0,
+  "mono_rate": 0.0,
+  "by_type": {
+    "bridge": 0.5891089108910891,
+    "comparison": 0.6481481481481481
+  }
+}
+
+=== training plain_recurrent ===
+  epoch 1/5 loss=1.1987
+  epoch 2/5 loss=0.8265
+  epoch 3/5 loss=0.4775
+  epoch 4/5 loss=0.2241
+  epoch 5/5 loss=0.2387
+{
+  "model": "plain_recurrent",
+  "acc": 0.54296875,
+  "n": 256,
+  "m_0": 0.9162349104881287,
+  "m_1": 1.255186915397644,
+  "m_2": 1.4645700454711914,
+  "m_3": 1.5910125970840454,
+  "m_last": 1.5910125970840454,
+  "m_gain": 0.6747776865959167,
+  "mono_rate": 0.5364583134651184,
+  "by_type": {
+    "bridge": 0.5198019801980198,
+    "comparison": 0.6296296296296297
+  }
+}
+
+=== training soft_mixture ===
+  epoch 1/5 loss=1.7143
+  epoch 2/5 loss=1.3172
+  epoch 3/5 loss=0.9129
+  epoch 4/5 loss=0.5474
+  epoch 5/5 loss=0.3998
+{
+  "model": "soft_mixture",
+  "acc": 0.5625,
+  "n": 256,
+  "m_0": 0.8090901374816895,
+  "m_1": 1.09260892868042,
+  "m_2": 1.1707900762557983,
+  "m_3": 1.186934232711792,
+  "m_last": 1.186934232711792,
+  "m_gain": 0.37784409523010254,
+  "mono_rate": 0.5390625,
+  "by_type": {
+    "bridge": 0.5495049504950495,
+    "comparison": 0.6111111111111112
+  }
+}
+
+Wrote outputs/week05_minilm.json
