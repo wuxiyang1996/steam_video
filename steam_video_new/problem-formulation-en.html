@@ -1,9 +1,10 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Support-Progressive Navigation over Fixed Streaming Semantic Memory</title><link rel="stylesheet" href="styles.css"></head><body>
-<header><h1>Support-Progressive Navigation over Fixed Streaming Semantic Memory</h1><p class="subtitle">Semantic-state navigation without discrete evidence retrieval for streaming Video QA</p><p class="meta">Problem formulation · 2026-07-17 · <a href="problem-formulation-zh.html">中文</a></p></header>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Implicit Causal-Temporal Graph-Navigation World Model over SelectStream</title><link rel="stylesheet" href="styles.css"></head><body>
+<header><h1>Implicit Causal-Temporal Graph-Navigation World Model over SelectStream</h1><p class="subtitle">Predictive evidence navigation over fixed-capacity streaming video memory</p><p class="meta">Problem formulation · 2026-07-17 · <a href="problem-formulation-zh.html">中文</a></p></header>
 
-<section class="card thesis"><span class="label">Core problem</span><h2>How can a question progressively find an answer inside a non-retrievable continuous history state?</h2><p>A streaming Video-LLM must compress video-caption history under a fixed budget. We retain no frames, segments, nodes, or graph: history exists only in one fixed, LLM-aligned embedding state. Once a question arrives, the system cannot retrieve an explicit evidence chain; it must progressively transform the question representation within the continuous state.</p><div class="equation">How can a streaming Video-LLM navigate a fixed, query-independent multimodal
-semantic state to progressively acquire answer-supporting information,
-without retrieving discrete memory items?</div><p><strong>The main contribution is navigation, not memory architecture:</strong> each step selects a semantic operation, reads complementary information from the same continuous state, and increases support for the correct answer over plausible alternatives.</p></section>
+<section class="card thesis"><span class="label">Core problem</span><h2>How can a model infer uncertain causal-temporal structure over SelectStream latent memory and foresee which evidence action will ultimately complete the answer?</h2><p>We retain SelectStream's fixed-capacity latent evidence memory as a grounded substrate. The causal-temporal graph, event identity, relations, and reasoning frontier are not a pre-given explicit topology; they form a posterior revised by real observations. The implicit world model predicts how semantic, temporal, same-entity, candidate-causal, bridge, and counter-evidence actions change future belief, chain completeness, and answerability.</p><div class="equation">How can an implicit world model plan in belief space over uncertain causal-temporal structure,
+while grounding every posterior update in real SelectStream memory observations?</div><p><strong>The contribution is belief-space evidence planning:</strong> short imagined rollouts compare delayed-utility actions; the system executes only the first action, observes a real memory anchor, updates the full posterior, and replans.</p></section>
+
+<details><summary><strong>Previous continuous-state semantic-navigation track (retained only for comparison)</strong></summary>
 
 <section class="card"><h2>1. Problem setting: fixed query-independent multimodal semantic state</h2><div class="equation">Z_t = Fuse(E_V(V_t),E_C(C_t))
 M_t = U_φ(M_{t-1},Z_t),   M_t∈R^{N×d},   N=constant</div><p><span class="math">M_t</span> is written online before any future question and jointly encodes entities, events, states, temporal relations, caption/ASR semantics, visual-only details, and cross-modal conflicts.</p><p>History contains no independent evidence items, frames, clips, caption entries, timestamps, pointers, provenance, nodes, edges, growing bank, Top-K retrieval, or raw-video replay.</p><p>The claim is about <strong>answer-supporting latent information</strong>, not grounded or source-traceable evidence.</p></section>
@@ -56,21 +57,25 @@ Net Memory Value=Historical Gain−λ·Current Interference</div><ul><li>step-wi
 
 <section class="card warning"><span class="label">Go / No-Go</span><h2>14. Evidence threshold</h2><p><strong>Go:</strong> under equal FLOPs, the semantic navigator beats deeper one-shot, recurrent attention, and latent deliberation; operations align with question types and shuffling hurts; support margin increases by step; and historical performance approaches or exceeds SelectStream while current perception is preserved.</p><p><strong>No-Go:</strong> gains are explained by Qwen embeddings or depth; operations can be shuffled; progress loss is ordinary deep supervision; or the fixed state cannot approach SelectStream graph retrieval. Then the method is an old recurrent-attention network with a modern backbone.</p></section>
 
-<section class="card"><h2>One-sentence position</h2><p><strong>We introduce support-progressive semantic navigation over a fixed, query-independent, LLM-aligned multimodal history state, progressively transforming the question without retrieving discrete video evidence.</strong></p></section>
+<section class="card"><h2>Previous-track one-sentence position</h2><p><strong>We introduce support-progressive semantic navigation over a fixed, query-independent, LLM-aligned multimodal history state, progressively transforming the question without retrieving discrete video evidence.</strong></p></section>
+</details>
 
-<section class="card thesis"><span class="label">Alternative track</span><h2>15. Causality-aware latent memory (SelectStream-adjacent)</h2>
-<p>Unified framing: nodes store local visual evidence; uncertain latent relations encode explanatory dependencies; consolidation preserves reasoning paths; the query evolves with observed evidence and the current causal hypothesis.</p>
-<div class="equation">How can a bounded latent memory preserve temporal and explanatory reasoning paths
-under continual consolidation, while supporting closed-loop query-dependent navigation?</div>
-<p><strong>Claim carefully:</strong> latent explanatory dependency / causal-support graph — not a true causal graph from observational video.</p>
+<section class="card thesis"><span class="label">Current main track</span><h2>15. Implicit Causal-Temporal Graph-Navigation World Model over SelectStream</h2>
+<p><strong>Core decision:</strong> retain SelectStream's fixed-capacity latent evidence memory, writing, consolidation, and evidence injection; treat the causal-temporal graph as a partially observed latent hypothesis rather than an added deterministic graph. The implicit world model predicts how an evidence action changes graph/relation posteriors, shared variables, and answerability.</p>
+<div class="equation">SelectStream memory as grounded substrate
++ uncertain causal-temporal structure as belief
++ evidence operators as epistemic actions
++ real memory reads as observations
++ implicit belief transitions for short-horizon planning</div>
+<p>The goal is neither causal-effect identification from observational video nor a general world model of abstract reasoning. The paper-level claim is <strong>belief-space planning over uncertain causal-temporal video structure</strong>: use one- or two-step imagined rollouts to select a delayed-utility evidence action, then globally update the posterior from a real memory-anchor observation and replan.</p>
 
-<h3>15.1 Node memory + latent causality</h3>
-<div class="equation">m_i=(h_i,τ_i,p_i)
-c_ij=(r_ij,u_ij,d_ij)=f_causal(h_i,h_j,Δτ_ij,…)
-G=(M,C)</div>
-<p><span class="math">r</span>: relation embedding; <span class="math">u</span>: uncertainty; <span class="math">d</span>: direction. Do <strong>not</strong> build full <span class="math">O(N²)</span> pairwise causality. Online: cheap Top-K candidates (recency, entity, semantic, state, causal frontier) → relation inference only on <span class="math">P_j</span> → <span class="math">O(NK)</span>, <span class="math">K≪N</span>. Long-range needs: causal landmarks + hierarchical summaries, not all-node scans.</p>
+<h3>15.1 Start from the SelectStream latent evidence substrate</h3>
+<div class="equation">M_t={m_i=(h_i,τ_i,p_i)}
+𝒢_t∼q_η(𝒢 | M_t,q,E_{1:k})
+q_η(r_ij)=P(r_ij | h_i,h_j,Δτ_ij,q,E_{1:k})</div>
+<p>Keep SelectStream's surprise-driven writing, priority-preserving consolidation, and latent evidence injection unchanged. Memory anchors provide latent representations, temporal spans, and provenance, while event boundaries, entity bindings, state transitions, explanatory links, and contradictions may remain uncertain variables. Relation inference runs only over cheap Top-K candidate pairs or the active frontier; <span class="math">explain/enable</span> denotes candidate causal support, not a causal edge identified from observational video.</p>
 
-<h3>15.2 Consolidation: not “delete lowest causality”</h3>
+<h3>15.2 Consolidation is an inherited constraint, not the current main contribution</h3>
 <p>Causal utility helps, but isolated / unresolved / factual nodes can still matter; the relation model errs; many QA types need facts, not chains. Multi-objective importance + three ops:</p>
 <div class="equation">I_i=λ_s I_i^sem+λ_t I_i^temp+λ_c I_i^causal+λ_q I_i^query+λ_u I_i^unc
 ops ∈ {keep, merge, abstract, delete}</div>
@@ -79,19 +84,19 @@ ops ∈ {keep, merge, abstract, delete}</div>
 <li><strong>Merge</strong> — same-state persistence; keep time span.</li>
 <li><strong>Abstract</strong> — compress a causal motif into a summary node with provenance (strongest new op).</li>
 </ul>
-<p>Protect bridges, unique state transitions, high-influence causes, and unresolved hypotheses. Strongest novelty among the three: <strong>reasoning-preserving consolidation</strong>.</p>
+<p>Protect bridges, unique state transitions, high-influence candidate causes, and unresolved hypotheses; however, v1 inherits SelectStream's consolidation and does not claim it as novelty. It becomes a later extension only if predictive navigation utility is shown to improve compression decisions.</p>
 
-<h3>15.3 Query over time: do not glue one embedding</h3>
-<div class="equation">z_t=[z_t^q; z_t^e; z_t^c; z_t^r]
-z_t^c=PathEncoder(current evidence path)
-a_t∈{retrieve-sem, follow-cause/effect, find-bridge, seek-counter, backtrack, stop}</div>
-<p>Parts: question / collected evidence / current causal-path hypothesis / missing requirement. Trajectory: match → anchor effect → search cause → complete bridge → verify / counter. Next hop depends on the actual retrieval outcome (closed-loop), not a one-shot symbolic program.</p>
+<h3>15.3 Action space and closed-loop state</h3>
+<div class="equation">z_k=Enc(q,E_{1:k},H_k,g_k,B_k)
+a_k=(o_k,v_k)
+o_k∈{semantic,before,after,same-entity,cause,effect,bridge,counter,stop}</div>
+<p><span class="math">z_k</span> is an implicit belief state conditioned on the question, real evidence already read, competing hypotheses, the missing reasoning role, and remaining budget. An action selects a relation operator and graph frontier; the next step must depend on the real graph read rather than autoregressing over imagined evidence.</p>
 
-<h3>15.4 Contribution order &amp; related work</h3>
+<h3>15.4 Contribution order and difference from SelectStream</h3>
 <ol>
-<li>Causality-aware consolidation under fixed budget (primary).</li>
-<li>Causal-path-conditioned closed-loop navigation.</li>
-<li>Uncertain revisable latent relation memory (supports 1–2).</li>
+<li><strong>Implicit graph-navigation world model:</strong> predict action-conditioned evidence-belief transitions and delayed utility.</li>
+<li><strong>Closed-loop predictive navigation:</strong> short rollout → execute one graph action → read real latent evidence → posterior correction → replan.</li>
+<li><strong>Uncertain causal-temporal augmentation:</strong> add revisable state-transition, explanatory, bridge, and contradiction relations to the SelectStream graph.</li>
 </ol>
 <table><thead><tr><th>Work</th><th>Role for us</th></tr></thead><tbody>
 <tr><td>Event-Causal RAG</td><td>Broader RW only: hard textual SES + TEMPORAL_NEXT, fixed-hop traversal; not nearest neighbor</td></tr>
@@ -99,10 +104,10 @@ a_t∈{retrieve-sem, follow-cause/effect, find-bridge, seek-counter, backtrack, 
 <tr><td>RAVU</td><td>Symbolic operators on entity-event graph; no learned uncertain edges / budgeted consolidation</td></tr>
 <tr><td>SelectStream + MERLIN + latent relation models</td><td>Nearest intersection we extend</td></tr>
 </tbody></table>
-<div class="equation">They discretize events into hard SES topology;
-we maintain uncertain latent temporal-causal relations that can be revised,
-compressed, and navigated as new evidence arrives.</div>
-<p><strong>One-line:</strong> Augment latent streaming-video memory with uncertain event dependencies, consolidate to preserve explanatory paths, and condition iterative retrieval on the evolving causal hypothesis and observed evidence.</p>
+<div class="equation">SelectStream: q → static graph propagation → rank evidence nodes
+Ours: q,belief → imagine graph actions → predict future utility
+      → execute one action → observe real node → update and replan</div>
+<p><strong>One-line:</strong> Learn implicit belief dynamics over SelectStream's fixed-capacity latent evidence graph, predict the future reasoning value of temporal and candidate-causal graph actions, and replan after real evidence observations.</p>
 
 <h3>15.5 Why a world model: delayed utility &amp; irreversibility</h3>
 <p>Belongs only on this causality-aware track: the continuous-state track has no discrete evidence actions or retrieval transitions, so a world-model framing there would be artificial. This is a short-horizon <em>belief-transition / reasoning-utility</em> model — not a pixel-level video world model.</p>
@@ -120,12 +125,13 @@ Our planning:      a_t = arg max_a E[V(s_{t+K})∣s_t,a]</div>
 <div class="equation">learn T_φ(b_{t+1}∣b_t,a_t),   b_t=P(relevant path∣q,E_{1:t})
 r_t=Δchain completeness+Δanswerability−cost</div>
 
-<h3>15.6 Implicit world state for video-graph navigation</h3>
+<h3>15.6 Implicit Graph-Navigation World Model</h3>
 <p>At the method level, multi-hop reasoning is modeled as action-conditioned dynamics in an abstract latent state space. The latent state need not decode into a fixed belief schema, evidence list, or webpage-like state:</p>
-<div class="equation">z_t=Enc_θ(q,h_t)
-p_φ(ẑ_{t+1},ô_{t+1}|z_t,a_t)
-z_{t+1}=U_ψ(z_t,a_t,o_{t+1})</div>
-<p>The first transition is an execution-time prior over how a reasoning action may reshape the trajectory and what evidence it may reveal. After the real retrieval/navigation action returns observation <span class="math">o_{t+1}</span>, the updater forms the posterior reasoning state. This distinction prevents imagined evidence from being treated as observed fact.</p>
+<div class="equation">z_k=Enc_θ(q,E_{1:k},H_k,g_k,B_k)
+p_φ(ẑ_{k+1},ô_{k+1},r̂_k | z_k,a_k,G_t)
+o_{k+1}=ReadGraph(G_t,a_k)
+z_{k+1}=U_ψ(z_k,a_k,o_{k+1})</div>
+<p>The world model is a prior before action execution: it predicts what type of node a graph action may reach, which reasoning role it may fill, and how future answerability or chain completeness may change. Test-time inference uses one- or two-step model-predictive planning, executes only the first action, and updates the posterior from the real graph observation. Imagined evidence never enters the final answer directly.</p>
 <p>For the video-graph instantiation, the latent state is conditioned on the following information without requiring it to be represented as explicit slots:</p>
 <ul>
 <li><strong>O<sub>t</sub> — current observation:</strong> current/recent video event, visible entities, actions, and state changes;</li>
@@ -134,15 +140,16 @@ z_{t+1}=U_ψ(z_t,a_t,o_{t+1})</div>
 <li><strong>g<sub>t</sub> — next reasoning need:</strong> the missing entity, temporal link, explanatory bridge, counterevidence, or verification step;</li>
 <li><strong>B<sub>t</sub> — budget:</strong> remaining retrieval calls, latency, and memory/navigation cost.</li>
 </ul>
-<p>The navigator maintains a probability distribution over reasoning hypotheses and graph locations rather than one path or a fixed-size beam:</p>
-<div class="equation">b_t(H,v)=P(H_t=H,v_t=v | q,E_{1:t})
-π_t(a,v'|H,v)=P(a_t=a,v_{t+1}=v' | z_t,H,v)
-b_{t+1}(H',v')=Σ_{H,v,a} b_t(H,v)π_t(a,v'|H,v)T_φ(H'|H,v,a,v')</div>
-<p>Each hop distributes probability mass in parallel over semantic neighbors, temporal forward/backward nodes, explanatory predecessors/effects, bridges, and counterevidence. Compatible successors merge by accumulating probability; contradictions reduce or split mass; alternative chains remain alive in proportion to posterior support. Computation can use sparse soft routing such as entmax or adaptive cumulative-probability truncation, so the represented uncertainty is probabilistic even when negligible mass is omitted for efficiency. There is no method-level fixed number of chains or expansions.</p>
+<p>The navigator does not define its state as one path or a fixed-size chain bank. It maintains a joint belief over latent graph structure, hidden variables, relations, and the reasoning frontier:</p>
+<div class="equation">b_t(𝒢,X,R,ℓ)=P(𝒢,X,R,ℓ | q,E_{1:t})
+b̂^-_{t+1}=T_φ(b_t,a_t)
+b_{t+1}=Update(b̂^-_{t+1},o_{t+1})</div>
+<p><span class="math">𝒢</span> is an uncertain causal-temporal graph hypothesis; <span class="math">X</span> contains entity, event, and state variables; <span class="math">R</span> contains identity, temporal, state-transition, explanatory, and contradiction relations; and <span class="math">ℓ</span> is the latent reasoning frontier. The world model predicts how an action reshapes the entire belief, not how one chain is extended into another chain.</p>
+<p>Computation may use sparse soft routing, a shared-substructure hypothesis DAG, or an adaptive posterior support satisfying <span class="math">Σ_{s∈𝒮_t}b_t(s)≥1−ε</span>. Support size changes with posterior entropy and remaining budget, while <span class="math">p_other=1−Σ_{s∈𝒮_t}b_t(s)</span> preserves unexpanded uncertainty. Explicit reasoning chains are used only for posterior inspection, verifier auditing, and visualization; they are not the method state and have no preset count.</p>
 <p>The world model predicts the next multi-hop reasoning state rather than an evaluation metric. A transition may ground an entity, establish temporal order, extend an explanatory link, expose a missing bridge, reveal a contradiction, verify a chain, or make the answer ready. The following reasoning-stage variable is an interpretable probe or auxiliary head, not the definition of <span class="math">z_t</span>:</p>
 <div class="equation">ρ_t∈{GROUND, TEMPORAL_LINK, EXPLANATORY_LINK, FIND_BRIDGE,
 SEEK_COUNTER, VERIFY_CHAIN, ANSWER, ABSTAIN}</div>
-<p>Short imagined rollouts compare parallel expansion sets and their successor beams by whether they complete the required reasoning roles, resolve missing links, preserve genuinely different hypotheses when uncertainty remains, and reach a verified answer state with low cost. <strong>Causal/explanatory coherence, uncertainty calibration, temporal correctness, and semantic relevance are validation axes for these predicted reasoning transitions—not explicit world-state slots.</strong> Recall, relation F1, calibration, and answer accuracy likewise remain evaluation measures only.</p>
+<p>Short imagined rollouts compare how actions change the posterior: whether they complete required reasoning roles, resolve missing links, distinguish competing explanations, reduce uncertainty, and reach a verified answer state at low cost. <strong>Causal/explanatory coherence, uncertainty calibration, temporal correctness, and semantic relevance are validation axes for belief transitions—not explicit world-state slots.</strong> Recall, relation F1, calibration, and answer accuracy likewise remain evaluation measures only.</p>
 
 <h3>15.7 Boundary against reasoning world models and latent retrieval</h3>
 <p>Several neighboring lines cover important parts of this formulation, so the contribution cannot be “using a world model for reasoning” or merely “latent state transitions.”</p>
@@ -156,36 +163,56 @@ SEEK_COUNTER, VERIFY_CHAIN, ANSWER, ABSTAIN}</div>
 </ul>
 <p><strong>Defensible position:</strong> learn an evidence-conditioned implicit belief-transition model for streaming video-graph QA that predicts how probabilistic parallel semantic, temporal, and explanatory navigation will change the next multi-hop reasoning state after real evidence is observed. The empirical comparison must include RAP-style explicit planning, latent reasoning, direct action ranking, adaptive stopping, and ordinary iterative retrieval.</p>
 <p><strong>Higher-level framing:</strong> implicit world modeling for abstract reasoning dynamics. We model multi-hop reasoning as action-conditioned transitions in a latent state space, where the world model predicts how intermediate reasoning actions reshape the trajectory toward an answer. This is motivation and method abstraction; the paper-level novelty must still be established by evidence-conditioned video navigation, observation-grounded posterior updates, delayed bridge utility, and test-time planning.</p>
-<p><strong>Training implication from Early Experience:</strong> at each real video-graph reasoning checkpoint, execute expert, current-policy, and admissible alternative navigation actions against the graph and record <code>(z_t,a_t,e_{t+1},z_{t+1})</code>. Train the transition model to predict both the evidence observation and updated latent reasoning state, including outcomes of wrong or locally attractive actions. This one-step supervision initializes dynamics, but does not establish the paper claim by itself. The decisive result must show that test-time rollout over the learned transition model selects delayed-utility bridge evidence and outperforms the same policy trained with next-state prediction but deployed without planning.</p>
+<h4>15.7.1 Epistemic-Action Counterfactual Training</h4>
+<p><strong>Scope:</strong> counterfactual does not mean generating a video in which a person took a different physical action, and it does not support classical causal-effect identification. It means forking the same reasoning checkpoint, executing different evidence-acquisition actions, and supervising how these epistemic interventions produce different observations, beliefs, and future answerability.</p>
 
-<h3>15.8 Multi-chain search → answer by calibrated confidence</h3>
-<p>The world model generates, expands, and compares <strong>multiple</strong> reasoning chains; the answer is not decided by a single path, but by aggregated support and calibrated confidence over candidate chains.</p>
-<div class="equation">The world model performs test-time search over multiple temporal-causal reasoning chains,
-while a calibrated verifier aggregates chain-level evidence into answer confidence
-and controls whether to continue, answer, or abstain.</div>
-<p>Roles: the world model predicts transition probabilities over parallel node expansions and reasoning hypotheses; the verifier updates and calibrates their posterior mass; answer confidence decides when to output.</p>
+<p><strong>Sibling counterfactual trajectories.</strong> Freeze a checkpoint:</p>
+<div class="equation">𝒞_t=(M_t,q,E_{1:t},b_t,B_t)</div>
+<p>From the same <span class="math">𝒞_t</span>, execute expert, current-policy, and other admissible actions:</p>
+<div class="equation">a_t^j∈{semantic,temporal-back,temporal-forward,same-entity,
+candidate-cause,effect,bridge,counter,verify,stop}
+o_{t+1}^j=Execute(M_t,a_t^j)
+b_{t+1}^j=Update(b_t,a_t^j,o_{t+1}^j)</div>
+<p>Continue each sibling state for one or two steps to record delayed consequences:</p>
+<div class="equation">𝒟_t={ (b_t,a_t^j,o_{t+1}^j,b_{t+1}^j,R_future^j) }_{j=1}^J</div>
 
-<p><strong>Hypotheses.</strong> After anchoring, maintain <span class="math">H_t={H_t^1,…,H_t^B}</span> with beam <span class="math">B≈3–8</span>:</p>
-<div class="equation">H^k=(e_1,r_{12},e_2,…,e_n)
-r ∈ {semantic, temporal, state-transition, explanatory/candidate-causal}</div>
-<p>Example for “Why return to kitchen?”: <span class="math">H_1</span> left cup→noticed missing→returned; <span class="math">H_2</span> heard noise→returned; <span class="math">H_3</span> talk to someone→returned. Soft edges may live underneath; reasoning keeps sparse, auditable hypotheses.</p>
+<p><strong>World-model targets:</strong></p>
+<ol>
+<li><strong>Observation:</strong> predict the evidence role or latent observation distribution returned by an action, not imagined evidence that can directly answer the question.</li>
+<li><strong>Belief delta:</strong> predict changes in relation posteriors, entity/event bindings, missing roles, contradictions, and residual uncertainty; split/merge behavior is supervised by sibling posterior geometry rather than fixed chain labels.</li>
+<li><strong>Future utility:</strong> construct <span class="math">R_future</span> from realized continuation—answer support, required-role completion, contradiction resolution, information gain, answer correctness, and cost—not only immediate relevance or confidence.</li>
+<li><strong>Counterfactual ranking:</strong> learn the delayed-utility ordering among sibling actions sharing the same <span class="math">b_t</span>.</li>
+</ol>
+<div class="equation">L_WM=λ_oL_obs+λ_bL_Δbelief+λ_uL_utility
+    +λ_rL_pairwise+λ_cL_calibration
+L_pairwise=−log σ(U_φ(b_t,a^+)−U_φ(b_t,a^-))</div>
+<p>This is stronger than next-state prediction from one behavior trajectory: a single trajectory reveals only the selected action's consequence, while sibling branching identifies whether other actions would have been better under the same belief. Training executes multiple branches offline; at test time the world model only imagines multiple actions, executes the first action with the highest expected future utility, updates the posterior from the real memory observation, and replans.</p>
+
+<p><strong>Decisive comparisons:</strong> the full method must outperform (1) training on behavior trajectories only; (2) direct <span class="math">Q(b,a)</span> learning from the same counterfactual data; (3) the same next-state supervision without test-time rollout; and (4) heuristic or learned beam search. Otherwise gains cannot be attributed to belief-transition world modeling.</p>
+
+<h3>15.8 Dynamic belief support → answer by calibrated confidence</h3>
+<p>The world model does not maintain a fixed number of explicit reasoning chains. It predicts the pushforward of the joint causal-temporal belief under an action. Shared evidence and subpaths are represented once in a hypothesis DAG or factorized belief; a new observation may split, merge, or redirect posterior mass, revise early variables, or create a new explanatory structure.</p>
+<div class="equation">action → predicted belief change, not chain → chain score
+b̂^-_{t+1}=T_φ(b_t,a_t)
+b_{t+1}∝p_ω(o_{t+1}|𝒢,X,R,a_t)b̂^-_{t+1}</div>
+<p>For “Why return to the kitchen?”, explanations such as a forgotten object, a heard sound, or finding another person may coexist as probability mass while sharing the same person, return event, and temporal evidence rather than being duplicated as fixed beam elements. For auditing, a small number of high-posterior paths can be expanded adaptively from <span class="math">b_t</span>, with residual uncertainty reported separately.</p>
 
 <p><strong>Three confidence layers (do not collapse):</strong></p>
 <ol>
 <li><strong>Edge:</strong> <span class="math">c_{ij}^r=P(r_{ij}∣e_i,e_j)</span>.</li>
-<li><strong>Chain:</strong> <span class="math">C(H)=Verifier(q,H)</span> — evidence, temporal, causal/explanatory, grounding, minus contradiction and missing-link penalties (not a product of edge probs).</li>
-<li><strong>Answer:</strong> for candidates <span class="math">y</span>, aggregate supporting chains with redundancy correction:</li>
+<li><strong>Belief structure:</strong> enforce global posterior consistency over shared variables, relations, contradictions, and missing roles; an expanded-path verifier is an auditing probe, not a substitute for belief update.</li>
+<li><strong>Answer:</strong> for candidate <span class="math">y</span>, marginalize over the posterior with redundancy correction:</li>
 </ol>
-<div class="equation">S(y)=log Σ_{H∈H(y)} exp(C(H))
+<div class="equation">S(y)=log E_{s∼b_t}[exp C(y;s)]
 P(y∣q,E)=softmax_y S(y)</div>
-<p>Final confidence comes from evidence chains, not VLM token probabilities.</p>
+<p>The expectation may be approximated with adaptive support <span class="math">𝒮_t</span>, but retained mass and <span class="math">p_other</span> must be reported. Final confidence comes from the evidence-grounded posterior, not VLM token probabilities or fixed Top-B chains.</p>
 
 <p><strong>When to answer</strong> — all of: <span class="math">P(y_max)>τ_ans</span>, margin vs runner-up, coverage of required roles, no strong unresolved contradiction. Else:</p>
 <div class="equation">d_t ∈ {continue, verify, answer, abstain}
-(H^*,a^*)=arg max_{H,a} E[ΔC_answer+ΔC_chain−λcost∣H,a]</div>
+a_t^*=arg max_a E_{b'∼T_φ(b_t,a)}[ΔC_answer+β·IG(b_t;b')−λcost]</div>
 <p>Actions: temporal back/forward, causal predecessor/effect, bridge, counter-evidence, verify edge. Bridge steps may raise chain expandability without immediate answer gain — exactly §15.5 delayed utility.</p>
 
-<p><strong>Pipeline:</strong> streaming video → bounded latent temporal-causal memory → multi-hypothesis init → world-model rollout → retrieve real evidence → update edge/chain confidence → compare support &amp; contradictions → answer / continue / abstain.</p>
+<p><strong>Pipeline:</strong> streaming video → bounded latent evidence memory → uncertain causal-temporal belief initialization → world-model belief rollout → retrieve real evidence → global posterior update → compare support, contradictions, and residual uncertainty → answer / continue / abstain.</p>
 
 <p><strong>Related work (no single prior matches):</strong></p>
 <table><thead><tr><th>Line</th><th>Gives</th><th>Gap vs us</th></tr></thead><tbody>
@@ -196,17 +223,17 @@ P(y∣q,E)=softmax_y S(y)</div>
 </tbody></table>
 <p><strong>Position:</strong> Embodied QA–style goal-directed information acquisition inside a bounded latent video memory, with world-model actions defined as semantic, temporal, and explanatory navigation.</p>
 
-<h3>15.9 Three-day video graph + world-model navigation sprint</h3>
+<h3>15.9 Three-day SelectStream + world-model navigation sprint</h3>
 <p>The sprint builds a small temporal-explanatory event graph directly over 20–50 short videos, then tests whether one- or two-step world-model lookahead improves navigation over that graph. Edges are candidate causal-support relations inferred from observational video, captions, subtitles, and event order; they are not claims of true causal identification. Existing Video Skills infrastructure may be reused for decoding, segmentation, captions, and evaluation, while the method and runtime remain separate.</p>
 <ol>
 <li><strong>Day 1 — video event graph:</strong> segment each video into events; extract entities, actions, state changes, and timestamps; and create sparse candidate edges of type temporal-next, same-entity, state-transition, explanatory-support, and contradiction. Use cheap retrieval to propose Top-K neighbors and a VLM/teacher to label relation type, direction, uncertainty, and a short warrant. Manually audit a sample of edges.</li>
-<li><strong>Day 2 — world-model navigator:</strong> define actions {retrieve-semantic, follow-temporal, follow-explanatory, find-bridge, seek-counter, stop}. From question-conditioned checkpoints, train or calibrate a lightweight transition model for one- or two-step navigation. Maintain posterior mass over chains and graph nodes, route to multiple successors in parallel, merge compatible states by probability accumulation, and use adaptive probability-mass truncation only for computational efficiency.</li>
-<li><strong>Day 3 — matched-budget evaluation:</strong> compare semantic Top-K retrieval, greedy one-step navigation, direct action ranking without transitions, beam search without a learned world model, oracle graph paths, and world-model navigation. Measure answer accuracy, supporting-event Recall@K, bridge retrieval, chain completeness, relation precision, latency, and regret to the oracle. Shuffle edges and transition targets as causal controls.</li>
+<li><strong>Day 2 — world-model navigator:</strong> execute multiple admissible actions from the same question-conditioned graph checkpoint, record <code>(z_k,a_k,o_{k+1},z_{k+1},R_future)</code>, and train lightweight transition, observation, and value heads. Use only one- or two-step MPC rollouts at test time.</li>
+<li><strong>Day 3 — matched-budget evaluation:</strong> compare original SelectStream, SelectStream plus new relations, a direct action ranker, heuristic beam search, value-only prediction, the same transition supervision without test-time rollout, full world-model MPC, and oracle graph paths. The decisive test is delayed-utility bridge retrieval under the same number of graph reads.</li>
 </ol>
 <p><strong>Go:</strong> audited candidate edges reach at least 70% precision; at least 20% of valid questions require a bridge event or delayed-utility hop; and world-model navigation improves supporting-event Recall@K by at least 10 absolute points or answer accuracy by at least 5 points over both greedy and direct-ranking baselines under equal retrieval calls. Edge/transition shuffling must materially reduce the gain. <strong>No-Go:</strong> the graph is too noisy, most questions are solved by direct semantic retrieval, a non-predictive beam/direct ranker matches the world model, or gains vanish under equal budgets.</p>
 
-<h3>15.10 Unifying world models, factor graphs, and causal reasoning</h3>
-<p>This subsection states the higher-level research framing that organizes §15.5–§15.9. It does not replace the paper-level claim of evidence-conditioned video-graph navigation; it clarifies what kind of world model, graph, and causality we mean.</p>
+<h3>15.10 Long-term vision (outside the current method and novelty claim)</h3>
+<p>The factor-graph and abstract-reasoning material below is retained only as a future-research note. The current paper does not implement a complete GTSAM-style factor graph, claim a general reasoning world model, or estimate classical causal effects. Its boundary is <strong>SelectStream latent memory substrate + uncertain causal-temporal belief + epistemic-action counterfactual training + implicit belief dynamics + real-observation posterior update</strong>.</p>
 
 <h4>15.10.1 Starting question: a world model for abstract problem solving?</h4>
 <p>Classical world models learn physical or game transitions:</p>
