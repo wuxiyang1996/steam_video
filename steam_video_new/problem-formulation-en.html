@@ -109,6 +109,16 @@ Ours: q,belief → imagine graph actions → predict future utility
       → execute one action → observe real node → update and replan</div>
 <p><strong>One-line:</strong> Learn implicit belief dynamics over SelectStream's fixed-capacity latent evidence graph, predict the future reasoning value of temporal and candidate-causal graph actions, and replan after real evidence observations.</p>
 
+<h4>15.4.1 Reuse Video_Skills; do not rebuild the video agent</h4>
+<p><a href="https://github.com/wuxiyang1996/Video_Skills" target="_blank" rel="noopener"><strong>Video_Skills</strong></a> is the implementation substrate for this track. Its active integration branch already provides the question-blind L1 clue-memory graph, question-conditioned L2 reasoning graph, typed temporal / causal / alternative edges, atomic skill actions, evidence verifiers, bounded local repair, trajectory logging, dataset adapters, and SFT / GRPO infrastructure. Therefore this paper does <strong>not</strong> propose another video decoding, captioning, skill-runtime, verifier, or generic graph stack.</p>
+<table><thead><tr><th>Inherited from Video_Skills</th><th>New research required here</th></tr></thead><tbody>
+<tr><td>L1/L2 graph containers, evidence provenance, typed skill invocations, verifier/repair loop, benchmark and training interfaces</td><td>A posterior over relation type/direction, temporal order, entity identity, missing bridges, contradictions, completeness, answerability, and uncertainty</td></tr>
+<tr><td>MDP-compatible state/action/observation traces and executable evidence-acquisition skills</td><td>An action-conditioned implicit transition model <span class="math">p_θ(b_{t+1},o_{t+1}|b_t,a_t)</span>, trained with sibling counterfactual trajectories</td></tr>
+<tr><td>Deterministic causal/temporal edge labels and explicit rollout records</td><td>Dynamic latent hypothesis mass that can split, merge, disappear, or introduce an uninstantiated node; no fixed Top-B set of explicit reasoning chains</td></tr>
+</tbody></table>
+<p><strong>Critical distinction:</strong> the existing typed graph is the execution and supervision interface, not the claimed belief model. Likewise, existing MDP-compatible traces make transition learning possible but are not themselves a learned world model. The new model must predict how an action changes the future belief and observation, not merely score the current chain or action.</p>
+<p><strong>Revised effort:</strong> given this reuse, a mechanism prototype is approximately 3–5 person-weeks; a defensible paper core with sibling branching, auxiliary belief probes, strong beam/direct-Q baselines, and three datasets is approximately 8–12 person-weeks; a competitive five-dataset ICLR submission is approximately 12–18 person-weeks. The dominant risk is counterfactual supervision and identifiable belief dynamics, not video-system engineering.</p>
+
 <h3>15.5 Why a world model: delayed utility &amp; irreversibility</h3>
 <p>Belongs only on this causality-aware track: the continuous-state track has no discrete evidence actions or retrieval transitions, so a world-model framing there would be artificial. This is a short-horizon <em>belief-transition / reasoning-utility</em> model — not a pixel-level video world model.</p>
 
