@@ -320,20 +320,13 @@ def _accepted_track_matches(
 ) -> list[tuple[_Participant, _Participant]]:
     """Require exact accepted-track identity, never surface similarity alone."""
 
-    explicit = _support_value(belief, "accepted_identity_track")
-    explicit_track = str(explicit or "").strip()
     matches: list[tuple[_Participant, _Participant]] = []
     for left, right in _identity_matches(pairs):
         same_structural_track = (
             left.mention_id == right.mention_id
             and left.mention_id.startswith("l1-track:")
         )
-        explicitly_accepted = bool(explicit_track) and explicit_track not in {
-            "false",
-            "none",
-            "unverified",
-        }
-        if same_structural_track or explicitly_accepted:
+        if same_structural_track:
             matches.append((left, right))
     return matches
 

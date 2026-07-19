@@ -1389,7 +1389,7 @@ class MemoryGraphTest(unittest.TestCase):
             0,
             1,
             "The door is closed.",
-            mention_id="door:before",
+            mention_id="l1-track:door",
             entity_type="object",
             surface="the door",
             state=("position", "closed"),
@@ -1399,7 +1399,7 @@ class MemoryGraphTest(unittest.TestCase):
             2,
             3,
             "The door is open.",
-            mention_id="door:after",
+            mention_id="l1-track:door",
             entity_type="object",
             surface="the door",
             state=("position", "open"),
@@ -1410,11 +1410,10 @@ class MemoryGraphTest(unittest.TestCase):
             "state_transition",
             participant_alignment=[
                 {
-                    "src_mention_id": "door:before",
-                    "dst_mention_id": "door:after",
+                    "src_mention_id": "l1-track:door",
+                    "dst_mention_id": "l1-track:door",
                 }
             ],
-            accepted_identity_track="track:door",
         )
 
         self.assertTrue(verify_relation(belief, src, dst).passed)
