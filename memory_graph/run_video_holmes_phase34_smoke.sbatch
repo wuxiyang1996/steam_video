@@ -74,6 +74,7 @@ cd "$WORKSPACE/Video_Skills"
   --unique-videos \
   --start-index 100 \
   --limit 1 \
+  --rebuild-from-stages \
   --skip-l2-planner \
   --disable-llm-skills \
   --disable-vlm-skills \
@@ -85,7 +86,7 @@ cd "$WORKSPACE/Video_Skills"
   --clip-schema-workers 1 \
   --graph-model openai/gpt-oss-120b \
   --graph-timeout-s 300 \
-  --graph-neighbor-workers 1 \
+  --graph-neighbor-workers 4 \
   --output "$L1_ROOT/examples.jsonl" \
   --stage-dir "$L1_ROOT/stages"
 
