@@ -118,6 +118,27 @@ lower the identity threshold. Until independent human labels accept non-empty
 admitted identity and state-transition sets, candidate edges are not called
 reliable and the formal navigation comparison remains gated.
 
+The isolated entity-reference rerun under
+`outputs/video_holmes_entity_refs_smoke` closes that data-contract failure. It
+completed 55/55 clip schemas and 55/55 neighbor-composer cache targets after
+resumable retries, with zero final compose, schema, or integrity errors and an
+intrinsic `high` grade. All 93 entity mentions have a mention ID, entity type,
+non-empty observable attributes, and evidence references. All 82 native
+identity edges connect two such entity mentions; the old smoke was 1/85.
+
+The strict verifier automatically admits none of those model proposals: eight
+carry explicit type or normalized stable-attribute conflicts and 74 remain
+raw-video reread candidates (63 unique endpoint pairs). A GPT-5.6 visual
+provisional reread accepted 69 edges, of which the component-wide consistency
+pass merged 64; the simultaneously visible look-alike men near the end remain
+separate tracks. This is an engineering smoke, not the independent-human gate.
+No accepted track has a sufficiently grounded same-attribute before/after
+delta, so zero `state_transition` edges are generated. A one-case provisional
+navigation ablation is negative: semantic-only evidence recall is 0.5 at two
+reads, while event-only, native-L1, and verified-dependency recall are 0.0.
+Formal navigation conclusions therefore remain blocked on independent labels,
+non-empty verified state/dependency edges, and a larger fixed gold case set.
+
 #### Implementation plan: evidence-first relation admission
 
 The implementation is ordered by safety dependency. Later phases may not
@@ -373,6 +394,10 @@ The first Phase 1/2 implementation now includes:
 - `identity_tracks.py`: admits only explicitly verified identity links after
   component-wide type, stable-attribute, simultaneous-instance, and motion
   consistency checks; unverified native labels remain candidates;
+- `identity_reread.py`: prepares graph-hash-bound raw-video review packets,
+  deduplicates repeated endpoint pairs, validates reviewer provenance and
+  evidence, and applies decisions back to either a graph or nested canonical
+  artifact;
 - `state_relations.py`: derives a state-transition proposal only when both
   visible states belong to the same accepted conflict-aware track, use the
   same normalized attribute, and have different grounded values;

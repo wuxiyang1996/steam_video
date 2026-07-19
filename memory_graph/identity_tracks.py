@@ -60,22 +60,6 @@ _SHAPE_TERMS = {
     "human": "human",
     "hand": "hand",
 }
-_GARMENT_TERMS = {
-    "shirt": "shirt",
-    "tshirt": "shirt",
-    "tee": "shirt",
-    "sweater": "sweater",
-    "jacket": "jacket",
-    "coat": "coat",
-    "pants": "pants",
-    "trousers": "pants",
-    "dress": "dress",
-    "suit": "suit",
-    "collar": "collar",
-    "collared": "collar",
-    "sleeve": "sleeve",
-    "sleeved": "sleeve",
-}
 
 
 @dataclass(frozen=True)
@@ -274,14 +258,8 @@ def _stable_attribute_conflict(key: str, left: str, right: str) -> bool:
     if key == "clothing":
         left_colors = _known_terms(left, _COLOR_TERMS)
         right_colors = _known_terms(right, _COLOR_TERMS)
-        if left_colors and right_colors and left_colors.isdisjoint(right_colors):
-            return True
-        left_garments = _known_terms(left, _GARMENT_TERMS)
-        right_garments = _known_terms(right, _GARMENT_TERMS)
         return bool(
-            left_garments
-            and right_garments
-            and left_garments.isdisjoint(right_garments)
+            left_colors and right_colors and left_colors.isdisjoint(right_colors)
         )
     return False
 
