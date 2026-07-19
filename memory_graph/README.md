@@ -139,6 +139,22 @@ reads, while event-only, native-L1, and verified-dependency recall are 0.0.
 Formal navigation conclusions therefore remain blocked on independent labels,
 non-empty verified state/dependency edges, and a larger fixed gold case set.
 
+The full isolated end-to-end run also completed with 32 atomic events, 172 L1
+observations, 175 event relations, and 37 native L1 navigation relations. Its
+relation teacher finished without errors. The first held-out graph-audit reply
+was truncated at the shared 3000-token limit; audit retries now use an
+independent 8000-token budget and compact retry instructions. Re-auditing the
+persisted overlay completed all 27/27 requested rows with temporal consistency
+passing. That result is a GPT-OSS engineering audit, not independent-human
+precision evidence. The failed response is preserved as `audit.failed.json`.
+An existing overlay can be retried without repeating video extraction:
+
+```bash
+python -m memory_graph.retry_overlay_audit \
+  --overlay memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json \
+  --summary memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/summary.json
+```
+
 #### Implementation plan: evidence-first relation admission
 
 The implementation is ordered by safety dependency. Later phases may not

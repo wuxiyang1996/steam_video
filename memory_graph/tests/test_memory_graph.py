@@ -57,6 +57,10 @@ from memory_graph.pipeline import (
     _verify_proposals,
 )
 from memory_graph.reliability import audit_l1_nodes
+from memory_graph.retry_overlay_audit import (
+    event_graph_from_overlay,
+    update_run_summary,
+)
 from memory_graph.schema_validation import validate_overlay_artifact
 from memory_graph.selectstream_policy import (
     merge_preserves_causal_witness,
@@ -2743,6 +2747,60 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(development | held_out, {"l1-edge:0001", "l1-edge:0002"})
         self.assertEqual(split["group_counts"]["identity"]["held_out"], 1)
         self.assertEqual(split["group_counts"]["state_transition"]["held_out"], 1)
+
+    def test_persisted_overlay_can_be_restored_for_audit_only_retry(self) -> None:
+        first = _atomic_node(
+            "event:1", 0.0, 1.0, "first", mention_id="person:1", surface="man"
+        )
+        second = _atomic_node(
+            "event:2", 1.0, 2.0, "second", mention_id="person:1", surface="man"
+        )
+        relation = _belief(first, second, "same_entity")
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:1",
+            example_id="example:1",
+            video_id="video-1",
+            l1_observations=[
+                _grounded_node("l1:event:1", start_s=0.0, end_s=1.0),
+                _grounded_node("l1:event:2", start_s=1.0, end_s=2.0),
+            ],
+            atomic_events=[first, second],
+            relations=[relation],
+        )
+
+        restored = event_graph_from_overlay(overlay.to_dict())
+
+        self.assertEqual(restored.graph_id, "overlay:1")
+        self.assertEqual(len(restored.nodes), 2)
+        self.assertEqual(
+            restored.relations[0].relation_probabilities,
+            {"same_entity": 0.9},
+        )
+        self.assertTrue(restored.metadata["restored_from_persisted_overlay"])
+
+    def test_successful_audit_retry_updates_only_matching_summary_error(self) -> None:
+        summary = {
+            "samples": [{"video_id": "video-1", "audit_summary": None}],
+            "errors": [
+                {"video_id": "video-1", "stage": "graph_audit", "error": "bad JSON"},
+                {"video_id": "video-2", "stage": "overlay_build", "error": "failed"},
+            ],
+            "video_count_failed": 2,
+        }
+        audit = {
+            "summary": {"verdict": "pass"},
+            "computed_summary": {"audit_complete": True, "strict_precision": 1.0},
+            "temporal_consistency": {"passed": True, "issues": []},
+        }
+
+        updated = update_run_summary(summary, video_id="video-1", audit=audit)
+
+        self.assertEqual(updated["video_count_failed"], 1)
+        self.assertEqual(updated["errors"][0]["video_id"], "video-2")
+        self.assertEqual(updated["samples"][0]["audit_summary"]["verdict"], "pass")
+        self.assertTrue(
+            updated["samples"][0]["computed_audit_summary"]["audit_complete"]
+        )
 
 
 def _atomic_node(
