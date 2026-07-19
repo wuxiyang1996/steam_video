@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, replace
 from typing import Any
 
+from .identity_tracks import IdentityTrackReport, build_identity_tracks
 from .types import MemoryNode
 
 
@@ -22,6 +23,7 @@ class L1StructuralizationReport:
     participant_count: int
     state_count: int
     unresolved_event_ids: tuple[str, ...]
+    identity_tracks: IdentityTrackReport
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -41,6 +43,7 @@ class L1StructuralizationReport:
                 else None
             ),
             "unresolved_event_ids": list(self.unresolved_event_ids),
+            "identity_tracks": self.identity_tracks.to_dict(),
             "method": "deterministic_video_skills_l1_subgraph_projection",
         }
 
@@ -62,7 +65,7 @@ def structuralize_video_skills_l1(
     edges = [
         value for value in graph.get("edges") or [] if isinstance(value, dict)
     ]
-    components = _identity_components(raw_by_id, edges)
+    components, identity_report = build_identity_tracks(raw_by_id, edges)
     component_members: dict[str, list[dict[str, Any]]] = {}
     for node_id, component_id in components.items():
         component_members.setdefault(component_id, []).append(raw_by_id[node_id])
@@ -153,61 +156,8 @@ def structuralize_video_skills_l1(
         participant_count=participant_total,
         state_count=state_total,
         unresolved_event_ids=tuple(unresolved),
+        identity_tracks=identity_report,
     )
-
-
-def _identity_components(
-    nodes: dict[str, dict[str, Any]],
-    edges: list[dict[str, Any]],
-) -> dict[str, str]:
-    parent = {node_id: node_id for node_id in nodes}
-
-    def root(node_id: str) -> str:
-        while parent[node_id] != node_id:
-            parent[node_id] = parent[parent[node_id]]
-            node_id = parent[node_id]
-        return node_id
-
-    def union(left: str, right: str) -> None:
-        left_root = root(left)
-        right_root = root(right)
-        if left_root == right_root:
-            return
-        keep, merge = sorted((left_root, right_root))
-        parent[merge] = keep
-
-    for edge in edges:
-        if str(edge.get("edge_type") or "") not in IDENTITY_EDGE_TYPES:
-            continue
-        src = str(edge.get("src") or "")
-        dst = str(edge.get("dst") or "")
-        if src in parent and dst in parent:
-            union(src, dst)
-    identity_endpoint_ids = {
-        str(edge.get(endpoint) or "")
-        for edge in edges
-        if str(edge.get("edge_type") or "") in IDENTITY_EDGE_TYPES
-        for endpoint in ("src", "dst")
-    }
-    endpoints_by_clip: dict[str, list[dict[str, Any]]] = {}
-    for node_id in identity_endpoint_ids:
-        node = nodes.get(node_id)
-        if node is not None and node.get("clip_id"):
-            endpoints_by_clip.setdefault(str(node["clip_id"]), []).append(node)
-    for entity in nodes.values():
-        if str(entity.get("node_type") or "") not in ENTITY_NODE_TYPES:
-            continue
-        entity_id = str(entity.get("node_id") or "")
-        clip_id = str(entity.get("clip_id") or "")
-        compatible = [
-            endpoint
-            for endpoint in endpoints_by_clip.get(clip_id, [])
-            if str(endpoint.get("node_id") or "") != entity_id
-            and _same_local_entity(_text(entity), _text(endpoint))
-        ]
-        if len(compatible) == 1:
-            union(entity_id, str(compatible[0]["node_id"]))
-    return {node_id: root(node_id) for node_id in nodes}
 
 
 def _participants_from_candidates(
@@ -255,7 +205,7 @@ def _participants_from_candidates(
         by_component.setdefault(
             component_id,
             {
-                "mention_id": f"l1-entity:{component_id}",
+                "mention_id": f"l1-{component_id}",
                 "role": "other",
                 "entity_type": _entity_type(surface),
                 "surface": surface,
@@ -263,9 +213,9 @@ def _participants_from_candidates(
                 "grounding_refs": [event_ref],
                 "source_l1_node_ids": source_ids,
                 "identity_basis": (
-                    "video_skills_identity_component"
+                    "accepted_conflict_aware_identity_track"
                     if len(source_ids) > 1
-                    else "same_clip_entity_mention"
+                    else "grounded_singleton_observation"
                 ),
             },
         )

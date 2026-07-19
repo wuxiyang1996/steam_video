@@ -28,6 +28,7 @@ from .mechanism_candidates import (
 )
 from .reliability import L1ReliabilityReport, audit_l1_nodes
 from .selectstream_policy import plan_bounded_memory
+from .state_relations import derive_state_transition_candidates
 from .types import (
     CausalTemporalOverlay,
     MemoryGraph,
@@ -283,6 +284,17 @@ def build_causal_temporal_overlay(
         for relation in event_graph.relations
         if relation.status is not RelationStatus.DETERMINISTIC
     ]
+    if semantic_allowed:
+        existing_labels = {
+            (relation.src, relation.dst, label)
+            for relation in proposals
+            for label in relation.relation_probabilities
+        }
+        for derived in derive_state_transition_candidates(event_nodes):
+            key = (derived.src, derived.dst, "state_transition")
+            if key not in existing_labels:
+                proposals.append(derived)
+                existing_labels.add(key)
     if relation_teacher is not None and semantic_allowed:
         if embeddings is None:
             raise ValueError("relation_teacher requires event embeddings")

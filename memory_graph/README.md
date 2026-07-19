@@ -363,6 +363,17 @@ The first Phase 1/2 implementation now includes:
   resolution before CLI and benchmark writers persist them; legacy v0.2
   reports may omit unavailable `candidate_relations`, while every new build
   writes the complete field;
+- `identity_tracks.py`: admits only explicitly verified identity links after
+  component-wide type, stable-attribute, simultaneous-instance, and motion
+  consistency checks; unverified native labels remain candidates;
+- `state_relations.py`: derives a state-transition proposal only when both
+  visible states belong to the same accepted conflict-aware track, use the
+  same normalized attribute, and have different grounded values;
+- `l1_relation_audit.py`: prepares the blinded 45-edge native-L1 human audit
+  and enforces separate ≥90% identity and state-transition precision gates;
+- `navigation_ablation.py`: compares semantic-only, event-only, native-L1
+  candidate, and verified-dependency reads under the same persisted-read
+  budget and independently supplied evidence targets;
 - `cli.py`: builds an atomic-event overlay from one canonical example;
 - `tests/test_memory_graph.py`: covers adapter selection, interval relations, relation scoring, and the embedding contract.
 

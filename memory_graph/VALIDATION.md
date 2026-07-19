@@ -141,6 +141,24 @@ python -m memory_graph.materialize_independent_edge_audit \
 
 Then run `evaluate_validation_outcomes --labels-source independent_human` and `calibration --labels-source independent_human`. `unclear` labels are excluded rather than treated as positive.
 
+The historical 45 native-L1 relations use a separate blinded packet because
+their endpoints are L1 observations rather than L1.5 events:
+
+```bash
+python -m memory_graph.l1_relation_audit prepare \
+  --overlay memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json \
+  --output-dir memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/independent_l1_relation_audit
+
+# An independent reviewer fills annotation_packet.json without opening model_key.json.
+python -m memory_graph.l1_relation_audit evaluate \
+  --packet /path/to/locked_annotation_packet.json \
+  --output /path/to/l1_relation_precision.json
+```
+
+The gate passes only when both admitted identity and admitted
+`state_transition` groups contain decided labels and reach at least 90% strict
+precision. `unclear` is reported but excluded from the precision denominator.
+
 ## Atomic-event grounding audit
 
 `audit_atomic_overlay.py` reports both containment and trusted temporal grounding. An event span lying inside a coarse L1 span is not enough to trust its finer ordering: LLM-refined timestamps are provisional unless frame-level evidence verifies them. Candidate-causal verifiers therefore reject causal direction that exists only between two events split from the same coarse L1 interval.

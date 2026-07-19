@@ -18,6 +18,11 @@ from memory_graph.contracts import (
 )
 from memory_graph.event_adapter import atomic_events_to_graph_nodes
 from memory_graph.graph_builder import LinearRelationScorer, build_memory_graph
+from memory_graph.identity_tracks import build_identity_tracks
+from memory_graph.l1_relation_audit import (
+    evaluate_l1_relation_packet,
+    prepare_l1_relation_packet,
+)
 from memory_graph.l1_structuralizer import structuralize_video_skills_l1
 from memory_graph.l1_structural_edges import materialize_l1_structural_relations
 from memory_graph.mechanism_candidates import (
@@ -33,6 +38,7 @@ from memory_graph.navigation import (
     propose_navigation_actions,
     update_belief_after_read,
 )
+from memory_graph.navigation_ablation import evaluate_navigation_ablation
 from memory_graph.openrouter_validation import (
     _computed_audit_summary,
     _parse_teacher_relations,
@@ -48,6 +54,7 @@ from memory_graph.selectstream_policy import (
     merge_preserves_causal_witness,
     plan_bounded_memory,
 )
+from memory_graph.state_relations import derive_state_transition_candidates
 from memory_graph.types import (
     CausalWitness,
     CausalTemporalOverlay,
@@ -326,6 +333,7 @@ class MemoryGraphTest(unittest.TestCase):
                     "src": "entity:car:1",
                     "dst": "entity:car:2",
                     "edge_type": "same_object",
+                    "identity_verified": True,
                 },
                 {
                     "edge_id": "edge:state",
@@ -390,6 +398,123 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(events[0].states[0].attribute, "motion_state")
         self.assertEqual(events[1].states[0].attribute, "motion_state")
         self.assertTrue(verify_relation(belief, event_nodes[0], event_nodes[1]).passed)
+
+    def test_identity_tracks_reject_component_and_motion_conflicts(self) -> None:
+        nodes = {
+            "person:a": {
+                "node_id": "person:a",
+                "entity_type": "person",
+                "attributes": {"clothing": "red coat"},
+            },
+            "person:b": {
+                "node_id": "person:b",
+                "entity_type": "person",
+                "attributes": {"clothing": "red coat"},
+            },
+            "person:c": {
+                "node_id": "person:c",
+                "entity_type": "person",
+                "attributes": {"clothing": "blue coat"},
+            },
+            "car:a": {
+                "node_id": "car:a",
+                "entity_type": "vehicle",
+                "instance_id": "car-1",
+                "time_span": {"start_s": 0, "end_s": 2},
+            },
+            "car:b": {
+                "node_id": "car:b",
+                "entity_type": "vehicle",
+                "instance_id": "car-2",
+                "time_span": {"start_s": 1, "end_s": 3},
+            },
+            "walker:a": {
+                "node_id": "walker:a",
+                "entity_type": "person",
+                "position_m": [0, 0],
+                "max_speed_mps": 2,
+                "time_span": {"start_s": 0, "end_s": 1},
+            },
+            "walker:b": {
+                "node_id": "walker:b",
+                "entity_type": "person",
+                "position_m": [100, 0],
+                "max_speed_mps": 2,
+                "time_span": {"start_s": 2, "end_s": 3},
+            },
+            "object:a": {"node_id": "object:a", "entity_type": "object"},
+        }
+        edges = [
+            {
+                "edge_id": "accept:ab",
+                "src": "person:a",
+                "dst": "person:b",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:component",
+                "src": "person:b",
+                "dst": "person:c",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:simultaneous",
+                "src": "car:a",
+                "dst": "car:b",
+                "edge_type": "same_object",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:motion",
+                "src": "walker:a",
+                "dst": "walker:b",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:type",
+                "src": "person:a",
+                "dst": "object:a",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+        ]
+
+        tracks, report = build_identity_tracks(nodes, edges)
+        reasons = {
+            row["edge_id"]: " ".join(row["reasons"])
+            for row in report.rejected_edges
+        }
+
+        self.assertEqual(tracks["person:a"], tracks["person:b"])
+        self.assertNotEqual(tracks["person:a"], tracks["person:c"])
+        self.assertIn("stable attribute conflict", reasons["reject:component"])
+        self.assertIn("simultaneous distinct", reasons["reject:simultaneous"])
+        self.assertIn("impossible displacement", reasons["reject:motion"])
+        self.assertIn("entity type conflict", reasons["reject:type"])
+
+    def test_unverified_identity_hint_does_not_create_track(self) -> None:
+        nodes = {
+            "entity:1": {"node_id": "entity:1", "entity_type": "person"},
+            "entity:2": {"node_id": "entity:2", "entity_type": "person"},
+        }
+        tracks, report = build_identity_tracks(
+            nodes,
+            [
+                {
+                    "edge_id": "hint:1",
+                    "src": "entity:1",
+                    "dst": "entity:2",
+                    "edge_type": "reappears",
+                }
+            ],
+        )
+
+        self.assertNotEqual(tracks["entity:1"], tracks["entity:2"])
+        self.assertEqual(report.accepted_edge_ids, ())
+        self.assertIn("lacks explicit verifier", report.rejected_edges[0]["reasons"][0])
 
     def test_native_l1_relations_remain_navigation_only(self) -> None:
         graph = {
@@ -1289,9 +1414,82 @@ class MemoryGraphTest(unittest.TestCase):
                     "dst_mention_id": "door:after",
                 }
             ],
+            accepted_identity_track="track:door",
         )
 
         self.assertTrue(verify_relation(belief, src, dst).passed)
+
+    def test_state_transition_rejects_surface_match_without_accepted_track(self) -> None:
+        src = _atomic_node(
+            "event:closed",
+            0,
+            1,
+            "The door is closed.",
+            mention_id="door:before",
+            entity_type="object",
+            surface="the door",
+            state=("position", "closed"),
+        )
+        dst = _atomic_node(
+            "event:open",
+            2,
+            3,
+            "The door is open.",
+            mention_id="door:after",
+            entity_type="object",
+            surface="the door",
+            state=("position", "open"),
+        )
+        belief = _belief(
+            src,
+            dst,
+            "state_transition",
+            participant_alignment=[
+                {
+                    "src_mention_id": "door:before",
+                    "dst_mention_id": "door:after",
+                }
+            ],
+        )
+
+        result = verify_relation(belief, src, dst)
+
+        self.assertFalse(result.passed)
+        self.assertIn("accepted conflict-aware identity track", result.reasons[0])
+
+    def test_state_transition_is_derived_only_on_accepted_track(self) -> None:
+        before = _atomic_node(
+            "event:closed-track",
+            0,
+            1,
+            "The door is closed.",
+            mention_id="l1-track:door",
+            entity_type="object",
+            surface="the door",
+            state=("openness", "closed"),
+        )
+        after = _atomic_node(
+            "event:open-track",
+            2,
+            3,
+            "The door is open.",
+            mention_id="l1-track:door",
+            entity_type="object",
+            surface="the door",
+            state=("openness", "open"),
+        )
+        candidates = derive_state_transition_candidates([before, after])
+
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(
+            candidates[0].provenance["accepted_identity_track"],
+            "l1-track:door",
+        )
+        self.assertTrue(verify_relation(candidates[0], before, after).passed)
+
+        after.metadata["participants"][0]["mention_id"] = "door:lookalike"
+        after.metadata["states"][0]["mention_id"] = "door:lookalike"
+        self.assertEqual(derive_state_transition_candidates([before, after]), [])
 
     def test_regression_5P_6Q2Q0NLk_timer_narrative_does_not_enable(self) -> None:
         src = _atomic_node(
@@ -2059,6 +2257,106 @@ class MemoryGraphTest(unittest.TestCase):
         )
         self.assertNotIn("causal_witness", dependency.provenance)
 
+    def test_navigation_ablation_keeps_candidate_and_verified_edges_separate(self) -> None:
+        events = [
+            _atomic_node(
+                "event:seed",
+                0,
+                1,
+                "A person sees a door.",
+                mention_id="person:1",
+                surface="a person",
+            ),
+            _atomic_node(
+                "event:background",
+                2,
+                3,
+                "The person walks slowly.",
+                mention_id="person:1",
+                surface="a person",
+            ),
+            _atomic_node(
+                "event:native-target",
+                4,
+                5,
+                "A key is behind the door.",
+                mention_id="key:1",
+                surface="a key",
+                entity_type="object",
+            ),
+            _atomic_node(
+                "event:verified-target",
+                6,
+                7,
+                "The verified bridge reveals the exit.",
+                mention_id="exit:1",
+                surface="the exit",
+                entity_type="object",
+            ),
+        ]
+        l1_nodes = [_grounded_node(ref) for event in events for ref in event.source_segments]
+        temporal = RelationBelief(
+            edge_id="temporal:seed-background",
+            src="event:seed",
+            dst="event:background",
+            relation_probabilities={"temporal_next": 1.0},
+            status=RelationStatus.DETERMINISTIC,
+            direction_confidence=1.0,
+        )
+        dependency = RelationBelief(
+            edge_id="dependency:verified",
+            src="event:seed",
+            dst="event:verified-target",
+            relation_probabilities={"transition_support": 0.9},
+            status=RelationStatus.UNCALIBRATED_PRIOR,
+            direction_confidence=0.9,
+            provenance={
+                "hard_verifier": {"transition_support": {"passed": True}}
+            },
+        )
+        native = RelationBelief(
+            edge_id="native:candidate",
+            src=events[0].source_segments[0],
+            dst=events[2].source_segments[0],
+            relation_probabilities={"same_instance_candidate": 0.8},
+            status=RelationStatus.UNCALIBRATED_PRIOR,
+            direction_confidence=0.5,
+            provenance={"navigation_only": True},
+        )
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:ablation",
+            example_id="example:ablation",
+            video_id="video-1",
+            l1_observations=l1_nodes,
+            atomic_events=events,
+            relations=[temporal, dependency],
+            l1_structural_relations=[native],
+        )
+        report = evaluate_navigation_ablation(
+            overlay.to_dict(),
+            [
+                {
+                    "case_id": "native",
+                    "question": "What door key does the person see?",
+                    "gold_event_ids": ["event:native-target"],
+                    "graph_read_budget": 2,
+                },
+                {
+                    "case_id": "verified",
+                    "question": "What verified exit does the person sees?",
+                    "gold_event_ids": ["event:verified-target"],
+                    "graph_read_budget": 2,
+                },
+            ],
+        )
+
+        native_rows = report["cases"]["native_l1_candidate"]
+        verified_rows = report["cases"]["verified_dependency"]
+        self.assertTrue(native_rows[0]["answerable"])
+        self.assertFalse(native_rows[1]["answerable"])
+        self.assertFalse(verified_rows[0]["answerable"])
+        self.assertTrue(verified_rows[1]["answerable"])
+
     def test_calibration_requires_independent_labels(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             sample = Path(temp_dir) / "sample"
@@ -2117,6 +2415,55 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertFalse(self_audit["calibrated"])
         self.assertTrue(human["calibrated"])
         self.assertEqual(human["relations"]["enables"]["sample_counts"]["used"], 2)
+
+    def test_l1_relation_audit_requires_independent_complete_labels(self) -> None:
+        src = _grounded_node("memory:a")
+        dst = _grounded_node("memory:b", start_s=3, end_s=4)
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:audit",
+            example_id="example:audit",
+            video_id="video-1",
+            l1_observations=[src, dst],
+            atomic_events=[],
+            relations=[],
+            l1_structural_relations=[
+                RelationBelief(
+                    edge_id="l1:identity",
+                    src=src.node_id,
+                    dst=dst.node_id,
+                    relation_probabilities={"same_entity": 0.9},
+                    status=RelationStatus.UNCALIBRATED_PRIOR,
+                    direction_confidence=0.5,
+                    evidence_refs=[src.node_id, dst.node_id],
+                ),
+                RelationBelief(
+                    edge_id="l1:state",
+                    src=src.node_id,
+                    dst=dst.node_id,
+                    relation_probabilities={"state_transition": 0.9},
+                    status=RelationStatus.UNCALIBRATED_PRIOR,
+                    direction_confidence=1.0,
+                    evidence_refs=[src.node_id, dst.node_id],
+                ),
+            ],
+        )
+        packet, model_key = prepare_l1_relation_packet(overlay.to_dict())
+        self.assertEqual(len(packet["items"]), 2)
+        self.assertNotIn("probability", packet["items"][0])
+        self.assertIn("probability", model_key["items"][0])
+        with self.assertRaisesRegex(ValueError, "annotator"):
+            evaluate_l1_relation_packet(packet)
+
+        packet["annotator"] = "independent-reviewer"
+        for item in packet["items"]:
+            item["annotation"]["judgment"] = "supported"
+        report = evaluate_l1_relation_packet(packet)
+
+        self.assertTrue(report["acceptance_passed"])
+        self.assertEqual(report["groups"]["identity"]["strict_precision"], 1.0)
+        self.assertEqual(
+            report["groups"]["state_transition"]["strict_precision"], 1.0
+        )
 
 
 def _atomic_node(
