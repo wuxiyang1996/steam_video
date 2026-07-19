@@ -110,8 +110,6 @@
           "type": "object",
           "required": [
             "observed_structure",
-            "identity_candidates",
-            "observation_support",
             "predictive_navigation",
             "verified_candidate_causality"
           ],
@@ -171,7 +169,6 @@
       "description": "Serialized separately from the immutable overlay core when present.",
       "required": [
         "l1_reliability",
-        "candidate_relations",
         "verifier_summary",
         "rejected_relations"
       ],
@@ -186,6 +183,7 @@
         },
         "candidate_relations": {
           "type": "array",
+          "description": "Complete proposal set when available. Optional for legacy v0.2 artifacts created before candidate persistence; absence means unavailable, not empty.",
           "items": {
             "$ref": "memory_graph.schema.json#/$defs/relation_belief"
           }

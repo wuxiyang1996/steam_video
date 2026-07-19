@@ -359,6 +359,10 @@ The first Phase 1/2 implementation now includes:
 - `validate_vrbench.py`: measures long-video temporal order and bridge coverage without treating reasoning steps as causal-edge gold;
 - `reliability.py` and `audit_l1.py`: compute hard L1 checks and require independent labels for semantic reliability gates;
 - `types.py`, `memory_graph.schema.json`, and `causal_temporal_overlay.schema.json`: define separate L1 observations and L1.5 event endpoints;
+- `schema_validation.py`: validates serialized overlays with local schema
+  resolution before CLI and benchmark writers persist them; legacy v0.2
+  reports may omit unavailable `candidate_relations`, while every new build
+  writes the complete field;
 - `cli.py`: builds an atomic-event overlay from one canonical example;
 - `tests/test_memory_graph.py`: covers adapter selection, interval relations, relation scoring, and the embedding contract.
 

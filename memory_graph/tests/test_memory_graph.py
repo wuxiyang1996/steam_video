@@ -722,6 +722,26 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertEqual(validate_overlay_artifact(overlay.to_dict()), [])
 
+    def test_overlay_schema_accepts_legacy_build_report_without_candidates(self) -> None:
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:legacy",
+            example_id="example:legacy",
+            video_id="video-1",
+            l1_observations=[_grounded_node("memory:legacy")],
+            atomic_events=[],
+            relations=[],
+            metadata={
+                "layer_contract": "l1_observations_plus_l1_5_atomic_overlay"
+            },
+        ).to_dict()
+        overlay["build_report"] = {
+            "l1_reliability": {},
+            "verifier_summary": {},
+            "rejected_relations": [],
+        }
+
+        self.assertEqual(validate_overlay_artifact(overlay), [])
+
     def test_video_l1_coarse_parser_rejects_ungrounded_timestamp(self) -> None:
         accepted, rejected = _parse_coarse_response(
             {
@@ -1022,6 +1042,16 @@ class MemoryGraphTest(unittest.TestCase):
             self.assertEqual(output["metadata"]["l1_reliability"]["status"], "incomplete")
             self.assertEqual(len(output["l1_observations"]), 2)
             self.assertEqual(len(output["atomic_events"]), 2)
+            self.assertEqual(validate_overlay_artifact(output), [])
+            self.assertIn("candidate_relations", output["build_report"])
+            self.assertIn("rejected_relations", output["build_report"])
+            self.assertIn("verifier_summary", output["build_report"])
+            self.assertIn(
+                "identity_candidates", output["metadata"]["relation_layers"]
+            )
+            self.assertIn(
+                "observation_support", output["metadata"]["relation_layers"]
+            )
             self.assertNotEqual(
                 output["metadata"]["node_event_assumption"],
                 "one_memory_node_approximately_one_event",
