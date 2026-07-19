@@ -12,6 +12,8 @@ from .identity_tracks import (
     _payload,
 )
 
+TRUSTED_REREAD_SOURCES = frozenset({"independent_human", "raw_video_verifier"})
+
 
 @dataclass(frozen=True)
 class IdentityVerificationReport:
@@ -121,6 +123,10 @@ def _positive_verification_method(
     if not isinstance(reread, dict):
         reread = (edge.get("payload") or {}).get("targeted_reread")
     if not isinstance(reread, dict) or reread.get("passed") is not True:
+        return None
+    if str(reread.get("labels_source") or "") not in TRUSTED_REREAD_SOURCES:
+        return None
+    if not str(reread.get("annotator") or "").strip():
         return None
     if not reread.get("src_evidence_ref") or not reread.get("dst_evidence_ref"):
         return None

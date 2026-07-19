@@ -20,6 +20,10 @@ from memory_graph.contracts import (
 from memory_graph.event_adapter import atomic_events_to_graph_nodes
 from memory_graph.graph_builder import LinearRelationScorer, build_memory_graph
 from memory_graph.identity_tracks import build_identity_tracks
+from memory_graph.identity_reread import (
+    apply_identity_reread_packet,
+    prepare_identity_reread_packet,
+)
 from memory_graph.identity_verifier import verify_identity_candidates
 from memory_graph.l1_relation_audit import (
     create_locked_audit_split,
@@ -586,10 +590,82 @@ class MemoryGraphTest(unittest.TestCase):
             "dst_evidence_ref": "frame:2",
             "matched_attributes": ["wood grain"],
             "conflicts": [],
+            "annotator": "visual-reviewer",
+            "labels_source": "raw_video_verifier",
         }
         verified, report = verify_identity_candidates(nodes, edges)
         self.assertTrue(verified[0]["identity_verified"])
         self.assertEqual(report.accepted[0]["method"], "targeted_raw_video_reread")
+
+        untrusted = [dict(edges[0])]
+        untrusted[0]["targeted_reread"] = {
+            **untrusted[0]["targeted_reread"],
+            "labels_source": "graph_llm",
+        }
+        verified, report = verify_identity_candidates(nodes, untrusted)
+        self.assertFalse(verified[0].get("identity_verified", False))
+        self.assertEqual(len(report.targeted_reread_queue), 1)
+
+    def test_identity_reread_packet_requires_grounded_visual_decision(self) -> None:
+        graph = {
+            "nodes": [
+                {
+                    "node_id": "box:1",
+                    "node_type": "entity_mention",
+                    "mention_id": "mention:box:1",
+                    "entity_type": "object",
+                    "attributes": {"color": "red"},
+                    "clip_id": "clip:1",
+                    "time_span": {"start_s": 0, "end_s": 1},
+                    "text": "red box",
+                    "evidence_refs": ["clip:1"],
+                },
+                {
+                    "node_id": "box:2",
+                    "node_type": "entity_mention",
+                    "mention_id": "mention:box:2",
+                    "entity_type": "object",
+                    "attributes": {"color": "red"},
+                    "clip_id": "clip:2",
+                    "time_span": {"start_s": 2, "end_s": 3},
+                    "text": "red box",
+                    "evidence_refs": ["clip:2"],
+                },
+            ],
+            "edges": [
+                {
+                    "edge_id": "same-box",
+                    "src": "box:1",
+                    "dst": "box:2",
+                    "edge_type": "same_object",
+                    "confidence": 0.9,
+                }
+            ],
+        }
+        packet = prepare_identity_reread_packet(graph)
+        self.assertEqual(len(packet["items"]), 1)
+        packet["annotator"] = "visual-reviewer"
+        packet["labels_source"] = "raw_video_verifier"
+        packet["items"][0]["annotation"] = {
+            "passed": True,
+            "src_evidence_ref": "frame:clip1:10",
+            "dst_evidence_ref": "frame:clip2:20",
+            "matched_attributes": ["same red corner mark"],
+            "conflicts": [],
+            "reason": "Distinctive mark is visible in both frames.",
+        }
+        applied = apply_identity_reread_packet(graph, packet)
+        verified, report = verify_identity_candidates(
+            {node["node_id"]: node for node in applied["nodes"]},
+            applied["edges"],
+        )
+        self.assertTrue(verified[0]["identity_verified"])
+        self.assertEqual(report.accepted[0]["method"], "targeted_raw_video_reread")
+
+        stale_packet = dict(packet)
+        stale_packet["graph_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            apply_identity_reread_packet(graph, stale_packet)
 
     def test_native_l1_relations_remain_navigation_only(self) -> None:
         graph = {
