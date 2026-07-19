@@ -101,15 +101,22 @@ an observable before/after state delta, an explicit mechanism, a minimal
 support set, raw-video verification, and no direct counterevidence. Without
 reliable identity and state change, no causal claim is admitted.
 
-The current implementation has the right dual-layer storage contract but not
-yet reliable relation admission. An independent GPT5.6 audit of the 45
-materialized L1 navigation priors judged 21 supported, 12 ambiguous, and 12
-unsupported (46.7% provisional strict precision); all four mechanically mapped
-`transition_support` edges were unsupported. This model audit is not human
-ground truth, but it is sufficient to prohibit calling the current edges
-reliable. The causal admission gate, schema validation, endpoint resolution,
-and identity-association verifier must be corrected before navigation
-evaluation.
+The current implementation has the dual-layer storage contract and a strict
+relation-admission gate, but it does not yet have enough grounded identity
+evidence for useful coverage. A blinded GPT-5.6 provisional audit of the 45
+old-flow L1 navigation priors produced 19/34 supported identity labels and 3/7
+supported state-transition labels. Decided precision was 70.4% and 50.0%; the
+more conservative precision that counts `unclear` as not established was 55.9%
+and 42.9%. These are model-provisional diagnostics, not human ground truth.
+
+The fresh high-grade smoke artifact contains 85 native identity candidates,
+but its 80 distinct candidate endpoints carry no structured `entity_type`,
+`mention_id`, observable attributes, or evidence references; only one native
+edge connects two explicit `entity_mention` nodes. The correct next step is to
+preserve grounded clip-schema entity references through L1 composition, not to
+lower the identity threshold. Until independent human labels accept non-empty
+admitted identity and state-transition sets, candidate edges are not called
+reliable and the formal navigation comparison remains gated.
 
 #### Implementation plan: evidence-first relation admission
 

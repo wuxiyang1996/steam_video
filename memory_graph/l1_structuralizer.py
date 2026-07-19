@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from .identity_tracks import IdentityTrackReport, build_identity_tracks
+from .identity_verifier import IdentityVerificationReport, verify_identity_candidates
 from .types import MemoryNode
 
 
@@ -24,6 +25,7 @@ class L1StructuralizationReport:
     state_count: int
     unresolved_event_ids: tuple[str, ...]
     identity_tracks: IdentityTrackReport
+    identity_verification: IdentityVerificationReport
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -44,6 +46,7 @@ class L1StructuralizationReport:
             ),
             "unresolved_event_ids": list(self.unresolved_event_ids),
             "identity_tracks": self.identity_tracks.to_dict(),
+            "identity_verification": self.identity_verification.to_dict(),
             "method": "deterministic_video_skills_l1_subgraph_projection",
         }
 
@@ -65,7 +68,8 @@ def structuralize_video_skills_l1(
     edges = [
         value for value in graph.get("edges") or [] if isinstance(value, dict)
     ]
-    components, identity_report = build_identity_tracks(raw_by_id, edges)
+    verified_edges, verification_report = verify_identity_candidates(raw_by_id, edges)
+    components, identity_report = build_identity_tracks(raw_by_id, verified_edges)
     component_members: dict[str, list[dict[str, Any]]] = {}
     for node_id, component_id in components.items():
         component_members.setdefault(component_id, []).append(raw_by_id[node_id])
@@ -157,6 +161,7 @@ def structuralize_video_skills_l1(
         state_count=state_total,
         unresolved_event_ids=tuple(unresolved),
         identity_tracks=identity_report,
+        identity_verification=verification_report,
     )
 
 

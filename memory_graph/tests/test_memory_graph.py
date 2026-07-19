@@ -7,6 +7,7 @@ from pathlib import Path
 
 from memory_graph.adapter import canonical_to_memory_nodes
 from memory_graph.atomic_events import parse_atomic_events
+from memory_graph.baseline_manifest import freeze_baseline, verify_baseline
 from memory_graph.calibration import calibrate
 from memory_graph.cli import main as cli_main
 from memory_graph.contracts import (
@@ -19,7 +20,9 @@ from memory_graph.contracts import (
 from memory_graph.event_adapter import atomic_events_to_graph_nodes
 from memory_graph.graph_builder import LinearRelationScorer, build_memory_graph
 from memory_graph.identity_tracks import build_identity_tracks
+from memory_graph.identity_verifier import verify_identity_candidates
 from memory_graph.l1_relation_audit import (
+    create_locked_audit_split,
     evaluate_l1_relation_packet,
     prepare_l1_relation_packet,
 )
@@ -301,6 +304,10 @@ class MemoryGraphTest(unittest.TestCase):
                 {
                     "node_id": "entity:car:1",
                     "node_type": "entity_mention",
+                    "mention_id": "clip:1:entity:000",
+                    "entity_type": "object",
+                    "instance_id": "car:shared",
+                    "evidence_refs": ["clip:1"],
                     "clip_id": "clip:1",
                     "text": "car",
                     "confidence": 0.95,
@@ -308,6 +315,10 @@ class MemoryGraphTest(unittest.TestCase):
                 {
                     "node_id": "entity:car:2",
                     "node_type": "entity_mention",
+                    "mention_id": "clip:2:entity:000",
+                    "entity_type": "object",
+                    "instance_id": "car:shared",
+                    "evidence_refs": ["clip:2"],
                     "clip_id": "clip:2",
                     "text": "the car",
                     "confidence": 0.94,
@@ -444,6 +455,14 @@ class MemoryGraphTest(unittest.TestCase):
             },
             "object:a": {"node_id": "object:a", "entity_type": "object"},
         }
+        for node_id, node in nodes.items():
+            node.update(
+                {
+                    "node_type": "entity_mention",
+                    "mention_id": f"mention:{node_id}",
+                    "evidence_refs": [f"clip:{node_id}"],
+                }
+            )
         edges = [
             {
                 "edge_id": "accept:ab",
@@ -497,8 +516,20 @@ class MemoryGraphTest(unittest.TestCase):
 
     def test_unverified_identity_hint_does_not_create_track(self) -> None:
         nodes = {
-            "entity:1": {"node_id": "entity:1", "entity_type": "person"},
-            "entity:2": {"node_id": "entity:2", "entity_type": "person"},
+            "entity:1": {
+                "node_id": "entity:1",
+                "node_type": "entity_mention",
+                "mention_id": "mention:1",
+                "entity_type": "person",
+                "evidence_refs": ["clip:1"],
+            },
+            "entity:2": {
+                "node_id": "entity:2",
+                "node_type": "entity_mention",
+                "mention_id": "mention:2",
+                "entity_type": "person",
+                "evidence_refs": ["clip:2"],
+            },
         }
         tracks, report = build_identity_tracks(
             nodes,
@@ -515,6 +546,50 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertNotEqual(tracks["entity:1"], tracks["entity:2"])
         self.assertEqual(report.accepted_edge_ids, ())
         self.assertIn("lacks explicit verifier", report.rejected_edges[0]["reasons"][0])
+
+    def test_identity_verifier_requires_instance_or_grounded_reread(self) -> None:
+        nodes = {
+            "box:1": {
+                "node_id": "box:1",
+                "node_type": "entity_mention",
+                "mention_id": "mention:box:1",
+                "entity_type": "object",
+                "attributes": {"color": "red", "material": "wood"},
+                "evidence_refs": ["clip:1"],
+            },
+            "box:2": {
+                "node_id": "box:2",
+                "node_type": "entity_mention",
+                "mention_id": "mention:box:2",
+                "entity_type": "object",
+                "attributes": {"color": "red", "material": "wood"},
+                "evidence_refs": ["clip:2"],
+            },
+        }
+        edges = [
+            {
+                "edge_id": "candidate",
+                "src": "box:1",
+                "dst": "box:2",
+                "edge_type": "same_object",
+                "confidence": 0.9,
+            }
+        ]
+
+        verified, report = verify_identity_candidates(nodes, edges)
+        self.assertFalse(verified[0].get("identity_verified", False))
+        self.assertEqual(len(report.targeted_reread_queue), 1)
+
+        edges[0]["targeted_reread"] = {
+            "passed": True,
+            "src_evidence_ref": "frame:1",
+            "dst_evidence_ref": "frame:2",
+            "matched_attributes": ["wood grain"],
+            "conflicts": [],
+        }
+        verified, report = verify_identity_candidates(nodes, edges)
+        self.assertTrue(verified[0]["identity_verified"])
+        self.assertEqual(report.accepted[0]["method"], "targeted_raw_video_reread")
 
     def test_native_l1_relations_remain_navigation_only(self) -> None:
         graph = {
@@ -2415,6 +2490,33 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertTrue(human["calibrated"])
         self.assertEqual(human["relations"]["enables"]["sample_counts"]["used"], 2)
 
+    def test_baseline_manifest_hashes_artifacts_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            artifact = root / "artifact.json"
+            artifact.write_text('{"ok": true}\n', encoding="utf-8")
+            original = artifact.read_bytes()
+            manifest = freeze_baseline(
+                {"smoke": artifact},
+                repository=Path(__file__).resolve().parents[2],
+                note="test baseline",
+            )
+            verification = verify_baseline(
+                manifest,
+                repository=Path(__file__).resolve().parents[2],
+            )
+            self.assertTrue(verification["passed"])
+            artifact.write_text('{"ok": false}\n', encoding="utf-8")
+            drift = verify_baseline(
+                manifest,
+                repository=Path(__file__).resolve().parents[2],
+            )
+            self.assertFalse(drift["passed"])
+
+        self.assertEqual(manifest["schema_version"], "steam-memory-graph-baseline/v0.1")
+        self.assertEqual(manifest["artifacts"][0]["name"], "smoke")
+        self.assertEqual(manifest["artifacts"][0]["size_bytes"], len(original))
+
     def test_l1_relation_audit_requires_independent_complete_labels(self) -> None:
         src = _grounded_node("memory:a")
         dst = _grounded_node("memory:b", start_s=3, end_s=4)
@@ -2469,6 +2571,29 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertTrue(provisional["provisional_target_met"])
         self.assertFalse(provisional["acceptance_passed"])
         self.assertEqual(provisional["labels_source"], "model_provisional")
+
+        packet["labels_source"] = "independent_human"
+        packet["items"][0]["annotation"]["judgment"] = "unclear"
+        conservative = evaluate_l1_relation_packet(packet)
+        self.assertFalse(conservative["acceptance_passed"])
+        self.assertEqual(
+            conservative["groups"]["identity"]["conservative_precision"], 0.0
+        )
+        self.assertEqual(
+            conservative["groups"]["identity"]["decision_coverage"], 0.0
+        )
+
+        split = create_locked_audit_split(
+            packet,
+            development_fraction=0.5,
+            salt="locked-test-salt",
+        )
+        development = set(split["development_item_ids"])
+        held_out = set(split["held_out_item_ids"])
+        self.assertFalse(development & held_out)
+        self.assertEqual(development | held_out, {"l1-edge:0001", "l1-edge:0002"})
+        self.assertEqual(split["group_counts"]["identity"]["held_out"], 1)
+        self.assertEqual(split["group_counts"]["state_transition"]["held_out"], 1)
 
 
 def _atomic_node(

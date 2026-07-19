@@ -20,6 +20,7 @@ class IdentityTrackReport:
     accepted_edge_ids: tuple[str, ...]
     rejected_edges: tuple[dict[str, Any], ...]
     track_count: int
+    endpoint_contract: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -28,6 +29,7 @@ class IdentityTrackReport:
             "accepted_edge_ids": list(self.accepted_edge_ids),
             "rejected_edges": list(self.rejected_edges),
             "track_count": self.track_count,
+            "endpoint_contract": self.endpoint_contract,
             "method": "verified_component_consistency/v1",
         }
 
@@ -62,12 +64,25 @@ def build_identity_tracks(
         for edge in edges
         if str(edge.get("edge_type") or "") in IDENTITY_EDGE_TYPES
     ]
+    endpoint_ids = {
+        str(edge.get(endpoint) or "")
+        for edge in candidates
+        for endpoint in ("src", "dst")
+        if edge.get(endpoint)
+    }
+    endpoint_nodes = [nodes[node_id] for node_id in endpoint_ids if node_id in nodes]
     for index, edge in enumerate(candidates):
         edge_id = str(edge.get("edge_id") or f"identity-edge:{index}")
         src, dst = str(edge.get("src") or ""), str(edge.get("dst") or "")
         reasons: list[str] = []
         if src not in nodes or dst not in nodes:
             reasons.append("unknown identity endpoint")
+        else:
+            for endpoint_name, endpoint_id in (("src", src), ("dst", dst)):
+                contract_reasons = _identity_endpoint_contract(nodes[endpoint_id])
+                reasons.extend(
+                    f"{endpoint_name} {reason}" for reason in contract_reasons
+                )
         if not _identity_verified(edge):
             reasons.append("identity link lacks explicit verifier acceptance")
         if not reasons:
@@ -93,7 +108,42 @@ def build_identity_tracks(
         accepted_edge_ids=tuple(accepted),
         rejected_edges=tuple(rejected),
         track_count=len(set(tracks.values())),
+        endpoint_contract={
+            "candidate_endpoint_count": len(endpoint_ids),
+            "resolved_endpoint_count": len(endpoint_nodes),
+            "entity_mention_endpoint_count": sum(
+                str(node.get("node_type") or "") in {"entity", "entity_mention"}
+                for node in endpoint_nodes
+            ),
+            "mention_id_count": sum(bool(_mention_id(node)) for node in endpoint_nodes),
+            "entity_type_count": sum(bool(_entity_type(node)) for node in endpoint_nodes),
+            "attributes_count": sum(
+                bool(node.get("attributes") or _payload(node).get("attributes"))
+                for node in endpoint_nodes
+            ),
+            "evidence_refs_count": sum(
+                bool(node.get("evidence_refs") or _payload(node).get("evidence_refs"))
+                for node in endpoint_nodes
+            ),
+        },
     )
+
+
+def _identity_endpoint_contract(node: dict[str, Any]) -> list[str]:
+    reasons: list[str] = []
+    if str(node.get("node_type") or "") not in {"entity", "entity_mention"}:
+        reasons.append("identity endpoint is not an entity mention")
+    if not _mention_id(node):
+        reasons.append("identity endpoint lacks mention_id")
+    if not _entity_type(node):
+        reasons.append("identity endpoint lacks entity_type")
+    if not (node.get("evidence_refs") or _payload(node).get("evidence_refs")):
+        reasons.append("identity endpoint lacks evidence_refs")
+    return reasons
+
+
+def _mention_id(node: dict[str, Any]) -> str:
+    return str(node.get("mention_id") or _payload(node).get("mention_id") or "").strip()
 
 
 def _identity_verified(edge: dict[str, Any]) -> bool:
