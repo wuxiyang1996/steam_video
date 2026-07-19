@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/memory_graph/l1_human_audit.schema.json",
+  "title": "L1HumanAudit",
+  "description": "Independent semantic labels for the L1 reliability gate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "annotator",
+    "protocol_version",
+    "grounded_event_correct",
+    "compound_event",
+    "gold_key_event_ids",
+    "covered_key_event_ids",
+    "entity_link_judgments"
+  ],
+  "properties": {
+    "annotator": {
+      "type": "string",
+      "minLength": 1
+    },
+    "protocol_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "grounded_event_correct": {
+      "type": "object",
+      "description": "Map every audited memory node ID to whether its observation is video-grounded.",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "compound_event": {
+      "type": "object",
+      "description": "Map every audited memory node ID to whether it contains multiple atomic events.",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "gold_key_event_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "covered_key_event_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "entity_link_judgments": {
+      "type": "array",
+      "description": "Judgments for proposed cross-node entity links.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "src",
+          "dst",
+          "correct"
+        ],
+        "properties": {
+          "src": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dst": {
+            "type": "string",
+            "minLength": 1
+          },
+          "correct": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
