@@ -1,0 +1,58 @@
+{
+  "schema_version": "steam-memory-graph-baseline/v0.1",
+  "created_at": "2026-07-19T22:29:56.582988+00:00",
+  "repository": "/fs/gamma-projects/vlm-robot/steam_video",
+  "git_commit": "5c0c39f89ed25d0ed221b5ddffb8ad01184afc70",
+  "git_branch": "agent/memory-graph-integrity",
+  "note": "Fresh isolated entity-reference smoke. Video_Skills commit f7812e1; GPT-5.6 visual and navigation artifacts are provisional, not formal human gates.",
+  "artifacts": [
+    {
+      "name": "clip_schemas",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/video_skills_l1/stages/video_holmes_train_mKqiGQrHtW8_q684/02_clip_schemas.jsonl",
+      "size_bytes": 155423,
+      "sha256": "520e09d053927cfc62a8f14e078aa949993105755660ab632b3a6eb2a50bdd1f"
+    },
+    {
+      "name": "gpt56_visual_overlay",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.gpt56_visual_provisional.json",
+      "size_bytes": 775340,
+      "sha256": "fd05c73200a3308935b382784d2d2ebe52fea301efbf0524a3e7d3ace3360207"
+    },
+    {
+      "name": "gpt56_visual_packet",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/identity_reread/annotation_packet.gpt56_visual_provisional.json",
+      "size_bytes": 124115,
+      "sha256": "bda32d107aaf0c3c1583615590a960338e0e9f6b622dea92d0e1e380fda1942c"
+    },
+    {
+      "name": "identity_reread_packet",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/identity_reread/annotation_packet.json",
+      "size_bytes": 109896,
+      "sha256": "224ce9c4a2a2db432a108660340e485fcce970fed8da28eb2a6cf6d6e431790d"
+    },
+    {
+      "name": "navigation_ablation",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/navigation_ablation/report.gpt56_provisional.json",
+      "size_bytes": 2606,
+      "sha256": "de632e440c3ed01917ad91cd905b0593e086477a776b5c95017e8f1c482e639f"
+    },
+    {
+      "name": "neighbor_graph_cache",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/video_skills_l1/stages/video_holmes_train_mKqiGQrHtW8_q684/03_neighbor_vlm_l1_clip_results.jsonl",
+      "size_bytes": 133557,
+      "sha256": "9eee846603aa38be4542462543f66978784b973731715289987472b73dfa8ce3"
+    },
+    {
+      "name": "structural_overlay",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.structural_smoke.json",
+      "size_bytes": 765921,
+      "sha256": "f32935a83ff3dbebfcba0040d02e41d9fa7d557c724dfcf0f7c8e53db59c24e0"
+    },
+    {
+      "name": "video_skills_example",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/video_skills_l1/examples.jsonl",
+      "size_bytes": 1504999,
+      "sha256": "3c19baea15ae49c427ed945469c3328e284d77b3542034811ec0b0d8727b088d"
+    }
+  ]
+}
