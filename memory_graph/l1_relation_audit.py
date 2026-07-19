@@ -95,6 +95,11 @@ def evaluate_l1_relation_packet(packet: dict[str, Any]) -> dict[str, Any]:
     annotator = str(packet.get("annotator") or "").strip()
     if not annotator:
         raise ValueError("independent audit requires a non-empty annotator")
+    labels_source = str(
+        packet.get("labels_source") or "independent_human"
+    ).strip()
+    if labels_source not in {"independent_human", "model_provisional"}:
+        raise ValueError(f"unsupported labels_source: {labels_source!r}")
     counts: dict[str, Counter[str]] = {
         "identity": Counter(),
         "state_transition": Counter(),
@@ -118,17 +123,19 @@ def evaluate_l1_relation_packet(packet: dict[str, Any]) -> dict[str, Any]:
         counts[group][judgment] += 1
     groups = {name: _precision_report(counter) for name, counter in counts.items()}
     required = (groups["identity"], groups["state_transition"])
+    target_met = all(
+        report["labeled_count"] > 0
+        and report["strict_precision"] is not None
+        and report["strict_precision"] >= 0.9
+        for report in required
+    )
     return {
-        "labels_source": "independent_human",
+        "labels_source": labels_source,
         "annotator": annotator,
         "groups": groups,
         "acceptance_target": 0.9,
-        "acceptance_passed": all(
-            report["labeled_count"] > 0
-            and report["strict_precision"] is not None
-            and report["strict_precision"] >= 0.9
-            for report in required
-        ),
+        "provisional_target_met": target_met,
+        "acceptance_passed": labels_source == "independent_human" and target_met,
     }
 
 

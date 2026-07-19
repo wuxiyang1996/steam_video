@@ -2464,6 +2464,12 @@ class MemoryGraphTest(unittest.TestCase):
             report["groups"]["state_transition"]["strict_precision"], 1.0
         )
 
+        packet["labels_source"] = "model_provisional"
+        provisional = evaluate_l1_relation_packet(packet)
+        self.assertTrue(provisional["provisional_target_met"])
+        self.assertFalse(provisional["acceptance_passed"])
+        self.assertEqual(provisional["labels_source"], "model_provisional")
+
 
 def _atomic_node(
     node_id: str,
