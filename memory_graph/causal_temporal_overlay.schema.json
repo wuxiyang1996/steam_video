@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/memory_graph/causal_temporal_overlay.schema.json",
+  "title": "SteamVideoCausalTemporalOverlay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "overlay_id",
+    "example_id",
+    "video_id",
+    "l1_observations",
+    "atomic_events",
+    "relations",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "steam-causal-overlay/v0.2"
+    },
+    "overlay_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "example_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "video_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "l1_observations": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "memory_graph.schema.json#/$defs/memory_node"
+          },
+          {
+            "properties": {
+              "node_type": {
+                "const": "observation"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "atomic_events": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "memory_graph.schema.json#/$defs/memory_node"
+          },
+          {
+            "properties": {
+              "node_type": {
+                "const": "atomic_event"
+              },
+              "source_segments": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            }
+          }
+        ]
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "memory_graph.schema.json#/$defs/relation_belief"
+      }
+    },
+    "l1_structural_relations": {
+      "type": "array",
+      "description": "Native Video_Skills relations for L1 navigation only; candidate causality is forbidden.",
+      "items": {
+        "$ref": "memory_graph.schema.json#/$defs/relation_belief"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "node_event_assumption": {
+          "not": {
+            "const": "one_memory_node_approximately_one_event"
+          }
+        },
+        "layer_contract": {
+          "const": "l1_observations_plus_l1_5_atomic_overlay"
+        },
+        "visual_verification_enabled": {
+          "type": "boolean"
+        },
+        "visual_verification_required": {
+          "type": "boolean"
+        },
+        "mechanism_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidate_generation": {
+          "const": "mechanism_first_plus_embedding_recall"
+        },
+        "relation_layers": {
+          "type": "object",
+          "required": [
+            "observed_structure",
+            "predictive_navigation",
+            "verified_candidate_causality"
+          ],
+          "properties": {
+            "observed_structure": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "identity_candidates": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "same_instance_candidate",
+                  "reappears_candidate"
+                ]
+              }
+            },
+            "observation_support": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "observation_support"
+                ]
+              }
+            },
+            "predictive_navigation": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "transition_support",
+                  "response_candidate"
+                ]
+              }
+            },
+            "verified_candidate_causality": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "explains",
+                  "enables"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "layer_contract"
+      ],
+      "additionalProperties": true
+    },
+    "build_report": {
+      "type": "object",
+      "description": "Serialized separately from the immutable overlay core when present.",
+      "required": [
+        "l1_reliability",
+        "verifier_summary",
+        "rejected_relations"
+      ],
+      "properties": {
+        "l1_reliability": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "overlay_index": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "candidate_relations": {
+          "type": "array",
+          "description": "Complete proposal set when available. Optional for legacy v0.2 artifacts created before candidate persistence; absence means unavailable, not empty.",
+          "items": {
+            "$ref": "memory_graph.schema.json#/$defs/relation_belief"
+          }
+        },
+        "verifier_summary": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "rejected_relations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

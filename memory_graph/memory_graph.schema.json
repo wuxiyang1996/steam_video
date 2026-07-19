@@ -1,0 +1,513 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/memory_graph/memory_graph.schema.json",
+  "title": "SteamVideoMemoryGraph",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "graph_id",
+    "example_id",
+    "video_id",
+    "nodes",
+    "relations",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "steam-causal-graph/v0.1"
+    },
+    "graph_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "example_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "video_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/memory_node"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relation_belief"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "time_span": {
+      "type": "object",
+      "required": [
+        "start_s",
+        "end_s"
+      ],
+      "properties": {
+        "start_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_s": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "embedding_ref": {
+      "type": "object",
+      "required": [
+        "path",
+        "model",
+        "dimension",
+        "dtype",
+        "normalized"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "const": "Qwen/Qwen3-VL-Embedding-2B"
+        },
+        "dimension": {
+          "const": 2048
+        },
+        "dtype": {
+          "type": "string"
+        },
+        "normalized": {
+          "const": true
+        },
+        "row_index": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "checksum": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "memory_node": {
+      "type": "object",
+      "required": [
+        "node_id",
+        "video_id",
+        "time_span",
+        "provenance",
+        "node_type",
+        "source_segments",
+        "metadata"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "video_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "time_span": {
+          "$ref": "#/$defs/time_span"
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "node_type": {
+          "type": "string"
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_node_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_segments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "embedding_ref": {
+          "$ref": "#/$defs/embedding_ref"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "mechanism_kind": {
+      "enum": [
+        "none",
+        "state_bridge",
+        "observable_precondition",
+        "rule_response",
+        "contact_transfer"
+      ]
+    },
+    "confidence_components": {
+      "type": "object",
+      "properties": {
+        "temporal_grounding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "entity_continuity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "state_delta_grounding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "mechanism_visibility": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "effect_grounding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "alternative_cause_penalty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "causal_witness": {
+      "type": "object",
+      "required": [
+        "witness_id",
+        "relation",
+        "cause_event_id",
+        "effect_event_id",
+        "mechanism",
+        "mechanism_detail",
+        "evidence_refs",
+        "minimal_support_set",
+        "evidence_quotes"
+      ],
+      "properties": {
+        "witness_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation": {
+          "enum": [
+            "explains",
+            "enables"
+          ]
+        },
+        "cause_event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect_event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mechanism_event_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "affected_entity": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "before_state": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "after_state": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "mechanism": {
+          "$ref": "#/$defs/mechanism_kind"
+        },
+        "mechanism_detail": {
+          "type": "string",
+          "minLength": 3
+        },
+        "precondition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state_bridge": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "minimal_support_set": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_quotes": {
+          "type": "object",
+          "required": [
+            "src",
+            "dst"
+          ],
+          "properties": {
+            "src": {
+              "type": "string",
+              "minLength": 1
+            },
+            "dst": {
+              "type": "string",
+              "minLength": 1
+            },
+            "bridge": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "confidence_components": {
+          "$ref": "#/$defs/confidence_components"
+        },
+        "alternative_explanations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "visual_verification": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_requested",
+            "pending",
+            "passed",
+            "failed",
+            "inconclusive"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protocol_version": {
+          "type": "string"
+        },
+        "video_windows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "frame_records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "relation_belief": {
+      "type": "object",
+      "required": [
+        "edge_id",
+        "src",
+        "dst",
+        "relation_probabilities",
+        "status",
+        "direction_confidence",
+        "evidence_refs",
+        "provenance",
+        "features"
+      ],
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "src": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dst": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation_probabilities": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "temporal_next",
+              "before",
+              "overlaps",
+              "during",
+              "same_entity",
+              "same_object",
+              "same_instance_candidate",
+              "reappears_candidate",
+              "state_transition",
+              "observation_support",
+              "transition_support",
+              "response_candidate",
+              "explains",
+              "enables",
+              "contradicts"
+            ]
+          },
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "status": {
+          "enum": [
+            "deterministic",
+            "uncalibrated_prior",
+            "calibrated_posterior"
+          ]
+        },
+        "direction_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warrant": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "causal_witness": {
+              "$ref": "#/$defs/causal_witness"
+            },
+            "visual_verification": {
+              "$ref": "#/$defs/visual_verification"
+            },
+            "mechanism": {
+              "$ref": "#/$defs/mechanism_kind"
+            }
+          },
+          "additionalProperties": true
+        },
+        "features": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

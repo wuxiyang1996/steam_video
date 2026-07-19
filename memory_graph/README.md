@@ -2,12 +2,15 @@
 
 ## 1. Goal
 
-This directory will implement a temporal and candidate-causal graph grounded in video memory nodes:
+This directory implements a temporal and predictive-dependency graph grounded
+in video memory nodes, with mechanism-grounded candidate causality retained as
+a smaller verified subset:
 
 ```text
 streaming video
   → bounded memory nodes
-  → temporal + candidate-causal graph
+  → temporal + predictive-dependency graph
+  → optional verified causal witnesses
   → question-conditioned belief
   → evidence action
   → real memory read
@@ -17,6 +20,323 @@ streaming video
 The design is inspired by SelectStream's fixed-capacity latent evidence graph, but it does not depend on SelectStream code. No official implementation is currently available, so this project must implement its own minimal memory-graph substrate and clearly describe it as our implementation.
 
 Video_Skills can provide video segmentation, clip schemas, L1/L2 graphs, typed skills, provenance, verifiers, and trajectory logging. It is the data and execution interface, not the belief model proposed here.
+
+### Architecture decision: dependency-first navigation
+
+The main runtime graph does not require every useful event relation to be
+causal. It separates three levels:
+
+```text
+observed structure:
+  temporal relations, same_entity, visible state_transition
+
+predictive navigation:
+  transition_support, response_candidate, derived question bridge
+
+verified candidate causality:
+  explains / enables only when a mechanism-grounded visual witness passes
+```
+
+`transition_support` means that an earlier event supplies grounded entity or
+state context useful for retrieving or anticipating a later transition. It
+does not mean that the earlier event caused the later one.
+
+`response_candidate` is a temporally local visible action-response hypothesis.
+It is useful for deciding what to inspect next, but does not infer hidden
+intent or causal effect.
+
+Question bridges are derived during navigation and are never written as
+question-independent observed facts. Correlation/dependency edges may choose a
+real graph read, but they may not enter the final answer as evidence.
+
+The navigation world model is therefore epistemic:
+
+```text
+P(next observation, belief change, answerability
+  | current belief, graph-read action, dependency graph)
+```
+
+It predicts the value of reading memory, not the physical effect of
+intervening on the video world. Every planned action executes a real persisted
+graph/video read before belief is updated.
+
+#### Identity, correlation, and causality are separate layers
+
+The graph must not jump directly from text similarity or a Video_Skills edge
+label to `same_entity`, `transition_support`, or causality. The required order
+is:
+
+```text
+L1 observed facts
+  → identity association
+  → correlation / predictive dependency
+  → verified candidate causality
+```
+
+**Observed structure** contains timestamps, temporal order, entity mentions,
+attributes, locations, actions, and visible states. This is the immutable
+evidence substrate.
+
+**Identity association** is a data-association problem. Temporal proximity and
+semantic embeddings generate candidates; they do not prove identity.
+Candidates are checked using compatible entity type, stable and distinctive
+attributes, spatial/trajectory continuity, interaction context, and hard
+negative evidence. Missing attributes are unknown rather than contradictory.
+Type conflicts, simultaneous distinct instances, impossible motion, or
+incompatible stable attributes reject an association. The output progresses
+from `same_instance_candidate` or `reappears_candidate` to verified
+`same_object` / `same_entity`. Identity components are not transitively merged
+unless the entire component remains temporally and attributively consistent.
+
+**Correlation and predictive dependency** include co-occurrence, state
+continuity, action-response candidates, and transition support. They guide
+SelectStream retrieval and memory utility, but are neither answer evidence nor
+explanations. `supports_observation` is evidence support and must not be
+mechanically renamed `transition_support`; `reappears` and `same_object` must
+not be mechanically renamed `same_entity`.
+
+**Verified candidate causality** is a sparse overlay. An `explains` or
+`enables` edge requires reliable affected-entity association, temporal order,
+an observable before/after state delta, an explicit mechanism, a minimal
+support set, raw-video verification, and no direct counterevidence. Without
+reliable identity and state change, no causal claim is admitted.
+
+The current implementation has the right dual-layer storage contract but not
+yet reliable relation admission. An independent GPT5.6 audit of the 45
+materialized L1 navigation priors judged 21 supported, 12 ambiguous, and 12
+unsupported (46.7% provisional strict precision); all four mechanically mapped
+`transition_support` edges were unsupported. This model audit is not human
+ground truth, but it is sufficient to prohibit calling the current edges
+reliable. The causal admission gate, schema validation, endpoint resolution,
+and identity-association verifier must be corrected before navigation
+evaluation.
+
+#### Implementation plan: evidence-first relation admission
+
+The implementation is ordered by safety dependency. Later phases may not
+bypass an incomplete earlier phase.
+
+**Phase 0 — close integrity and causal-admission holes**
+
+1. In `pipeline.py`, remove `explains` and `enables` whenever
+   `causal_allowed` is false. Require a passed visual verification for every
+   causal edge when video-only L1 has no independent human acceptance.
+2. Align the Video_Skills composer vocabulary, clue-memory JSON Schema, and
+   memory-graph relation vocabulary. Validate actual artifacts, not only Python
+   dataclasses.
+3. Strengthen `audit_video_skills_l1` with duplicate node/edge IDs, self-edges,
+   endpoint existence, timestamp validity, probability ranges, edge
+   vocabulary, failed compose steps, and full schema validation.
+4. Add `build_report` to the overlay schema or serialize it as a separate
+   artifact.
+5. Reject unknown explicit local node references and duplicate
+   `(clip_id, local_node_id)` values instead of silently falling back to a
+   clip-primary node.
+
+**Phase 1 — restore relation semantics**
+
+1. Stop the broad mappings:
+   `same_object/reappears → same_entity`,
+   `supports_observation → transition_support`, and unconditional
+   `state_change → state_transition`.
+2. Add distinct L1 relation contracts for `observation_support`,
+   `same_instance_candidate`, `reappears_candidate`, verified `same_object`,
+   and verified `same_entity`.
+3. Remove clip-only endpoint substitution from admitted relations. An
+   unresolved endpoint becomes a repair request, not an edge.
+4. Preserve source labels, source confidence, endpoint-resolution method, and
+   evidence references in every candidate.
+
+**Phase 2 — build entity observations and identity candidates**
+
+1. Project explicit `entity_mention`, `state_of`, and `derived_from` references
+   first. Lexical same-clip association is retained only as a provisional
+   candidate.
+2. Normalize entity type and observable attributes such as color, clothing,
+   material, shape, size, role, carried-by, located-in, and motion.
+3. Generate candidate pairs from temporal neighborhoods, semantic/embedding
+   top-K, native Video_Skills identity hints, and long-gap recurrence retrieval.
+4. Store decomposed support:
+   temporal feasibility, semantic compatibility, attribute compatibility,
+   trajectory continuity, context continuity, and contradiction evidence.
+
+**Phase 3 — verify identity and construct conflict-aware tracks**
+
+1. Hard-reject type conflict, simultaneous incompatible instances, impossible
+   displacement, and incompatible stable attributes.
+2. Treat absent attributes as unknown, never as disagreement.
+3. Admit `same_object` / `same_entity` only with grounded endpoint mentions and
+   sufficient positive identity evidence. Retain ambiguous pairs as candidate
+   edges.
+4. Before merging two tracks, test every member against component-level time,
+   type, location, and stable-attribute constraints. Do not use unconstrained
+   transitive union.
+5. Send only unresolved high-value candidates to targeted raw-video reread.
+
+**Phase 4 — derive state and dependency relations**
+
+1. Build a state transition only after its subject maps to one accepted
+   identity track.
+2. Require the same normalized attribute, different grounded before/after
+   values, correct temporal direction, and explicit evidence for both states.
+3. Keep repeated or consistent state as `state_continuity`, not
+   `state_transition`.
+4. Derive `transition_support` from accepted identity/state continuity plus
+   temporal relevance. Keep `observation_support` separate.
+5. Treat action-response as `response_candidate` until an observable response
+   verifier passes.
+
+**Phase 5 — re-enable sparse candidate causality**
+
+1. Generate causal candidates only from accepted event identities and verified
+   state deltas.
+2. Require affected entity, before state, after state, mechanism kind,
+   temporally ordered evidence, and minimal support set.
+3. Apply raw-video witness verification and counterevidence checks.
+4. Store rejected causal candidates and reasons; never downgrade them into an
+   accepted correlation edge automatically.
+
+**Phase 6 — navigation and SelectStream evaluation**
+
+1. Enforce graph-read budgets and relation-specific confidence thresholds.
+2. Candidate identity/correlation edges may propose one-hop reads but may not
+   support answers, transitive clustering, or causal traversal.
+3. Compare semantic-only retrieval, event-only graph navigation, native L1
+   candidate navigation, and verified dependency navigation.
+4. Measure answer accuracy, graph reads, evidence recall, identity precision,
+   state-transition precision, dependency precision, and memory
+   keep/merge/evict utility.
+
+The first validation set is the existing 45-edge artifact with independent
+human labels added to the GPT5.6 provisional audit. Acceptance targets are at
+least 90% strict precision for admitted identity and state-transition edges,
+zero schema/integrity errors, zero causal-gate bypasses, and measurable
+navigation improvement over semantic-only retrieval. A newly generated
+Video_Skills artifact must then confirm that preserved local IDs and explicit
+reference edges improve coverage without reducing precision.
+
+### Video-only L1 before relation prediction
+
+The authoritative substrate is the accepted Video_Skills L1 pipeline:
+
+```text
+raw video
+  → Qwen clip schemas
+  → neighbor-aware Video_Skills L1 graph compose
+  → video_only hidden-supervision filter
+  → intrinsic high-grade L1 acceptance gate
+  → immutable ClueMemoryGraph adapter
+  ├→ native observation/entity/state navigation graph
+  └→ event-only L1.5 passthrough → verified relation overlay
+```
+
+`pipeline.py` rejects video-only inputs without a materialized
+`metadata.clue_memory_graph`. `video_skills_l1.py` requires the Video_Skills
+intrinsic grade to be `high`, no hidden nodes or invalid edges, successful Qwen
+clip schemas, no deterministic graph fallback, and semantic nodes produced by
+the L1 composer. This acceptance is structural/perceptual; it is not mislabeled
+as independent-human semantic correctness.
+
+`adapter.py` preserves the L1 node provenance, clip anchors, modality,
+confidence, and incident L1 edges. `l1_structural_edges.py` separately
+materializes accepted native `same_entity`/`same_object`/`reappears`,
+`state_change`, and `supports_observation` edges as L1 navigation relations.
+Model-composed edges retain their original confidence and remain uncalibrated
+priors. Deterministic reference edges are marked deterministic.
+
+This is a dual-track contract:
+
+```text
+l1_structural_relations
+  endpoints: immutable L1 observations
+  purpose: entity/state/dependency navigation
+  forbidden: explains, enables
+
+relations
+  endpoints: L1.5 atomic events
+  purpose: temporal, verified semantic, and candidate-causal overlay
+  causal admission: hard verifier + optional visual witness
+```
+
+Navigation may enter the native L1 graph through an event's evidence reference,
+follow a structural relation, and return through an event projection. The
+native relation chooses what persisted evidence to read; it is not itself
+answer evidence. `causal_hint` remains recall-only and never becomes an
+accepted L1 or event causal edge.
+
+The standalone full-video `video_l1.py` extractor is not an authoritative L1
+replacement. Its replacement path is disabled. Qwen frame rereads remain
+available only as targeted repair/verification for a specific accepted node,
+state transition, or candidate-causal witness.
+
+GPU execution remains staged: run Video_Skills
+`dataset_clip_wrapper.run_staged_llm_pipeline --skip-l2-planner`, unload the
+9B server, then pass its `examples.jsonl` to
+`validate_video_holmes.py --video-skills-l1-jsonl ...`.
+
+#### Historical result and required structuralization
+
+The experiments established a consistent failure sequence:
+
+1. Coarse expert segments completed 47/50 videos but achieved only 54.4%
+   strict relation precision. Narrative succession was over-labeled as
+   explanation or enablement.
+2. Targeted visual rereads found five candidate-causal witnesses. Only one
+   initially passed, and the hard verifier rejected it as a perception-only
+   restatement. No trusted causal edge remained.
+3. A separate full-video Qwen L1 extractor produced frame-grounded events but
+   also duplicated long actions, admitted camera/edit events, confused
+   participant surfaces, and produced almost no state changes. It is not an
+   authoritative L1 source.
+4. An accepted Video_Skills artifact passed the intrinsic high-grade gate with
+   301 semantic nodes, 190 semantic edges, and complete clip coverage. The
+   memory overlay retained 269 L1 observations and 27 event endpoints, but all
+   20 semantic/dependency labels were rejected: 14 `same_entity`, three
+   `state_transition`, and three `transition_support`.
+
+The last rejection is a schema mismatch, not evidence that the accepted L1 is
+poor. Video_Skills stores entities and states as graph nodes and edges, whereas
+the memory verifier expects event-local `participants` and `states` arrays.
+Passing event text through while dropping that neighborhood correctly leaves
+the hard verifier with nothing it can ground.
+
+The required bridge is deterministic:
+
+```text
+accepted Video_Skills ClueMemoryGraph
+  → event/observation node
+  → traverse entity_mention / same_entity / same_object edges
+  → event-local EntityMention with source L1 node ID as mention_id
+  → traverse state_change / supports_observation / located_in edges
+  → event-local StateAssertion with source evidence refs
+  → preserve unresolved links explicitly
+  → L1.5 event endpoints
+  → dependency proposals and hard verification
+```
+
+This bridge must not invent an entity or state from prose. Direct graph
+structure is projected first; unresolved identity/state is escalated to a
+targeted visual reread. Existing `causal_hint` edges remain recall hints and
+never bypass visual witness verification.
+
+The first accepted-artifact smoke after implementing this bridge projected
+participants for 10/27 event nodes and typed states for 2/27. GPT-OSS proposed
+two `same_entity` labels above threshold; both were still rejected because the
+two endpoint mentions belonged to different L1 identity components. This is
+the intended conservative result: structuralization removed the original
+"empty participants" failure where evidence exists, but did not collapse
+unlinked mentions merely because their prose both says "man" or "vehicle".
+The remaining unresolved event identities and state subjects are targeted
+visual-reread work, not grounds for weakening the verifier.
+
+New Video_Skills L1 artifacts preserve each neighbor composer's
+`local_node_id` together with its clip scope. The composer also emits
+deterministic intra-clip `entity_mention`, `state_of`, and `derived_from`
+reference edges. This makes future entity/state projection an exact graph
+operation. Older accepted artifacts remain usable through conservative
+endpoint resolution; on the current smoke artifact that recovers 45 native L1
+navigation relations (34 identity, seven state-transition, four transition
+support) while leaving causal admission unchanged.
 
 ### Current prototype status
 
@@ -28,10 +348,21 @@ The first Phase 1/2 implementation now includes:
 - `contracts.py` and `atomic_events.py`: define and verify L1-grounded atomic event, entity mention, and visible-state hypotheses;
 - `event_adapter.py` and `pipeline.py`: implement the only supported L1 → gate → L1.5 → relation → verifier → calibration path;
 - `verifiers/`: deterministically reject ungrounded entity, state, contradiction, explanation, and enablement claims;
+- `navigation.py`: proposes temporal/entity/state/dependency reads, predicts
+  read utility, executes real graph reads, and keeps imagined observations out
+  of the acquired-evidence state;
+- `selectstream_policy.py`: protects predictive bridges and verified causal
+  witness sets under a bounded keep/merge/evict plan;
 - `calibration.py`: fits relation-wise decision thresholds only from explicitly identified independent labels;
+- `prepare_independent_edge_audit.py`: emits a blinded annotation packet and a separately held model key;
+- `audit_atomic_overlay.py`: distinguishes L1-contained spans from genuinely trusted temporal order;
 - `validate_vrbench.py`: measures long-video temporal order and bridge coverage without treating reasoning steps as causal-edge gold;
 - `reliability.py` and `audit_l1.py`: compute hard L1 checks and require independent labels for semantic reliability gates;
 - `types.py`, `memory_graph.schema.json`, and `causal_temporal_overlay.schema.json`: define separate L1 observations and L1.5 event endpoints;
+- `schema_validation.py`: validates serialized overlays with local schema
+  resolution before CLI and benchmark writers persist them; legacy v0.2
+  reports may omit unavailable `candidate_relations`, while every new build
+  writes the complete field;
 - `cli.py`: builds an atomic-event overlay from one canonical example;
 - `tests/test_memory_graph.py`: covers adapter selection, interval relations, relation scoring, and the embedding contract.
 
@@ -40,6 +371,107 @@ The repository does **not** include trained relation-head weights. Consequently,
 See [`VALIDATION.md`](VALIDATION.md) for the historical coarse-segment run and the new staged protocol. The historical 47/50 result remains **54.4% strict precision** and must not be presented as validation of the atomic-event overlay. The trusted video-only + independent-audit rerun is still required.
 
 See [`L1_RELIABILITY.md`](L1_RELIABILITY.md) for the updated architecture decision: L1 remains the grounded observation graph, while atomic events and causal-temporal hypotheses live in a separate L1.5 belief overlay.
+
+### Model routing for mechanism-grounded candidate causality
+
+The causal overlay uses a routed model stack. The models must not all perform
+the same proposal-and-approval task:
+
+```text
+raw video
+  → local Qwen/Qwen3.5-9B VLM: visible events, entities, states, and timestamps
+  → deterministic mechanism candidate generation
+  → targeted Qwen/Qwen3.5-9B VLM reread: cause / bridge / effect windows
+  → GPT-OSS-120B teacher/critic: causal interpretation and alternative causes
+  → deterministic hard verifier
+  → calibrated candidate-causal witness
+  → SelectStream-style keep / merge / evict and graph reads
+```
+
+`Qwen/Qwen3-VL-Embedding-2B` remains the node encoder. It can supplement
+candidate recall, but embedding similarity is not a causal mechanism.
+
+The local 9B VLM is the visual evidence producer. It must attach frame or time
+provenance to:
+
+- directly visible cause and effect events;
+- entity continuity;
+- before/after state;
+- contact, transfer, access, response, or another visible mechanism;
+- any refined temporal order inside a coarse L1 span.
+
+GPT-OSS-120B is a teacher and causal critic, not the visual source of truth. It
+may classify a structured witness, identify missing mediators, challenge an
+alternative explanation, and generate student training traces. A GPT-OSS
+judgment over event text alone must never pass as visual verification.
+
+The runtime target is a local 9B VLM plus deterministic verifiers and a small
+calibrated relation/mechanism head. GPT-OSS is reserved for data generation,
+hard-case escalation, and offline audit. Independent human labels remain
+required because using GPT-OSS as both teacher and auditor is circular.
+
+#### Causal witness, not pair classification
+
+Candidate causality is represented by a structured witness:
+
+```yaml
+CausalWitness:
+  cause_event_id: string
+  effect_event_id: string
+  mechanism_event_id: string | null
+  affected_entity: object | null
+  before_state: object | null
+  after_state: object | null
+  mechanism: state_bridge | observable_precondition | rule_response | contact_transfer
+  mechanism_detail: string
+  evidence_refs: [string]
+  minimal_support_set: [string]
+  evidence_quotes: object
+  confidence_components:
+    temporal_grounding: float
+    entity_continuity: float
+    state_delta_grounding: float
+    mechanism_visibility: float
+    effect_grounding: float
+    alternative_cause_penalty: float
+  alternative_explanations: [string]
+```
+
+The support set must contain the cause and effect and may contain an explicit
+mediator. This replaces the earlier assumption that every causal claim can be
+verified from exactly two event endpoints.
+
+The first mechanism-grounded implementation keeps the public `explains` and
+`enables` relations for compatibility. Internally, it distinguishes:
+
+- direct visible state change;
+- establishment of an observable precondition;
+- visible action/response;
+- unsupported temporal or narrative progression.
+
+`explains` should eventually be derived at question time from one or more
+verified primitive witnesses rather than treated as a free-form base fact.
+
+#### SelectStream integration
+
+Candidate-causal evidence affects bounded-memory value:
+
+```text
+memory_value =
+    semantic_relevance
+  + temporal_bridge_value
+  + state_change_value
+  + predictive_dependency_value
+  + causal_witness_value
+  + unresolved_hypothesis_value
+  - redundancy
+```
+
+`keep` protects witness endpoints, mediators, visible state transitions, and
+unresolved candidates. `merge` is permitted only when temporal order, entity
+continuity, before/after states, mechanism, and provenance survive. `evict`
+prefers redundant background observations and must not remove only one member
+of a protected witness set.
 
 ## 2. Core Distinctions
 
@@ -222,7 +654,9 @@ Temporal order must be constrained by explicit `time_span` values. Embedding sim
 | `before` / `overlaps` / `during` | Interval relations | Explicit temporal constraints |
 | `same_entity` | Entity continuity across nodes | Probabilistic |
 | `state_transition` | State change of the same entity | Probabilistic |
-| `explains` / `enables` | Candidate explanatory or enabling support | Probabilistic |
+| `transition_support` | Grounded entity/state trajectory useful for navigation | Probabilistic, non-causal |
+| `response_candidate` | Temporally local visible action-response hypothesis | Probabilistic, non-causal |
+| `explains` / `enables` | Mechanism-grounded candidate causal support | Verified subset |
 | `contradicts` | Conflicting states, events, or claims | Probabilistic |
 | `bridge` | Evidence role that completes a multi-hop path | Derived from structure and task |
 
@@ -236,11 +670,11 @@ Initial action vocabulary:
 semantic
 temporal_back
 temporal_forward
-same_entity
-candidate_cause
-effect
-bridge
-counter
+track_entity
+inspect_state_change
+follow_dependency
+find_bridge
+search_counterevidence
 verify
 stop
 ```
@@ -330,6 +764,33 @@ python -m memory_graph.cli \
   --allow-provisional-expert-demo \
   --device cuda:0
 ```
+
+Run mechanism-first candidate generation, targeted local 9B visual rereads, and
+a SelectStream-style bounded-memory plan:
+
+```bash
+# Start the local Qwen/Qwen3.5-9B OpenAI-compatible worker first.
+python -m memory_graph.cli \
+  --canonical /path/to/video_only_canonical.json \
+  --atomic-events /path/to/atomic_events.json \
+  --embedding-output /path/to/event_embeddings.npy \
+  --relation-teacher \
+  --visual-reread \
+  --visual-model Qwen/Qwen3.5-9B \
+  --visual-api-base http://127.0.0.1:8000/v1/chat/completions \
+  --require-visual-verification \
+  --memory-capacity 32 \
+  --input-mode video_only \
+  --l1-human-audit /path/to/independent_l1_labels.json \
+  --output /path/to/causal_temporal_overlay.json
+```
+
+`--visual-reread` is opt-in because it requires a running VLM endpoint and a
+valid raw-video path in the canonical example. `--require-visual-verification`
+turns a failed or inconclusive reread into a hard rejection for `explains` and
+`enables`. `--memory-capacity` plans keep/merge/evict actions without mutating
+the immutable evidence graph; executing safe consolidation remains a separate
+writer responsibility.
 
 The embedding path requires:
 
