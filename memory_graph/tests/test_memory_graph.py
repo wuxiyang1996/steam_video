@@ -22,6 +22,7 @@ from memory_graph.graph_builder import LinearRelationScorer, build_memory_graph
 from memory_graph.identity_tracks import build_identity_tracks
 from memory_graph.identity_reread import (
     apply_identity_reread_packet,
+    apply_identity_reread_to_artifact,
     prepare_identity_reread_packet,
 )
 from memory_graph.identity_verifier import verify_identity_candidates
@@ -551,6 +552,51 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(report.accepted_edge_ids, ())
         self.assertIn("lacks explicit verifier", report.rejected_edges[0]["reasons"][0])
 
+    def test_identity_attributes_reject_only_explicit_contradictions(self) -> None:
+        nodes = {
+            "projector:a": {
+                "node_id": "projector:a",
+                "node_type": "entity_mention",
+                "mention_id": "mention:projector:a",
+                "entity_type": "object",
+                "attributes": {
+                    "color": "black and silver",
+                    "material": "wood/metal",
+                    "role": "projecting device",
+                    "size": "large in frame",
+                },
+                "evidence_refs": ["clip:a"],
+            },
+            "projector:b": {
+                "node_id": "projector:b",
+                "node_type": "entity_mention",
+                "mention_id": "mention:projector:b",
+                "entity_type": "object",
+                "attributes": {
+                    "color": "dark gray/black",
+                    "material": "metal",
+                    "role": "light source",
+                    "size": "close-up",
+                },
+                "evidence_refs": ["clip:b"],
+            },
+        }
+        edges = [
+            {
+                "edge_id": "compatible-description",
+                "src": "projector:a",
+                "dst": "projector:b",
+                "edge_type": "same_object",
+                "confidence": 0.9,
+            }
+        ]
+
+        verified, report = verify_identity_candidates(nodes, edges)
+
+        self.assertFalse(verified[0].get("identity_verified", False))
+        self.assertEqual(len(report.rejected), 0)
+        self.assertEqual(len(report.targeted_reread_queue), 1)
+
     def test_identity_verifier_requires_instance_or_grounded_reread(self) -> None:
         nodes = {
             "box:1": {
@@ -642,8 +688,13 @@ class MemoryGraphTest(unittest.TestCase):
                 }
             ],
         }
-        packet = prepare_identity_reread_packet(graph)
+        packet = prepare_identity_reread_packet(
+            graph,
+            video_path="/datasets/video.mp4",
+        )
         self.assertEqual(len(packet["items"]), 1)
+        self.assertEqual(packet["items"][0]["edge_ids"], ["same-box"])
+        self.assertEqual(packet["source_video_path"], "/datasets/video.mp4")
         packet["annotator"] = "visual-reviewer"
         packet["labels_source"] = "raw_video_verifier"
         packet["items"][0]["annotation"] = {
@@ -666,6 +717,15 @@ class MemoryGraphTest(unittest.TestCase):
         stale_packet["graph_sha256"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "does not match"):
             apply_identity_reread_packet(graph, stale_packet)
+
+        canonical = {"metadata": {"clue_memory_graph": graph}, "question": {}}
+        applied_canonical = apply_identity_reread_to_artifact(canonical, packet)
+        self.assertTrue(
+            applied_canonical["metadata"]["clue_memory_graph"]["edges"][0][
+                "targeted_reread"
+            ]["passed"]
+        )
+        self.assertNotIn("targeted_reread", graph["edges"][0])
 
     def test_native_l1_relations_remain_navigation_only(self) -> None:
         graph = {

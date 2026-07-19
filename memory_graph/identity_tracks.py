@@ -4,13 +4,78 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import hypot
+import re
 from typing import Any
 
 
 IDENTITY_EDGE_TYPES = frozenset({"same_entity", "same_object", "reappears"})
-STABLE_ATTRIBUTE_KEYS = frozenset(
-    {"color", "clothing", "material", "shape", "size", "role"}
-)
+STABLE_ATTRIBUTE_KEYS = frozenset({"color", "clothing", "material", "shape"})
+
+_COLOR_TERMS = {
+    "black": "black",
+    "white": "white",
+    "gray": "gray",
+    "grey": "gray",
+    "brown": "brown",
+    "red": "red",
+    "blue": "blue",
+    "green": "green",
+    "yellow": "yellow",
+    "orange": "orange",
+    "purple": "purple",
+    "pink": "pink",
+    "gold": "gold",
+    "golden": "gold",
+    "silver": "silver",
+}
+_MATERIAL_TERMS = {
+    value: value
+    for value in (
+        "wood",
+        "metal",
+        "fabric",
+        "plastic",
+        "glass",
+        "leather",
+        "paper",
+        "stone",
+        "skin",
+    )
+}
+_SHAPE_TERMS = {
+    "rectangle": "rectangle",
+    "rectangular": "rectangle",
+    "box": "rectangle",
+    "boxy": "rectangle",
+    "square": "square",
+    "circle": "circle",
+    "circular": "circle",
+    "round": "circle",
+    "cylinder": "cylinder",
+    "cylindrical": "cylinder",
+    "sphere": "sphere",
+    "spherical": "sphere",
+    "flower": "flower",
+    "petal": "flower",
+    "human": "human",
+    "hand": "hand",
+}
+_GARMENT_TERMS = {
+    "shirt": "shirt",
+    "tshirt": "shirt",
+    "tee": "shirt",
+    "sweater": "sweater",
+    "jacket": "jacket",
+    "coat": "coat",
+    "pants": "pants",
+    "trousers": "pants",
+    "dress": "dress",
+    "suit": "suit",
+    "collar": "collar",
+    "collared": "collar",
+    "sleeve": "sleeve",
+    "sleeved": "sleeve",
+}
 
 
 @dataclass(frozen=True)
@@ -170,7 +235,7 @@ def _component_conflicts(
             for key in sorted(STABLE_ATTRIBUTE_KEYS):
                 left_value = _attribute(left, key)
                 right_value = _attribute(right, key)
-                if left_value and right_value and left_value != right_value:
+                if _stable_attribute_conflict(key, left_value, right_value):
                     reasons.append(
                         f"stable attribute conflict {key}: {left_id}={left_value}, "
                         f"{right_id}={right_value}"
@@ -193,6 +258,47 @@ def _attribute(node: dict[str, Any], key: str) -> str:
         attributes = _payload(node).get("attributes")
     value = attributes.get(key) if isinstance(attributes, dict) else None
     return str(value or "").strip().casefold()
+
+
+def _stable_attribute_conflict(key: str, left: str, right: str) -> bool:
+    """Reject only explicit categorical contradictions in free-form attributes."""
+
+    if not left or not right or left == right:
+        return False
+    if key == "color":
+        return _disjoint_known_terms(left, right, _COLOR_TERMS)
+    if key == "material":
+        return _disjoint_known_terms(left, right, _MATERIAL_TERMS)
+    if key == "shape":
+        return _disjoint_known_terms(left, right, _SHAPE_TERMS)
+    if key == "clothing":
+        left_colors = _known_terms(left, _COLOR_TERMS)
+        right_colors = _known_terms(right, _COLOR_TERMS)
+        if left_colors and right_colors and left_colors.isdisjoint(right_colors):
+            return True
+        left_garments = _known_terms(left, _GARMENT_TERMS)
+        right_garments = _known_terms(right, _GARMENT_TERMS)
+        return bool(
+            left_garments
+            and right_garments
+            and left_garments.isdisjoint(right_garments)
+        )
+    return False
+
+
+def _disjoint_known_terms(
+    left: str,
+    right: str,
+    vocabulary: dict[str, str],
+) -> bool:
+    left_terms = _known_terms(left, vocabulary)
+    right_terms = _known_terms(right, vocabulary)
+    return bool(left_terms and right_terms and left_terms.isdisjoint(right_terms))
+
+
+def _known_terms(value: str, vocabulary: dict[str, str]) -> set[str]:
+    tokens = set(re.findall(r"[a-z]+", value.casefold().replace("t-shirt", "tshirt")))
+    return {normalized for token, normalized in vocabulary.items() if token in tokens}
 
 
 def _simultaneous_distinct(left: dict[str, Any], right: dict[str, Any]) -> bool:
