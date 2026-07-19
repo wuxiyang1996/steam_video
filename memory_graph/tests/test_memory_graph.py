@@ -713,6 +713,19 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertTrue(verified[0]["identity_verified"])
         self.assertEqual(report.accepted[0]["method"], "targeted_raw_video_reread")
 
+        l1_nodes = [_grounded_node("memory:box:1"), _grounded_node("memory:box:2")]
+        for memory_node, source_id in zip(l1_nodes, ("box:1", "box:2")):
+            memory_node.source_node_id = source_id
+        relations, _ = materialize_l1_structural_relations(applied, l1_nodes)
+        self.assertEqual(
+            relations[0].relation_probabilities,
+            {"same_object": 0.9},
+        )
+        self.assertEqual(
+            relations[0].provenance["admission_tier"],
+            "verified_identity",
+        )
+
         stale_packet = dict(packet)
         stale_packet["graph_sha256"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "does not match"):
