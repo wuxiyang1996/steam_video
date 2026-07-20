@@ -43,6 +43,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     TransitionIntervention,
     VideoSkillsL2Adapter,
     build_executed_transition_dataset,
+    build_transition_review_packet,
     build_video_skills_l2_rollout,
     build_balanced_evidence_packet,
     derive_realized_belief_delta,
@@ -58,7 +59,9 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     import_evidence_annotations,
     inspect_balanced_evidence_packet,
     inspect_transition_gathering,
+    inspect_transition_review,
     validate_executed_transition_dataset,
+    validate_transition_review_packet,
     validate_balanced_review_queue,
     validate_balanced_evidence_packet,
     validate_sibling_artifact,
@@ -1354,6 +1357,109 @@ def test_reviewed_action_restores_endpoint_read_without_mutating_graph(
     assert record["execution"]["grounded"] is True
     assert record["execution"]["skill_id"] == "review_anchored_endpoint_read"
     assert record["target"]["belief_delta"]["resolved_roles"] == []
+
+
+def test_transition_review_packet_is_blinded_categorical_and_duplicate_audited(
+    tmp_path: Path,
+) -> None:
+    from steam_video_new.implicit_world_model.l15_graph_navigator import (
+        apply_transition_review,
+    )
+
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    locked_cases = lock_navigation_case_set(
+        _navigation_case_set(overlay_path, overlay),
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+    dataset = build_executed_transition_dataset(
+        locked_cases,
+        case_root=tmp_path,
+        dataset_id="transitions:review-packet",
+        executor_factory=lambda: VideoSkillsL2Adapter(
+            use_video_skills_runtime=False
+        ),
+    )
+    packet, hidden = build_transition_review_packet(
+        dataset,
+        locked_cases,
+        packet_id="transition-review:test",
+        native_controls_per_action=1,
+        consistency_duplicates=1,
+    )
+
+    assert validate_transition_review_packet(packet) == []
+    serialized = json.dumps(packet).lower()
+    for forbidden in (
+        "action_provenance", "legality", "verifier_measurement",
+        "belief_update_audit", "target_source", "stored_target",
+    ):
+        assert forbidden not in serialized
+    decisions = []
+    for item in packet["items"]:
+        refs = item["executed_result"]["evidence_refs"]
+        if not refs:
+            refs = [item["visible_context"]["nodes"][0]["node_id"]]
+        decisions.append(
+            {
+                "item_id": item["item_id"],
+                "review_decision": "accept",
+                "observation_validity": "valid",
+                "action_execution_validity": "valid",
+                "belief_delta_validity": "valid",
+                "relation_outcome": "supports",
+                "evidence_refs": [refs[0]],
+                "rationale": "Visible grounded execution supports the categorical update.",
+            }
+        )
+    review = {
+        "schema_version": "steam-transition-review-response/v0.1",
+        "packet_id": packet["packet_id"],
+        "labels_source": "model_provisional",
+        "annotator": "GPT-5.6 provisional",
+        "protocol": "outcome_blinded_categorical_review",
+        "decisions": decisions,
+    }
+    locked = apply_transition_review(packet, review)
+    report = inspect_transition_review(locked, hidden)
+
+    assert validate_transition_review_packet(locked) == []
+    assert locked["annotation_status"] == "ai_provisional"
+    assert report["valid"] is True
+    assert report["duplicate_consistency"]["all_groups_exact"] is True
+    assert report["training_ready"] is False
+    assert report["training_performed"] is False
+
+    human_review = json.loads(json.dumps(review))
+    human_review["labels_source"] = "independent_human"
+    human_review["annotator"] = "independent-reviewer"
+    human_review["protocol"] = "outcome_blinded_categorical_human_review"
+    human_locked = apply_transition_review(packet, human_review)
+    assert human_locked["annotation_status"] == "human_locked"
+    assert human_locked["labels_source"] == "independent_human"
+    assert validate_transition_review_packet(human_locked) == []
+
+    selected_id = dataset["records"][0]["record_id"]
+    targeted, targeted_key = build_transition_review_packet(
+        dataset,
+        locked_cases,
+        packet_id="transition-review:targeted",
+        native_controls_per_action=0,
+        consistency_duplicates=1,
+        selected_record_strata={selected_id: "control"},
+    )
+    assert len(targeted["items"]) == 2
+    assert validate_transition_review_packet(targeted) == []
+    assert {
+        row["sampling_stratum"] for row in targeted_key["items"]
+    } == {"targeted:control", "consistency_duplicate"}
+
+    numeric = json.loads(json.dumps(review))
+    numeric["decisions"][0]["reward"] = 1
+    with pytest.raises(ValueError, match="invalid transition review decision"):
+        apply_transition_review(packet, numeric)
 
 
 def test_realized_delta_recomputes_full_categorical_state_change() -> None:

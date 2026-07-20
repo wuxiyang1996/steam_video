@@ -1005,3 +1005,133 @@ post-read categorical state-delta check. On the 52 provisional cases, all 42
 non-STOP reviewed actions are executed and grounded; the dataset remains
 unreviewed and no GPT-OSS training is performed. See the canonical factor
 graph README section 13.5 for counts and remaining gates.
+
+## 16. Targeted Failure Slices and Human Review
+
+The transition-review workflow now separates model-provisional inspection from
+independent human locking. `inspect-transition-failures` partitions every
+provisional `inconclusive` row into one exclusive primary failure slice using
+only public categorical evidence. `build-targeted-gathering` then samples
+already executed records across videos for strict state deltas, identity hard
+negatives, counterevidence adjudication, empty/reject controls, inconclusive
+controls, and delayed two-hop cases. Target strata and consistency groups stay
+in ignored `*.hidden_key.json` files and never enter the public packet.
+
+The local review application is started with:
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.human_review_server \
+  --packet steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_packet.unreviewed.json
+```
+
+It saves drafts in browser localStorage, renders only public evidence, validates
+against the production Python contract, and exports an `independent_human`
+response. Applying that response produces `human_locked`; GPT-5.6 responses
+remain `ai_provisional`. Neither path exports training records automatically.
+
+## 17. Qwen IWM Post-Training: Grounded Dynamics plus Preference GRPO
+
+The intended IWM is a Qwen-family LLM/VLM, not a rule model, graph neural
+network, or weighted collection of hand-designed scores. Given a compact
+belief state, grounded evidence memory, and candidate reasoning action, it
+predicts an observation descriptor, a categorical belief delta, and a short
+imagined continuation:
+
+```text
+Qwen-IWM(belief_t, grounded_memory_t, action_t)
+    -> observation_descriptor_hat
+    -> categorical_belief_delta_hat
+    -> imagined_continuation
+```
+
+The post-training design separates two objectives that should not be
+conflated:
+
+1. **Grounded world-dynamics learning.** Human-locked executed transitions
+   supervise the actual observation descriptor and categorical belief delta.
+   SFT, categorical preference optimization, or on-policy distillation may be
+   used here. This objective prevents the model from learning a successful
+   action shortcut while producing inaccurate imagined transitions.
+2. **Reasoning-policy improvement.** From one fixed belief checkpoint, the
+   current Qwen policy samples a group of short sibling trajectories. After
+   real execution or auditable replay, an independent reviewer returns only a
+   partial order: `prefer_left`, `prefer_right`, `tie`, or `incomparable`.
+   Ordinal preference GRPO then improves action selection and stopping.
+
+GRPO is therefore part of the main method, but GRPO alone is not treated as
+evidence that the IWM learned world dynamics. A policy optimized only from the
+final trajectory outcome could exploit retrieval shortcuts, answer priors, or
+language patterns while ignoring its own imagined belief transitions.
+
+### 17.1 No model-produced scalar reward
+
+The reviewer never emits a reward, probability, confidence, utility, or
+weighted subscore. In particular, the method must not introduce a reward such
+as a weighted combination of information gain, graph progress, answerability,
+and read efficiency. The only supervision exposed by the reviewer is an
+ordinal trajectory relation:
+
+```text
+same initial belief + same execution budget
+
+trajectory A preferred to trajectory B
+trajectory A tied with trajectory C
+trajectory D incomparable
+```
+
+The optimizer may deterministically convert an ordinal group ranking into a
+centered group-relative advantage. Those internal numerical values are an
+implementation detail of optimization, not an LLM/VLM judgment or an
+annotation target. Ties retain equal rank; incomparable trajectories do not
+receive an invented ordering.
+
+Evidence grounding is a validity constraint rather than a reward component.
+A trajectory that cites imagined evidence as observed evidence is invalid; an
+undecidable comparison is `incomparable`, and equal-quality trajectories are
+`tie`.
+
+### 17.2 Alternating training loop
+
+The clean training loop alternates grounded transition batches and on-policy
+trajectory groups:
+
+```text
+human-locked executed transition
+    -> update Qwen observation/belief-transition behavior
+
+current Qwen samples sibling reasoning trajectories
+    -> execute the first action or perform auditable replay
+    -> obtain real evidence and corrected belief
+    -> collect categorical group preference
+    -> ordinal preference GRPO update
+```
+
+On-policy distillation is an optional dynamics-stabilization method or
+ablation. It is not the primary claim because a larger teacher may transfer
+reasoning style or answer priors without establishing that the student learned
+grounded action-conditioned dynamics. A text-only teacher also cannot replace
+visual transition supervision unless it receives an independently grounded
+observation description.
+
+### 17.3 Required causal ablations
+
+The minimum matched-data comparison is:
+
+- executed-transition SFT only;
+- ordinal preference GRPO only;
+- executed-transition SFT plus ordinal preference GRPO;
+- DPO/IPO on the same sibling preferences;
+- shuffled IWM transition predictions with the same GRPO planner;
+- no imagined transition with the same GRPO planner;
+- optional on-policy distillation with the same teacher and data budget.
+
+The main IWM claim requires both better navigation and evidence that planner
+behavior depends on learned transition predictions. If shuffling or removing
+imagined belief transitions leaves action selection unchanged, GRPO learned a
+policy shortcut rather than world-model-guided reasoning.
+
+The current targeted packet supplies only action-level transition supervision.
+Before GRPO, it still needs independent human locking, Qwen on-policy sibling
+rollouts from identical checkpoints, real executed corrections, and blinded
+group-level ordinal preferences. No GRPO or GPT-OSS/Qwen training should begin
+from the current model-provisional packet alone.

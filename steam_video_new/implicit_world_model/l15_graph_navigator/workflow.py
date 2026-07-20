@@ -31,6 +31,16 @@ from .evidence_packets import (
 )
 from .matched_ablation import evaluate_matched_navigation
 from .data_inspection import inspect_transition_gathering
+from .transition_review import (
+    apply_transition_review,
+    build_transition_review_packet,
+    inspect_transition_review,
+    validate_transition_review_packet,
+)
+from .targeted_gathering import (
+    build_targeted_transition_gathering,
+    inspect_inconclusive_failure_slices,
+)
 from .overlay_io import load_overlay_artifact
 from .preference_data import (
     build_preference_annotation_packet,
@@ -128,6 +138,42 @@ def build_parser() -> argparse.ArgumentParser:
     inspect_gathering.add_argument("--dataset", required=True, type=Path)
     inspect_gathering.add_argument("--cases", required=True, type=Path)
     inspect_gathering.add_argument("--output", required=True, type=Path)
+
+    transition_review = commands.add_parser("build-transition-review")
+    transition_review.add_argument("--dataset", required=True, type=Path)
+    transition_review.add_argument("--cases", required=True, type=Path)
+    transition_review.add_argument("--packet-id", required=True)
+    transition_review.add_argument("--native-controls-per-action", type=int, default=2)
+    transition_review.add_argument("--consistency-duplicates", type=int, default=6)
+    transition_review.add_argument("--output", required=True, type=Path)
+    transition_review.add_argument("--key-output", required=True, type=Path)
+
+    validate_transition_review = commands.add_parser("validate-transition-review")
+    validate_transition_review.add_argument("--packet", required=True, type=Path)
+
+    apply_transition = commands.add_parser("apply-transition-review")
+    apply_transition.add_argument("--packet", required=True, type=Path)
+    apply_transition.add_argument("--review", required=True, type=Path)
+    apply_transition.add_argument("--output", required=True, type=Path)
+
+    inspect_transition = commands.add_parser("inspect-transition-review")
+    inspect_transition.add_argument("--packet", required=True, type=Path)
+    inspect_transition.add_argument("--key", type=Path)
+    inspect_transition.add_argument("--output", required=True, type=Path)
+
+    failure_slices = commands.add_parser("inspect-transition-failures")
+    failure_slices.add_argument("--packet", required=True, type=Path)
+    failure_slices.add_argument("--output", required=True, type=Path)
+
+    targeted = commands.add_parser("build-targeted-gathering")
+    targeted.add_argument("--dataset", required=True, type=Path)
+    targeted.add_argument("--cases", required=True, type=Path)
+    targeted.add_argument("--packet-id", required=True)
+    targeted.add_argument("--consistency-duplicates", type=int, default=6)
+    targeted.add_argument("--packet-output", required=True, type=Path)
+    targeted.add_argument("--key-output", required=True, type=Path)
+    targeted.add_argument("--manifest-output", required=True, type=Path)
+    targeted.add_argument("--report-output", required=True, type=Path)
 
     validate = commands.add_parser("validate-cases")
     validate.add_argument("--cases", required=True, type=Path)
@@ -326,6 +372,54 @@ def main(argv: list[str] | None = None) -> int:
         _write_json(args.output, report)
         print(json.dumps(report, indent=2, ensure_ascii=False))
         return 0 if report["dataset_valid"] and report["case_set_valid"] else 1
+    if args.command == "build-transition-review":
+        packet, hidden = build_transition_review_packet(
+            _read_json(args.dataset),
+            _read_json(args.cases),
+            packet_id=args.packet_id,
+            native_controls_per_action=args.native_controls_per_action,
+            consistency_duplicates=args.consistency_duplicates,
+        )
+        _write_json(args.output, packet)
+        _write_json(args.key_output, hidden)
+        print(json.dumps(inspect_transition_review(packet), indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "validate-transition-review":
+        errors = validate_transition_review_packet(_read_json(args.packet))
+        print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
+        return 0 if not errors else 1
+    if args.command == "apply-transition-review":
+        packet = apply_transition_review(
+            _read_json(args.packet), _read_json(args.review)
+        )
+        _write_json(args.output, packet)
+        return 0
+    if args.command == "inspect-transition-review":
+        report = inspect_transition_review(
+            _read_json(args.packet),
+            _read_json(args.key) if args.key is not None else None,
+        )
+        _write_json(args.output, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0 if report["valid"] else 1
+    if args.command == "inspect-transition-failures":
+        report = inspect_inconclusive_failure_slices(_read_json(args.packet))
+        _write_json(args.output, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "build-targeted-gathering":
+        packet, key, artifacts = build_targeted_transition_gathering(
+            _read_json(args.dataset),
+            _read_json(args.cases),
+            packet_id=args.packet_id,
+            consistency_duplicates=args.consistency_duplicates,
+        )
+        _write_json(args.packet_output, packet)
+        _write_json(args.key_output, key)
+        _write_json(args.manifest_output, artifacts["manifest"])
+        _write_json(args.report_output, artifacts["report"])
+        print(json.dumps(artifacts["report"], indent=2, ensure_ascii=False))
+        return 0
     if args.command == "validate-cases":
         payload = _read_json(args.cases)
         errors = validate_navigation_case_set(payload)

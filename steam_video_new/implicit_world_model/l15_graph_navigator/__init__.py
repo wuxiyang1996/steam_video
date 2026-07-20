@@ -74,6 +74,19 @@ from .planner import (
 from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
 from .matched_ablation import MATCHED_STRATEGIES, evaluate_matched_navigation
 from .data_inspection import inspect_transition_gathering
+from .transition_review import (
+    apply_transition_review,
+    build_transition_review_packet,
+    inspect_transition_review,
+    validate_transition_review_packet,
+)
+from .targeted_gathering import (
+    DEFAULT_TARGET_QUOTAS,
+    FAILURE_SLICES,
+    TARGET_STRATA,
+    build_targeted_transition_gathering,
+    inspect_inconclusive_failure_slices,
+)
 from .interventions import (
     FrozenBeliefWorldModel,
     TransitionIntervention,
@@ -113,6 +126,7 @@ from .siblings import (
 __all__ = [
     "Answerability",
     "apply_evidence_review",
+    "apply_transition_review",
     "ALLOWED_PREFERENCE_LABELS",
     "BeliefBackend",
     "BALANCED_CASE_CATEGORIES",
@@ -162,9 +176,14 @@ __all__ = [
     "VideoSkillsL2Adapter",
     "DEFAULT_GPT_OSS_MODEL",
     "DEFAULT_BALANCED_QUOTAS",
+    "DEFAULT_TARGET_QUOTAS",
+    "FAILURE_SLICES",
+    "TARGET_STRATA",
     "build_video_skills_l2_rollout",
     "build_executed_transition_dataset",
     "build_balanced_evidence_packet",
+    "build_transition_review_packet",
+    "build_targeted_transition_gathering",
     "build_preference_annotation_packet",
     "build_balanced_review_queue",
     "belief_to_dict",
@@ -177,6 +196,8 @@ __all__ = [
     "import_evidence_annotations",
     "inspect_balanced_evidence_packet",
     "inspect_transition_gathering",
+    "inspect_transition_review",
+    "inspect_inconclusive_failure_slices",
     "intervene_trajectories",
     "derive_realized_belief_delta",
     "load_overlay_artifact",
@@ -199,6 +220,7 @@ __all__ = [
     "validate_balanced_review_queue",
     "validate_balanced_evidence_packet",
     "validate_executed_transition_dataset",
+    "validate_transition_review_packet",
     "validate_preference_annotation_packet",
     "train_baselines",
 ]

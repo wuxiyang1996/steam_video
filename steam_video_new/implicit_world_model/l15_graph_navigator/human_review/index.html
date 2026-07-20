@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STEAM Transition Blind Review</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">STEAM · OUTCOME-BLIND</p>
+      <h1>Executed Transition 人工审核</h1>
+    </div>
+    <div class="progress-block">
+      <span id="progressText">载入中…</span>
+      <div class="progress-track"><div id="progressBar"></div></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <label class="field-label" for="annotator">审核者</label>
+      <input id="annotator" class="text-input" autocomplete="name" placeholder="姓名或 reviewer ID">
+
+      <div class="filter-row" role="group" aria-label="条目筛选">
+        <button class="filter active" data-filter="all">全部</button>
+        <button class="filter" data-filter="incomplete">未完成</button>
+        <button class="filter" data-filter="flagged">待复核</button>
+      </div>
+      <div id="itemList" class="item-list" aria-label="审核条目"></div>
+    </aside>
+
+    <section id="reviewPane" class="review-pane" hidden>
+      <div class="review-heading">
+        <div>
+          <p id="itemPosition" class="eyebrow"></p>
+          <h2 id="question"></h2>
+        </div>
+        <label class="flag-control"><input id="flagged" type="checkbox"> 待复核</label>
+      </div>
+
+      <section class="card compact-grid">
+        <div><span class="label">Action</span><code id="actionType"></code></div>
+        <div><span class="label">Relation</span><code id="relation"></code></div>
+        <div><span class="label">Belief</span><span id="belief"></span></div>
+        <div><span class="label">Execution</span><span id="execution"></span></div>
+      </section>
+
+      <section>
+        <h3>公开证据</h3>
+        <div id="evidenceCards" class="evidence-grid"></div>
+      </section>
+
+      <section class="card annotation-card">
+        <h3>分类判断</h3>
+        <div id="categoricalFields" class="categorical-grid"></div>
+        <fieldset>
+          <legend>引用证据（至少一项）</legend>
+          <div id="citationChoices" class="citation-list"></div>
+        </fieldset>
+        <label class="field-label" for="rationale">理由</label>
+        <textarea id="rationale" rows="5" placeholder="只依据上方公开证据说明判断；不要给数字 reward、score、confidence、probability 或 utility。"></textarea>
+      </section>
+
+      <div class="nav-actions">
+        <button id="previous" class="secondary">上一条</button>
+        <button id="next">保存并下一条</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-actions">
+    <span id="saveState">草稿自动保存在本浏览器</span>
+    <div>
+      <button id="resetDraft" class="danger secondary">清除本地草稿</button>
+      <button id="validate" class="secondary">完整性校验</button>
+      <button id="exportReview">导出人工审核 JSON</button>
+    </div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
