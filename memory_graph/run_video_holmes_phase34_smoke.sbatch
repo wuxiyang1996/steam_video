@@ -17,6 +17,8 @@ PY=$WORKSPACE/conda/envs/cosplay-candy-a100/bin/python
 TRANSFORMERS=$WORKSPACE/Video_Skills/.venv-qwen35-serve/bin/transformers
 MODEL=Qwen/Qwen3.5-9B
 RUN_ROOT=${MEMORY_GRAPH_RUN_ROOT:-$WORKSPACE/steam_video/memory_graph/outputs/video_holmes_phase34_smoke}
+GRAPH_TIMEOUT_S=${MEMORY_GRAPH_GRAPH_TIMEOUT_S:-300}
+GRAPH_NEIGHBOR_WORKERS=${MEMORY_GRAPH_GRAPH_NEIGHBOR_WORKERS:-4}
 L1_ROOT=$RUN_ROOT/video_skills_l1
 GRAPH_ROOT=$RUN_ROOT/memory_graph
 PORT=$((23000 + SLURM_JOB_ID % 1000))
@@ -85,8 +87,8 @@ cd "$WORKSPACE/Video_Skills"
   --clip-schema-timeout-s 300 \
   --clip-schema-workers 1 \
   --graph-model openai/gpt-oss-120b \
-  --graph-timeout-s 300 \
-  --graph-neighbor-workers 4 \
+  --graph-timeout-s "$GRAPH_TIMEOUT_S" \
+  --graph-neighbor-workers "$GRAPH_NEIGHBOR_WORKERS" \
   --output "$L1_ROOT/examples.jsonl" \
   --stage-dir "$L1_ROOT/stages"
 
