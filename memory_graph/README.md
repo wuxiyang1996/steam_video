@@ -421,9 +421,80 @@ The first Phase 1/2 implementation now includes:
   and enforces separate ≥90% identity and state-transition precision gates;
 - `navigation_ablation.py`: compares semantic-only, event-only, native-L1
   candidate, and verified-dependency reads under the same persisted-read
-  budget and independently supplied evidence targets;
+  budget and independently supplied evidence targets. Explicit state-change
+  questions route the verified strategy to the jointly most relevant
+  hard-verified `state_transition` pair; no gold event ID is used for routing;
 - `cli.py`: builds an atomic-event overlay from one canonical example;
 - `tests/test_memory_graph.py`: covers adapter selection, interval relations, relation scoring, and the embedding contract.
+
+#### Latest structured-state smoke assessment (2026-07-20)
+
+The new structured-state Video-Holmes smoke supersedes the earlier negative
+navigation diagnosis above, while retaining that run as historical evidence.
+The resumable Video_Skills flow completed 55/55 clip schemas and 55/55 graph
+composition targets with zero final schema or integrity errors. The resulting
+canonical graph contains 177 structured state nodes and exactly 177 `state_of`
+edges. Its L1.5 overlay contains 30 atomic events, all 30 with explicit
+participant references, and 67 strict visible-state assertions.
+
+Every atomic event retains an `embedding_ref` for the normalized,
+2048-dimensional `Qwen/Qwen3-VL-Embedding-2B` representation. Embedding text
+uses the `event+participants+states/v1` contract so future navigation can use
+the event description, grounded participants, and visible states together.
+Large vectors remain in `.npy` matrices; graph JSON stores the model,
+dimension, dtype, normalization flag, row index, matrix path, and SHA-256
+checksum. Navigation questions use the same model and persist equivalent query
+embedding references and manifests.
+
+After a GPT-5.6 visual **provisional** identity reread, the conflict-aware track
+pass admits one strict state transition: the same tracked man's expression
+changes from `serious` to `focused`. The transition connects the explicit
+before/after events and passes the accepted-track hard verifier. The base
+video-only artifact still admits no probabilistic identity or state edge
+without an independent reviewer, as intended.
+
+On the unchanged six-case, raw-video-reviewed provisional gold set, with two
+persisted event reads per question, the final Qwen embedding ablation is:
+
+| Strategy | Answer accuracy | Mean evidence recall |
+| --- | ---: | ---: |
+| Semantic only | 66.7% | 0.833 |
+| Event only | 66.7% | 0.833 |
+| Native L1 candidate | 66.7% | 0.833 |
+| Verified dependency | **83.3%** | **0.917** |
+
+For the held diagnostic state-change question, the first three strategies
+acquire only one of two required events (`0%` answer accuracy and `0.5`
+evidence recall). Verified dependency follows the strict state edge and
+acquires both endpoints (`100%` and `1.0`) under the same read budget. This is
+positive engineering evidence that a verified state dependency can improve
+navigation; it is not yet a statistically reliable benchmark result.
+
+The current assessment is therefore:
+
+- the implementation is reliable enough for continued evaluation, and the
+  central dependency-navigation hypothesis now has a positive signal;
+- strict identity/state admission correctly favors precision over coverage;
+- the embedding representation is a reusable artifact rather than a temporary
+  evaluation input;
+- formal validation is still blocked because the result covers one video, six
+  fixed questions, and one admitted transition, and its identity decisions are
+  GPT-5.6 provisional rather than independent-human labels;
+- the `change` / `become` / `from ... to ...` query-intent route needs broader
+  paraphrase and hard-negative evaluation before it is treated as general.
+
+The next evidence milestones, in order, are:
+
+1. independently review the existing identity-relation packet and require at
+   least 90% strict precision for admitted identity and state-transition edges;
+2. freeze 30--50 navigation questions across multiple videos before examining
+   ablation results;
+3. include diverse state-change paraphrases and negative questions that mention
+   change even though no verified transition exists;
+4. report coverage alongside precision: videos with accepted tracks, tracks
+   with grounded state deltas, and questions that can use a verified dependency;
+5. only after those gates pass, build the persistent embedding index and expand
+   to learned or multi-hop navigation.
 
 The repository does **not** include trained relation-head weights. Consequently, `same_entity`, `state_transition`, `explains`, `enables`, and `contradicts` must not be reported as calibrated posteriors until a teacher-labeled or human-audited relation dataset has been fitted and calibrated.
 
