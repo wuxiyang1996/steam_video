@@ -23,6 +23,16 @@ from .world_model import evidence_role_for_action
 _PACKAGE_DIR = Path(__file__).resolve().parent
 _DATASET_SCHEMA = "executed_transition_dataset.schema.json"
 _TRUST_STATUSES = {"unreviewed", "ai_provisional", "human_locked"}
+_VERIFIER_APPLICABLE_ACTIONS = {
+    NavigationActionType.TEMPORAL_BACK,
+    NavigationActionType.TEMPORAL_FORWARD,
+    NavigationActionType.TRACK_ENTITY,
+    NavigationActionType.INSPECT_STATE_CHANGE,
+    NavigationActionType.FOLLOW_DEPENDENCY,
+    NavigationActionType.CANDIDATE_CAUSE,
+    NavigationActionType.EFFECT,
+    NavigationActionType.VERIFY,
+}
 
 
 def build_executed_transition_dataset(
@@ -66,6 +76,9 @@ def build_executed_transition_dataset(
     recovery_counts: dict[str, int] = {}
     resolved_role_counts: dict[str, int] = {}
     hypothesis_disposition_counts: dict[str, int] = {}
+    verifier_outcome_counts: dict[str, int] = {}
+    verifier_source_counts: dict[str, int] = {}
+    post_read_verifier_count = 0
     grounded_count = 0
     checkpoints: list[dict[str, Any]] = []
 
@@ -162,6 +175,16 @@ def build_executed_transition_dataset(
                     for value in (invocation.get("evidence_refs") or [])
                 )
             )
+            verifier = _verifier_measurement(invocation, action)
+            verifier_outcome = str(verifier["categorical_outcome"])
+            verifier_source = str(verifier["source"])
+            verifier_outcome_counts[verifier_outcome] = (
+                verifier_outcome_counts.get(verifier_outcome, 0) + 1
+            )
+            verifier_source_counts[verifier_source] = (
+                verifier_source_counts.get(verifier_source, 0) + 1
+            )
+            post_read_verifier_count += int(verifier["post_read"] is True)
             grounded = bool(observation_ids) and bool(evidence_refs)
             grounded_count += int(grounded)
             action_name = action.action_type.value
@@ -187,6 +210,7 @@ def build_executed_transition_dataset(
                         "evidence_refs": list(evidence_refs),
                         "grounded": grounded,
                         "belief_update_audit": audit,
+                        "verifier_measurement": verifier,
                     },
                     "target": {
                         "observation_descriptor": {
@@ -231,6 +255,9 @@ def build_executed_transition_dataset(
             "hypothesis_disposition_counts": dict(
                 sorted(hypothesis_disposition_counts.items())
             ),
+            "verifier_outcome_counts": dict(sorted(verifier_outcome_counts.items())),
+            "verifier_source_counts": dict(sorted(verifier_source_counts.items())),
+            "post_read_verifier_count": post_read_verifier_count,
         },
         "checkpoints": checkpoints,
         "records": records,
@@ -501,3 +528,37 @@ def _numeric_paths(value: Any, *, path: str) -> list[str]:
             for child_path in _numeric_paths(child, path=f"{path}[{index}]")
         ]
     return [path]
+
+
+def _verifier_measurement(
+    invocation: dict[str, object],
+    action: GraphReadAction,
+) -> dict[str, Any]:
+    value = invocation.get("verifier_result") or {}
+    if not isinstance(value, dict):
+        value = {}
+    outcome = value.get("categorical_outcome")
+    if outcome not in {"supports", "rejects", "inconclusive", "not_applicable"}:
+        outcome = "inconclusive"
+    applicability = value.get("applicability")
+    if applicability not in {"applicable", "not_applicable"}:
+        applicability = (
+            "applicable"
+            if action.action_type in _VERIFIER_APPLICABLE_ACTIONS
+            else "not_applicable"
+        )
+    if applicability == "not_applicable":
+        outcome = "not_applicable"
+    return {
+        "applicability": applicability,
+        "categorical_outcome": outcome,
+        "source": str(value.get("source") or "missing_verifier_contract"),
+        "post_read": value.get("post_read") is True,
+        "evidence_refs": list(
+            dict.fromkeys(str(item) for item in (value.get("evidence_refs") or []))
+        ),
+        "reasons": list(
+            dict.fromkeys(str(item) for item in (value.get("reasons") or []))
+        ),
+        "numeric_output_exposed": False,
+    }

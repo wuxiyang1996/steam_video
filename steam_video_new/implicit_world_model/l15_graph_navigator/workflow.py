@@ -9,6 +9,12 @@ import re
 from typing import Any
 
 from .case_miner import mine_navigation_cases
+from .balanced_cases import (
+    export_reviewed_balanced_case_set,
+    lock_balanced_review_queue,
+    mine_balanced_reasoning_cases,
+    validate_balanced_review_queue,
+)
 from .executed_transitions import (
     build_executed_transition_dataset,
     export_executed_transition_training_records,
@@ -49,6 +55,32 @@ def build_parser() -> argparse.ArgumentParser:
     mine.add_argument("--per-video-limit", type=int, default=5)
     mine.add_argument("--output", required=True, type=Path)
     mine.add_argument("--report", required=True, type=Path)
+
+    balanced = commands.add_parser("mine-balanced-cases")
+    balanced.add_argument("--overlay-root", type=Path)
+    balanced.add_argument("--overlay", action="append", default=[], type=Path)
+    balanced.add_argument("--glob", default="**/causal_temporal_overlay.json")
+    balanced.add_argument("--case-set-id", required=True)
+    balanced.add_argument("--per-video-category-limit", type=int, default=2)
+    balanced.add_argument("--output", required=True, type=Path)
+    balanced.add_argument("--report", required=True, type=Path)
+    balanced.add_argument("--review-queue", required=True, type=Path)
+
+    validate_balanced = commands.add_parser("validate-balanced-review")
+    validate_balanced.add_argument("--queue", required=True, type=Path)
+
+    lock_balanced = commands.add_parser("lock-balanced-review")
+    lock_balanced.add_argument("--queue", required=True, type=Path)
+    lock_balanced.add_argument("--output", required=True, type=Path)
+    lock_balanced.add_argument("--annotator", required=True)
+    lock_balanced.add_argument(
+        "--status", choices=("ai_provisional", "human_locked"), required=True
+    )
+
+    export_balanced = commands.add_parser("export-balanced-cases")
+    export_balanced.add_argument("--queue", required=True, type=Path)
+    export_balanced.add_argument("--case-set-id", required=True)
+    export_balanced.add_argument("--output", required=True, type=Path)
 
     validate = commands.add_parser("validate-cases")
     validate.add_argument("--cases", required=True, type=Path)
@@ -157,6 +189,46 @@ def main(argv: list[str] | None = None) -> int:
         _write_json(args.output, case_set)
         _write_json(args.report, report)
         print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "mine-balanced-cases":
+        overlay_paths = [path.expanduser().resolve() for path in args.overlay]
+        if args.overlay_root is not None:
+            overlay_paths.extend(
+                sorted(args.overlay_root.expanduser().resolve().glob(args.glob))
+            )
+        overlay_paths = list(dict.fromkeys(overlay_paths))
+        if not overlay_paths:
+            raise ValueError(
+                "mine-balanced-cases requires --overlay-root or at least one --overlay"
+            )
+        case_set, report, queue = mine_balanced_reasoning_cases(
+            overlay_paths,
+            case_set_id=args.case_set_id,
+            per_video_category_limit=args.per_video_category_limit,
+        )
+        _write_json(args.output, case_set)
+        _write_json(args.report, report)
+        _write_json(args.review_queue, queue)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "validate-balanced-review":
+        errors = validate_balanced_review_queue(_read_json(args.queue))
+        print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
+        return 0 if not errors else 1
+    if args.command == "lock-balanced-review":
+        queue = lock_balanced_review_queue(
+            _read_json(args.queue),
+            annotation_status=args.status,
+            annotator=args.annotator,
+        )
+        _write_json(args.output, queue)
+        return 0
+    if args.command == "export-balanced-cases":
+        case_set = export_reviewed_balanced_case_set(
+            _read_json(args.queue),
+            case_set_id=args.case_set_id,
+        )
+        _write_json(args.output, case_set)
         return 0
     if args.command == "validate-cases":
         payload = _read_json(args.cases)

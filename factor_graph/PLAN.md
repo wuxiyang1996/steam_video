@@ -172,6 +172,19 @@ answer accuracy、evidence completeness、reads 和 action divergence。
 - 8-video/29-case provisional pilot 得到 609 个 grounded records，但 state-transition role
   resolution 只有 1 条、counterevidence action 只有 2 条，当前覆盖严重不平衡。
 
+### Phase E.3：Balanced cases 与 verifier availability（pipeline 已实现）
+
+- 13 个 correction-sensitive 类别独立 quota，`cross_category_backfill=false`；
+- outcome-blinded review queue 使用 opaque ID、broad stratum、sanitized tags/question 和
+  hash-shuffled order，并必须逐条确认 evidence chain、first action、delayed effect 与
+  `supports/rejects/inconclusive/not_applicable`，未完成不能 lock/export；
+- pre-admission hard-verifier rejects 标记为 `offline_verifier_challenge`，不能冒充合法在线 edge；
+- persisted replay 明确报告 `post_read_verifier_count=0`；
+- Video_Skills runtime arm 有 236 个 post-read claim-verifier calls，但全部 supports、0 rejects，
+  因此只通过 availability，不通过 relation-verifier validity 或 confusion-matrix gate；
+- balanced pilot 选出 54 candidates，但 identity negative、state inconclusive、contradiction、
+  useful counterevidence 仍为零，必须新增数据而不是用 temporal case 回填。
+
 同时必须清除 heuristic leakage：candidate generator 只负责 legality、provenance、blocking、
 deduplication 和预算，不能通过 lexical/question-direction/factor-priority/stable-order 决定
 winner。建立 candidate permutation test，以及 normal/null/shuffled/frozen/immediate-only/

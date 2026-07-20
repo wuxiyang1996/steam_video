@@ -490,3 +490,40 @@ answer-ready；resolved roles 为 temporal 78、identity 20、state-transition 1
 counterevidence actions。因此该 artifact 是 `unreviewed`、`formal_eligible=false` 的 pipeline
 与 coverage pilot，不能作为正式 WM accuracy 结果。下一步必须补充 state/counterevidence/
 reject/inconclusive cases，并由独立 reviewer 逐条 accept/reject 后锁定。
+
+### 13.3 Balanced correction-sensitive cases 与 verifier provenance
+
+新增的 balanced miner 对 delayed two-hop、identity/state 的
+support/reject/inconclusive、contradiction open/resolve、counterevidence、blocked-path
+recovery 和 ambiguity/abstention 分别设置 quota。稀缺类别不足时保留 deficit，禁止用普通
+temporal case 跨类别回填。当前 11-video / 15-unique-overlay pilot 共选出 54 个 draft
+candidates：15 delayed、10 identity-support、1 state-support、4 state-reject、10
+empty-counterevidence、4 blocked-path-recovery 和 10 ambiguity。identity negative、state
+inconclusive、contradiction 与 useful counterevidence 仍然缺失，因此不是正式 gold set。
+
+产物位于 [`phase_e_gpt56_provisional_v1`](experiments/phase_e_gpt56_provisional_v1/)：
+
+- `balanced_cases.draft.json`：只含待审候选；
+- `balanced_case_mining_report.json`：逐类别 available/selected/deficit；
+- `balanced_case_review.unreviewed.json`：独立 reviewer queue；
+- `video_skills_runtime_verifier_availability.json`：live runtime 可用性检查。
+
+review queue 使用 opaque ID、broad relation stratum、sanitized question/tags 和稳定 hash
+乱序，不向 reviewer 暴露 miner 预期的 support/reject/inconclusive outcome；逐条填写
+accept/reject、categorical verifier outcome、evidence-chain validity、first-action validity、
+delayed-effect 与文字理由。只有完整 review 才能 lock，只有
+locked queue 中 accepted cases 才能导出。pre-admission hard-verifier failure 被标记为
+`offline_verifier_challenge`：它可以帮助构造 negative review 样本，但在独立审查恢复之前
+不是合法在线 graph edge。
+
+executed-transition artifact 现在显式区分 verifier provenance。persisted replay 的 609 条
+记录中 `post_read_verifier_count=0`；旧 hard-verifier 只能标为 persisted/pre-read，没有
+verifier 的 replay 只能是 `inconclusive`。额外的 live Video_Skills arm 确实执行了 236 次
+post-read claim verifier，但 236 次全部返回 `supports`、没有 reject，因此只证明 runtime
+wiring 可用，不能证明 relation-level verifier 有效，更不能形成 confusion matrix。support
+检查失败一律映射为 `inconclusive`，不得自动解释为 contradiction。
+
+所以 GTSAM backup 的下一项正式实验不能直接消费这些 draft。必须先补齐 negative、
+inconclusive、contradiction 和 useful-counterevidence 数据，完成独立 review/lock，再在同一
+fixed gold set 上分别报告 verifier-direct-only 与 GTSAM propagation 的 accuracy、read
+efficiency 和 action divergence。

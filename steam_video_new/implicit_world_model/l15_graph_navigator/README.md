@@ -120,6 +120,7 @@ The first preference-only closed loop is implemented in this package:
 | `interventions.py` | Normal/null/shuffled transition controls and frozen-belief WM wrapper for causal dependence ablations |
 | `realized.py` | Recompute complete categorical deltas from persisted before/after belief; never reuse imagined deltas |
 | `executed_transitions.py` | Immutable sibling execution, normalized transition dataset, review locking, and categorical training export |
+| `balanced_cases.py` | Correction-sensitive case mining with per-category quotas, no cross-category backfill, and independent review/export gates |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
@@ -255,6 +256,44 @@ but it is not balanced: only one action resolved a state-transition role and
 only two counterevidence actions were available. It is useful for pipeline and
 coverage diagnosis, not a live post-read-verifier, production, or research
 accuracy claim.
+
+### 1.5 Balanced correction-sensitive review queue
+
+`mine-balanced-cases` targets delayed two-hop, identity/state
+support/reject/inconclusive, contradiction open/resolve, useful/empty
+counterevidence, blocked-path recovery, and ambiguity/abstention separately.
+When a category is unavailable its quota remains a reported deficit; easy
+temporal cases never fill the gap.
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  mine-balanced-cases \
+  --overlay-root memory_graph/outputs \
+  --case-set-id phase-e-balanced-reasoning-candidates-v1 \
+  --output /path/to/balanced_cases.draft.json \
+  --report /path/to/balanced_case_mining_report.json \
+  --review-queue /path/to/balanced_case_review.unreviewed.json
+```
+
+Every row requires an accept/reject decision, categorical verifier outcome,
+evidence-chain validity, first-action validity, delayed-effect label, and
+rationale. The review rows use opaque IDs, broad relation strata, sanitized
+questions/tags, deterministic hash ordering, and never expose the miner's
+expected support/reject/inconclusive outcome. Pre-admission hard-verifier failures are marked
+`offline_verifier_challenge`; they are diagnostic candidates, not legal online
+edges, unless independent review explicitly restores them.
+
+The current pilot selected 54 candidates without cross-category backfill:
+15 delayed, 10 identity-support, 1 state-support, 4 offline state-reject,
+10 empty-counterevidence, 4 blocked-path-recovery, and 10 ambiguity cases.
+Identity negatives, state inconclusive, contradiction, and useful
+counterevidence remain explicit deficits.
+
+The Video_Skills runtime availability arm completed all 609 actions and exposed
+236 post-read categorical claim-support results, but all 236 were `supports`.
+Runtime wiring is available, while relation-level verifier validity and
+negative coverage are not demonstrated. A failed support check maps to
+`inconclusive`, never automatically to `rejects`.
 
 ```bash
 # Mine draft cases and report missing relation strata. This never creates gold.

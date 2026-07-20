@@ -26,6 +26,7 @@ from memory_graph.types import (
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator import (
     Answerability,
+    BALANCED_CASE_CATEGORIES,
     ClosedLoopNavigator,
     FactorizedBeliefBackend,
     FactorGraphBeliefBackend,
@@ -43,11 +44,15 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     build_video_skills_l2_rollout,
     derive_realized_belief_delta,
     export_executed_transition_training_records,
+    export_reviewed_balanced_case_set,
     generate_sibling_artifact,
     guided_navigation_actions,
     load_overlay_artifact,
     lock_executed_transition_dataset,
+    lock_balanced_review_queue,
+    mine_balanced_reasoning_cases,
     validate_executed_transition_dataset,
+    validate_balanced_review_queue,
     validate_sibling_artifact,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.gpt_oss import (
@@ -945,6 +950,11 @@ def test_video_skills_adapter_and_siblings_emit_only_real_grounded_reads() -> No
     assert first_node["skill_id"] == "retrieve_by_relation"
     assert first_node["outputs"]["real_observation_ids"] == ["event:push"]
     assert first_node["evidence_refs"] == ["l1:push"]
+    verifier = first_node["verifier_result"]
+    assert verifier["categorical_outcome"] == "supports"
+    assert verifier["source"] == "persisted_relation_verifier"
+    assert verifier["post_read"] is False
+    assert verifier["numeric_output_exposed"] is False
     assert l2["preference_navigation"]["output_contract"] == "ordinal_only"
     assert siblings["annotation_status"] == "requires_independent_annotation"
     assert siblings["pairwise_preferences"]
@@ -954,6 +964,35 @@ def test_video_skills_adapter_and_siblings_emit_only_real_grounded_reads() -> No
     } == {belief.belief_id}
     serialized = json.dumps({"l2": l2, "siblings": siblings}).lower()
     for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
+        assert forbidden not in serialized
+
+
+def test_video_skills_runtime_verify_exposes_only_categorical_measurement() -> None:
+    overlay = _overlay()
+    belief = FactorizedBeliefBackend().initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:push",),
+        missing_roles=("verification",),
+    )
+    action = GraphReadAction(
+        NavigationActionType.VERIFY,
+        source_id="event:push",
+        target_ids=("event:open",),
+        relation="enables",
+    )
+
+    execution = VideoSkillsL2Adapter().execute(belief, action, overlay)
+    verifier = execution.skill_invocation["verifier_result"]
+
+    assert verifier["post_read"] is True
+    assert verifier["source"] == "video_skills_post_read_claim_verifier"
+    assert verifier["categorical_outcome"] in {
+        "supports", "rejects", "inconclusive"
+    }
+    assert verifier["numeric_output_exposed"] is False
+    serialized = json.dumps(verifier).lower()
+    for forbidden in ("score", "confidence", "probability", "utility"):
         assert forbidden not in serialized
 
 
@@ -1152,6 +1191,7 @@ def test_executed_transition_dataset_is_real_immutable_and_review_gated(
     assert dataset["annotation_status"] == "unreviewed"
     assert dataset["formal_eligible"] is False
     assert dataset["records"]
+    assert dataset["summary"]["post_read_verifier_count"] == 0
     assert len(dataset["checkpoints"]) == 1
     assert len({row["checkpoint_ref"] for row in dataset["records"]}) == 1
     assert all(
@@ -1244,6 +1284,64 @@ def test_realized_delta_recomputes_full_categorical_state_change() -> None:
     assert delta.hypothesis_updates[0].disposition.value == "accepted"
     assert delta.frontier_change.value == "opened"
     assert delta.recovery_status.value == "recovered"
+
+
+def test_balanced_miner_reports_deficits_without_cross_category_backfill(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay.relations[0].provenance["hard_verifier"]["state_transition"] = {
+        "passed": False,
+        "reasons": ["visible state delta is not established"],
+    }
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    quotas = {category: 0 for category in BALANCED_CASE_CATEGORIES}
+    quotas.update({"state_reject": 1, "identity_reject": 1, "counterevidence_empty": 1})
+
+    cases, report, queue = mine_balanced_reasoning_cases(
+        [overlay_path],
+        case_set_id="balanced:test",
+        quotas=quotas,
+    )
+
+    assert report["cross_category_backfill"] is False
+    assert report["selected_categories"]["state_reject"] == 1
+    assert report["selected_categories"]["counterevidence_empty"] == 1
+    assert report["quota_deficits"]["identity_reject"] == 1
+    assert len(cases["cases"]) == 2
+    assert validate_balanced_review_queue(queue) == []
+    assert "quota_deficits" not in queue
+    with pytest.raises(ValueError, match="incomplete"):
+        lock_balanced_review_queue(
+            queue,
+            annotation_status="human_locked",
+            annotator="reviewer",
+        )
+
+    reviewed = json.loads(json.dumps(queue))
+    for row in reviewed["reviews"]:
+        is_offline_reject = row["category"] == "state"
+        row["review_decision"] = "reject" if is_offline_reject else "accept"
+        row["verifier_outcome"] = "rejects" if is_offline_reject else "not_applicable"
+        row["evidence_chain_valid"] = not is_offline_reject
+        row["first_action_valid"] = not is_offline_reject
+        row["delayed_effect"] = "not_applicable"
+        row["rationale"] = "Visible evidence and online action legality reviewed."
+    locked = lock_balanced_review_queue(
+        reviewed,
+        annotation_status="human_locked",
+        annotator="reviewer",
+    )
+    exported = export_reviewed_balanced_case_set(
+        locked,
+        case_set_id="balanced:accepted",
+    )
+    assert exported["annotation_status"] == "human_locked"
+    assert len(exported["cases"]) == 1
+    serialized_reviews = json.dumps(queue["reviews"])
+    assert "state_reject" not in serialized_reviews
+    assert "counterevidence_empty" not in serialized_reviews
 
 
 def test_blinded_packet_randomizes_sides_without_reading_labels() -> None:

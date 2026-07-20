@@ -71,6 +71,14 @@ class VideoSkillsL2Adapter:
         )
         observations = tuple(by_id[node_id] for node_id in observed_ids)
         evidence_refs = _grounded_l1_refs(observations, overlay)
+        verifier_result = _categorical_verifier_result(
+            belief=belief,
+            action=action,
+            observations=observations,
+            skill_outputs=outputs,
+            evidence_refs=evidence_refs,
+            runtime_used=self.use_video_skills_runtime,
+        )
         invocation = {
             "node_id": _stable_id(
                 "skill",
@@ -105,9 +113,11 @@ class VideoSkillsL2Adapter:
                 "relation_verified_before_read": _relation_verified(
                     belief, action
                 ),
+                **verifier_result,
             },
         }
         return GraphReadExecution(observations, invocation)
+
 
     def _execute_video_skills(
         self,
@@ -184,6 +194,95 @@ class VideoSkillsL2Adapter:
             "verify_claim_support": verify_claim_support,
         }
         return self._runtime
+
+
+def _categorical_verifier_result(
+    *,
+    belief: BeliefSnapshot,
+    action: GraphReadAction,
+    observations: tuple[MemoryNode, ...],
+    skill_outputs: dict[str, Any],
+    evidence_refs: tuple[str, ...],
+    runtime_used: bool,
+) -> dict[str, Any]:
+    """Project verifier behavior without exposing scores or inventing rejects."""
+
+    if action.action_type is NavigationActionType.VERIFY:
+        if not runtime_used:
+            return {
+                "applicability": "applicable",
+                "categorical_outcome": "inconclusive",
+                "source": "persisted_replay_no_post_read_verifier",
+                "post_read": False,
+                "evidence_refs": list(evidence_refs),
+                "reasons": ["Video_Skills runtime verifier was not executed"],
+                "numeric_output_exposed": False,
+            }
+        explicit = skill_outputs.get("categorical_outcome")
+        if explicit in {"supports", "rejects", "inconclusive"}:
+            outcome = str(explicit)
+            reason = "runtime returned an explicit categorical verifier outcome"
+        elif skill_outputs.get("passed") is True and observations and evidence_refs:
+            outcome = "supports"
+            reason = "runtime claim-support verifier passed on grounded evidence"
+        else:
+            outcome = "inconclusive"
+            reason = "runtime verifier did not establish grounded support"
+        return {
+            "applicability": "applicable",
+            "categorical_outcome": outcome,
+            "source": "video_skills_post_read_claim_verifier",
+            "post_read": True,
+            "evidence_refs": list(evidence_refs),
+            "reasons": [reason],
+            "numeric_output_exposed": False,
+        }
+    persisted = _persisted_relation_verifier_outcome(belief, action)
+    if persisted is not None:
+        return {
+            "applicability": "applicable",
+            "categorical_outcome": persisted,
+            "source": "persisted_relation_verifier",
+            "post_read": False,
+            "evidence_refs": list(evidence_refs),
+            "reasons": ["categorical outcome existed before the read"],
+            "numeric_output_exposed": False,
+        }
+    if action.action_type in _RELATION_ACTIONS:
+        return {
+            "applicability": "applicable",
+            "categorical_outcome": "inconclusive",
+            "source": "no_post_read_relation_verifier",
+            "post_read": False,
+            "evidence_refs": list(evidence_refs),
+            "reasons": ["relation read has no post-read categorical verifier"],
+            "numeric_output_exposed": False,
+        }
+    return {
+        "applicability": "not_applicable",
+        "categorical_outcome": "not_applicable",
+        "source": "not_applicable",
+        "post_read": False,
+        "evidence_refs": list(evidence_refs),
+        "reasons": [],
+        "numeric_output_exposed": False,
+    }
+
+
+def _persisted_relation_verifier_outcome(
+    belief: BeliefSnapshot,
+    action: GraphReadAction,
+) -> str | None:
+    for state in belief.relation_states:
+        if action.source_id not in {state.src, state.dst}:
+            continue
+        if not any(target in {state.src, state.dst} for target in action.target_ids):
+            continue
+        if action.relation and action.relation in state.verified_relations:
+            return "supports"
+        if state.grounding.value == "contradicted":
+            return "rejects"
+    return None
 
 
 def overlay_to_video_skills_graph(

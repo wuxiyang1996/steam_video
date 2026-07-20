@@ -841,6 +841,16 @@ future retrieval but excludes raw vectors and numeric targets. Generated
 records remain unreviewed until independently accepted/rejected and locked;
 they are not automatically training gold.
 
+Verifier provenance is explicit in executed-transition records. A persisted
+hard-verifier result is labeled pre-read, replay without a verifier is
+inconclusive, and only an actually invoked Video_Skills verifier is labeled
+post-read. Failure to establish support is not treated as contradiction.
+Balanced mining reports missing correction-sensitive categories rather than
+backfilling them with ordinary temporal examples.
+Its independent review rows also remove the miner's expected outcome from the
+ID, question, tags, and category, and use stable hash ordering to prevent label
+and row-position leakage.
+
 ## 7. Are We Performing Causal Inference?
 
 The current method does not perform classical causal inference:
