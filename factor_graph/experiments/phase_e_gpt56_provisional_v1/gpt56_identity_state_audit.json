@@ -1,0 +1,50 @@
+{
+  "labels_source": "model_provisional",
+  "annotator": "gpt-5.6-sol",
+  "groups": {
+    "identity": {
+      "counts": {
+        "contradicted": 6,
+        "supported": 19,
+        "unclear": 7,
+        "unsupported": 2
+      },
+      "labeled_count": 34,
+      "decided_count": 27,
+      "decided_precision": 0.7037037037037037,
+      "conservative_precision": 0.5588235294117647,
+      "decision_coverage": 0.7941176470588235,
+      "strict_precision": 0.5588235294117647
+    },
+    "state_transition": {
+      "counts": {
+        "contradicted": 1,
+        "supported": 3,
+        "unclear": 1,
+        "unsupported": 2
+      },
+      "labeled_count": 7,
+      "decided_count": 6,
+      "decided_precision": 0.5,
+      "conservative_precision": 0.42857142857142855,
+      "decision_coverage": 0.8571428571428571,
+      "strict_precision": 0.42857142857142855
+    },
+    "other": {
+      "counts": {
+        "contradicted": 2,
+        "unsupported": 2
+      },
+      "labeled_count": 4,
+      "decided_count": 4,
+      "decided_precision": 0.0,
+      "conservative_precision": 0.0,
+      "decision_coverage": 1.0,
+      "strict_precision": 0.0
+    }
+  },
+  "acceptance_target": 0.9,
+  "decision_coverage_target": 0.95,
+  "provisional_target_met": false,
+  "acceptance_passed": false
+}

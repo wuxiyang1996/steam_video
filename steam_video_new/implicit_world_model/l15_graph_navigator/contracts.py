@@ -197,6 +197,7 @@ class PlanDecision:
 class BeliefUpdateResult:
     belief: BeliefSnapshot
     delta: BeliefDeltaDescriptor
+    audit_record: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -207,6 +208,7 @@ class NavigationStep:
     belief_after_id: str
     realized_belief_delta: BeliefDeltaDescriptor | None = None
     skill_invocation: dict[str, object] | None = None
+    belief_update_audit: dict[str, object] | None = None
 
     def to_l2_record(self) -> dict[str, object]:
         action = self.decision.selected_action
@@ -247,6 +249,7 @@ class NavigationStep:
                 else None
             ),
             "skill_invocation": self.skill_invocation,
+            "belief_update_audit": self.belief_update_audit,
         }
 
 

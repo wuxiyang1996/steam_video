@@ -1,0 +1,674 @@
+{
+  "schema_version": "steam-causal-overlay/v0.2",
+  "overlay_id": "overlay:phase-e:correction-sensitive:reject:v1",
+  "example_id": "video_holmes:train:mKqiGQrHtW8:q684",
+  "video_id": "mKqiGQrHtW8",
+  "l1_observations": [
+    {
+      "node_id": "memory:evidence.event:faf09dbfa7",
+      "video_id": "mKqiGQrHtW8",
+      "time_span": {
+        "start_s": 81.0,
+        "end_s": 85.0
+      },
+      "provenance": {
+        "created_by": "dataset_clip_wrapper.evidence_index",
+        "source_graph_id": "clue_memory:video_holmes:train:mKqiGQrHtW8:q684",
+        "source_schema_version": "video-skills-relaunch/v0.1",
+        "source_node_type": "event",
+        "adapter": "memory_graph.adapter.canonical_to_memory_nodes"
+      },
+      "node_type": "observation",
+      "text": "Man examines handheld device.",
+      "source_node_id": "evidence.event:faf09dbfa7",
+      "source_segments": [
+        "clip:mKqiGQrHtW8:fine:0028",
+        "evidence.event:faf09dbfa7"
+      ],
+      "metadata": {
+        "source_node_type": "event",
+        "source_type": "event",
+        "trust_level": null,
+        "discovery_status": null,
+        "granularity": null,
+        "visibility": {
+          "hidden_supervision": false,
+          "mode": "video_only"
+        },
+        "confidence": null,
+        "producer": "neighbor_vlm_l1_graph_composer",
+        "modality": "mixed",
+        "clip_id": "clip:mKqiGQrHtW8:fine:0028",
+        "parent_clip_id": null,
+        "local_node_id": "t_evt_1",
+        "local_id_clip_id": "clip:mKqiGQrHtW8:fine:0028",
+        "surface_form": null,
+        "observable_facts": null,
+        "events": null,
+        "entities": null,
+        "dialogue": null,
+        "ocr_text": null,
+        "source_l1_edges": [
+          {
+            "edge_id": "edge:9c5ecee57d",
+            "src": "evidence.event:faf09dbfa7",
+            "dst": "evidence.observation:5f4ddca163",
+            "edge_type": "derived_from",
+            "evidence_refs": [
+              "evidence.event:faf09dbfa7",
+              "evidence.observation:5f4ddca163"
+            ],
+            "producer": "neighbor_vlm_l1_reference_structuralizer"
+          },
+          {
+            "edge_id": "edge:aeec58752e",
+            "src": "evidence.event:faf09dbfa7",
+            "dst": "evidence.entity_mention:148813fbbc",
+            "edge_type": "entity_mention",
+            "evidence_refs": [
+              "evidence.event:faf09dbfa7",
+              "evidence.entity_mention:148813fbbc"
+            ],
+            "producer": "neighbor_vlm_l1_reference_structuralizer"
+          }
+        ],
+        "participants": [
+          {
+            "mention_id": "l1-track:evidence.entity_mention:148813fbbc",
+            "role": "other",
+            "entity_type": "person",
+            "surface": "man",
+            "confidence": 1.0,
+            "grounding_refs": [
+              "memory:evidence.event:faf09dbfa7"
+            ],
+            "source_l1_node_ids": [
+              "evidence.entity_mention:148813fbbc"
+            ],
+            "identity_basis": "grounded_singleton_observation"
+          }
+        ],
+        "states": [
+          {
+            "mention_id": "l1-track:evidence.entity_mention:148813fbbc",
+            "attribute": "gaze_direction",
+            "value": "looking down",
+            "polarity": "positive",
+            "confidence": 0.95,
+            "grounding_refs": [
+              "memory:evidence.event:faf09dbfa7"
+            ],
+            "source_l1_node_id": "evidence.state:9d86d6f787",
+            "subject_source_l1_node_id": "evidence.entity_mention:148813fbbc",
+            "subject_binding": "explicit_state_of",
+            "contract_version": "grounded-state-assertion/v1"
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:148813fbbc",
+            "attribute": "expression",
+            "value": "neutral",
+            "polarity": "positive",
+            "confidence": 0.8,
+            "grounding_refs": [
+              "memory:evidence.event:faf09dbfa7"
+            ],
+            "source_l1_node_id": "evidence.state:22a87b1865",
+            "subject_source_l1_node_id": "evidence.entity_mention:148813fbbc",
+            "subject_binding": "explicit_state_of",
+            "contract_version": "grounded-state-assertion/v1"
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:148813fbbc",
+            "attribute": "visibility",
+            "value": "partially obscured",
+            "polarity": "positive",
+            "confidence": 0.9,
+            "grounding_refs": [
+              "memory:evidence.event:faf09dbfa7"
+            ],
+            "source_l1_node_id": "evidence.state:b62efaa70d",
+            "subject_source_l1_node_id": "evidence.entity_mention:148813fbbc",
+            "subject_binding": "explicit_state_of",
+            "contract_version": "grounded-state-assertion/v1"
+          }
+        ],
+        "l1_structuralization": {
+          "status": "grounded",
+          "source_event_id": "evidence.event:faf09dbfa7",
+          "source_clip_id": "clip:mKqiGQrHtW8:fine:0028",
+          "participant_source_ids": [
+            "evidence.entity_mention:148813fbbc"
+          ],
+          "state_source_ids": [
+            "evidence.state:9d86d6f787",
+            "evidence.state:22a87b1865",
+            "evidence.state:b62efaa70d"
+          ]
+        }
+      }
+    },
+    {
+      "node_id": "memory:evidence.event:47ecad373c",
+      "video_id": "mKqiGQrHtW8",
+      "time_span": {
+        "start_s": 141.0,
+        "end_s": 145.0
+      },
+      "provenance": {
+        "created_by": "dataset_clip_wrapper.evidence_index",
+        "source_graph_id": "clue_memory:video_holmes:train:mKqiGQrHtW8:q684",
+        "source_schema_version": "video-skills-relaunch/v0.1",
+        "source_node_type": "event",
+        "adapter": "memory_graph.adapter.canonical_to_memory_nodes"
+      },
+      "node_type": "observation",
+      "text": "Man examines the wooden object.",
+      "source_node_id": "evidence.event:47ecad373c",
+      "source_segments": [
+        "clip:mKqiGQrHtW8:fine:0048",
+        "evidence.event:47ecad373c"
+      ],
+      "metadata": {
+        "source_node_type": "event",
+        "source_type": "event",
+        "trust_level": null,
+        "discovery_status": null,
+        "granularity": null,
+        "visibility": {
+          "hidden_supervision": false,
+          "mode": "video_only"
+        },
+        "confidence": null,
+        "producer": "neighbor_vlm_l1_graph_composer",
+        "modality": "mixed",
+        "clip_id": "clip:mKqiGQrHtW8:fine:0048",
+        "parent_clip_id": null,
+        "local_node_id": "t_evt_examine_0048",
+        "local_id_clip_id": "clip:mKqiGQrHtW8:fine:0048",
+        "surface_form": null,
+        "observable_facts": null,
+        "events": null,
+        "entities": null,
+        "dialogue": null,
+        "ocr_text": null,
+        "source_l1_edges": [
+          {
+            "edge_id": "edge:f3f893adb4",
+            "src": "evidence.event:47ecad373c",
+            "dst": "evidence.observation:11f27a4c82",
+            "edge_type": "derived_from",
+            "evidence_refs": [
+              "evidence.event:47ecad373c",
+              "evidence.observation:11f27a4c82"
+            ],
+            "producer": "neighbor_vlm_l1_reference_structuralizer"
+          },
+          {
+            "edge_id": "edge:a6f105fdb6",
+            "src": "evidence.event:47ecad373c",
+            "dst": "evidence.entity_mention:91381949b1",
+            "edge_type": "entity_mention",
+            "evidence_refs": [
+              "evidence.event:47ecad373c",
+              "evidence.entity_mention:91381949b1"
+            ],
+            "producer": "neighbor_vlm_l1_reference_structuralizer"
+          },
+          {
+            "edge_id": "edge:1680dd01a4",
+            "src": "evidence.event:47ecad373c",
+            "dst": "evidence.entity_mention:ddaa4d819c",
+            "edge_type": "entity_mention",
+            "evidence_refs": [
+              "evidence.event:47ecad373c",
+              "evidence.entity_mention:ddaa4d819c"
+            ],
+            "producer": "neighbor_vlm_l1_reference_structuralizer"
+          }
+        ],
+        "participants": [
+          {
+            "mention_id": "l1-track:evidence.entity_mention:91381949b1",
+            "role": "other",
+            "entity_type": "person",
+            "surface": "man",
+            "confidence": 1.0,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "source_l1_node_ids": [
+              "evidence.entity_mention:91381949b1"
+            ],
+            "identity_basis": "grounded_singleton_observation"
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:ddaa4d819c",
+            "role": "other",
+            "entity_type": "object",
+            "surface": "wooden object",
+            "confidence": 1.0,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "source_l1_node_ids": [
+              "evidence.entity_mention:ddaa4d819c"
+            ],
+            "identity_basis": "grounded_singleton_observation"
+          }
+        ],
+        "states": [
+          {
+            "mention_id": "l1-track:evidence.entity_mention:91381949b1",
+            "attribute": "gaze_direction",
+            "value": "downward",
+            "polarity": "positive",
+            "confidence": 0.95,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "source_l1_node_id": "evidence.state:f91ebdff90",
+            "subject_source_l1_node_id": "evidence.entity_mention:91381949b1",
+            "subject_binding": "explicit_state_of",
+            "contract_version": "grounded-state-assertion/v1"
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:91381949b1",
+            "attribute": "expression",
+            "value": "focused",
+            "polarity": "positive",
+            "confidence": 0.8,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "source_l1_node_id": "evidence.state:b2566a2c7b",
+            "subject_source_l1_node_id": "evidence.entity_mention:91381949b1",
+            "subject_binding": "explicit_state_of",
+            "contract_version": "grounded-state-assertion/v1"
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:ddaa4d819c",
+            "attribute": "visibility",
+            "value": "partially obscured",
+            "polarity": "positive",
+            "confidence": 0.9,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "source_l1_node_id": "evidence.state:a4886f22aa",
+            "subject_source_l1_node_id": "evidence.entity_mention:ddaa4d819c",
+            "subject_binding": "explicit_state_of",
+            "contract_version": "grounded-state-assertion/v1"
+          }
+        ],
+        "l1_structuralization": {
+          "status": "grounded",
+          "source_event_id": "evidence.event:47ecad373c",
+          "source_clip_id": "clip:mKqiGQrHtW8:fine:0048",
+          "participant_source_ids": [
+            "evidence.entity_mention:91381949b1",
+            "evidence.entity_mention:ddaa4d819c"
+          ],
+          "state_source_ids": [
+            "evidence.state:f91ebdff90",
+            "evidence.state:b2566a2c7b",
+            "evidence.state:a4886f22aa"
+          ]
+        }
+      }
+    }
+  ],
+  "atomic_events": [
+    {
+      "node_id": "event:atomic:video_skills_l1:00140",
+      "video_id": "mKqiGQrHtW8",
+      "time_span": {
+        "start_s": 81.0,
+        "end_s": 85.0
+      },
+      "provenance": {
+        "producer": "memory_graph.video_skills_l1.VideoSkillsL1AtomicEventExtractor",
+        "model": "Video_Skills/ClueMemoryGraph",
+        "layer": "L1.5",
+        "video_skills_l1_passthrough": true,
+        "l1_structuralization": {
+          "status": "grounded",
+          "source_event_id": "evidence.event:faf09dbfa7",
+          "source_clip_id": "clip:mKqiGQrHtW8:fine:0028",
+          "participant_source_ids": [
+            "evidence.entity_mention:148813fbbc"
+          ],
+          "state_source_ids": [
+            "evidence.state:9d86d6f787",
+            "evidence.state:22a87b1865",
+            "evidence.state:b62efaa70d"
+          ]
+        },
+        "adapter": "memory_graph.event_adapter.atomic_events_to_graph_nodes",
+        "phase_d_track_remap": {
+          "source_mention_id": "l1-track:evidence.entity_mention:148813fbbc",
+          "accepted_track_id": "l1-track:phase-d:mKqiGQrHtW8:man"
+        }
+      },
+      "node_type": "atomic_event",
+      "text": "Man examines handheld device. | participants: other=man | visible states: l1-track:evidence.entity_mention:148813fbbc.gaze_direction=looking down, l1-track:evidence.entity_mention:148813fbbc.expression=neutral, l1-track:evidence.entity_mention:148813fbbc.visibility=partially obscured",
+      "source_node_id": "atomic:video_skills_l1:00140",
+      "source_segments": [
+        "memory:evidence.event:faf09dbfa7"
+      ],
+      "embedding_ref": {
+        "path": "phase_d_coupled_overlay_embeddings.npy",
+        "model": "Qwen/Qwen3-VL-Embedding-2B",
+        "dimension": 2048,
+        "dtype": "float32",
+        "normalized": true,
+        "row_index": 0,
+        "checksum": "a6769cbe2f3292d3763bb92e33b3a4898ebd0669751798dddb069f3ec09b3384"
+      },
+      "metadata": {
+        "predicate": "Man examines handheld device.",
+        "confidence": 0.8,
+        "participants": [
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "role": "other",
+            "entity_type": "person",
+            "surface": "man",
+            "confidence": 1.0,
+            "grounding_refs": [
+              "memory:evidence.event:faf09dbfa7"
+            ]
+          }
+        ],
+        "states": [
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "attribute": "gaze_direction",
+            "value": "looking down",
+            "confidence": 0.95,
+            "polarity": "positive",
+            "contract_version": "grounded-state-assertion/v1",
+            "source_l1_node_id": "evidence.state:9d86d6f787",
+            "subject_source_l1_node_id": "evidence.entity_mention:148813fbbc",
+            "subject_binding": "explicit_state_of"
+          },
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "attribute": "expression",
+            "value": "neutral",
+            "confidence": 0.8,
+            "polarity": "positive",
+            "contract_version": "grounded-state-assertion/v1",
+            "source_l1_node_id": "evidence.state:22a87b1865",
+            "subject_source_l1_node_id": "evidence.entity_mention:148813fbbc",
+            "subject_binding": "explicit_state_of"
+          },
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "attribute": "visibility",
+            "value": "partially obscured",
+            "confidence": 0.9,
+            "polarity": "positive",
+            "contract_version": "grounded-state-assertion/v1",
+            "source_l1_node_id": "evidence.state:b62efaa70d",
+            "subject_source_l1_node_id": "evidence.entity_mention:148813fbbc",
+            "subject_binding": "explicit_state_of"
+          }
+        ],
+        "evidence_refs": [
+          "memory:evidence.event:faf09dbfa7"
+        ],
+        "layer": "L1.5"
+      }
+    },
+    {
+      "node_id": "event:atomic:video_skills_l1:00258",
+      "video_id": "mKqiGQrHtW8",
+      "time_span": {
+        "start_s": 141.0,
+        "end_s": 145.0
+      },
+      "provenance": {
+        "producer": "memory_graph.video_skills_l1.VideoSkillsL1AtomicEventExtractor",
+        "model": "Video_Skills/ClueMemoryGraph",
+        "layer": "L1.5",
+        "video_skills_l1_passthrough": true,
+        "l1_structuralization": {
+          "status": "grounded",
+          "source_event_id": "evidence.event:47ecad373c",
+          "source_clip_id": "clip:mKqiGQrHtW8:fine:0048",
+          "participant_source_ids": [
+            "evidence.entity_mention:91381949b1",
+            "evidence.entity_mention:ddaa4d819c"
+          ],
+          "state_source_ids": [
+            "evidence.state:f91ebdff90",
+            "evidence.state:b2566a2c7b",
+            "evidence.state:a4886f22aa"
+          ]
+        },
+        "adapter": "memory_graph.event_adapter.atomic_events_to_graph_nodes",
+        "phase_d_track_remap": {
+          "source_mention_id": "l1-track:evidence.entity_mention:91381949b1",
+          "accepted_track_id": "l1-track:phase-d:mKqiGQrHtW8:man"
+        }
+      },
+      "node_type": "atomic_event",
+      "text": "Man examines the wooden object. | participants: other=man, other=wooden object | visible states: l1-track:evidence.entity_mention:91381949b1.gaze_direction=downward, l1-track:evidence.entity_mention:91381949b1.expression=focused, l1-track:evidence.entity_mention:ddaa4d819c.visibility=partially obscured",
+      "source_node_id": "atomic:video_skills_l1:00258",
+      "source_segments": [
+        "memory:evidence.event:47ecad373c"
+      ],
+      "embedding_ref": {
+        "path": "phase_d_coupled_overlay_embeddings.npy",
+        "model": "Qwen/Qwen3-VL-Embedding-2B",
+        "dimension": 2048,
+        "dtype": "float32",
+        "normalized": true,
+        "row_index": 1,
+        "checksum": "a6769cbe2f3292d3763bb92e33b3a4898ebd0669751798dddb069f3ec09b3384"
+      },
+      "metadata": {
+        "predicate": "Man examines the wooden object.",
+        "confidence": 0.8,
+        "participants": [
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "role": "other",
+            "entity_type": "person",
+            "surface": "man",
+            "confidence": 1.0,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ]
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:ddaa4d819c",
+            "role": "other",
+            "entity_type": "object",
+            "surface": "wooden object",
+            "confidence": 1.0,
+            "grounding_refs": [
+              "memory:evidence.event:47ecad373c"
+            ]
+          }
+        ],
+        "states": [
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "attribute": "gaze_direction",
+            "value": "looking down",
+            "confidence": 0.95,
+            "polarity": "positive",
+            "contract_version": "grounded-state-assertion/v1",
+            "source_l1_node_id": "evidence.state:f91ebdff90",
+            "subject_source_l1_node_id": "evidence.entity_mention:91381949b1",
+            "subject_binding": "explicit_state_of",
+            "phase_d_normalization": {
+              "source_value": "downward",
+              "reason": "directional synonym; prevents a false state delta in smoke"
+            }
+          },
+          {
+            "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+            "attribute": "expression",
+            "value": "focused",
+            "confidence": 0.8,
+            "polarity": "positive",
+            "contract_version": "grounded-state-assertion/v1",
+            "source_l1_node_id": "evidence.state:b2566a2c7b",
+            "subject_source_l1_node_id": "evidence.entity_mention:91381949b1",
+            "subject_binding": "explicit_state_of"
+          },
+          {
+            "mention_id": "l1-track:evidence.entity_mention:ddaa4d819c",
+            "attribute": "visibility",
+            "value": "partially obscured",
+            "confidence": 0.9,
+            "polarity": "positive",
+            "contract_version": "grounded-state-assertion/v1",
+            "source_l1_node_id": "evidence.state:a4886f22aa",
+            "subject_source_l1_node_id": "evidence.entity_mention:ddaa4d819c",
+            "subject_binding": "explicit_state_of"
+          }
+        ],
+        "evidence_refs": [
+          "memory:evidence.event:47ecad373c"
+        ],
+        "layer": "L1.5"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "edge_id": "phase-d:identity",
+      "src": "event:atomic:video_skills_l1:00140",
+      "dst": "event:atomic:video_skills_l1:00258",
+      "relation_probabilities": {
+        "same_entity": 0.55
+      },
+      "status": "uncalibrated_prior",
+      "direction_confidence": 0.9,
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "provenance": {
+        "producer": "factor_graph.phase_d_smoke",
+        "source_edge_id": "relation:event:atomic:video_skills_l1:00140->event:atomic:video_skills_l1:00258:gpt-oss-teacher",
+        "participant_alignment": {
+          "src": "l1-track:phase-d:mKqiGQrHtW8:man",
+          "dst": "l1-track:evidence.entity_mention:ddaa4d819c"
+        },
+        "accepted_identity_track": "l1-track:phase-d:mKqiGQrHtW8:man",
+        "derivation": "accepted-track remap of the source edge's independently structured person alignment; fixture is an integration smoke, not a gold label"
+      },
+      "features": {}
+    },
+    {
+      "edge_id": "phase-d:state",
+      "src": "event:atomic:video_skills_l1:00140",
+      "dst": "event:atomic:video_skills_l1:00258",
+      "relation_probabilities": {
+        "state_transition": 0.55
+      },
+      "status": "uncalibrated_prior",
+      "direction_confidence": 0.9,
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "provenance": {
+        "producer": "factor_graph.phase_d_smoke",
+        "source_edge_id": "relation:event:atomic:video_skills_l1:00140->event:atomic:video_skills_l1:00258:gpt-oss-teacher",
+        "participant_alignment": {
+          "src": "l1-track:phase-d:mKqiGQrHtW8:man",
+          "dst": "l1-track:phase-d:mKqiGQrHtW8:man"
+        },
+        "accepted_identity_track": "l1-track:phase-d:mKqiGQrHtW8:man",
+        "derivation": "accepted-track remap of the source edge's independently structured person alignment; fixture is an integration smoke, not a gold label",
+        "state_delta": {
+          "mention_id": "l1-track:phase-d:mKqiGQrHtW8:man",
+          "attribute": "expression",
+          "before": "neutral",
+          "after": "focused"
+        },
+        "prior_note": "conservative pilot prior; not model- or human-calibrated"
+      },
+      "features": {}
+    },
+    {
+      "edge_id": "phase-d:dependency",
+      "src": "event:atomic:video_skills_l1:00140",
+      "dst": "event:atomic:video_skills_l1:00258",
+      "relation_probabilities": {
+        "transition_support": 0.55
+      },
+      "status": "uncalibrated_prior",
+      "direction_confidence": 0.9,
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "warrant": "Man examines handheld device. Then Man examines the wooden object.",
+      "provenance": {
+        "producer": "factor_graph.phase_d_smoke",
+        "source_edge_id": "relation:event:atomic:video_skills_l1:00140->event:atomic:video_skills_l1:00258:gpt-oss-teacher",
+        "participant_alignment": {
+          "src": "l1-track:phase-d:mKqiGQrHtW8:man",
+          "dst": "l1-track:phase-d:mKqiGQrHtW8:man"
+        },
+        "accepted_identity_track": "l1-track:phase-d:mKqiGQrHtW8:man",
+        "derivation": "accepted-track remap of the source edge's independently structured person alignment; fixture is an integration smoke, not a gold label",
+        "dependency_basis": "state_continuity",
+        "evidence_quotes": {
+          "src": "Man examines handheld device.",
+          "dst": "Man examines the wooden object."
+        }
+      },
+      "features": {}
+    },
+    {
+      "edge_id": "phase-d:conflict",
+      "src": "event:atomic:video_skills_l1:00140",
+      "dst": "event:atomic:video_skills_l1:00258",
+      "relation_probabilities": {
+        "contradicts": 0.2
+      },
+      "status": "uncalibrated_prior",
+      "direction_confidence": 0.9,
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "provenance": {
+        "producer": "factor_graph.phase_d_smoke",
+        "source_edge_id": "relation:event:atomic:video_skills_l1:00140->event:atomic:video_skills_l1:00258:gpt-oss-teacher",
+        "participant_alignment": {
+          "src": "l1-track:phase-d:mKqiGQrHtW8:man",
+          "dst": "l1-track:phase-d:mKqiGQrHtW8:man"
+        },
+        "accepted_identity_track": "l1-track:phase-d:mKqiGQrHtW8:man",
+        "derivation": "accepted-track remap of the source edge's independently structured person alignment; fixture is an integration smoke, not a gold label",
+        "conflict_basis": "same-track expression values are incompatible"
+      },
+      "features": {}
+    }
+  ],
+  "l1_structural_relations": [],
+  "metadata": {
+    "layer_contract": "l1_observations_plus_l1_5_atomic_overlay",
+    "status": "derived_grounded_integration_smoke_not_gold_benchmark",
+    "source_overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+    "source_artifact": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+    "source_artifact_sha256": "2360cba16056586765b4223afa80e330a635baabbeab529b9283a7d35b574f80",
+    "source_edge_id": "relation:event:atomic:video_skills_l1:00140->event:atomic:video_skills_l1:00258:gpt-oss-teacher",
+    "input_mode": "video_only",
+    "accepted_identity_track": "l1-track:phase-d:mKqiGQrHtW8:man",
+    "embedding_model": "Qwen/Qwen3-VL-Embedding-2B",
+    "llm_numeric_output": false,
+    "embedding_artifact": "phase_d_coupled_overlay_embeddings.npy",
+    "embedding_artifact_sha256": "a6769cbe2f3292d3763bb92e33b3a4898ebd0669751798dddb069f3ec09b3384",
+    "correction_sensitive_variant": "reject",
+    "derived_from": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_d_coupled_overlay.json"
+  }
+}

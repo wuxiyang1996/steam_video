@@ -122,3 +122,27 @@ factor-guided preference、factor-guided frozen、no-loop、shuffled measurement
 Phase D 的 derived smoke 证明端到端链路能工作，但不能替代 ≥90% strict precision 的
 独立人工 identity/state 审计，也不能替代多视频 locked gold navigation benchmark。
 因此目前正确状态仍是 `runtime_pass=true, production_ready=false`。
+
+### Phase E provisional checkpoint（2026-07-20）
+
+已完成：
+
+- 8 视频、29 case 的 `ai_provisional` 固定集合；
+- 确定性随机左右顺序的 blinded preference packet；
+- 29 条 GPT-5.6 categorical preference 与 83 条无数字 reward 的训练记录；
+- categorical transition/preference pilot；
+- 29-case matched-budget ablation，以及 frozen/shuffled 破坏性对照；
+- 单视频 45-relation provisional identity/state 审计和 native-admission baseline matrix。
+
+首轮兼容 backend 诊断门禁通过 2/3；随后 v1 closed-loop 的“3/3”已因 verifier/GTSAM
+混淆被撤回。v2 已完成独立持久 GTSAM belief、persisted-verifier 隔离、corrected delta、
+verifier-direct-only arm，以及 support/reject/inconclusive/conflict persistence 测试。
+
+29-case v2 中 normal 与 verifier-direct-only 在 accuracy proxies、reads 和全部 action
+sequences 上完全相同，所以正式结论是“尚无 GTSAM 导航收益”。三个 derived coupled
+mechanism cases 则确认 support/reject propagation 会改变下一步，而 inconclusive 不会。
+下一优先级是将这种 correction sensitivity 扩展到多视频独立人工 gold cases，再做 verifier
+confusion matrix 和统计门限预注册。
+
+状态文件：
+[`experiments/phase_e_gpt56_provisional_v1/status.json`](experiments/phase_e_gpt56_provisional_v1/status.json)。

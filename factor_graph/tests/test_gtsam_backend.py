@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import importlib.util
 from pathlib import Path
 
@@ -17,6 +18,78 @@ from memory_graph.navigation import GraphReadAction, NavigationActionType
 from steam_video_new.implicit_world_model.l15_graph_navigator.contracts import (
     GraphReadExecution,
 )
+
+
+class _SequenceVerifier:
+    def __init__(self, outcomes):
+        self.outcomes = iter(outcomes)
+
+    def verify(self, *, edge_id, action, **kwargs):
+        from factor_graph.measurement import VerifierDecision
+
+        return VerifierDecision(
+            edge_id=edge_id,
+            relation=action.relation,
+            outcome=next(self.outcomes),
+            verifier_name="test_sequence_verifier",
+            verifier_version="v1",
+            evidence_refs=("l1:a", "l1:b"),
+            reasons=("controlled categorical test decision",),
+        )
+
+
+def _persistent_navigation_overlay() -> CausalTemporalOverlay:
+    observations = [
+        MemoryNode(
+            node_id=f"l1:{name}",
+            video_id="video:persistent",
+            time_span=TimeSpan(index * 2.0, index * 2.0 + 1.0),
+            provenance={"producer": "test"},
+            node_type="observation",
+        )
+        for index, name in enumerate(("a", "b"))
+    ]
+    events = [
+        MemoryNode(
+            node_id=f"event:{name}",
+            video_id="video:persistent",
+            time_span=observation.time_span,
+            provenance={"producer": "test"},
+            node_type="atomic_event",
+            source_segments=[observation.node_id],
+        )
+        for name, observation in zip(("a", "b"), observations, strict=True)
+    ]
+    return CausalTemporalOverlay(
+        overlay_id="overlay:persistent",
+        example_id="example:persistent",
+        video_id="video:persistent",
+        l1_observations=observations,
+        atomic_events=events,
+        relations=[
+            RelationBelief(
+                edge_id="edge:identity",
+                src="event:a",
+                dst="event:b",
+                relation_probabilities={"same_entity": 0.2},
+                status=RelationStatus.UNCALIBRATED_PRIOR,
+                direction_confidence=0.5,
+                provenance={
+                    "hard_verifier": {
+                        "same_entity": {"passed": True, "reasons": []}
+                    }
+                },
+            ),
+            RelationBelief(
+                edge_id="edge:state",
+                src="event:a",
+                dst="event:b",
+                relation_probabilities={"state_transition": 0.55},
+                status=RelationStatus.UNCALIBRATED_PRIOR,
+                direction_confidence=0.5,
+            ),
+        ],
+    )
 
 
 def test_categorical_projection_has_three_public_states() -> None:
@@ -220,6 +293,219 @@ def test_executed_measurement_session_is_grounded_idempotent_and_propagates() ->
     record = session.journal.to_records()[0]
     assert record["outcome"] == "supports"
     assert "confidence" not in record
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_navigation_backend_corrects_after_execution_while_frozen_does_not() -> None:
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+    from steam_video_new.implicit_world_model.l15_graph_navigator.overlay_io import (
+        load_overlay_artifact,
+    )
+    from steam_video_new.implicit_world_model.l15_graph_navigator.planner import (
+        PersistedGraphReadExecutor,
+    )
+
+    overlay = load_overlay_artifact(
+        Path(__file__).resolve().parents[1] / "fixtures" / "phase_d_coupled_overlay.json"
+    ).overlay
+    action = GraphReadAction(
+        NavigationActionType.FOLLOW_DEPENDENCY,
+        source_id="event:atomic:video_skills_l1:00140",
+        target_ids=("event:atomic:video_skills_l1:00258",),
+        relation="transition_support",
+    )
+    results = {}
+    for mode in ("correct", "frozen"):
+        backend = GTSAMExecutedReadBeliefBackend(mode=mode)
+        belief = backend.initialize(
+            "What does the state change support?",
+            overlay,
+            seed_evidence=("event:atomic:video_skills_l1:00140",),
+            missing_roles=("dependency",),
+            graph_read_budget=2,
+        )
+        execution = PersistedGraphReadExecutor().execute(belief, action, overlay)
+        results[mode] = backend.update_from_execution(
+            belief, action, execution, overlay
+        )
+
+    assert results["correct"].audit_record["measurement_status"] == "appended"
+    assert results["correct"].belief.missing_roles == ()
+    assert results["correct"].belief.answerability.value == "ready"
+    assert results["frozen"].audit_record["measurement_status"] == "frozen"
+    assert results["frozen"].belief.missing_roles == ("dependency",)
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_navigation_belief_excludes_persisted_verifier_and_persists_correction() -> None:
+    from factor_graph.measurement import MeasurementOutcome
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+    overlay = _persistent_navigation_overlay()
+    backend = GTSAMExecutedReadBeliefBackend(
+        verifier=_SequenceVerifier((MeasurementOutcome.SUPPORTS,))
+    )
+    initial = backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=3,
+    )
+    assert all(not state.verified_relations for state in initial.relation_states)
+    assert all("hard_verified_relation" not in state.factor_sources for state in initial.relation_states)
+
+    action = GraphReadAction(
+        NavigationActionType.TRACK_ENTITY,
+        source_id="event:a",
+        target_ids=("event:b",),
+        relation="same_entity",
+    )
+    execution = GraphReadExecution(
+        observations=(overlay.atomic_events[1],),
+        skill_invocation={
+            "node_id": "skill:identity-support",
+            "status": "executed",
+            "outputs": {"real_observation_ids": ["event:b"]},
+            "evidence_refs": ["l1:b"],
+        },
+    )
+    corrected = backend.update_from_execution(initial, action, execution, overlay)
+    assert corrected.belief.missing_roles == ()
+    assert corrected.delta.resolved_roles == ("identity",)
+    assert corrected.delta.answerability_after is corrected.belief.answerability
+
+    semantic = GraphReadAction(
+        NavigationActionType.SEMANTIC,
+        source_id="event:b",
+        target_ids=("l1:b",),
+    )
+    second_execution = GraphReadExecution(
+        observations=(overlay.l1_observations[1],),
+        skill_invocation={
+            "node_id": "skill:semantic-after-correction",
+            "status": "executed",
+            "outputs": {"real_observation_ids": ["l1:b"]},
+            "evidence_refs": ["l1:b"],
+        },
+    )
+    persisted = backend.update_from_execution(
+        corrected.belief, semantic, second_execution, overlay
+    )
+    identity = next(
+        state for state in persisted.belief.relation_states if state.edge_id == "edge:identity"
+    )
+    assert identity.verified_relations == ("same_entity",)
+    assert persisted.belief.missing_roles == ()
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_navigation_reject_inconclusive_and_conflict_are_persistent() -> None:
+    from factor_graph.measurement import MeasurementOutcome
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+    overlay = _persistent_navigation_overlay()
+    action = GraphReadAction(
+        NavigationActionType.TRACK_ENTITY,
+        source_id="event:a",
+        target_ids=("event:b",),
+        relation="same_entity",
+    )
+
+    inconclusive_backend = GTSAMExecutedReadBeliefBackend(
+        verifier=_SequenceVerifier((MeasurementOutcome.INCONCLUSIVE,))
+    )
+    inconclusive_initial = inconclusive_backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=2,
+    )
+    inconclusive_execution = GraphReadExecution(
+        observations=(overlay.atomic_events[1],),
+        skill_invocation={
+            "node_id": "skill:identity-inconclusive",
+            "status": "executed",
+            "outputs": {"real_observation_ids": ["event:b"]},
+            "evidence_refs": ["l1:b"],
+        },
+    )
+    inconclusive = inconclusive_backend.update_from_execution(
+        inconclusive_initial, action, inconclusive_execution, overlay
+    )
+    assert inconclusive.audit_record["factor_activated"] is False
+    assert inconclusive.audit_record["changed_variables"] == []
+    assert inconclusive.belief.missing_roles == ("identity",)
+
+    conflict_backend = GTSAMExecutedReadBeliefBackend(
+        verifier=_SequenceVerifier(
+            (MeasurementOutcome.SUPPORTS, MeasurementOutcome.REJECTS)
+        )
+    )
+    conflict_initial = conflict_backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=3,
+    )
+    support_execution = replace(
+        inconclusive_execution,
+        skill_invocation={
+            **inconclusive_execution.skill_invocation,
+            "node_id": "skill:identity-support-then-reject",
+        },
+    )
+    supported = conflict_backend.update_from_execution(
+        conflict_initial, action, support_execution, overlay
+    )
+    reject_execution = replace(
+        inconclusive_execution,
+        skill_invocation={
+            **inconclusive_execution.skill_invocation,
+            "node_id": "skill:identity-reject-after-support",
+        },
+    )
+    conflicted = conflict_backend.update_from_execution(
+        supported.belief, action, reject_execution, overlay
+    )
+    assert conflicted.belief.missing_roles == ("identity",)
+    assert "edge:identity" in conflicted.belief.contradictions
+    assert "edge:identity" in conflicted.belief.blocked_edge_ids
+    assert conflicted.delta.answerability_after is conflicted.belief.answerability
+    assert len(conflict_backend.session.journal.measurements) == 2
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_correction_sensitive_navigation_separates_propagation_from_verifier(
+    tmp_path: Path,
+) -> None:
+    from factor_graph.correction_sensitive_experiment import run_experiment
+
+    report = run_experiment(
+        Path(__file__).resolve().parents[1] / "fixtures" / "phase_d_coupled_overlay.json",
+        tmp_path,
+    )
+
+    assert report["summary"] == {
+        "case_count": 3,
+        "support_propagation_changes_next_action": True,
+        "reject_propagation_changes_next_action": True,
+        "inconclusive_is_negative_control": True,
+    }
+    support, reject, inconclusive = report["cases"]
+    assert support["arms"]["correct"]["probe_outcome"] == "supports"
+    assert reject["arms"]["correct"]["probe_outcome"] == "rejects"
+    assert inconclusive["arms"]["correct"]["probe_outcome"] == "inconclusive"
+    assert (
+        support["arms"]["correct"]["next_action"]
+        != support["arms"]["verifier_only"]["next_action"]
+    )
+    assert (
+        inconclusive["arms"]["correct"]["next_action"]
+        == inconclusive["arms"]["verifier_only"]["next_action"]
+    )
 
 
 def test_measurement_rejects_unexecuted_or_ungrounded_evidence() -> None:

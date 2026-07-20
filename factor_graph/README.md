@@ -22,8 +22,8 @@ Implicit world model
   → 对完整候选轨迹只给 pairwise preference
 
 Planner
-  → 选择偏好轨迹的第一步 skill
-  → 执行真实 action，读取真实 observation
+  → 为 multi-hop reasoning 选择偏好轨迹的第一个 reasoning hop
+  → 执行真实 evidence query / graph read，读取真实 observation
   → 把 measurement 加入 factor graph，更新 belief，再规划
 
 L2
@@ -32,6 +32,16 @@ L2
 
 所以因子图不替代 L2，也不替代 implicit world model。它是探索期间的 belief
 state；L2 是执行日志；world model 是候选轨迹的预测器和序数比较器。
+
+这里的 `action` 不是机器人物理动作，而是多跳推理的下一跳：读取事件、沿
+temporal/causal/identity/state edge 扩展、验证 relation、查询冲突证据，或
+`stop_and_answer`。若接口继续使用 `skill`，它表示 reasoning skill。Planner 只执行
+获偏好轨迹的第一跳，然后用真实新证据更新 GTSAM belief 并重新规划。
+
+Planner/LLM 的输入边界定义在
+[`l15_graph_navigator/README.md`](../steam_video_new/implicit_world_model/l15_graph_navigator/README.md#41-bounded-reasoning-context)。
+它只接收经检索和裁剪的局部子图、categorical belief 摘要和少量候选轨迹；完整
+Memory Graph、GTSAM 数值、raw embedding 向量和全部历史不进入 prompt。
 
 ## 2. Active SLAM 类比
 
@@ -323,3 +333,75 @@ dependency measurement 非空；冲突 measurement 被 append-only journal 保�
 不是独立人工 gold。下一步必须建立多视频固定 case set，完成 identity/state 双盲人工
 审计与 categorical verifier confusion matrix，再运行 closed-loop matched-budget 导航
 消融。只有这些门禁通过后，才应考虑替换默认 backend。
+
+## 13. Phase E：GPT-5.6 provisional pilot（2026-07-20）
+
+本轮建立了可复现、但不冒充正式 gold 的实证基线，完整状态见
+[`phase_e_gpt56_provisional_v1/status.json`](experiments/phase_e_gpt56_provisional_v1/status.json)。
+当前会话中的 GPT-5.6 只给出 categorical 判断和轨迹 pairwise preference；没有输出
+reward、confidence、probability 或 utility 数字，也没有发生远程模型 API 调用。
+
+- 从 9 个真实 overlay 加 Phase D fixture 挖出 30 条候选，逐条检查后锁定 29 条
+  `ai_provisional` cases，覆盖 8 个视频；其中 identity 7、temporal 8、
+  state-transition 1、verified-dependency 1、delayed bridge 12。
+- blinded sibling packet 的左右顺序改为基于 packet/case/index 的确定性 hash 随机化，
+  避免固定 left/right 位置泄漏。29 条比较全部形成 categorical provisional labels，
+  并导出 83 条无数字 reward 的训练记录。
+- 视频隔离的 preference pilot 在 6 条 held-out comparisons 上 exact accuracy 为 66.7%；
+  样本很小，只用于验证数据与训练链路。
+- 29-case matched-budget ablation 中，semantic/event/native/verified 分别为
+  55.2%/58.6%/58.6%/58.6%，factor-graph direct 为 75.9%，rule lookahead 为
+  82.8%，shuffled 为 72.4%。lookahead 优于 direct 且 relation shuffle 有伤害。
+- normal lookahead 与 frozen-posterior 同为 82.8%，所以第三个诊断 gate 失败。这表明
+  当前 matched evaluator 尚未把“执行真实 read → categorical measurement → GTSAM belief
+  correction → replan”真正接入策略差异，不能把提升归因于在线 belief correction。
+- 单视频 45 条旧 L1 admitted candidates 的 GPT-5.6 临时审计得到 identity strict
+  precision 55.9%、state-transition 42.9%，均未达到 90%。admission baseline 的
+  confusion matrix 只是“候选存在即 supports”的诊断，不是 post-read verifier matrix。
+
+因此本轮结论仍为 `runtime_pass=true, production_ready=false`。正式门禁还需要：多视频
+独立人工 identity/state 标注；真实 post-read verifier 的三分类 confusion matrix；以及
+更多非空、correction-sensitive 的 state/dependency/counter-evidence cases。闭环接入后的
+严格复核结果见下一节。
+
+### 13.1 Executed-read GTSAM closed loop v2
+
+严格复核后，v1 的“3/3 gate”已经撤回：唯一的读取差异来自 categorical verifier 直接
+消除 missing role，并不能归因于 GTSAM。v2 做了以下隔离修复：
+
+- GTSAM backend 独立、持久地维护 acquired evidence、missing roles、relation grounding、
+  priority、blocked edges 和 contradiction，不再从 compatibility backend 重建每一步；
+- 初始化和后续更新均删除 persisted `hard_verifier` 状态，只有当前 session 中真实执行后
+  的 measurement 能改变 relation belief；
+- corrected belief 之后重新计算 `BeliefDeltaDescriptor`，不再复用 correction 前的 delta；
+- 新增 `categorical_verifier_direct_only_lookahead`，用于隔离 verifier 直接更新与 GTSAM
+  propagation；
+- VERIFY action 显式携带 typed relation endpoint，避免 provenance reread 无法归因到 edge；
+- accuracy proxy、ready+evidence accuracy、真实读取次数和 action divergence 分开报告，
+  不再聚合成 lexicographic pass/fail。
+
+```bash
+PYTHONPATH=. /tmp/steam-video-gtsam-venv/bin/python -m \
+  steam_video_new.implicit_world_model.l15_graph_navigator.workflow evaluate \
+  --cases factor_graph/experiments/phase_e_gpt56_provisional_v1/\
+cases.locked_ai_provisional.json \
+  --output factor_graph/experiments/phase_e_gpt56_provisional_v1/\
+matched_ablation_gtsam_closed_loop_v2.json \
+  --allow-ai-provisional --gtsam-closed-loop
+```
+
+固定 29-case set 的严格结果见
+[`matched_ablation_gtsam_closed_loop_v2.json`](experiments/phase_e_gpt56_provisional_v1/matched_ablation_gtsam_closed_loop_v2.json)：
+
+- 38 条 journal records 中只有 14 条激活 factor；24 条 `inconclusive` 正确 abstain；
+- 产生 2 个 direct categorical changes 和 1 个 propagated change；
+- normal 与 verifier-direct-only 的 evidence-completion proxy、ready+evidence accuracy、
+  mean reads 和全部 29 条 action sequences 完全相同；
+- 因此该固定集合仍未证明 GTSAM propagation 带来导航收益。
+
+为确认机制确实能影响重新规划，新增三个 derived grounded correction-sensitive cases，见
+[`correction_sensitive_navigation.json`](experiments/phase_e_gpt56_provisional_v1/correction_sensitive_navigation.json)。
+state support 传播到 identity、identity reject 传播到 state rejection 时，normal 的下一步
+均与 verifier-direct-only/frozen/shuffled 不同；inconclusive 不激活 factor，且 normal 与
+verifier-direct-only 下一步相同。它证明了 propagation→replan 机制，而不是正式 accuracy
+收益；这些 cases 来自 Phase D fixture，不是独立人工 gold。因此生产状态仍为 false。

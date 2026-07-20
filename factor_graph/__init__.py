@@ -25,6 +25,7 @@ from .measurement import (
 )
 from .session import GTSAMBeliefSession, SessionUpdateResult
 from .post_read_verifier import PostReadCategoricalVerifier
+from .navigation_backend import GTSAMExecutedReadBeliefBackend
 
 __all__ = [
     "BeliefLabel",
@@ -32,6 +33,7 @@ __all__ = [
     "FactorSpec",
     "GTSAM_AVAILABLE",
     "GTSAMDiscreteBeliefGraph",
+    "GTSAMExecutedReadBeliefBackend",
     "GTSAMBeliefSession",
     "GTSAMOverlayAdapter",
     "InferenceResult",

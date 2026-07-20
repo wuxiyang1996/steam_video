@@ -22,8 +22,9 @@ implicit world model
   → predict categorical observation descriptors and belief deltas
 
 navigator
-  → compare complete candidate trajectories by pairwise preference
-  → execute only the first planned action
+  → choose the next evidence-acquisition / reasoning hop for multi-hop reasoning
+  → compare complete candidate reasoning trajectories by pairwise preference
+  → execute only the first planned hop
   → read a real L1 / L1.5 node
   → update the belief and replan
 ```
@@ -46,7 +47,7 @@ The first preference-only closed loop is implemented in this package:
 | `factor_graph.py` | Production-compatible discrete sum-product adapter; canonical design and GTSAM pilot are in [`factor_graph/`](../../../factor_graph/) |
 | `continuous.py` | Compatibility protocol for optional continuous smoothing; canonical boundary is documented in [`factor_graph/`](../../../factor_graph/) |
 | `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
-| `planner.py` | Horizon-one/two expansion, pairwise partial-order selection, real read, belief update, and replanning |
+| `planner.py` | Horizon-one/two next-hop expansion, pairwise partial-order selection, real evidence read, belief update, and replanning |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
@@ -259,6 +260,13 @@ It does not mean generating a physical counterfactual video, and it is not a do-
 
 ## 4. Closed-Loop Navigation
 
+Here, an `action` is not a physical robot action. It is a next-hop
+evidence-acquisition or reasoning operation in a multi-hop chain, such as
+reading a supporting event, following a temporal or dependency edge, resolving
+an identity, comparing before/after state, seeking counter-evidence, or stopping
+to answer. If the term `skill` is retained in an interface, it means a
+**reasoning skill**.
+
 At step \(t\):
 
 ```text
@@ -274,9 +282,62 @@ o_t+1 = ReadGraph(G, a_t)
 z_t+1 = Update(z_t, a_t, o_t+1)
 ```
 
-The planner executes only the first action of the preferred trajectory.
+The planner executes only the first reasoning hop of the preferred trajectory.
 Subsequent imagined observations do not enter the evidence set and must not
 enter the answer directly.
+
+### 4.1 Bounded reasoning context
+
+The planner and world model must not receive the complete Memory Graph, all
+GTSAM variables/factors, every past hop, or every expanded trajectory. That
+input grows too quickly for multi-video, multi-hop navigation and exposes solver
+details that the LLM must not interpret.
+
+Each planning round should construct a compact `ReasoningContext` containing
+only:
+
+- the query and current answer constraints;
+- unresolved or missing evidence roles;
+- a retrieved local subgraph relevant to the candidate hop;
+- a categorical summary of accepted, rejected, and unresolved hypotheses;
+- references to acquired evidence, plus only the most recent local history;
+- the two candidate trajectories currently being compared.
+
+The recommended input path is:
+
+```text
+complete Memory Graph
+  → embedding / structural retrieval
+  → candidate local subgraph
+  → query-, missing-role-, and conflict-conditioned pruning
+  → bounded ReasoningContext
+  → categorical world-model prediction
+  → pairwise trajectory preference
+```
+
+Embeddings, including the `Qwen/Qwen3-VL-Embedding-2B` field, are retrieval
+features and references; raw embedding vectors must not be placed in the LLM
+prompt. Likewise, GTSAM priors, likelihoods, marginals, covariance, and factor
+weights remain solver-internal. The LLM sees categorical belief descriptors,
+for example `accepted`, `rejected`, `unresolved`, `missing`, or
+`answerability=insufficient`, and never produces numeric confidence, reward,
+probability, or utility.
+
+The runtime should enforce and audit three independent budgets:
+
+- **retrieval budget:** maximum local nodes and edges retrieved per round;
+- **candidate budget:** maximum legal next hops retained after deterministic
+  filtering;
+- **comparison budget:** maximum pairwise trajectory comparisons, preferably
+  using a tournament or staged selection instead of a full all-pairs expansion.
+
+Long history must be folded into the current belief snapshot, acquired-evidence
+references, unresolved questions, and a short recent-hop window. Every run
+should record retrieved/dropped nodes and edges, candidate count, comparison
+count, prompt tokens, and real evidence reads. Context-budget ablations must
+report final-answer accuracy, evidence-chain completeness, and read efficiency
+at fixed budgets; increasing the model context window is not a substitute for
+this retrieval boundary.
 
 ## 5. Belief State
 
@@ -556,3 +617,22 @@ production-compatible Python sum-product adapter and
 not silently change navigator inference. Use `--factor-iterations N` only for
 the compatibility backend; use the commands in the canonical document for the
 GTSAM pilot.
+
+## 15. Phase E Provisional Evidence
+
+The 2026-07-20 pilot locks 29 AI-provisional cases across 8 videos, creates a
+side-randomized blinded packet with 29 categorical GPT-5.6 preferences, trains
+categorical transition/preference pilots, and runs the matched-budget arms.
+No LLM-produced numeric reward, confidence, probability, or utility enters the
+training data. Full metrics and provenance are recorded in
+[`factor_graph/experiments/phase_e_gpt56_provisional_v1/status.json`](../../../factor_graph/experiments/phase_e_gpt56_provisional_v1/status.json).
+
+This is engineering evidence, not gold: independent human identity/state
+labels and an actual post-read verifier confusion matrix are still absent.
+The strict v2 `evaluate --gtsam-closed-loop` follow-up adds a
+verifier-direct-only arm and removes the former aggregate lexicographic gate.
+On the 29-case set, GTSAM correction and verifier-direct-only have identical
+accuracy proxies, mean reads, and action sequences, so no GTSAM navigation
+benefit is claimed. Three derived coupled mechanism cases separately show that
+support/reject propagation changes the next action while inconclusive remains
+a no-factor negative control. These mechanism cases are not independent gold.

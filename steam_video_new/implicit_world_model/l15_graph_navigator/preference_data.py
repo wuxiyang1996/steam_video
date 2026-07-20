@@ -96,6 +96,13 @@ def build_preference_annotation_packet(
             right_id = str(row.get("right_branch_id") or "")
             if left_id not in branches or right_id not in branches:
                 raise ValueError(f"unknown sibling branch in {case_id}: {left_id}, {right_id}")
+            left = _blinded_branch(branches[left_id])
+            right = _blinded_branch(branches[right_id])
+            ordering_digest = hashlib.sha256(
+                f"{packet_id}\0{case_id}\0{index}".encode("utf-8")
+            ).digest()
+            if ordering_digest[0] % 2:
+                left, right = right, left
             comparisons.append(
                 {
                     "comparison_id": f"{case_id}:comparison:{index:05d}",
@@ -103,8 +110,8 @@ def build_preference_annotation_packet(
                     "video_id": str(artifact.get("video_id") or artifact.get("example_id") or "unknown"),
                     "question": question,
                     "checkpoint_summary": checkpoint_summary,
-                    "left": _blinded_branch(branches[left_id]),
-                    "right": _blinded_branch(branches[right_id]),
+                    "left": left,
+                    "right": right,
                     "label": None,
                     "rationale": "",
                 }
@@ -122,6 +129,7 @@ def build_preference_annotation_packet(
             "Prefer evidence-grounded role resolution and answerability without unresolved contradiction.",
             "Use incomparable when branches make different useful progress without a justified ordering.",
             "This packet hides rule-based provisional labels and relation posterior probabilities.",
+            "Left/right ordering is deterministically randomized without reading any label.",
         ],
         "comparisons": comparisons,
     }

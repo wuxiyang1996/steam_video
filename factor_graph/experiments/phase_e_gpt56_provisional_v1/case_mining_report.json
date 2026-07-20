@@ -1,0 +1,60 @@
+{
+  "schema_version": "steam-navigation-case-mining-report/v0.1",
+  "case_set_id": "phase-e-gpt56-provisional-v1",
+  "requested_case_count": 30,
+  "selected_case_count": 30,
+  "selected_video_count": 8,
+  "available_overlay_count": 10,
+  "duplicate_overlay_count": 0,
+  "requested_quotas": {
+    "temporal": 8,
+    "identity": 8,
+    "state_transition": 8,
+    "verified_dependency": 8,
+    "delayed_bridge": 6,
+    "counterevidence": 2
+  },
+  "available_candidates": {
+    "temporal": 192,
+    "identity": 161,
+    "state_transition": 1,
+    "verified_dependency": 1,
+    "delayed_bridge": 516,
+    "counterevidence": 0
+  },
+  "selected_categories": {
+    "state_transition": 1,
+    "verified_dependency": 1,
+    "identity": 8,
+    "temporal": 8,
+    "delayed_bridge": 12
+  },
+  "quota_deficits": {
+    "temporal": 0,
+    "identity": 0,
+    "state_transition": 7,
+    "verified_dependency": 7,
+    "delayed_bridge": 0,
+    "counterevidence": 2
+  },
+  "relation_coverage": {
+    "same_entity": 161,
+    "state_transition": 1,
+    "transition_support": 1,
+    "temporal_next": 192,
+    "before": 707,
+    "during": 7
+  },
+  "split_case_counts": {
+    "test": 6,
+    "dev": 8,
+    "train": 16
+  },
+  "diagnostic_case_count": 12,
+  "formal_ready": false,
+  "formal_blockers": [
+    "all mined cases are draft hypotheses, not independent human gold",
+    "acceptable actions and evidence chains require blinded human review",
+    "quota deficits remain: {'temporal': 0, 'identity': 0, 'state_transition': 7, 'verified_dependency': 7, 'delayed_bridge': 0, 'counterevidence': 2}"
+  ]
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import hashlib
 from itertools import combinations
 import re
 
@@ -184,7 +185,12 @@ class ClosedLoopNavigator:
                 break
             execution = self.executor.execute(belief, action, overlay)
             observations = list(execution.observations)
-            update = self.backend.update(belief, action, observations, overlay)
+            execution_update = getattr(self.backend, "update_from_execution", None)
+            update = (
+                execution_update(belief, action, execution, overlay)
+                if callable(execution_update)
+                else self.backend.update(belief, action, observations, overlay)
+            )
             steps.append(
                 NavigationStep(
                     belief_before_id=belief.belief_id,
@@ -193,6 +199,7 @@ class ClosedLoopNavigator:
                     belief_after_id=update.belief.belief_id,
                     realized_belief_delta=update.delta,
                     skill_invocation=execution.skill_invocation,
+                    belief_update_audit=update.audit_record,
                 )
             )
             belief = update.belief
@@ -215,9 +222,27 @@ class PersistedGraphReadExecutor:
         overlay: CausalTemporalOverlay,
     ) -> GraphReadExecution:
         observations = tuple(execute_real_graph_read(action, overlay))
+        action_key = "\x1f".join(
+            (
+                belief.belief_id,
+                action.action_type.value,
+                action.source_id or "",
+                *action.target_ids,
+                action.relation or "",
+            )
+        )
+        node_id = f"persisted-read:{hashlib.sha256(action_key.encode('utf-8')).hexdigest()[:24]}"
+        evidence_refs = tuple(
+            dict.fromkeys(
+                ref
+                for node in observations
+                for ref in node.source_segments
+            )
+        )
         return GraphReadExecution(
             observations=observations,
             skill_invocation={
+                "node_id": node_id,
                 "skill_id": "persisted_graph_read",
                 "args": {
                     "action_type": action.action_type.value,
@@ -228,6 +253,7 @@ class PersistedGraphReadExecutor:
                 "outputs": {
                     "real_observation_ids": [node.node_id for node in observations],
                 },
+                "evidence_refs": list(evidence_refs),
                 "status": "executed" if observations else "insufficient",
             },
         )
@@ -423,6 +449,7 @@ def _verification_targets(
     by_id = {
         node.node_id: node for node in overlay.atomic_events + overlay.l1_observations
     }
+    endpoint = str(getattr(edge, "dst", ""))
     candidates = [
         str(value)
         for value in getattr(edge, "evidence_refs", ())
@@ -432,6 +459,10 @@ def _verification_targets(
         node = by_id.get(endpoint)
         if node is not None:
             candidates.extend(ref for ref in node.source_segments if ref in known)
-    return tuple(
+    evidence_targets = tuple(
         value for value in dict.fromkeys(candidates) if value not in acquired
     )
+    # A verifier reread may include provenance nodes, but the typed endpoint
+    # must remain explicit so the executed action is unambiguously attributable
+    # to one relation measurement.
+    return tuple(dict.fromkeys(((endpoint,) if endpoint in known else ()) + evidence_targets))

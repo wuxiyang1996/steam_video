@@ -430,7 +430,8 @@ def _short_text(value: str, limit: int = 120) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--overlay-root", required=True, type=Path)
+    parser.add_argument("--overlay-root", type=Path)
+    parser.add_argument("--overlay", action="append", default=[], type=Path)
     parser.add_argument("--glob", default="**/causal_temporal_overlay.json")
     parser.add_argument("--case-set-id", required=True)
     parser.add_argument("--desired-count", type=int, default=40)
@@ -438,7 +439,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
     args = parser.parse_args(argv)
-    paths = sorted(args.overlay_root.expanduser().resolve().glob(args.glob))
+    paths = [path.expanduser().resolve() for path in args.overlay]
+    if args.overlay_root is not None:
+        paths.extend(sorted(args.overlay_root.expanduser().resolve().glob(args.glob)))
+    paths = list(dict.fromkeys(paths))
+    if not paths:
+        raise ValueError("requires --overlay-root or at least one --overlay")
     cases, report = mine_navigation_cases(
         paths,
         case_set_id=args.case_set_id,

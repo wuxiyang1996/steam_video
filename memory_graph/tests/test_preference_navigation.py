@@ -12,6 +12,10 @@ from memory_graph.navigation import (
     NavigationActionType,
     propose_navigation_actions,
 )
+from memory_graph.categorical_confusion import (
+    admitted_candidate_predictions,
+    categorical_confusion_report,
+)
 from memory_graph.types import (
     CausalTemporalOverlay,
     EmbeddingRef,
@@ -50,6 +54,12 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.preference_data im
     lock_navigation_case_set,
     validate_navigation_case_set,
     validate_preference_annotation_packet,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.preference_review import (
+    apply_preference_review,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.provisional_review import (
+    apply_provisional_case_review,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.train_models import (
     predict_preference_label,
@@ -347,7 +357,8 @@ def test_factor_graph_propagates_identity_component_contradiction() -> None:
         if action.action_type is NavigationActionType.VERIFY
     ]
     assert verify
-    assert set(verify[0].target_ids) <= {"l1:a", "l1:b", "l1:c"}
+    assert "event:b" in verify[0].target_ids
+    assert set(verify[0].target_ids) <= {"event:b", "l1:a", "l1:b", "l1:c"}
 
 
 def test_factor_graph_ignores_unverified_contradiction_candidate() -> None:
@@ -792,6 +803,139 @@ def test_case_lock_annotation_packet_and_training_export_enforce_trust_boundary(
         assert forbidden not in lowered
 
 
+def test_blinded_packet_randomizes_sides_without_reading_labels() -> None:
+    overlay = _overlay()
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    artifact = generate_sibling_artifact(
+        belief,
+        overlay,
+        backend=backend,
+        executor=VideoSkillsL2Adapter(use_video_skills_runtime=False),
+        world_model=RuleBasedObservationBeliefModel(),
+        preference_model=RuleBasedTrajectoryPreferenceModel(),
+    )
+    first = build_preference_annotation_packet(
+        [("door-dependency", artifact)],
+        packet_id="packet:a",
+        max_comparisons_per_case=1,
+    )
+    repeated = build_preference_annotation_packet(
+        [("door-dependency", artifact)],
+        packet_id="packet:a",
+        max_comparisons_per_case=1,
+    )
+    reversed_packet = build_preference_annotation_packet(
+        [("door-dependency", artifact)],
+        packet_id="packet:d",
+        max_comparisons_per_case=1,
+    )
+
+    assert first["comparisons"] == repeated["comparisons"]
+    assert first["comparisons"][0]["left"] == reversed_packet["comparisons"][0]["right"]
+    assert "randomized" in " ".join(first["instructions"])
+
+
+def test_ai_reviews_lock_cases_and_preferences_without_numeric_reward(tmp_path: Path) -> None:
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    draft = _navigation_case_set(overlay_path, overlay)
+    case_id = draft["cases"][0]["case_id"]
+    locked_cases, case_report = apply_provisional_case_review(
+        draft,
+        {
+            "labels_source": "model_provisional",
+            "annotator": "gpt-test",
+            "decisions": [
+                {
+                    "case_id": case_id,
+                    "judgment": "supported",
+                    "evidence_refs": ["event:push", "event:open"],
+                    "rationale": "Both grounded events are required.",
+                }
+            ],
+        },
+    )
+    assert locked_cases["annotation_status"] == "ai_provisional"
+    assert case_report["formal_gate_eligible"] is False
+
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    artifact = generate_sibling_artifact(
+        belief,
+        overlay,
+        backend=backend,
+        executor=VideoSkillsL2Adapter(use_video_skills_runtime=False),
+        world_model=RuleBasedObservationBeliefModel(),
+        preference_model=RuleBasedTrajectoryPreferenceModel(),
+    )
+    packet = build_preference_annotation_packet(
+        [(case_id, artifact)], packet_id="packet:review", max_comparisons_per_case=1
+    )
+    comparison_id = packet["comparisons"][0]["comparison_id"]
+    locked_packet, preference_report = apply_preference_review(
+        packet,
+        {
+            "labels_source": "model_provisional",
+            "annotator": "gpt-test",
+            "decisions": [
+                {
+                    "comparison_id": comparison_id,
+                    "label": "prefer_left",
+                    "rationale": "Left gives more grounded progress.",
+                }
+            ],
+        },
+    )
+    serialized = json.dumps(locked_packet).lower()
+    assert preference_report["numeric_reward_present"] is False
+    for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
+        assert forbidden not in serialized
+
+
+def test_categorical_confusion_keeps_inconclusive_as_a_third_class() -> None:
+    packet = {
+        "labels_source": "model_provisional",
+        "items": [
+            {
+                "item_id": "one",
+                "relation": "same_entity",
+                "annotation": {"judgment": "supported"},
+            },
+            {
+                "item_id": "two",
+                "relation": "same_entity",
+                "annotation": {"judgment": "contradicted"},
+            },
+            {
+                "item_id": "three",
+                "relation": "state_transition",
+                "annotation": {"judgment": "unclear"},
+            },
+        ],
+    }
+    report = categorical_confusion_report(
+        packet, admitted_candidate_predictions(packet)
+    )
+
+    matrix = report["groups"]["all"]["reference_by_prediction"]
+    assert matrix["supports"]["supports"] == 1
+    assert matrix["rejects"]["supports"] == 1
+    assert matrix["inconclusive"]["supports"] == 1
+    assert report["formal_gate_eligible"] is False
+
+
 def test_matched_ablation_runs_all_policies_from_locked_checkpoint(
     tmp_path: Path,
 ) -> None:
@@ -816,7 +960,9 @@ def test_matched_ablation_runs_all_policies_from_locked_checkpoint(
     ] == 1.0
     assert "factor_graph_frozen_posterior_lookahead" in report["strategies"]
     assert "factor_graph_shuffled_relations" in report["strategies"]
-    assert report["diagnostic_gates"]["engineering_status"] == "no_go"
+    assert report["diagnostic_gates"]["engineering_status"] == "descriptive_only"
+    assert report["diagnostic_gates"]["formal_result"] is False
+    assert "comparisons" in report["diagnostic_gates"]
 
 
 def test_case_miner_produces_video_disjoint_draft_and_reports_missing_strata(

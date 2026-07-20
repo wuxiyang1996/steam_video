@@ -32,6 +32,7 @@ MATCHED_STRATEGIES = (
     "verified_dependency",
     "factorized_direct_preference",
     "factor_graph_direct_preference",
+    "categorical_verifier_direct_only_lookahead",
     "factor_graph_rule_world_model_lookahead",
     "factor_graph_frozen_posterior_lookahead",
     "factor_graph_shuffled_relations",
@@ -44,6 +45,7 @@ def evaluate_matched_navigation(
     *,
     case_root: Path,
     allow_ai_provisional: bool = False,
+    gtsam_closed_loop: bool = False,
 ) -> dict[str, Any]:
     """Evaluate every policy from the same seed checkpoint and read-call budget."""
 
@@ -88,6 +90,10 @@ def evaluate_matched_navigation(
                     case_root=case_root,
                 )
                 contradictions: tuple[str, ...] = ()
+                update_audits: tuple[dict[str, Any], ...] = ()
+                action_sequence: tuple[dict[str, Any], ...] = (first_action,)
+                final_answerability = None
+                final_missing_roles: tuple[str, ...] = ()
             elif strategy == "oracle":
                 unseen_gold = sorted(gold - set(seeds))
                 reads = unseen_gold[: int(case["graph_read_budget"])]
@@ -99,16 +105,30 @@ def evaluate_matched_navigation(
                 )
                 calls = len(reads)
                 contradictions = ()
+                update_audits = ()
+                action_sequence = (first_action,)
+                final_answerability = None
+                final_missing_roles = ()
             else:
                 planning_overlay = (
                     _shuffled_relation_overlay(overlay, str(case["case_id"]))
-                    if strategy == "factor_graph_shuffled_relations"
+                    if strategy == "factor_graph_shuffled_relations" and not gtsam_closed_loop
                     else overlay
                 )
-                acquired, first_action, calls, contradictions = _run_planner_strategy(
+                (
+                    acquired,
+                    first_action,
+                    calls,
+                    contradictions,
+                    update_audits,
+                    action_sequence,
+                    final_answerability,
+                    final_missing_roles,
+                ) = _run_planner_strategy(
                     strategy,
                     case=case,
                     overlay=planning_overlay,
+                    gtsam_closed_loop=gtsam_closed_loop,
                 )
             hits = gold & set(acquired)
             accepted = (
@@ -131,10 +151,20 @@ def evaluate_matched_navigation(
                     "hit_count": len(hits),
                     "evidence_recall": len(hits) / len(gold),
                     "answerable": hits == gold and not contradictions,
+                    "evidence_complete": hits == gold,
+                    "belief_answerability": final_answerability,
+                    "final_missing_roles": list(final_missing_roles),
+                    "ready_and_evidence_complete": (
+                        hits == gold and not contradictions and final_answerability == "ready"
+                        if final_answerability is not None
+                        else None
+                    ),
                     "graph_read_calls": calls,
                     "first_action": first_action,
                     "first_action_accepted": accepted,
                     "contradictions": list(contradictions),
+                    "action_sequence": list(action_sequence),
+                    "belief_update_audits": list(update_audits),
                 }
             )
     summaries = {
@@ -144,22 +174,34 @@ def evaluate_matched_navigation(
         }
         for strategy, strategy_rows in rows.items()
     }
-    diagnostics = _diagnostic_gates(summaries, status)
+    diagnostics = _diagnostic_gates(
+        summaries,
+        status,
+        rows=rows,
+        gtsam_closed_loop=gtsam_closed_loop,
+    )
     return {
-        "schema_version": "steam-matched-navigation-ablation/v0.1",
+        "schema_version": "steam-matched-navigation-ablation/v0.2",
         "case_set_id": case_set["case_set_id"],
         "case_set_annotation_status": status,
         "case_count": len(case_set["cases"]),
+        "gtsam_closed_loop": gtsam_closed_loop,
         "strategies": summaries,
         "diagnostic_gates": diagnostics,
         "cases": rows,
         "semantics": {
             "matched_checkpoint": "all policies begin with the case seed_event_ids",
             "matched_budget": "graph_read_budget counts real retrieval calls, not imagined rollouts",
-            "answerable": "all locked gold events acquired and no unresolved factor contradiction",
+            "answerable": "legacy evidence-completion proxy: all locked gold events acquired and no unresolved factor contradiction",
+            "ready_and_evidence_complete": "planner-only diagnostic additionally requiring final categorical belief READY",
             "preference": "ordinal four-way comparison only; no numeric reward or utility",
             "world_model": "current lookahead row uses the transparent categorical rule baseline",
-            "diagnostics": "frozen-posterior and deterministically shuffled-relation controls must not be reported as learned policies",
+            "belief_correction": (
+                "executed read -> categorical verifier -> GTSAM journal -> categorical projection -> replan"
+                if gtsam_closed_loop
+                else "compatibility backend; no executed-read GTSAM measurement"
+            ),
+            "diagnostics": "frozen/shuffled are controls; accuracy proxy, ready+evidence accuracy, read efficiency, and action divergence are reported separately with no aggregate pass gate",
         },
     }
 
@@ -246,7 +288,17 @@ def _run_planner_strategy(
     *,
     case: dict[str, Any],
     overlay: Any,
-) -> tuple[tuple[str, ...], dict[str, Any], int, tuple[str, ...]]:
+    gtsam_closed_loop: bool,
+) -> tuple[
+    tuple[str, ...],
+    dict[str, Any],
+    int,
+    tuple[str, ...],
+    tuple[dict[str, Any], ...],
+    tuple[dict[str, Any], ...],
+    str,
+    tuple[str, ...],
+]:
     backend: BeliefBackend
     if strategy == "factorized_direct_preference":
         backend = FactorizedBeliefBackend()
@@ -255,7 +307,27 @@ def _run_planner_strategy(
         backend = FactorGraphBeliefBackend()
         horizon = 1
     elif strategy == "factor_graph_frozen_posterior_lookahead":
-        backend = _FrozenPosteriorBackend()
+        if gtsam_closed_loop:
+            from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+            backend = GTSAMExecutedReadBeliefBackend(mode="frozen")
+        else:
+            backend = _FrozenPosteriorBackend()
+        horizon = 2
+    elif strategy == "categorical_verifier_direct_only_lookahead" and gtsam_closed_loop:
+        from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+        backend = GTSAMExecutedReadBeliefBackend(mode="verifier_only")
+        horizon = 2
+    elif strategy == "factor_graph_rule_world_model_lookahead" and gtsam_closed_loop:
+        from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+        backend = GTSAMExecutedReadBeliefBackend(mode="correct")
+        horizon = 2
+    elif strategy == "factor_graph_shuffled_relations" and gtsam_closed_loop:
+        from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+        backend = GTSAMExecutedReadBeliefBackend(mode="shuffled")
         horizon = 2
     else:
         backend = FactorGraphBeliefBackend()
@@ -285,11 +357,23 @@ def _run_planner_strategy(
     calls = sum(
         step.decision.selected_action.action_type.value != "stop" for step in run.steps
     )
+    audits = tuple(
+        step.belief_update_audit
+        for step in run.steps
+        if step.belief_update_audit is not None
+    )
+    action_sequence = tuple(
+        _action_dict(step.decision.selected_action) for step in run.steps
+    )
     return (
         run.final_belief.acquired_evidence,
         first_action,
         calls,
         run.final_belief.contradictions,
+        audits,
+        action_sequence,
+        run.final_belief.answerability.value,
+        run.final_belief.missing_roles,
     )
 
 
@@ -315,12 +399,22 @@ def _first_action_accepted(
 def _summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     count = len(rows)
     accepted = [row["first_action_accepted"] for row in rows if row["first_action_accepted"] is not None]
+    ready_rows = [
+        row["ready_and_evidence_complete"]
+        for row in rows
+        if row.get("ready_and_evidence_complete") is not None
+    ]
     return {
         "case_count": count,
         "answer_accuracy": sum(bool(row["answerable"]) for row in rows) / count if count else None,
         "mean_evidence_recall": sum(float(row["evidence_recall"]) for row in rows) / count if count else None,
         "mean_graph_read_calls": sum(int(row["graph_read_calls"]) for row in rows) / count if count else None,
         "first_action_accuracy": sum(bool(value) for value in accepted) / len(accepted) if accepted else None,
+        "ready_evidence_accuracy": (
+            sum(bool(value) for value in ready_rows) / len(ready_rows)
+            if ready_rows
+            else None
+        ),
     }
 
 
@@ -335,29 +429,86 @@ def _summaries_by_tag(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 def _diagnostic_gates(
     summaries: dict[str, dict[str, Any]],
     annotation_status: str,
+    *,
+    rows: dict[str, list[dict[str, Any]]],
+    gtsam_closed_loop: bool,
 ) -> dict[str, Any]:
-    direct = summaries["factor_graph_direct_preference"]["answer_accuracy"]
-    lookahead = summaries["factor_graph_rule_world_model_lookahead"]["answer_accuracy"]
-    frozen = summaries["factor_graph_frozen_posterior_lookahead"]["answer_accuracy"]
-    shuffled = summaries["factor_graph_shuffled_relations"]["answer_accuracy"]
-    gates = {
-        "lookahead_beats_direct": lookahead is not None and direct is not None and lookahead > direct,
-        "relation_shuffling_hurts": lookahead is not None and shuffled is not None and lookahead > shuffled,
-        "posterior_correction_helps": lookahead is not None and frozen is not None and lookahead > frozen,
-    }
+    normal_name = "factor_graph_rule_world_model_lookahead"
+    comparator_names = (
+        "factor_graph_direct_preference",
+        "categorical_verifier_direct_only_lookahead",
+        "factor_graph_frozen_posterior_lookahead",
+        "factor_graph_shuffled_relations",
+    )
+    normal_summary = summaries[normal_name]
+    normal_rows = rows["factor_graph_rule_world_model_lookahead"]
+    normal_audits = [audit for row in normal_rows for audit in row["belief_update_audits"]]
+    verifier_counts: dict[str, int] = {}
+    for audit in normal_audits:
+        decision = audit.get("verifier_decision") or {}
+        outcome = str(decision.get("outcome") or "")
+        if outcome:
+            verifier_counts[outcome] = verifier_counts.get(outcome, 0) + 1
     return {
         "annotation_status": annotation_status,
-        "formal_result": annotation_status == "human_locked",
-        "answer_accuracy_deltas": {
-            "lookahead_minus_direct": lookahead - direct,
-            "lookahead_minus_shuffled": lookahead - shuffled,
-            "lookahead_minus_frozen_posterior": lookahead - frozen,
+        "formal_eligible": annotation_status == "human_locked",
+        "formal_result": False,
+        "formal_blockers": [
+            "metrics are descriptive until minimum effect sizes and uncertainty intervals are predeclared",
+            "independent human gold is required",
+        ],
+        "comparisons": {
+            name: _separate_comparison(
+                normal_summary,
+                summaries[name],
+                normal_rows,
+                rows[name],
+            )
+            for name in comparator_names
         },
-        "gates": gates,
-        "engineering_status": (
-            "provisional_only"
-            if annotation_status != "human_locked"
-            else "go" if all(gates.values()) else "no_go"
+        "closed_loop_evidence": {
+            "gtsam_enabled": gtsam_closed_loop,
+            "journal_record_count": sum(
+                audit.get("measurement_status") == "appended" for audit in normal_audits
+            ),
+            "active_factor_count": sum(
+                audit.get("factor_activated") is True for audit in normal_audits
+            ),
+            "categorical_change_count": sum(
+                len(audit.get("changed_variables") or []) for audit in normal_audits
+            ),
+            "direct_change_count": sum(
+                len(audit.get("direct_changed_variables") or []) for audit in normal_audits
+            ),
+            "propagated_change_count": sum(
+                len(audit.get("propagated_changed_variables") or []) for audit in normal_audits
+            ),
+            "verifier_outcome_counts": dict(sorted(verifier_counts.items())),
+        },
+        "engineering_status": "descriptive_only",
+    }
+
+
+def _separate_comparison(
+    normal: dict[str, Any],
+    comparator: dict[str, Any],
+    normal_rows: list[dict[str, Any]],
+    comparator_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "answer_accuracy_proxy_delta": normal["answer_accuracy"] - comparator["answer_accuracy"],
+        "ready_evidence_accuracy_delta": (
+            normal["ready_evidence_accuracy"] - comparator["ready_evidence_accuracy"]
+            if normal["ready_evidence_accuracy"] is not None
+            and comparator["ready_evidence_accuracy"] is not None
+            else None
+        ),
+        "mean_graph_read_call_delta": (
+            normal["mean_graph_read_calls"] - comparator["mean_graph_read_calls"]
+        ),
+        "action_sequence_difference_count": sum(
+            left["action_sequence"] != right["action_sequence"]
+            for left, right in zip(normal_rows, comparator_rows, strict=True)
         ),
     }
 

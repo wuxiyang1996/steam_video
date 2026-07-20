@@ -1,0 +1,164 @@
+{
+  "schema_version": "steam-categorical-relation-confusion/v0.1",
+  "predictor": "native_l1_candidate_admission",
+  "labels_source": "model_provisional",
+  "formal_gate_eligible": false,
+  "outcomes": [
+    "supports",
+    "rejects",
+    "inconclusive"
+  ],
+  "groups": {
+    "all": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 22,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 15,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 8,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 45,
+      "categorical_accuracy": 0.4888888888888889
+    },
+    "identity": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 19,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 8,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 7,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 34,
+      "categorical_accuracy": 0.5588235294117647
+    },
+    "other": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 0,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 4,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 0,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 4,
+      "categorical_accuracy": 0.0
+    },
+    "relation:same_entity": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 19,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 8,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 7,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 34,
+      "categorical_accuracy": 0.5588235294117647
+    },
+    "relation:state_transition": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 3,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 3,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 1,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 7,
+      "categorical_accuracy": 0.42857142857142855
+    },
+    "relation:transition_support": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 0,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 4,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 0,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 4,
+      "categorical_accuracy": 0.0
+    },
+    "state_transition": {
+      "reference_by_prediction": {
+        "supports": {
+          "supports": 3,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "rejects": {
+          "supports": 3,
+          "rejects": 0,
+          "inconclusive": 0
+        },
+        "inconclusive": {
+          "supports": 1,
+          "rejects": 0,
+          "inconclusive": 0
+        }
+      },
+      "item_count": 7,
+      "categorical_accuracy": 0.42857142857142855
+    }
+  },
+  "limitations": [
+    "model_provisional references cannot satisfy a production gate",
+    "Every packet row existed in the admitted candidate set, so the baseline categorically predicts supports. This is not a post-read verifier."
+  ]
+}

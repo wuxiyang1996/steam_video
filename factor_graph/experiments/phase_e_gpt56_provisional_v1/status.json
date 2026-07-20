@@ -1,0 +1,127 @@
+{
+  "schema_version": "steam-factor-graph-phase-e-status/v0.1",
+  "experiment_id": "phase_e_gpt56_provisional_v1",
+  "created_on": "2026-07-20",
+  "runtime_pass": true,
+  "production_ready": false,
+  "formal_result": false,
+  "annotation_provenance": {
+    "annotator": "gpt-5.6-sol/current-session",
+    "labels_source": "model_provisional",
+    "remote_api_call_made": false,
+    "numeric_reward_or_confidence_emitted_by_llm": false,
+    "formal_gate_eligible": false
+  },
+  "locked_case_set": {
+    "status": "ai_provisional",
+    "draft_case_count": 30,
+    "accepted_case_count": 29,
+    "video_count": 8,
+    "split_counts": {"train": 16, "dev": 7, "test": 6},
+    "relation_tag_counts": {
+      "identity": 7,
+      "temporal": 8,
+      "state_transition": 1,
+      "verified_dependency": 1,
+      "delayed_bridge": 12
+    },
+    "file_sha256": "9ef2d2c329908367f88aef19942016f944346632d9a968505fa2ce4b788896c0"
+  },
+  "identity_state_audit": {
+    "scope": "single-video 45-relation provisional audit",
+    "identity": {"count": 34, "strict_precision": 0.5588235294117647, "decision_coverage": 0.7941176470588235},
+    "state_transition": {"count": 7, "strict_precision": 0.42857142857142855, "decision_coverage": 0.8571428571428571},
+    "target_strict_precision": 0.9,
+    "acceptance_passed": false,
+    "file_sha256": "7907b583acbcae0b1c693235ef8a6535af76e1729aa1ef4d9fdb778d74081262"
+  },
+  "categorical_confusion": {
+    "predictor": "native_l1_candidate_admission",
+    "semantics": "All audited rows were admitted candidates, so this baseline always predicts supports. It is not a post-read verifier.",
+    "all_accuracy": 0.4888888888888889,
+    "identity_accuracy": 0.5588235294117647,
+    "state_transition_accuracy": 0.42857142857142855,
+    "formal_post_read_verifier_matrix_complete": false,
+    "file_sha256": "9c6b31de6bff1e72772cbc366f8bfc229977f0d78cf7b08d48cdbd4c6cbb0523"
+  },
+  "categorical_preference": {
+    "comparison_count": 29,
+    "label_counts": {"prefer_left": 12, "prefer_right": 17, "tie": 0, "incomparable": 0},
+    "blinded_side_order": "deterministic_hash_randomized",
+    "training_record_count": 83,
+    "held_out_video_exact_accuracy": 0.6666666666666666,
+    "reward_model": false,
+    "file_sha256": "a93117dce1b438b8e4f92a70f2f19d8ba8ad5c834ea8f2f4d4dcb4ea880dac02"
+  },
+  "matched_budget_ablation": {
+    "case_count": 29,
+    "answer_accuracy": {
+      "semantic_only": 0.5517241379310345,
+      "event_only": 0.5862068965517241,
+      "native_l1_candidate": 0.5862068965517241,
+      "verified_dependency": 0.5862068965517241,
+      "factorized_direct_preference": 0.6896551724137931,
+      "factor_graph_direct_preference": 0.7586206896551724,
+      "factor_graph_rule_world_model_lookahead": 0.8275862068965517,
+      "factor_graph_frozen_posterior_lookahead": 0.8275862068965517,
+      "factor_graph_shuffled_relations": 0.7241379310344828,
+      "oracle": 1.0
+    },
+    "diagnostic_gates": {
+      "lookahead_beats_direct": true,
+      "relation_shuffling_hurts": true,
+      "posterior_correction_helps": false
+    },
+    "passed_gate_count": 2,
+    "total_gate_count": 3,
+    "file_sha256": "54faf6ef64425e0bfb813041f07d9c66baa41ce81046913885ca8f76d9594e32"
+  },
+  "executed_read_gtsam_followup_v1": {
+    "status": "superseded_after_strict_review",
+    "reason": "The apparent read-efficiency gain was not isolated from the categorical verifier direct update."
+  },
+  "executed_read_gtsam_followup_v2": {
+    "artifact": "matched_ablation_gtsam_closed_loop_v2.json",
+    "gtsam_closed_loop": true,
+    "journal_record_count": 38,
+    "active_factor_count": 14,
+    "categorical_change_count": 3,
+    "direct_change_count": 2,
+    "propagated_change_count": 1,
+    "verifier_outcome_counts": {
+      "supports": 14,
+      "inconclusive": 24,
+      "rejects": 0
+    },
+    "normal": {
+      "answer_accuracy_proxy": 0.7586206896551724,
+      "ready_evidence_accuracy": 0.5517241379310345,
+      "mean_graph_read_calls": 1.7241379310344827
+    },
+    "normal_vs_verifier_direct_only": {
+      "answer_accuracy_proxy_delta": 0.0,
+      "ready_evidence_accuracy_delta": 0.0,
+      "mean_graph_read_call_delta": 0.0,
+      "action_sequence_difference_count": 0
+    },
+    "aggregate_gate_removed": true,
+    "accuracy_improvement_demonstrated": false,
+    "gtsam_navigation_improvement_demonstrated": false,
+    "file_sha256": "9ad132fe1d4e233df43018a361cc277ff5dad45db1edf8c51a3f485e0321a4a6"
+  },
+  "correction_sensitive_mechanism_pilot": {
+    "artifact": "correction_sensitive_navigation.json",
+    "case_count": 3,
+    "support_propagation_changes_next_action": true,
+    "reject_propagation_changes_next_action": true,
+    "inconclusive_is_negative_control": true,
+    "independent_gold": false,
+    "file_sha256": "9fd57ace94711df86488337757c5664ca77b39437e5b03c7ebb68c7a90c5ff0c"
+  },
+  "remaining_formal_gates": [
+    "independent human identity/state annotation on a multi-video locked set",
+    "actual categorical post-read verifier predictions and confusion matrix",
+    "more non-empty state-transition, verified-dependency, and counter-evidence cases",
+    "a larger correction-sensitive gold set showing answer-accuracy benefit, not only read-efficiency benefit"
+  ]
+}

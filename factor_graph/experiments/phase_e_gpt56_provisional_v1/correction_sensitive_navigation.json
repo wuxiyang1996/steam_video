@@ -1,0 +1,1399 @@
+{
+  "schema_version": "steam-gtsam-correction-sensitive-navigation/v0.1",
+  "status": "derived_grounded_mechanism_pilot_not_gold",
+  "production_ready": false,
+  "llm_numeric_output": false,
+  "source_fixture": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_d_coupled_overlay.json",
+  "source_sha256": "1b52d60789a76dc8c5b560099c6f917ebafaeb83e696eb2bfa035ff6c04bb81f",
+  "cases": [
+    {
+      "case_id": "state-support-propagates-identity",
+      "variant": "support",
+      "expected_outcome": "supports",
+      "arms": {
+        "correct": {
+          "mode": "correct",
+          "probe_action": {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "state_transition"
+          },
+          "probe_outcome": "supports",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "correct",
+            "measurement_status": "appended",
+            "factor_activated": true,
+            "verifier_decision": {
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "outcome": "supports",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:122a5b99862078b2d0d2059c",
+              "action_id": "persisted-read:d07a8c9acc392b5e37a02b2a",
+              "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "variable_id": "relation::phase-d:state::state_transition",
+              "outcome": "supports",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [
+              "relation::phase-d:identity::same_entity",
+              "relation::phase-d:state::state_transition"
+            ],
+            "direct_changed_variables": [
+              "relation::phase-d:state::state_transition"
+            ],
+            "propagated_changed_variables": [
+              "relation::phase-d:identity::same_entity"
+            ]
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "follow_dependency",
+            "source_id": "event:atomic:video_skills_l1:00258",
+            "target_ids": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "grounded_by"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "follow_dependency",
+              "source_id": "event:atomic:video_skills_l1:00258",
+              "target_ids": [
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "grounded_by"
+            },
+            {
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "verifier_only": {
+          "mode": "verifier_only",
+          "probe_action": {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "state_transition"
+          },
+          "probe_outcome": "supports",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "verifier_only",
+            "measurement_status": "verifier_direct_only",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "outcome": "supports",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:122a5b99862078b2d0d2059c",
+              "action_id": "persisted-read:d07a8c9acc392b5e37a02b2a",
+              "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "variable_id": "relation::phase-d:state::state_transition",
+              "outcome": "supports",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:identity"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "same_entity"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "same_entity"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "same_entity"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "frozen": {
+          "mode": "frozen",
+          "probe_action": {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "state_transition"
+          },
+          "probe_outcome": "supports",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "frozen",
+            "measurement_status": "frozen",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "outcome": "supports",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:122a5b99862078b2d0d2059c",
+              "action_id": "persisted-read:d07a8c9acc392b5e37a02b2a",
+              "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "variable_id": "relation::phase-d:state::state_transition",
+              "outcome": "supports",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:identity"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "same_entity"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "same_entity"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "same_entity"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "shuffled": {
+          "mode": "shuffled",
+          "probe_action": {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "state_transition"
+          },
+          "probe_outcome": "supports",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "shuffled",
+            "measurement_status": "shuffled",
+            "factor_activated": true,
+            "verifier_decision": {
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "outcome": "supports",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:122a5b99862078b2d0d2059c",
+              "action_id": "persisted-read:d07a8c9acc392b5e37a02b2a",
+              "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+              "edge_id": "phase-d:state",
+              "relation": "state_transition",
+              "variable_id": "relation::phase-d:state::state_transition",
+              "outcome": "supports",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'"
+              ]
+            },
+            "injected_measurement": {
+              "measurement_id": "measurement:122a5b99862078b2d0d2059c:shuffled",
+              "action_id": "persisted-read:d07a8c9acc392b5e37a02b2a",
+              "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+              "edge_id": "phase-d:dependency",
+              "relation": "transition_support",
+              "variable_id": "relation::phase-d:dependency::transition_support",
+              "outcome": "supports",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "same entity changes 'expression' from 'neutral' to 'focused'",
+                "destructive control: measurement target shuffled"
+              ]
+            },
+            "changed_variables": [
+              "relation::phase-d:dependency::transition_support"
+            ],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": [
+              "relation::phase-d:dependency::transition_support"
+            ]
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:identity"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "same_entity"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "same_entity"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "same_entity"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "identity"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        }
+      },
+      "separate_diagnostics": {
+        "correct_vs_verifier_only_next_action_differs": true,
+        "correct_vs_frozen_next_action_differs": true,
+        "correct_vs_shuffled_next_action_differs": true,
+        "correct_probe_propagated_change_count": 1,
+        "correct_probe_factor_activated": true
+      }
+    },
+    {
+      "case_id": "identity-reject-propagates-state-rejection",
+      "variant": "reject",
+      "expected_outcome": "rejects",
+      "arms": {
+        "correct": {
+          "mode": "correct",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "rejects",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "correct",
+            "measurement_status": "appended",
+            "factor_activated": true,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "rejects",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:6ef7dc4abb1161463aaf9208",
+              "action_id": "persisted-read:69a29153235d77386d0a18cc",
+              "overlay_id": "overlay:phase-e:correction-sensitive:reject:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "rejects",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [
+              "relation::phase-d:identity::same_entity",
+              "relation::phase-d:state::state_transition"
+            ],
+            "direct_changed_variables": [
+              "relation::phase-d:identity::same_entity"
+            ],
+            "propagated_changed_variables": [
+              "relation::phase-d:state::state_transition"
+            ]
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [],
+            "blocked_edge_ids": [
+              "phase-d:identity",
+              "phase-d:state"
+            ]
+          },
+          "next_action": {
+            "action_type": "follow_dependency",
+            "source_id": "event:atomic:video_skills_l1:00258",
+            "target_ids": [
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "grounded_by"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "follow_dependency",
+              "source_id": "event:atomic:video_skills_l1:00258",
+              "target_ids": [
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "grounded_by"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7"
+              ],
+              "relation": "same_entity"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "verifier_only": {
+          "mode": "verifier_only",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "rejects",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "verifier_only",
+            "measurement_status": "verifier_direct_only",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "rejects",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:6ef7dc4abb1161463aaf9208",
+              "action_id": "persisted-read:69a29153235d77386d0a18cc",
+              "overlay_id": "overlay:phase-e:correction-sensitive:reject:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "rejects",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": [
+              "phase-d:identity"
+            ]
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "state_transition"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "frozen": {
+          "mode": "frozen",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "rejects",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "frozen",
+            "measurement_status": "frozen",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "rejects",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:6ef7dc4abb1161463aaf9208",
+              "action_id": "persisted-read:69a29153235d77386d0a18cc",
+              "overlay_id": "overlay:phase-e:correction-sensitive:reject:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "rejects",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "state_transition"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "shuffled": {
+          "mode": "shuffled",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "rejects",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "shuffled",
+            "measurement_status": "shuffled",
+            "factor_activated": true,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "rejects",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:6ef7dc4abb1161463aaf9208",
+              "action_id": "persisted-read:69a29153235d77386d0a18cc",
+              "overlay_id": "overlay:phase-e:correction-sensitive:reject:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "rejects",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "no aligned participant has matching entity_type and surface"
+              ]
+            },
+            "injected_measurement": {
+              "measurement_id": "measurement:6ef7dc4abb1161463aaf9208:shuffled",
+              "action_id": "persisted-read:69a29153235d77386d0a18cc",
+              "overlay_id": "overlay:phase-e:correction-sensitive:reject:v1",
+              "edge_id": "phase-d:conflict",
+              "relation": "contradicts",
+              "variable_id": "relation::phase-d:conflict::contradicts",
+              "outcome": "rejects",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "no aligned participant has matching entity_type and surface",
+                "destructive control: measurement target shuffled"
+              ]
+            },
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": [
+              "phase-d:conflict"
+            ]
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "state_transition"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        }
+      },
+      "separate_diagnostics": {
+        "correct_vs_verifier_only_next_action_differs": true,
+        "correct_vs_frozen_next_action_differs": true,
+        "correct_vs_shuffled_next_action_differs": true,
+        "correct_probe_propagated_change_count": 1,
+        "correct_probe_factor_activated": true
+      }
+    },
+    {
+      "case_id": "identity-inconclusive-negative-control",
+      "variant": "inconclusive",
+      "expected_outcome": "inconclusive",
+      "arms": {
+        "correct": {
+          "mode": "correct",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "inconclusive",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "correct",
+            "measurement_status": "appended",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "inconclusive",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:2486438ffcb93c05f90500ca",
+              "action_id": "persisted-read:72ec0573708bf233ae9a032b",
+              "overlay_id": "overlay:phase-e:correction-sensitive:inconclusive:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "inconclusive",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "verifier_only": {
+          "mode": "verifier_only",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "inconclusive",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "verifier_only",
+            "measurement_status": "verifier_direct_only",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "inconclusive",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:2486438ffcb93c05f90500ca",
+              "action_id": "persisted-read:72ec0573708bf233ae9a032b",
+              "overlay_id": "overlay:phase-e:correction-sensitive:inconclusive:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "inconclusive",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "state_transition"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "frozen": {
+          "mode": "frozen",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "inconclusive",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "frozen",
+            "measurement_status": "frozen",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "inconclusive",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:2486438ffcb93c05f90500ca",
+              "action_id": "persisted-read:72ec0573708bf233ae9a032b",
+              "overlay_id": "overlay:phase-e:correction-sensitive:inconclusive:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "inconclusive",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "injected_measurement": null,
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "state_transition"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        },
+        "shuffled": {
+          "mode": "shuffled",
+          "probe_action": {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "same_entity"
+          },
+          "probe_outcome": "inconclusive",
+          "probe_audit": {
+            "backend": "gtsam_executed_read_navigation/v0.2",
+            "mode": "shuffled",
+            "measurement_status": "shuffled",
+            "factor_activated": false,
+            "verifier_decision": {
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "outcome": "inconclusive",
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "measurement": {
+              "measurement_id": "measurement:2486438ffcb93c05f90500ca",
+              "action_id": "persisted-read:72ec0573708bf233ae9a032b",
+              "overlay_id": "overlay:phase-e:correction-sensitive:inconclusive:v1",
+              "edge_id": "phase-d:identity",
+              "relation": "same_entity",
+              "variable_id": "relation::phase-d:identity::same_entity",
+              "outcome": "inconclusive",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'"
+              ]
+            },
+            "injected_measurement": {
+              "measurement_id": "measurement:2486438ffcb93c05f90500ca:shuffled",
+              "action_id": "persisted-read:72ec0573708bf233ae9a032b",
+              "overlay_id": "overlay:phase-e:correction-sensitive:inconclusive:v1",
+              "edge_id": "phase-d:conflict",
+              "relation": "contradicts",
+              "variable_id": "relation::phase-d:conflict::contradicts",
+              "outcome": "inconclusive",
+              "observation_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "evidence_refs": [
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "verifier_name": "post_read_categorical_relation_verifier",
+              "verifier_version": "memory_graph.verify_relation/post-read-v1",
+              "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+              "reasons": [
+                "participant_alignment references unknown pair 'l1-track:phase-e:missing-src'->'l1-track:phase-e:missing-dst'",
+                "destructive control: measurement target shuffled"
+              ]
+            },
+            "changed_variables": [],
+            "direct_changed_variables": [],
+            "propagated_changed_variables": []
+          },
+          "belief_after_probe": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "priority_edge_ids": [
+              "phase-d:state"
+            ],
+            "blocked_edge_ids": []
+          },
+          "next_action": {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258",
+              "memory:evidence.event:faf09dbfa7",
+              "memory:evidence.event:47ecad373c"
+            ],
+            "relation": "state_transition"
+          },
+          "continuation_actions": [
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258",
+                "memory:evidence.event:faf09dbfa7",
+                "memory:evidence.event:47ecad373c"
+              ],
+              "relation": "state_transition"
+            },
+            {
+              "action_type": "verify",
+              "source_id": "event:atomic:video_skills_l1:00140",
+              "target_ids": [
+                "event:atomic:video_skills_l1:00258"
+              ],
+              "relation": "same_entity"
+            }
+          ],
+          "final_belief": {
+            "missing_roles": [
+              "state_transition"
+            ],
+            "answerability": "not_ready",
+            "contradictions": []
+          }
+        }
+      },
+      "separate_diagnostics": {
+        "correct_vs_verifier_only_next_action_differs": false,
+        "correct_vs_frozen_next_action_differs": false,
+        "correct_vs_shuffled_next_action_differs": false,
+        "correct_probe_propagated_change_count": 0,
+        "correct_probe_factor_activated": false
+      }
+    }
+  ],
+  "summary": {
+    "case_count": 3,
+    "support_propagation_changes_next_action": true,
+    "reject_propagation_changes_next_action": true,
+    "inconclusive_is_negative_control": true
+  },
+  "limitations": [
+    "Cases are transparently derived from grounded Phase D evidence, not independent human gold.",
+    "Pilot measurement likelihoods are not calibrated production probabilities.",
+    "This isolates mechanism sensitivity; it is not an answer-accuracy benchmark."
+  ]
+}

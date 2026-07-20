@@ -28,7 +28,14 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     mine = commands.add_parser("mine-cases")
-    mine.add_argument("--overlay-root", required=True, type=Path)
+    mine.add_argument("--overlay-root", type=Path)
+    mine.add_argument(
+        "--overlay",
+        action="append",
+        default=[],
+        type=Path,
+        help="Additional explicit overlay artifact; may be repeated.",
+    )
     mine.add_argument("--glob", default="**/causal_temporal_overlay.json")
     mine.add_argument("--case-set-id", required=True)
     mine.add_argument("--desired-count", type=int, default=40)
@@ -81,6 +88,11 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--cases", required=True, type=Path)
     evaluate.add_argument("--output", required=True, type=Path)
     evaluate.add_argument("--allow-ai-provisional", action="store_true")
+    evaluate.add_argument(
+        "--gtsam-closed-loop",
+        action="store_true",
+        help="Require executed-read categorical correction through GTSAM; no fallback.",
+    )
 
     train = commands.add_parser("train")
     train.add_argument("--training-jsonl", required=True, type=Path)
@@ -92,8 +104,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "mine-cases":
+        overlay_paths = [path.expanduser().resolve() for path in args.overlay]
+        if args.overlay_root is not None:
+            overlay_paths.extend(
+                sorted(args.overlay_root.expanduser().resolve().glob(args.glob))
+            )
+        overlay_paths = list(dict.fromkeys(overlay_paths))
+        if not overlay_paths:
+            raise ValueError("mine-cases requires --overlay-root or at least one --overlay")
         case_set, report = mine_navigation_cases(
-            sorted(args.overlay_root.expanduser().resolve().glob(args.glob)),
+            overlay_paths,
             case_set_id=args.case_set_id,
             desired_count=args.desired_count,
             per_video_limit=args.per_video_limit,
@@ -158,6 +178,7 @@ def main(argv: list[str] | None = None) -> int:
             _read_json(case_path),
             case_root=case_path.parent,
             allow_ai_provisional=args.allow_ai_provisional,
+            gtsam_closed_loop=args.gtsam_closed_loop,
         )
         _write_json(args.output, report)
         print(json.dumps(report["strategies"], indent=2))
