@@ -419,6 +419,143 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(events[1].states[0].attribute, "motion_state")
         self.assertTrue(verify_relation(belief, event_nodes[0], event_nodes[1]).passed)
 
+    def test_explicit_state_of_attaches_state_with_multiple_participants(self) -> None:
+        graph = {
+            "nodes": [
+                {
+                    "node_id": "event:closed",
+                    "node_type": "event",
+                    "clip_id": "clip:1",
+                    "text": "He holds it.",
+                    "participant_refs": ["person:1", "box:1"],
+                },
+                {
+                    "node_id": "event:open",
+                    "node_type": "event",
+                    "clip_id": "clip:2",
+                    "text": "The person opens the box.",
+                    "participant_refs": ["person:2", "box:2"],
+                },
+                {
+                    "node_id": "person:1",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:1:entity:000",
+                    "entity_type": "person",
+                    "clip_id": "clip:1",
+                    "text": "person",
+                },
+                {
+                    "node_id": "person:2",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:2:entity:000",
+                    "entity_type": "person",
+                    "clip_id": "clip:2",
+                    "text": "person",
+                },
+                {
+                    "node_id": "box:1",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:1:entity:001",
+                    "entity_type": "object",
+                    "instance_id": "box:shared",
+                    "evidence_refs": ["clip:1"],
+                    "clip_id": "clip:1",
+                    "text": "box",
+                },
+                {
+                    "node_id": "box:2",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:2:entity:001",
+                    "entity_type": "object",
+                    "instance_id": "box:shared",
+                    "evidence_refs": ["clip:2"],
+                    "clip_id": "clip:2",
+                    "text": "box",
+                },
+                {
+                    "node_id": "state:closed",
+                    "node_type": "state",
+                    "clip_id": "clip:1",
+                    "subject_ref": "box:1",
+                    "attribute": "openness",
+                    "value": "closed",
+                    "text": "The box is closed.",
+                    "confidence": 0.95,
+                },
+                {
+                    "node_id": "state:open",
+                    "node_type": "state",
+                    "clip_id": "clip:2",
+                    "subject_ref": "box:2",
+                    "attribute": "openness",
+                    "value": "open",
+                    "text": "The box is open.",
+                    "confidence": 0.96,
+                },
+            ],
+            "edges": [
+                {
+                    "edge_id": "same-box",
+                    "src": "box:1",
+                    "dst": "box:2",
+                    "edge_type": "same_object",
+                    "identity_verified": True,
+                },
+                {
+                    "edge_id": "state-of-closed",
+                    "src": "state:closed",
+                    "dst": "box:1",
+                    "edge_type": "state_of",
+                },
+                {
+                    "edge_id": "state-of-open",
+                    "src": "state:open",
+                    "dst": "box:2",
+                    "edge_type": "state_of",
+                },
+            ],
+        }
+        nodes = [
+            MemoryNode(
+                node_id="memory:event:closed",
+                video_id="video-1",
+                time_span=TimeSpan(0, 1),
+                provenance={},
+                node_type="observation",
+                text="He holds it.",
+                source_node_id="event:closed",
+                source_segments=["event:closed"],
+                metadata={"source_node_type": "event", "confidence": 0.9},
+            ),
+            MemoryNode(
+                node_id="memory:event:open",
+                video_id="video-1",
+                time_span=TimeSpan(2, 3),
+                provenance={},
+                node_type="observation",
+                text="The person opens the box.",
+                source_node_id="event:open",
+                source_segments=["event:open"],
+                metadata={"source_node_type": "event", "confidence": 0.9},
+            ),
+        ]
+
+        enriched, report = structuralize_video_skills_l1(graph, nodes)
+        events = VideoSkillsL1AtomicEventExtractor().extract(enriched)
+        event_nodes, _ = atomic_events_to_graph_nodes(events, l1_nodes=enriched)
+        transitions = derive_state_transition_candidates(event_nodes)
+
+        self.assertEqual(report.events_with_states, 2)
+        self.assertEqual(len(events[0].participants), 2)
+        self.assertEqual(events[0].states[0].attribute, "openness")
+        self.assertEqual(events[0].states[0].value, "closed")
+        self.assertEqual(events[1].states[0].value, "open")
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(
+            transitions[0].relation_probabilities,
+            {"state_transition": 0.95},
+        )
+
     def test_identity_tracks_reject_component_and_motion_conflicts(self) -> None:
         nodes = {
             "person:a": {
@@ -2583,6 +2720,66 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertFalse(native_rows[1]["answerable"])
         self.assertFalse(verified_rows[0]["answerable"])
         self.assertTrue(verified_rows[1]["answerable"])
+
+    def test_navigation_ablation_prefers_supplied_embedding_scores(self) -> None:
+        events = [
+            _atomic_node(
+                "event:early",
+                0,
+                1,
+                "An unrelated early event.",
+                mention_id="entity:1",
+                surface="entity",
+            ),
+            _atomic_node(
+                "event:gold",
+                2,
+                3,
+                "The relevant event.",
+                mention_id="entity:2",
+                surface="entity",
+            ),
+        ]
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:embedding-ablation",
+            example_id="example:embedding-ablation",
+            video_id="video-1",
+            l1_observations=[
+                _grounded_node(ref)
+                for event in events
+                for ref in event.source_segments
+            ],
+            atomic_events=events,
+            relations=[],
+        )
+        case = {
+            "case_id": "embedding-case",
+            "question": "Which event is relevant?",
+            "gold_event_ids": ["event:gold"],
+            "graph_read_budget": 1,
+            "query_embedding_ref": {
+                "model": "Qwen/Qwen3-VL-Embedding-2B",
+                "dimension": 2,
+            },
+        }
+
+        report = evaluate_navigation_ablation(
+            overlay.to_dict(),
+            [case],
+            event_embeddings={
+                "event:early": [1.0, 0.0],
+                "event:gold": [0.0, 1.0],
+            },
+            query_embeddings={"embedding-case": [0.0, 1.0]},
+            embedding_metadata={"model": "Qwen/Qwen3-VL-Embedding-2B"},
+        )
+
+        self.assertEqual(report["retrieval"]["mode"], "qwen3_vl_embedding")
+        self.assertTrue(report["cases"]["semantic_only"][0]["answerable"])
+        self.assertEqual(
+            report["cases"]["semantic_only"][0]["query_embedding_ref"]["model"],
+            "Qwen/Qwen3-VL-Embedding-2B",
+        )
 
     def test_calibration_requires_independent_labels(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

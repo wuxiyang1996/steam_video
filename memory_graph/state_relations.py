@@ -79,6 +79,10 @@ def _track_state_deltas(
             continue
         for before in src_states[track_id]:
             for after in dst_states[track_id]:
+                if not _formal_state_contract(before) or not _formal_state_contract(
+                    after
+                ):
+                    continue
                 if _norm(before.get("attribute")) != _norm(after.get("attribute")):
                     continue
                 if _norm(before.get("value")) == _norm(after.get("value")):
@@ -113,6 +117,20 @@ def _states_by_mention(node: MemoryNode) -> dict[str, list[dict[str, Any]]]:
 def _confidence(value: dict[str, Any]) -> float:
     raw = value.get("confidence", 0.7)
     return max(0.0, min(1.0, float(raw)))
+
+
+def _formal_state_contract(value: dict[str, Any]) -> bool:
+    contract = value.get("contract_version")
+    if "contract_version" not in value:
+        # Unit fixtures and pre-Video_Skills callers remain supported. Persisted
+        # Video_Skills states always carry this field and must use the strict contract.
+        return True
+    return (
+        contract == "grounded-state-assertion/v1"
+        and value.get("subject_binding") == "explicit_state_of"
+        and bool(value.get("source_l1_node_id"))
+        and bool(value.get("subject_source_l1_node_id"))
+    )
 
 
 def _norm(value: Any) -> str:
