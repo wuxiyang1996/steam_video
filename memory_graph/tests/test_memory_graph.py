@@ -2903,6 +2903,88 @@ class MemoryGraphTest(unittest.TestCase):
             "Qwen/Qwen3-VL-Embedding-2B",
         )
 
+    def test_verified_dependency_is_prioritized_over_temporal_neighbor(self) -> None:
+        events = [
+            _atomic_node(
+                "event:seed",
+                0,
+                1,
+                "Seed event.",
+                mention_id="track:seed",
+                surface="seed",
+            ),
+            _atomic_node(
+                "event:temporal",
+                2,
+                3,
+                "Temporally adjacent event.",
+                mention_id="track:temporal",
+                surface="temporal",
+            ),
+            _atomic_node(
+                "event:dependency",
+                4,
+                5,
+                "Verified state dependency.",
+                mention_id="track:dependency",
+                surface="dependency",
+            ),
+        ]
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:priority",
+            example_id="example:priority",
+            video_id="video-1",
+            l1_observations=[
+                _grounded_node(ref)
+                for event in events
+                for ref in event.source_segments
+            ],
+            atomic_events=events,
+            relations=[
+                RelationBelief(
+                    edge_id="temporal",
+                    src="event:seed",
+                    dst="event:temporal",
+                    relation_probabilities={"temporal_next": 1.0},
+                    status=RelationStatus.DETERMINISTIC,
+                    direction_confidence=1.0,
+                ),
+                RelationBelief(
+                    edge_id="dependency",
+                    src="event:seed",
+                    dst="event:dependency",
+                    relation_probabilities={"state_transition": 0.9},
+                    status=RelationStatus.UNCALIBRATED_PRIOR,
+                    direction_confidence=1.0,
+                    provenance={"accepted_identity_track": "l1-track:entity"},
+                ),
+            ],
+        )
+        case = {
+            "case_id": "priority",
+            "question": "How did the object change from closed to open?",
+            "gold_event_ids": ["event:dependency"],
+            "graph_read_budget": 2,
+        }
+
+        report = evaluate_navigation_ablation(
+            overlay.to_dict(),
+            [case],
+            event_embeddings={
+                "event:seed": [0.9, 0.1],
+                "event:temporal": [1.0, 0.0],
+                "event:dependency": [0.0, 1.0],
+            },
+            query_embeddings={"priority": [1.0, 0.0]},
+        )
+
+        self.assertFalse(report["cases"]["event_only"][0]["answerable"])
+        self.assertTrue(report["cases"]["verified_dependency"][0]["answerable"])
+        self.assertEqual(
+            report["cases"]["verified_dependency"][0]["acquired_event_ids"],
+            ["event:seed", "event:dependency"],
+        )
+
     def test_calibration_requires_independent_labels(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             sample = Path(temp_dir) / "sample"

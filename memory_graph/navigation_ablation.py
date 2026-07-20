@@ -69,6 +69,7 @@ def evaluate_navigation_ablation(
         for strategy in STRATEGIES:
             acquired = _run_strategy(
                 strategy,
+                question=question,
                 relevance_scores=scores,
                 budget=budget,
                 events=events,
@@ -116,6 +117,7 @@ def evaluate_navigation_ablation(
 def _run_strategy(
     strategy: str,
     *,
+    question: str,
     relevance_scores: dict[str, float],
     budget: int,
     events: dict[str, dict[str, Any]],
@@ -131,16 +133,32 @@ def _run_strategy(
     )
     if strategy == "semantic_only":
         return ranked[:budget]
-    acquired = [ranked[0]] if ranked else []
-    adjacency = _event_adjacency(overlay, verified_only=strategy == "verified_dependency")
+    adjacency = _event_adjacency(overlay, verified_only=False)
+    preferred_adjacency: dict[str, set[str]] = {}
     if strategy == "native_l1_candidate":
-        _add_native_l1_adjacency(adjacency, overlay, events)
+        _add_native_l1_adjacency(preferred_adjacency, overlay, events)
+    elif strategy == "verified_dependency":
+        preferred_adjacency = _verified_dependency_adjacency(overlay)
+    for event_id, neighbors in preferred_adjacency.items():
+        adjacency.setdefault(event_id, set()).update(neighbors)
+    acquired = [ranked[0]] if ranked else []
+    if strategy == "verified_dependency" and _asks_for_state_transition(question):
+        state_adjacency = _verified_state_transition_adjacency(overlay)
+        state_pair = _best_scoring_edge_pair(
+            state_adjacency,
+            relevance_scores=relevance_scores,
+        )
+        if state_pair:
+            acquired = state_pair[:budget]
     queue = deque(acquired)
     while queue and len(acquired) < budget:
         current = queue.popleft()
         neighbors = sorted(
             adjacency.get(current, ()),
             key=lambda event_id: (
+                0
+                if event_id in preferred_adjacency.get(current, set())
+                else 1,
                 -float(relevance_scores.get(event_id, 0.0)),
                 event_id,
             ),
@@ -181,6 +199,79 @@ def _event_adjacency(
         adjacency.setdefault(src, set()).add(dst)
         adjacency.setdefault(dst, set()).add(src)
     return adjacency
+
+
+def _verified_dependency_adjacency(
+    overlay: dict[str, Any],
+) -> dict[str, set[str]]:
+    adjacency: dict[str, set[str]] = {}
+    for edge in overlay.get("relations") or []:
+        if not isinstance(edge, dict):
+            continue
+        names = set((edge.get("relation_probabilities") or {}).keys())
+        if not names & DEPENDENCY_RELATIONS or not _dependency_verified(edge):
+            continue
+        src, dst = str(edge.get("src") or ""), str(edge.get("dst") or "")
+        if not src or not dst:
+            continue
+        adjacency.setdefault(src, set()).add(dst)
+        adjacency.setdefault(dst, set()).add(src)
+    return adjacency
+
+
+def _verified_state_transition_adjacency(
+    overlay: dict[str, Any],
+) -> dict[str, set[str]]:
+    adjacency: dict[str, set[str]] = {}
+    for edge in overlay.get("relations") or []:
+        if not isinstance(edge, dict):
+            continue
+        names = set((edge.get("relation_probabilities") or {}).keys())
+        if "state_transition" not in names or not _dependency_verified(edge):
+            continue
+        src, dst = str(edge.get("src") or ""), str(edge.get("dst") or "")
+        if not src or not dst:
+            continue
+        adjacency.setdefault(src, set()).add(dst)
+        adjacency.setdefault(dst, set()).add(src)
+    return adjacency
+
+
+def _best_scoring_edge_pair(
+    adjacency: dict[str, set[str]],
+    *,
+    relevance_scores: dict[str, float],
+) -> list[str]:
+    pairs = {
+        tuple(sorted((src, dst)))
+        for src, neighbors in adjacency.items()
+        for dst in neighbors
+        if src != dst
+    }
+    if not pairs:
+        return []
+    best = min(
+        pairs,
+        key=lambda pair: (
+            -sum(float(relevance_scores.get(event_id, 0.0)) for event_id in pair),
+            -max(float(relevance_scores.get(event_id, 0.0)) for event_id in pair),
+            pair,
+        ),
+    )
+    return sorted(
+        best,
+        key=lambda event_id: (
+            -float(relevance_scores.get(event_id, 0.0)),
+            event_id,
+        ),
+    )
+
+
+def _asks_for_state_transition(question: str) -> bool:
+    value = question.casefold()
+    if re.search(r"\b(?:become|becomes|became|change|changes|changed|changing)\b", value):
+        return True
+    return bool(re.search(r"\bfrom\b.{1,120}\bto\b", value))
 
 
 def _dependency_verified(edge: dict[str, Any]) -> bool:
