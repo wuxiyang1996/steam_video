@@ -1,8 +1,73 @@
-# Implicit World Model over the L1.5 Graph
+# Implicit World Model for Grounded Evidence Navigation
 
 ## 1. Goal
 
-This directory describes how to run the implicit graph-navigation world model on the L1 / L1.5 structure in [`memory_graph`](../../../memory_graph/).
+### Architecture decision: fixed L1/L1.5 memory, IWM reasoning novelty
+
+The target research method is **implicit-world-model-guided multi-hop reasoning
+over a fixed grounded L1/L1.5 Memory Graph**. The Memory Graph is shared input
+infrastructure, not the claimed novelty. It provides L1 observations, L1.5
+atomic events and relations, timestamps, provenance, acquired status, and Qwen
+embedding references. The research contribution is action-conditioned
+future-belief prediction and planning that depends on those predictions.
+
+The default target loop is:
+
+```text
+persistent grounded L1/L1.5 Memory Graph
+  → current question-conditioned belief
+  → unordered admissible evidence-query / reasoning operations
+  → action-conditioned imagined belief transitions
+  → blinded categorical trajectory preference
+  → execute the preferred first operation
+  → read real evidence and correct latent belief
+  → replan
+```
+
+Factor graph / GTSAM is retained as an **optional belief-correction backup**, a
+baseline, and a diagnostic tool. It is not part of the main planner claim. The
+same frozen L1/L1.5 Memory Graph, retrieved candidate set, and evidence budget
+must be shared across reasoning-policy comparisons so gains cannot be
+attributed to graph construction.
+
+The backup boundary is strict:
+
+- only a real executed read followed by a categorical verifier outcome may add
+  a GTSAM measurement;
+- imagined observations or predicted belief deltas never enter persistent
+  GTSAM state;
+- GTSAM may preserve competing hypotheses, contradictions, identity
+  consistency, and correction persistence;
+- GTSAM does not generate candidates, traverse the memory, rank actions,
+  predict transitions, compare trajectories, or supply final-answer evidence;
+- the Planner still selects the next hop from IWM-predicted future-belief
+  trajectories, whether or not backup correction was used on the current real
+  belief.
+
+The intended correction modes are:
+
+```text
+iwm_belief_only
+  default main method
+
+iwm_with_gtsam_backup
+  activate only for an explicit categorical correction condition
+
+gtsam_always
+  graph-based baseline / ablation
+```
+
+Allowed backup triggers are categorical, for example
+`contradiction_detected`, `identity_ambiguous`, `state_history_conflict`,
+`multiple_competing_hypotheses`, `correction_failed`, or
+`long_dependency_unresolved`. They are not hand-authored numeric thresholds.
+Backup output exposed outside the solver is limited to categories such as
+`accepted`, `rejected`, `unresolved`, and `conflicted`; numeric posteriors remain
+solver-internal. Backup unavailability must be explicit and must never silently
+change the planner or fall back to a heuristic ranking policy.
+
+This directory contains the runnable IWM-guided L1/L1.5 navigation prototype,
+its graph-based baselines, and the optional GTSAM correction experiments.
 
 Core division of labor:
 
@@ -14,9 +79,9 @@ L1.5 causal-temporal overlay
   → provide atomic events, temporal edges, and candidate explain / enable relations
   → define the structured hypothesis space for navigation
 
-factor-graph belief backend
+factor-graph belief backend (optional backup / graph baseline)
   → maintain question-conditioned relation posteriors and global consistency
-  → identify conflicts, blocked hypotheses, and the next constraint to inspect
+  → expose categorical conflicts and corrected hypotheses after real reads
 
 implicit world model
   → predict categorical observation descriptors and belief deltas
@@ -29,14 +94,16 @@ navigator
   → update the belief and replan
 ```
 
-The L1.5 graph is not the world model. It is the environment and structural prior over which the world model predicts, acts, and receives real observations.
+The L1.5 graph is not the world model. It is the fixed structured memory over
+which every compared reasoning policy predicts and reads. Graph relations may
+define legal candidates and retrieval context, but cannot rank the final
+winner in the main IWM planner.
 
-The factor graph is neither L2 nor the learned world model. It is the
-exploration-time belief state used by both components. L2 remains the audited
-execution trace, while the world model predicts how an action may change this
-belief before the corresponding evidence is read.
+The factor graph is neither L2 nor the learned world model. In `gtsam_always`
+it is the baseline belief state; in `iwm_with_gtsam_backup` it is only an
+optional real-evidence corrector. L2 remains the audited execution trace.
 
-### 1.1 Runnable implementation
+### 1.1 Runnable graph-based baseline
 
 The first preference-only closed loop is implemented in this package:
 
@@ -48,6 +115,9 @@ The first preference-only closed loop is implemented in this package:
 | `continuous.py` | Compatibility protocol for optional continuous smoothing; canonical boundary is documented in [`factor_graph/`](../../../factor_graph/) |
 | `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
 | `planner.py` | Horizon-one/two next-hop expansion, pairwise partial-order selection, real evidence read, belief update, and replanning |
+| `context.py` | Bounded local-subgraph retrieval, categorical belief projection, candidate-hop pruning, and context audit |
+| `gpt_oss.py` | OpenAI-compatible `gpt-oss-120B` categorical world-model and pairwise-preference adapters; numeric model outputs are rejected |
+| `interventions.py` | Normal/null/shuffled transition controls and frozen-belief WM wrapper for causal dependence ablations |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
@@ -58,7 +128,7 @@ The first preference-only closed loop is implemented in this package:
 | `workflow.py` | Batch generation, annotation, export, and evaluation CLI |
 | `run.py` | CLI that writes navigation, L2, belief, sibling, and summary artifacts |
 
-Minimal use with an existing `CausalTemporalOverlay`:
+Minimal baseline use with an existing `CausalTemporalOverlay`:
 
 ```python
 from steam_video_new.implicit_world_model.l15_graph_navigator import (
@@ -134,9 +204,11 @@ The output directory contains:
 | `run_summary.json` | Counts, final answerability, embedding status, and output-contract audit |
 
 `sibling_checkpoint.json` is validated against
-`sibling_trajectory.schema.json`. Its rule-derived labels are always marked
-`rule_based_provisional/v0.1` and `requires_independent_annotation`; they are
-not training gold until independently reviewed. Numeric retrieval similarity,
+`sibling_trajectory.schema.json`. Rule-derived labels are marked
+`rule_based_provisional/v0.1`; GPT-OSS labels are marked
+`gpt-oss-120b_categorical_provisional/v0.1`. Both remain
+`requires_independent_annotation` and are not training gold until independently
+reviewed. Numeric retrieval similarity,
 edge probability, and runtime cost may remain audit metadata, but no numeric
 reward, Q-value, or utility is emitted.
 
@@ -288,12 +360,12 @@ enter the answer directly.
 
 ### 4.1 Bounded reasoning context
 
-The planner and world model must not receive the complete Memory Graph, all
+The planner and world model do not receive the complete Memory Graph, all
 GTSAM variables/factors, every past hop, or every expanded trajectory. That
 input grows too quickly for multi-video, multi-hop navigation and exposes solver
 details that the LLM must not interpret.
 
-Each planning round should construct a compact `ReasoningContext` containing
+Each planning round constructs a compact `ReasoningContext` containing
 only:
 
 - the query and current answer constraints;
@@ -323,7 +395,7 @@ for example `accepted`, `rejected`, `unresolved`, `missing`, or
 `answerability=insufficient`, and never produces numeric confidence, reward,
 probability, or utility.
 
-The runtime should enforce and audit three independent budgets:
+The runtime enforces and audits three independent budgets:
 
 - **retrieval budget:** maximum local nodes and edges retrieved per round;
 - **candidate budget:** maximum legal next hops retained after deterministic
@@ -333,11 +405,178 @@ The runtime should enforce and audit three independent budgets:
 
 Long history must be folded into the current belief snapshot, acquired-evidence
 references, unresolved questions, and a short recent-hop window. Every run
-should record retrieved/dropped nodes and edges, candidate count, comparison
-count, prompt tokens, and real evidence reads. Context-budget ablations must
+records retrieved/dropped nodes and edges, candidate count, comparison budget,
+estimated prompt tokens, and real evidence reads. Context-budget ablations must
 report final-answer accuracy, evidence-chain completeness, and read efficiency
 at fixed budgets; increasing the model context window is not a substitute for
 this retrieval boundary.
+
+This boundary is implemented by `ReasoningContextBuilder`. `GraphReadAction`
+remains the execution compatibility type, while every `PlanDecision` exposes a
+semantic `ReasoningHop` (`read_event`, `follow_temporal`,
+`follow_dependency`, `resolve_identity`, `inspect_state_delta`,
+`seek_counter_evidence`, `verify_relation`, or `stop_and_answer`). The planner
+retains the largest candidate set whose complete all-pairs comparison fits the
+comparison budget. It executes a first hop only when the undominated set has
+one semantic first-hop meaning; otherwise it emits an audited abstention. The
+complete context audit is recorded in the navigation and L2 artifacts.
+
+The optional embedding-score input is computed outside the LLM. When supplied,
+it ranks structurally legal candidates before pruning; the context stores only
+the embedding model name and retrieved IDs, never raw vectors. The current
+artifact contract retains `Qwen/Qwen3-VL-Embedding-2B` references for this path.
+
+### 4.2 GPT-OSS-120B provisional reasoning backend
+
+For now, both categorical transition prediction and trajectory comparison may
+use `openai/gpt-oss-120b` through an OpenAI-compatible endpoint:
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator \
+  --overlay /path/to/causal_temporal_overlay.json \
+  --question "What happened after the person opened the door?" \
+  --seed-event event:anchor \
+  --missing-role temporal \
+  --reasoning-model-backend gpt-oss-120b \
+  --reasoning-model openai/gpt-oss-120b \
+  --reasoning-keys-py /fs/gamma-projects/vlm-robot/keys.py \
+  --context-max-nodes 24 \
+  --context-max-edges 32 \
+  --candidate-hop-budget 8 \
+  --comparison-budget 32 \
+  --transition-intervention normal \
+  --output-dir /path/to/navigation_run
+```
+
+For matched dependence controls, use `--transition-intervention null` or
+`shuffled`, `--freeze-world-model`, and horizon one/two for immediate-only vs
+delayed-belief prediction. These flags alter imagined transitions only; they
+do not change legal candidates or permit imagined evidence to be persisted.
+
+With `--reasoning-keys-py`, the client reads `OPENROUTER_API_KEY` without
+serializing it and uses `https://openrouter.ai/api/v1` by default.
+`--reasoning-api-base` may override that endpoint. Alternatively,
+`OPENAI_BASE_URL` plus the environment named by `--reasoning-api-key-env` may
+be used. Selecting GPT-OSS without either a keys file or environment endpoint
+fails explicitly and never falls back silently to the rule baseline.
+
+The adapter permits only categorical observation descriptors, categorical
+belief deltas, and one of `prefer_left`, `prefer_right`, `tie`, or
+`incomparable`. A numeric value anywhere in the model JSON output is rejected.
+GTSAM probabilities/posteriors and raw embeddings are excluded from the model
+payload. GPT-OSS outputs remain provisional model judgments rather than
+independent gold annotations or acquired evidence.
+
+The evidence role is not generated: it is a deterministic type contract of the
+legal reasoning operation. GPT-OSS predicts only unknown descriptor fields,
+which avoids redundant role disagreement without adding a winner heuristic.
+
+`stop_and_answer` is a deterministic no-observation transition and never calls
+the model. For every other hop, predicted relation updates must copy an exact
+edge ID touched by that hop; cross-edge or invented updates are rejected.
+Transport token counts and finish reasons may be logged separately to audit
+context cost, but they are never used as reward, confidence, or belief values.
+
+A live OpenRouter smoke on the grounded Phase D fixture passed on 2026-07-20.
+With a budget of 3 local nodes, 2 local edges, 2 candidate hops, and 1
+comparison, GPT-OSS selected `inspect_state_delta`; the real read resolved the
+missing role and the final belief became answer-ready. The run made two model
+requests (one non-stop transition and one preference comparison). Their prompt
+token counts were 804 and 445; both completed with `finish_reason=stop`. This is
+an integration smoke, not an accuracy result. The deterministic stop trajectory
+made no request and produced no resolved role or relation update.
+
+### 4.3 Non-heuristic planning boundary
+
+The research claim is **world-model-guided multi-hop reasoning in belief
+space**, not factor-priority or hand-scored graph traversal. Deterministic rules
+may enforce legality, provenance, safety, deduplication, and compute budgets;
+they must not decide which admissible reasoning direction wins.
+
+The intended boundary is:
+
+```text
+graph rules / factor graph
+  → reject illegal, blocked, repeated, or ungrounded hops
+  → produce an unordered admissible candidate set
+
+embedding retrieval
+  → improve candidate recall within the retrieval budget
+  → never assign the final winner
+
+world model
+  → predict categorical future-belief transitions for candidate trajectories
+
+preference planner
+  → compare only those predicted trajectory outcomes
+  → execute the preferred first reasoning hop
+```
+
+Question-direction ordering, lexical overlap, factor priority, stable structural
+order, and rule-based projected progress are provisional candidate-generation
+or baseline mechanisms. They are not acceptable evidence that the learned
+planner selected an action. In particular, `tie` or `incomparable` must trigger
+additional evidence, another comparison, or abstention; production code must
+not silently choose the first candidate.
+
+The production planner must satisfy these invariants:
+
+- permuting candidate order does not change the selected semantic hop;
+- removing lexical cues or shuffling graph presentation order does not create
+  an implicit ranking policy;
+- factor probabilities/posteriors remain solver-internal and never become
+  hand-authored action scores;
+- failure of GPT-OSS causes an explicit failure or abstention, never a silent
+  rule-planner fallback;
+- the rule-based world model remains an explicitly named experimental baseline;
+- learned supervision comes from real post-read categorical belief deltas and
+  independently reviewed trajectory preferences, not action bonuses.
+
+The current implementation now enforces the first-stage anti-shortcut boundary:
+
+- candidate truncation is stable under input permutation and does not use
+  question-direction, lexical, or factor-priority winner rules;
+- every retained trajectory pair is compared within the comparison budget;
+- a unique undominated first-hop meaning is required; otherwise planning emits
+  an audited `abstain` instead of selecting the first item;
+- GPT-OSS trajectory comparison receives anonymous imagined outcomes, without
+  operator names, target/edge/trajectory identifiers, or action rationales;
+- imagined rollouts carry categorical hypothesis, frontier, contradiction,
+  path, recovery, uncertainty, and answerability changes.
+
+These are implementation invariants, not evidence of research success. The
+remaining gap is empirical: train/validate the learned WM and preference model,
+construct delayed-effect and ambiguity cases, run the interventions below on a
+fixed multi-video gold set, and show that WM corruption changes actions and
+reduces end-task quality under a matched read budget. The categorical GTSAM
+backup-mode wrapper is also still pending; existing GTSAM code is currently an
+independent baseline/experiment backend.
+
+The required dependence experiment keeps the query, current factor-graph
+belief, candidate set, planner, and budget fixed, changing only the world-model
+prediction arm:
+
+```text
+normal learned WM
+null WM
+shuffled-transition WM
+frozen WM
+immediate-only WM
+delayed-belief trajectory WM
+```
+
+The runtime primitives for these arms are implemented as
+`TransitionIntervention.NORMAL/NULL/SHUFFLED`, `FrozenBeliefWorldModel`, and
+planner horizon one/two. A benchmark result is not claimed until the arms are
+run on the same locked cases, candidates, graph-read budget, and model budget.
+
+Report action divergence, categorical transition accuracy, evidence-chain
+completion, reads, and final-answer accuracy separately. The main claim is
+supported only if corrupting or removing world-model predictions systematically
+changes trajectories and degrades reasoning outcomes, while the delayed-belief
+arm succeeds on cases whose first hop has no immediate categorical progress
+but opens the second-hop evidence path. If actions remain unchanged, the system
+must not be described as world-model-guided.
 
 ## 5. Belief State
 

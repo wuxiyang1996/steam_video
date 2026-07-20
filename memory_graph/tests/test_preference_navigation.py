@@ -29,16 +29,27 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     ClosedLoopNavigator,
     FactorizedBeliefBackend,
     FactorGraphBeliefBackend,
+    FrozenBeliefWorldModel,
     PreferenceOnlyPlanner,
+    ReasoningContextBudget,
+    ReasoningContextBuilder,
+    ReasoningHopType,
     RelationGrounding,
     RuleBasedObservationBeliefModel,
     RuleBasedTrajectoryPreferenceModel,
+    TransitionIntervention,
     VideoSkillsL2Adapter,
     build_video_skills_l2_rollout,
     generate_sibling_artifact,
     guided_navigation_actions,
     load_overlay_artifact,
     validate_sibling_artifact,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.gpt_oss import (
+    GPTOSSObservationBeliefModel,
+    GPTOSSTrajectoryPreferenceModel,
+    OpenAICompatibleCategoricalClient,
+    _reject_numeric_output,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.matched_ablation import (
     MATCHED_STRATEGIES,
@@ -67,8 +78,10 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.train_models impor
     train_baselines,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.contracts import (
+    PairwisePreference,
     PlanDecision,
     PredictedTransition,
+    PreferenceLabel,
     TrajectoryPrediction,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.run import main as run_main
@@ -158,6 +171,289 @@ def _planner(*, horizon: int = 1) -> PreferenceOnlyPlanner:
     )
 
 
+class _FakeCategoricalClient:
+    def __init__(self, responses: list[dict[str, object]]) -> None:
+        self.responses = list(responses)
+        self.requests: list[dict[str, object]] = []
+
+    def complete_json(self, *, task: str, payload: dict[str, object]) -> dict[str, object]:
+        self.requests.append({"task": task, "payload": payload})
+        return self.responses.pop(0)
+
+
+def test_reasoning_context_bounds_graph_candidates_and_comparisons() -> None:
+    overlay = _overlay()
+    for node in overlay.atomic_events:
+        node.embedding_ref = EmbeddingRef(
+            path="event_embeddings.npy",
+            model="Qwen/Qwen3-VL-Embedding-2B",
+            row_index=0,
+        )
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    planner = PreferenceOnlyPlanner(
+        RuleBasedObservationBeliefModel(),
+        RuleBasedTrajectoryPreferenceModel(),
+        horizon=1,
+        context_builder=ReasoningContextBuilder(
+            ReasoningContextBudget(
+                max_nodes=2,
+                max_edges=1,
+                max_candidate_hops=2,
+                max_comparisons=1,
+                recent_hop_window=1,
+            )
+        ),
+    )
+
+    decision = planner.plan(belief, overlay, recent_hops=("read_event", "verify_relation"))
+
+    context = decision.reasoning_context
+    assert context is not None
+    assert len(context.local_node_ids) <= 2
+    assert len(context.local_edge_ids) <= 1
+    assert len(context.candidate_hops) <= 2
+    assert len(decision.comparisons) <= 1
+    assert context.recent_hops == ("verify_relation",)
+    assert context.audit.embedding_models_available == (
+        "Qwen/Qwen3-VL-Embedding-2B",
+    )
+    assert decision.selected_hop.hop_type in set(ReasoningHopType)
+    assert "embedding_ref" not in json.dumps(
+        {
+            "nodes": context.local_node_ids,
+            "audit": context.audit.embedding_models_available,
+        }
+    )
+
+
+def test_gpt_oss_models_accept_only_categorical_descriptors() -> None:
+    overlay = _overlay()
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    action = next(
+        action
+        for action in guided_navigation_actions(belief, overlay)
+        if action.action_type is NavigationActionType.CANDIDATE_CAUSE
+    )
+    client = _FakeCategoricalClient(
+        [
+                {
+                    "node_kind": "atomic_event",
+                "resolved_roles": ["dependency"],
+                "relation_updates": ["edge:push-open"],
+                "hypothesis_updates": [
+                    {
+                        "edge_id": "edge:push-open",
+                        "disposition": "accepted",
+                    }
+                ],
+                "contradiction_updates": [],
+                "frontier_change": "opened",
+                "contradiction_change": "unchanged",
+                "path_change": "opened",
+                "recovery_status": "recovered",
+                "uncertainty_change": "decrease",
+                "answerability_after": "ready",
+            },
+            {"label": "prefer_left", "rationale": "left completes the missing role"},
+        ]
+    )
+    world_model = GPTOSSObservationBeliefModel(client)  # type: ignore[arg-type]
+    transition = world_model.predict(belief, action, overlay)
+    trajectory = TrajectoryPrediction("left", (transition,))
+    stop = GraphReadAction(NavigationActionType.STOP)
+    stop_transition = PredictedTransition(
+        stop,
+        RuleBasedObservationBeliefModel().predict(belief, stop, overlay).observation,
+        RuleBasedObservationBeliefModel().predict(belief, stop, overlay).belief_delta,
+    )
+    preference = GPTOSSTrajectoryPreferenceModel(client).compare(  # type: ignore[arg-type]
+        trajectory,
+        TrajectoryPrediction("right", (stop_transition,)),
+        belief,
+    )
+
+    assert transition.belief_delta.resolved_roles == ("dependency",)
+    assert transition.belief_delta.hypothesis_updates[0].edge_id == "edge:push-open"
+    assert preference.label.value == "prefer_left"
+    assert len(client.requests) == 2
+    world_payload = client.requests[0]["payload"]
+    assert isinstance(world_payload, dict)
+    assert "posterior_probabilities" not in json.dumps(world_payload)
+    assert "relation_probabilities" not in json.dumps(world_payload)
+    preference_payload = client.requests[1]["payload"]
+    assert isinstance(preference_payload, dict)
+    serialized_preference = json.dumps(
+        {"belief": preference_payload["belief"],
+         "left": preference_payload["left"],
+         "right": preference_payload["right"]}
+    )
+    for forbidden in (
+        "operator",
+        "target_ids",
+        "trajectory_id",
+        "relation_updates",
+        "edge:push-open",
+        "rationale",
+    ):
+        assert forbidden not in serialized_preference
+
+
+def test_context_candidate_order_is_permutation_invariant() -> None:
+    overlay = _overlay()
+    belief = FactorGraphBeliefBackend().initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    actions = guided_navigation_actions(belief, overlay)
+    builder = ReasoningContextBuilder(
+        ReasoningContextBudget(max_candidate_hops=2, max_comparisons=1)
+    )
+
+    forward = builder.build(belief, overlay, actions)
+    reversed_order = builder.build(belief, overlay, list(reversed(actions)))
+
+    assert forward.context.candidate_hops == reversed_order.context.candidate_hops
+    assert forward.actions == reversed_order.actions
+
+
+class _TiePreferenceModel:
+    def compare(self, left, right, belief) -> PairwisePreference:
+        return PairwisePreference(
+            left_id=left.trajectory_id,
+            right_id=right.trajectory_id,
+            label=PreferenceLabel.TIE,
+            rationale="indistinguishable imagined outcomes",
+        )
+
+
+def test_non_unique_undominated_actions_cause_explicit_abstention() -> None:
+    overlay = _overlay()
+    belief = FactorizedBeliefBackend().initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    planner = PreferenceOnlyPlanner(
+        RuleBasedObservationBeliefModel(),
+        _TiePreferenceModel(),  # type: ignore[arg-type]
+        horizon=1,
+    )
+
+    decision = planner.plan(belief, overlay)
+
+    assert decision.selected_action.action_type is NavigationActionType.STOP
+    assert decision.planning_status == "abstain"
+    assert decision.ambiguity_reason == "multiple_undominated_trajectories"
+
+
+def test_null_wm_intervention_erases_predicted_progress_and_abstains() -> None:
+    overlay = _overlay()
+    belief = FactorizedBeliefBackend().initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    planner = PreferenceOnlyPlanner(
+        RuleBasedObservationBeliefModel(),
+        _TiePreferenceModel(),  # type: ignore[arg-type]
+        horizon=1,
+        transition_intervention=TransitionIntervention.NULL,
+    )
+
+    decision = planner.plan(belief, overlay)
+
+    assert decision.planning_status == "abstain"
+    assert all(
+        transition.observation.role.value == "none"
+        and transition.belief_delta.resolved_roles == ()
+        for trajectory in decision.trajectories
+        for transition in trajectory.transitions
+    )
+
+
+def test_frozen_wm_ignores_later_real_belief_change() -> None:
+    overlay = _overlay()
+    backend = FactorizedBeliefBackend()
+    initial = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    action = next(
+        item
+        for item in guided_navigation_actions(initial, overlay)
+        if item.action_type is NavigationActionType.CANDIDATE_CAUSE
+    )
+    model = FrozenBeliefWorldModel(RuleBasedObservationBeliefModel())
+    first = model.predict(initial, action, overlay)
+    observed = next(node for node in overlay.atomic_events if node.node_id == "event:push")
+    updated = backend.update(initial, action, [observed], overlay).belief
+
+    frozen = model.predict(updated, action, overlay)
+    normal = RuleBasedObservationBeliefModel().predict(updated, action, overlay)
+
+    assert first.belief_delta.uncertainty_change.value == "decrease"
+    assert frozen.belief_delta.uncertainty_change.value == "decrease"
+    assert normal.belief_delta.uncertainty_change.value == "unchanged"
+
+
+def test_gpt_oss_numeric_output_is_rejected() -> None:
+    with pytest.raises(ValueError, match="forbidden numeric value"):
+        _reject_numeric_output({"confidence": 0.9})
+
+
+def test_gpt_oss_stop_is_deterministic_and_never_calls_model() -> None:
+    overlay = _overlay()
+    belief = FactorGraphBeliefBackend().initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    client = _FakeCategoricalClient([])
+
+    transition = GPTOSSObservationBeliefModel(client).predict(  # type: ignore[arg-type]
+        belief,
+        GraphReadAction(NavigationActionType.STOP),
+        overlay,
+    )
+
+    assert transition.observation.role.value == "none"
+    assert transition.belief_delta.resolved_roles == ()
+    assert transition.belief_delta.relation_updates == ()
+    assert transition.belief_delta.answerability_after is belief.answerability
+    assert client.requests == []
+
+
+def test_gpt_oss_openrouter_keys_file_loader(tmp_path: Path) -> None:
+    keys_path = tmp_path / "keys.py"
+    keys_path.write_text("OPENROUTER_API_KEY = 'test-secret'\n", encoding="utf-8")
+
+    client = OpenAICompatibleCategoricalClient.from_openrouter_keys_file(
+        keys_path
+    )
+
+    assert client.endpoint == "https://openrouter.ai/api/v1/chat/completions"
+    assert client.api_key == "test-secret"
+
+
 def test_factorized_backend_keeps_probabilities_as_relation_metadata() -> None:
     overlay = _overlay()
     backend = FactorizedBeliefBackend()
@@ -196,7 +492,10 @@ def test_factor_graph_updates_posteriors_and_prioritizes_unresolved_role() -> No
     assert relation.edge_id in belief.priority_edge_ids
 
     actions = guided_navigation_actions(belief, overlay)
-    assert actions[0].action_type is NavigationActionType.CANDIDATE_CAUSE
+    assert any(
+        action.action_type is NavigationActionType.CANDIDATE_CAUSE
+        for action in actions
+    )
 
 
 def test_factor_graph_does_not_promote_unverified_candidate_relation() -> None:
@@ -227,7 +526,7 @@ def test_factor_graph_does_not_promote_unverified_candidate_relation() -> None:
     )
 
 
-def test_factor_guidance_uses_explicit_temporal_direction_as_tie_breaker() -> None:
+def test_temporal_direction_defines_legal_candidates_without_ranking() -> None:
     overlay = _overlay()
     backend = FactorGraphBeliefBackend()
 
@@ -244,11 +543,13 @@ def test_factor_guidance_uses_explicit_temporal_direction_as_tie_breaker() -> No
         missing_roles=("temporal",),
     )
 
-    assert guided_navigation_actions(after, overlay)[0].action_type is (
-        NavigationActionType.TEMPORAL_FORWARD
+    assert any(
+        action.action_type is NavigationActionType.TEMPORAL_FORWARD
+        for action in guided_navigation_actions(after, overlay)
     )
-    assert guided_navigation_actions(before, overlay)[0].action_type is (
-        NavigationActionType.TEMPORAL_BACK
+    assert any(
+        action.action_type is NavigationActionType.TEMPORAL_BACK
+        for action in guided_navigation_actions(before, overlay)
     )
 
 

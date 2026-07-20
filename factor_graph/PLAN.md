@@ -1,9 +1,36 @@
 # GTSAM Belief Graph Implementation Plan
 
+## Architecture decision（2026-07-20）
+
+主研究方法使用固定、共享的 L1/L1.5 Memory Graph；novelty 集中在 IWM-guided reasoning，
+而不是 graph construction 或 propagation。GTSAM 不再是默认 planner dependency，而是可选
+belief-correction backup，以及 baseline/diagnostic。
+
+后续 runtime 统一为 `BeliefCorrector` 接口，并提供：
+
+- `iwm_belief_only`：默认主方法；
+- `iwm_with_gtsam_backup`：真实读取和 categorical verifier 后，在明确冲突/纠错条件下
+  调用；
+- `gtsam_always`：baseline 与消融。
+
+GTSAM backup 只消费 real executed evidence，不消费 imagined transition；不生成候选、
+不排名 reasoning operation、不产生 preference、不提供答案证据。Planner 必须继续依赖
+IWM predicted future-belief trajectory。backup 不可用时显式返回
+`backup_unavailable`，不得静默改变策略。
+
+下一实现顺序：
+
+1. 冻结共享 L1/L1.5 graph、candidate set 和 evidence budget；
+2. 清除 graph priority、lexical 和 stable-order winner leakage；
+3. 将现有 GTSAM backend 包装为 optional `BeliefCorrector`；
+4. 实现 categorical backup triggers 和 correction audit；
+5. 比较 `iwm_belief_only`、`iwm_with_gtsam_backup`、`gtsam_always`，分别报告 backup activation、
+   correction persistence、action divergence、evidence completeness、accuracy 和成本。
+
 这份计划把“求解器能运行”“能读真实 overlay”“能根据真实 query measurement
 纠错”和“能提高导航结果”分成不同门禁，禁止用 synthetic 成功替代真实数据结论。
 
-## 目标架构
+## 已实现的 GTSAM baseline 架构
 
 ```text
 CausalTemporalOverlay
@@ -101,10 +128,42 @@ dependency 非空；相互冲突的 categorical measurements 都保留在 journa
 - 重新生成 action 并规划。
 
 matched arms：semantic-only、event-only、native L1 candidate、verified dependency、
-factor-guided preference、factor-guided frozen、no-loop、shuffled measurement。
+IWM preference、null/shuffled/frozen WM、immediate-only、delayed-belief，以及独立的
+GTSAM-always / no-loop / shuffled-measurement baseline。
 
 验收：固定 gold case set、相同 graph-read budget、独立 preference/answer 标注，以及
 所有答案证据可回溯到 L1。
+
+### Phase E.1：Bounded next-hop reasoning（已实现）
+
+- `ReasoningContextBuilder` 只向 world model / planner 暴露 query-conditioned 局部子图、
+  categorical belief、少量 candidate hops 和短期 history；
+- `GraphReadAction` 保留为执行兼容层，`ReasoningHop` 明确表示 multi-hop reasoning 的下一跳；
+- 独立限制 local nodes、local edges、candidate hops 和 pairwise comparisons；
+- 在 comparison budget 可覆盖的范围内保留最大候选集，并对保留轨迹做完整 all-pairs；
+  不再使用顺序敏感的 staged tournament；
+- candidate order 用稳定内容摘要规范化；多个不同 first-hop 同为 undominated 时显式
+  `abstain`，不取第一个候选；
+- GPT preference 只看到匿名 imagined outcomes，不看到 operator、target/edge ID 或 action rationale；
+- L2 记录 retrieved/dropped node/edge、候选数、comparison budget、估算 prompt tokens；
+- Qwen embedding 只在 LLM 外部参与召回排序，raw vector 不进入 prompt；
+- implicit world model 和 preference planner 可显式使用 `openai/gpt-oss-120b`，且只允许
+  categorical JSON；模型输出任何数值均失败，endpoint 缺失时不静默 fallback。
+
+OpenRouter live smoke 已通过：在 Phase D grounded fixture 上，3-node / 2-edge /
+2-hop / 1-comparison 预算产生两次 GPT-OSS 请求，选择 `inspect_state_delta`，真实读取后
+belief 变为 answer-ready。两次 prompt token 分别为 804 和 445；这些 transport 计数只用于
+输入成本审计，不进入 preference 或 belief。`stop_and_answer` 已固定为 deterministic no-op，
+不会调用模型，也不能凭 imagined transition 解决 missing role。
+
+下一实验步骤是做 context-budget ablation，并在独立 multi-video gold cases 上分别报告
+answer accuracy、evidence completeness、reads 和 action divergence。
+
+同时必须清除 heuristic leakage：candidate generator 只负责 legality、provenance、blocking、
+deduplication 和预算，不能通过 lexical/question-direction/factor-priority/stable-order 决定
+winner。建立 candidate permutation test，以及 normal/null/shuffled/frozen/immediate-only/
+delayed-belief WM intervention。只有破坏 WM prediction 会系统性改变 action trajectory 并降低
+reasoning outcome，才能支持 world-model-guided reasoning claim。
 
 ## Phase F：生产门禁
 

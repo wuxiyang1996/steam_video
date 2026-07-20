@@ -112,11 +112,13 @@
   "correction_sensitive_mechanism_pilot": {
     "artifact": "correction_sensitive_navigation.json",
     "case_count": 3,
-    "support_propagation_changes_next_action": true,
-    "reject_propagation_changes_next_action": true,
+    "support_propagated_belief_change": true,
+    "reject_propagated_belief_change": true,
+    "support_action_divergence": true,
+    "reject_action_divergence": false,
     "inconclusive_is_negative_control": true,
     "independent_gold": false,
-    "file_sha256": "9fd57ace94711df86488337757c5664ca77b39437e5b03c7ebb68c7a90c5ff0c"
+    "file_sha256": "f85be94468b6feefbf1bcfeb8c06db2fa077d421bf0ae373e923e89d2809ce3f"
   },
   "remaining_formal_gates": [
     "independent human identity/state annotation on a multi-video locked set",

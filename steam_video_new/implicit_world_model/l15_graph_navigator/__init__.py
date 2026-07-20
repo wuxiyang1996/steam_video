@@ -18,9 +18,22 @@ from .contracts import (
     PreferenceLabel,
     RelationGrounding,
     RelationState,
+    ReasoningContext,
+    ReasoningContextAudit,
+    ReasoningContextBudget,
+    ReasoningHop,
+    ReasoningHopType,
     TrajectoryPrediction,
     UncertaintyChange,
     UncertaintyLevel,
+)
+from .context import BuiltReasoningContext, ReasoningContextBuilder
+from .gpt_oss import (
+    DEFAULT_GPT_OSS_MODEL,
+    GPTOSSObservationBeliefModel,
+    GPTOSSTrajectoryPreferenceModel,
+    OpenAICompatibleCategoricalClient,
+    OPENROUTER_API_BASE,
 )
 from .continuous import (
     ContinuousBeliefSmoother,
@@ -36,6 +49,11 @@ from .planner import (
 )
 from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
 from .matched_ablation import MATCHED_STRATEGIES, evaluate_matched_navigation
+from .interventions import (
+    FrozenBeliefWorldModel,
+    TransitionIntervention,
+    intervene_trajectories,
+)
 from .overlay_io import LoadedOverlayArtifact, load_overlay_artifact, overlay_from_dict
 from .preference_data import (
     ALLOWED_PREFERENCE_LABELS,
@@ -72,6 +90,7 @@ __all__ = [
     "BeliefBackend",
     "BeliefDeltaDescriptor",
     "BeliefSnapshot",
+    "BuiltReasoningContext",
     "CASE_CATEGORIES",
     "ClosedLoopNavigator",
     "ContinuousBeliefSmoother",
@@ -80,6 +99,9 @@ __all__ = [
     "FactorizedBeliefBackend",
     "FactorGraphBeliefBackend",
     "GTSAM_AVAILABLE",
+    "GPTOSSObservationBeliefModel",
+    "GPTOSSTrajectoryPreferenceModel",
+    "FrozenBeliefWorldModel",
     "GraphReadExecution",
     "GraphReadExecutor",
     "NavigationRun",
@@ -92,15 +114,25 @@ __all__ = [
     "PlanDecision",
     "PreferenceLabel",
     "PreferenceOnlyPlanner",
+    "OpenAICompatibleCategoricalClient",
+    "OPENROUTER_API_BASE",
     "PersistedGraphReadExecutor",
     "RelationGrounding",
     "RelationState",
+    "ReasoningContext",
+    "ReasoningContextAudit",
+    "ReasoningContextBudget",
+    "ReasoningContextBuilder",
+    "ReasoningHop",
+    "ReasoningHopType",
     "RuleBasedObservationBeliefModel",
     "RuleBasedTrajectoryPreferenceModel",
     "TrajectoryPrediction",
+    "TransitionIntervention",
     "UncertaintyChange",
     "UncertaintyLevel",
     "VideoSkillsL2Adapter",
+    "DEFAULT_GPT_OSS_MODEL",
     "build_video_skills_l2_rollout",
     "build_preference_annotation_packet",
     "belief_to_dict",
@@ -108,6 +140,7 @@ __all__ = [
     "evaluate_matched_navigation",
     "export_training_records",
     "guided_navigation_actions",
+    "intervene_trajectories",
     "load_overlay_artifact",
     "lock_annotation_packet",
     "lock_navigation_case_set",

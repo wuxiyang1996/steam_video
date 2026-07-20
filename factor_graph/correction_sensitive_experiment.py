@@ -147,7 +147,7 @@ def run_experiment(source: Path, fixture_dir: Path) -> dict[str, Any]:
             }
         )
     return {
-        "schema_version": "steam-gtsam-correction-sensitive-navigation/v0.1",
+        "schema_version": "steam-gtsam-correction-sensitive-navigation/v0.2",
         "status": "derived_grounded_mechanism_pilot_not_gold",
         "production_ready": False,
         "llm_numeric_output": False,
@@ -156,10 +156,20 @@ def run_experiment(source: Path, fixture_dir: Path) -> dict[str, Any]:
         "cases": rows,
         "summary": {
             "case_count": len(rows),
-            "support_propagation_changes_next_action": rows[0]["separate_diagnostics"][
+            "support_propagated_belief_change": (
+                rows[0]["separate_diagnostics"][
+                    "correct_probe_propagated_change_count"
+                ] > 0
+            ),
+            "reject_propagated_belief_change": (
+                rows[1]["separate_diagnostics"][
+                    "correct_probe_propagated_change_count"
+                ] > 0
+            ),
+            "support_action_divergence": rows[0]["separate_diagnostics"][
                 "correct_vs_verifier_only_next_action_differs"
             ],
-            "reject_propagation_changes_next_action": rows[1]["separate_diagnostics"][
+            "reject_action_divergence": rows[1]["separate_diagnostics"][
                 "correct_vs_verifier_only_next_action_differs"
             ],
             "inconclusive_is_negative_control": (
@@ -173,6 +183,7 @@ def run_experiment(source: Path, fixture_dir: Path) -> dict[str, Any]:
             "Cases are transparently derived from grounded Phase D evidence, not independent human gold.",
             "Pilot measurement likelihoods are not calibrated production probabilities.",
             "This isolates mechanism sensitivity; it is not an answer-accuracy benchmark.",
+            "Belief correction and action divergence are reported separately; neither is inferred from the other.",
         ],
     }
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 import hashlib
 from itertools import combinations
-import re
+from typing import Mapping
 
 from memory_graph.navigation import (
     GraphReadAction,
@@ -18,20 +18,27 @@ from memory_graph.types import CausalTemporalOverlay
 from .contracts import (
     BeliefBackend,
     BeliefSnapshot,
+    ContradictionChange,
+    FrontierChange,
     GraphReadExecution,
     GraphReadExecutor,
     NavigationRun,
     NavigationStep,
     ObservationBeliefWorldModel,
     PairwisePreference,
+    HypothesisDisposition,
     PlanDecision,
     PredictedTransition,
     PreferenceLabel,
+    PathChange,
+    RelationGrounding,
     TrajectoryPrediction,
     TrajectoryPreferenceModel,
     UncertaintyChange,
     UncertaintyLevel,
 )
+from .context import ReasoningContextBuilder
+from .interventions import TransitionIntervention, intervene_trajectories
 
 
 class PreferenceOnlyPlanner:
@@ -44,6 +51,8 @@ class PreferenceOnlyPlanner:
         *,
         horizon: int = 2,
         max_second_actions: int = 4,
+        context_builder: ReasoningContextBuilder | None = None,
+        transition_intervention: TransitionIntervention = TransitionIntervention.NORMAL,
     ) -> None:
         if horizon not in {1, 2}:
             raise ValueError("only horizon 1 or 2 is supported")
@@ -53,23 +62,52 @@ class PreferenceOnlyPlanner:
         self.preference_model = preference_model
         self.horizon = horizon
         self.max_second_actions = max_second_actions
+        self.context_builder = context_builder or ReasoningContextBuilder()
+        self.transition_intervention = transition_intervention
 
     def plan(
         self,
         belief: BeliefSnapshot,
         overlay: CausalTemporalOverlay,
+        *,
+        recent_hops: tuple[str, ...] = (),
+        embedding_scores: Mapping[str, float] | None = None,
     ) -> PlanDecision:
-        trajectories = self._expand_trajectories(belief, overlay)
+        actions = guided_navigation_actions(belief, overlay)
+        built = self.context_builder.build(
+            belief,
+            overlay,
+            actions,
+            recent_hops=recent_hops,
+            embedding_scores=embedding_scores,
+        )
+        trajectories = self._expand_trajectories(
+            built.belief,
+            built.overlay,
+            built.actions,
+            max_trajectories=_max_fully_compared_trajectories(
+                built.context.audit.comparison_budget
+            ),
+        )
         if not trajectories:
             raise RuntimeError("the graph action generator returned no trajectories")
+        trajectories = list(
+            intervene_trajectories(
+                tuple(trajectories), built.belief, self.transition_intervention
+            )
+        )
 
         comparisons: list[PairwisePreference] = []
         dominated: set[str] = set()
-        for left, right in combinations(trajectories, 2):
-            comparison = self.preference_model.compare(left, right, belief)
+        for left, candidate in combinations(trajectories, 2):
+            comparison = self.preference_model.compare(
+                left,
+                candidate,
+                built.belief,
+            )
             comparisons.append(comparison)
             if comparison.label is PreferenceLabel.PREFER_LEFT:
-                dominated.add(right.trajectory_id)
+                dominated.add(candidate.trajectory_id)
             elif comparison.label is PreferenceLabel.PREFER_RIGHT:
                 dominated.add(left.trajectory_id)
 
@@ -78,40 +116,70 @@ class PreferenceOnlyPlanner:
             for trajectory in trajectories
             if trajectory.trajectory_id not in dominated
         )
-        selected = next(
-            (
-                trajectory
-                for trajectory in trajectories
-                if trajectory.trajectory_id in set(undominated)
-            ),
-            trajectories[0],
-        )
+        unique = [
+            trajectory
+            for trajectory in trajectories
+            if trajectory.trajectory_id in set(undominated)
+        ]
+        first_hops = {
+            _action_digest(trajectory.first_action): trajectory.first_action
+            for trajectory in unique
+        }
+        if len(first_hops) == 1:
+            selected_action = next(iter(first_hops.values()))
+            selected_trajectory_id = min(
+                trajectory.trajectory_id for trajectory in unique
+            )
+            planning_status = (
+                "selected"
+                if len(unique) == 1
+                else "selected_equivalent_first_hop"
+            )
+            ambiguity_reason = None
+        else:
+            selected_action = GraphReadAction(
+                NavigationActionType.STOP,
+                rationale="planning_abstain: non-unique undominated trajectories",
+            )
+            selected_trajectory_id = "planning:abstain"
+            planning_status = "abstain"
+            ambiguity_reason = (
+                "no_undominated_trajectory"
+                if not unique
+                else "multiple_undominated_trajectories"
+            )
         return PlanDecision(
-            selected_action=selected.first_action,
-            selected_trajectory_id=selected.trajectory_id,
+            selected_action=selected_action,
+            selected_trajectory_id=selected_trajectory_id,
             trajectories=tuple(trajectories),
             comparisons=tuple(comparisons),
             undominated_trajectory_ids=undominated,
+            fallback_policy="explicit_abstain_for_non_unique_undominated",
+            reasoning_context=built.context,
+            planning_status=planning_status,
+            ambiguity_reason=ambiguity_reason,
         )
 
     def _expand_trajectories(
         self,
         belief: BeliefSnapshot,
         overlay: CausalTemporalOverlay,
+        actions: tuple[GraphReadAction, ...],
+        *,
+        max_trajectories: int,
     ) -> list[TrajectoryPrediction]:
-        actions = guided_navigation_actions(belief, overlay)
         trajectories: list[TrajectoryPrediction] = []
-        sequence = 0
         for first_action in actions:
+            if len(trajectories) >= max_trajectories:
+                break
             first = self.world_model.predict(belief, first_action, overlay)
             if (
                 self.horizon == 1
                 or first_action.action_type is NavigationActionType.STOP
             ):
                 trajectories.append(
-                    TrajectoryPrediction(f"trajectory:{sequence}", (first,))
+                    TrajectoryPrediction(_trajectory_id((first,)), (first,))
                 )
-                sequence += 1
                 continue
 
             imagined_belief = _project_imagined_belief(belief, first)
@@ -121,11 +189,12 @@ class PreferenceOnlyPlanner:
             )[: self.max_second_actions]
             if not second_actions:
                 trajectories.append(
-                    TrajectoryPrediction(f"trajectory:{sequence}", (first,))
+                    TrajectoryPrediction(_trajectory_id((first,)), (first,))
                 )
-                sequence += 1
                 continue
             for second_action in second_actions:
+                if len(trajectories) >= max_trajectories:
+                    break
                 second = self.world_model.predict(
                     imagined_belief,
                     second_action,
@@ -133,11 +202,10 @@ class PreferenceOnlyPlanner:
                 )
                 trajectories.append(
                     TrajectoryPrediction(
-                        f"trajectory:{sequence}",
+                        _trajectory_id((first, second)),
                         (first, second),
                     )
                 )
-                sequence += 1
         return trajectories
 
 
@@ -166,11 +234,17 @@ class ClosedLoopNavigator:
         initial_belief_id = belief.belief_id
         steps: list[NavigationStep] = []
         snapshots = [belief]
+        recent_hops: list[str] = []
         while belief.remaining_graph_reads > 0:
             if max_steps is not None and len(steps) >= max_steps:
                 break
-            decision = self.planner.plan(belief, overlay)
+            decision = self.planner.plan(
+                belief,
+                overlay,
+                recent_hops=tuple(recent_hops),
+            )
             action = decision.selected_action
+            recent_hops.append(decision.selected_hop.hop_type.value)
             if action.action_type is NavigationActionType.STOP:
                 steps.append(
                     NavigationStep(
@@ -276,12 +350,74 @@ def _project_imagined_belief(
             UncertaintyLevel.MEDIUM: UncertaintyLevel.LOW,
             UncertaintyLevel.LOW: UncertaintyLevel.LOW,
         }[uncertainty]
+    hypothesis_updates = {
+        update.edge_id: update.disposition
+        for update in transition.belief_delta.hypothesis_updates
+    }
+    relation_states = tuple(
+        replace(
+            state,
+            grounding=(
+                RelationGrounding.VERIFIED
+                if hypothesis_updates[state.edge_id]
+                is HypothesisDisposition.ACCEPTED
+                else RelationGrounding.CONTRADICTED
+                if hypothesis_updates[state.edge_id]
+                is HypothesisDisposition.REJECTED
+                else state.grounding
+            ),
+        )
+        if state.edge_id in hypothesis_updates
+        else state
+        for state in belief.relation_states
+    )
+    contradictions = list(belief.contradictions)
+    contradiction_updates = set(transition.belief_delta.contradiction_updates)
+    if (
+        transition.belief_delta.contradiction_change
+        is ContradictionChange.RESOLVED
+    ):
+        contradictions = [
+            value for value in contradictions if value not in contradiction_updates
+        ]
+    elif (
+        transition.belief_delta.contradiction_change
+        is ContradictionChange.OPENED
+    ):
+        contradictions = list(
+            dict.fromkeys((*contradictions, *transition.belief_delta.contradiction_updates))
+        )
+    priority = set(belief.priority_edge_ids)
+    blocked = set(belief.blocked_edge_ids)
+    for edge_id, disposition in hypothesis_updates.items():
+        if disposition is HypothesisDisposition.ACCEPTED:
+            priority.discard(edge_id)
+            blocked.discard(edge_id)
+        elif disposition is HypothesisDisposition.REJECTED:
+            priority.discard(edge_id)
+            blocked.add(edge_id)
+        else:
+            priority.add(edge_id)
+    changed_edges = set(transition.belief_delta.relation_updates)
+    if transition.belief_delta.path_change is PathChange.BLOCKED:
+        blocked.update(changed_edges)
+    elif transition.belief_delta.path_change is PathChange.OPENED:
+        blocked.difference_update(changed_edges)
+    frontier = belief.frontier
+    if transition.belief_delta.frontier_change is FrontierChange.OPENED:
+        frontier = target_ids or belief.frontier
+    elif transition.belief_delta.frontier_change is FrontierChange.CLOSED:
+        frontier = ()
     return replace(
         belief,
         belief_id=f"{belief.belief_id}:imagined",
         acquired_evidence=acquired,
-        frontier=target_ids or belief.frontier,
+        frontier=frontier,
         missing_roles=missing,
+        contradictions=tuple(contradictions),
+        relation_states=relation_states,
+        priority_edge_ids=tuple(sorted(priority)),
+        blocked_edge_ids=tuple(sorted(blocked)),
         uncertainty=uncertainty,
         answerability=transition.belief_delta.answerability_after,
         step=belief.step + 1,
@@ -295,7 +431,6 @@ def guided_navigation_actions(
     """Use factor-graph directives to order/filter legal exploration actions."""
 
     actions = propose_navigation_actions(belief.navigation_view(), overlay)
-    priority = set(belief.priority_edge_ids)
     blocked = set(belief.blocked_edge_ids)
     acquired = set(belief.acquired_evidence)
     edges = {
@@ -338,13 +473,7 @@ def guided_navigation_actions(
         (action for action, _ in kept),
         key=lambda action: (
             action.action_type is NavigationActionType.STOP,
-            not bool(_action_edge_ids(action, overlay) & priority),
-            _question_direction_rank(belief.question, action.action_type),
-            action.action_type.value,
-            -_question_target_overlap(belief.question, action, overlay),
-            action.source_id or "",
-            action.target_ids,
-            action.relation or "",
+            _action_digest(action),
         ),
     )
     result: list[GraphReadAction] = []
@@ -362,40 +491,6 @@ def guided_navigation_actions(
     return result
 
 
-def _question_direction_rank(
-    question: str,
-    action_type: NavigationActionType,
-) -> int:
-    """Use an explicit temporal word only to break ordinal planning ties."""
-
-    normalized = question.casefold()
-    asks_forward = any(
-        marker in normalized
-        for marker in ("after", "following", "later", "next", "之后", "以后", "后来", "接下来")
-    )
-    asks_backward = any(
-        marker in normalized
-        for marker in ("before", "earlier", "prior", "之前", "以前", "此前")
-    )
-    if asks_forward == asks_backward:
-        return 0
-    preferred = (
-        NavigationActionType.TEMPORAL_FORWARD
-        if asks_forward
-        else NavigationActionType.TEMPORAL_BACK
-    )
-    opposite = (
-        NavigationActionType.TEMPORAL_BACK
-        if asks_forward
-        else NavigationActionType.TEMPORAL_FORWARD
-    )
-    if action_type is preferred:
-        return 0
-    if action_type is opposite:
-        return 2
-    return 1
-
-
 def _action_edge_ids(
     action: GraphReadAction,
     overlay: CausalTemporalOverlay,
@@ -411,31 +506,28 @@ def _action_edge_ids(
     }
 
 
-def _question_target_overlap(
-    question: str,
-    action: GraphReadAction,
-    overlay: CausalTemporalOverlay,
-) -> int:
-    """Lexical fallback for structural tie-breaking; never an action reward."""
-
-    by_id = {
-        node.node_id: node for node in overlay.atomic_events + overlay.l1_observations
-    }
-    question_tokens = _navigation_tokens(question)
-    return sum(
-        len(question_tokens & _navigation_tokens(by_id[target].text or ""))
-        for target in action.target_ids
-        if target in by_id
+def _action_digest(action: GraphReadAction) -> str:
+    value = "\x1f".join(
+        (
+            action.action_type.value,
+            action.source_id or "",
+            *action.target_ids,
+            action.relation or "",
+        )
     )
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def _navigation_tokens(value: str) -> set[str]:
-    stop = {"after", "and", "does", "event", "immediately", "the", "to", "what", "which"}
-    return {
-        token
-        for token in re.findall(r"[a-z0-9]+", value.casefold())
-        if len(token) > 1 and token not in stop
-    }
+def _trajectory_id(transitions: tuple[PredictedTransition, ...]) -> str:
+    value = "\x1e".join(_action_digest(item.action) for item in transitions)
+    return f"trajectory:{hashlib.sha256(value.encode('utf-8')).hexdigest()[:20]}"
+
+
+def _max_fully_compared_trajectories(comparison_budget: int) -> int:
+    count = 1
+    while (count + 1) * count // 2 <= comparison_budget:
+        count += 1
+    return count
 
 
 def _verification_targets(

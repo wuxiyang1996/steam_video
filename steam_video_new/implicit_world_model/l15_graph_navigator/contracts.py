@@ -61,6 +61,120 @@ class PreferenceLabel(str, Enum):
     INCOMPARABLE = "incomparable"
 
 
+class HypothesisDisposition(str, Enum):
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    UNRESOLVED = "unresolved"
+
+
+class FrontierChange(str, Enum):
+    OPENED = "opened"
+    UNCHANGED = "unchanged"
+    CLOSED = "closed"
+
+
+class ContradictionChange(str, Enum):
+    OPENED = "opened"
+    RESOLVED = "resolved"
+    UNCHANGED = "unchanged"
+
+
+class PathChange(str, Enum):
+    OPENED = "opened"
+    BLOCKED = "blocked"
+    UNCHANGED = "unchanged"
+
+
+class RecoveryStatus(str, Enum):
+    RECOVERED = "recovered"
+    STALLED = "stalled"
+    UNCHANGED = "unchanged"
+
+
+@dataclass(frozen=True)
+class HypothesisUpdate:
+    edge_id: str
+    disposition: HypothesisDisposition
+
+
+class ReasoningHopType(str, Enum):
+    """Semantic next-hop operators for multi-hop reasoning.
+
+    ``GraphReadAction`` remains the execution compatibility contract.  This
+    enum makes clear that planning selects evidence/reasoning hops, not
+    physical robot actions.
+    """
+
+    READ_EVENT = "read_event"
+    FOLLOW_TEMPORAL = "follow_temporal"
+    FOLLOW_DEPENDENCY = "follow_dependency"
+    RESOLVE_IDENTITY = "resolve_identity"
+    INSPECT_STATE_DELTA = "inspect_state_delta"
+    SEEK_COUNTER_EVIDENCE = "seek_counter_evidence"
+    VERIFY_RELATION = "verify_relation"
+    STOP_AND_ANSWER = "stop_and_answer"
+
+
+@dataclass(frozen=True)
+class ReasoningHop:
+    hop_type: ReasoningHopType
+    action: GraphReadAction
+
+
+@dataclass(frozen=True)
+class ReasoningContextBudget:
+    max_nodes: int = 24
+    max_edges: int = 32
+    max_candidate_hops: int = 8
+    max_comparisons: int = 32
+    recent_hop_window: int = 3
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("max_nodes", self.max_nodes),
+            ("max_edges", self.max_edges),
+            ("max_candidate_hops", self.max_candidate_hops),
+            ("max_comparisons", self.max_comparisons),
+        ):
+            if value <= 0:
+                raise ValueError(f"{name} must be positive")
+        if self.recent_hop_window < 0:
+            raise ValueError("recent_hop_window must be non-negative")
+
+
+@dataclass(frozen=True)
+class ReasoningContextAudit:
+    retrieval_mode: str
+    retrieved_node_ids: tuple[str, ...]
+    dropped_node_ids: tuple[str, ...]
+    retrieved_edge_ids: tuple[str, ...]
+    dropped_edge_ids: tuple[str, ...]
+    retained_candidate_hops: int
+    dropped_candidate_hops: int
+    comparison_budget: int
+    estimated_prompt_tokens: int
+    embedding_models_available: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ReasoningContext:
+    """Bounded, categorical planner input; never contains raw embeddings."""
+
+    question: str
+    answerability: Answerability
+    missing_roles: tuple[str, ...]
+    accepted_hypotheses: tuple[str, ...]
+    rejected_hypotheses: tuple[str, ...]
+    unresolved_hypotheses: tuple[str, ...]
+    contradictions: tuple[str, ...]
+    acquired_evidence_refs: tuple[str, ...]
+    recent_hops: tuple[str, ...]
+    local_node_ids: tuple[str, ...]
+    local_edge_ids: tuple[str, ...]
+    candidate_hops: tuple[ReasoningHop, ...]
+    audit: ReasoningContextAudit
+
+
 @dataclass(frozen=True)
 class RelationState:
     """Question-conditioned state for one typed graph edge.
@@ -153,6 +267,11 @@ class BeliefDeltaDescriptor:
     resolved_roles: tuple[str, ...] = ()
     relation_updates: tuple[str, ...] = ()
     contradiction_updates: tuple[str, ...] = ()
+    hypothesis_updates: tuple[HypothesisUpdate, ...] = ()
+    frontier_change: FrontierChange = FrontierChange.UNCHANGED
+    contradiction_change: ContradictionChange = ContradictionChange.UNCHANGED
+    path_change: PathChange = PathChange.UNCHANGED
+    recovery_status: RecoveryStatus = RecoveryStatus.UNCHANGED
     uncertainty_change: UncertaintyChange = UncertaintyChange.UNCHANGED
     answerability_after: Answerability = Answerability.NOT_READY
     predicted_only: bool = True
@@ -190,7 +309,14 @@ class PlanDecision:
     trajectories: tuple[TrajectoryPrediction, ...]
     comparisons: tuple[PairwisePreference, ...]
     undominated_trajectory_ids: tuple[str, ...]
-    fallback_policy: str = "stable_structural_order_for_tie_or_incomparable"
+    fallback_policy: str = "explicit_abstain_for_non_unique_undominated"
+    reasoning_context: ReasoningContext | None = None
+    planning_status: str = "selected"
+    ambiguity_reason: str | None = None
+
+    @property
+    def selected_hop(self) -> ReasoningHop:
+        return reasoning_hop_from_action(self.selected_action)
 
 
 @dataclass(frozen=True)
@@ -215,6 +341,7 @@ class NavigationStep:
         realized_delta = self.realized_belief_delta
         return {
             "belief_before_id": self.belief_before_id,
+            "reasoning_hop": self.decision.selected_hop.hop_type.value,
             "action": {
                 "type": action.action_type.value,
                 "source_id": action.source_id,
@@ -224,6 +351,8 @@ class NavigationStep:
             "real_observation_ids": list(self.observation_ids),
             "belief_after_id": self.belief_after_id,
             "selected_trajectory_id": self.decision.selected_trajectory_id,
+            "planning_status": self.decision.planning_status,
+            "ambiguity_reason": self.decision.ambiguity_reason,
             "preference_output": "ordinal_only",
             "trajectory_preferences": [
                 {
@@ -241,6 +370,19 @@ class NavigationStep:
                     "contradiction_updates": list(
                         realized_delta.contradiction_updates
                     ),
+                    "hypothesis_updates": [
+                        {
+                            "edge_id": update.edge_id,
+                            "disposition": update.disposition.value,
+                        }
+                        for update in realized_delta.hypothesis_updates
+                    ],
+                    "frontier_change": realized_delta.frontier_change.value,
+                    "contradiction_change": (
+                        realized_delta.contradiction_change.value
+                    ),
+                    "path_change": realized_delta.path_change.value,
+                    "recovery_status": realized_delta.recovery_status.value,
                     "uncertainty_change": realized_delta.uncertainty_change.value,
                     "answerability_after": realized_delta.answerability_after.value,
                     "predicted_only": realized_delta.predicted_only,
@@ -250,6 +392,17 @@ class NavigationStep:
             ),
             "skill_invocation": self.skill_invocation,
             "belief_update_audit": self.belief_update_audit,
+            "reasoning_context_audit": (
+                {
+                    **reasoning_context_audit_to_dict(
+                        self.decision.reasoning_context.audit
+                    ),
+                    "actual_comparisons": len(self.decision.comparisons),
+                    "predicted_trajectories": len(self.decision.trajectories),
+                }
+                if self.decision.reasoning_context is not None
+                else None
+            ),
         }
 
 
@@ -317,3 +470,42 @@ class TrajectoryPreferenceModel(Protocol):
         right: TrajectoryPrediction,
         belief: BeliefSnapshot,
     ) -> PairwisePreference: ...
+
+
+def reasoning_hop_from_action(action: GraphReadAction) -> ReasoningHop:
+    """Map the legacy execution action to its multi-hop reasoning meaning."""
+
+    from memory_graph.navigation import NavigationActionType
+
+    mapping = {
+        NavigationActionType.SEMANTIC: ReasoningHopType.READ_EVENT,
+        NavigationActionType.TEMPORAL_BACK: ReasoningHopType.FOLLOW_TEMPORAL,
+        NavigationActionType.TEMPORAL_FORWARD: ReasoningHopType.FOLLOW_TEMPORAL,
+        NavigationActionType.TRACK_ENTITY: ReasoningHopType.RESOLVE_IDENTITY,
+        NavigationActionType.INSPECT_STATE_CHANGE: ReasoningHopType.INSPECT_STATE_DELTA,
+        NavigationActionType.FOLLOW_DEPENDENCY: ReasoningHopType.FOLLOW_DEPENDENCY,
+        NavigationActionType.CANDIDATE_CAUSE: ReasoningHopType.FOLLOW_DEPENDENCY,
+        NavigationActionType.EFFECT: ReasoningHopType.FOLLOW_DEPENDENCY,
+        NavigationActionType.FIND_BRIDGE: ReasoningHopType.FOLLOW_DEPENDENCY,
+        NavigationActionType.SEARCH_COUNTEREVIDENCE: ReasoningHopType.SEEK_COUNTER_EVIDENCE,
+        NavigationActionType.VERIFY: ReasoningHopType.VERIFY_RELATION,
+        NavigationActionType.STOP: ReasoningHopType.STOP_AND_ANSWER,
+    }
+    return ReasoningHop(mapping[action.action_type], action)
+
+
+def reasoning_context_audit_to_dict(
+    audit: ReasoningContextAudit,
+) -> dict[str, object]:
+    return {
+        "retrieval_mode": audit.retrieval_mode,
+        "retrieved_node_ids": list(audit.retrieved_node_ids),
+        "dropped_node_ids": list(audit.dropped_node_ids),
+        "retrieved_edge_ids": list(audit.retrieved_edge_ids),
+        "dropped_edge_ids": list(audit.dropped_edge_ids),
+        "retained_candidate_hops": audit.retained_candidate_hops,
+        "dropped_candidate_hops": audit.dropped_candidate_hops,
+        "comparison_budget": audit.comparison_budget,
+        "estimated_prompt_tokens": audit.estimated_prompt_tokens,
+        "embedding_models_available": list(audit.embedding_models_available),
+    }

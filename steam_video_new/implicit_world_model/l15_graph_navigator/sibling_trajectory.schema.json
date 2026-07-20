@@ -109,7 +109,12 @@
         "right_branch_id": {"type": "string"},
         "label": {"$ref": "#/$defs/preference_label"},
         "rationale": {"type": "string"},
-        "label_source": {"const": "rule_based_provisional/v0.1"}
+        "label_source": {
+          "enum": [
+            "rule_based_provisional/v0.1",
+            "gpt-oss-120b_categorical_provisional/v0.1"
+          ]
+        }
       }
     }
   }

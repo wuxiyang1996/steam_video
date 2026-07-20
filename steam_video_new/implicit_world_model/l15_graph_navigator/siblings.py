@@ -28,6 +28,7 @@ from .contracts import (
     UncertaintyChange,
 )
 from .planner import guided_navigation_actions
+from .context import ReasoningContextBuilder
 
 
 def generate_sibling_artifact(
@@ -39,10 +40,21 @@ def generate_sibling_artifact(
     world_model: ObservationBeliefWorldModel,
     preference_model: TrajectoryPreferenceModel,
     include_stop: bool = True,
+    context_builder: ReasoningContextBuilder | None = None,
+    label_source: str = "rule_based_provisional/v0.1",
 ) -> dict[str, Any]:
     """Execute every branch against persisted graph state, never imagined text."""
 
     actions = guided_navigation_actions(belief, overlay)
+    model_belief = belief
+    model_overlay = overlay
+    comparison_budget: int | None = None
+    if context_builder is not None:
+        built = context_builder.build(belief, overlay, actions)
+        actions = list(built.actions)
+        model_belief = built.belief
+        model_overlay = built.overlay
+        comparison_budget = built.context.audit.comparison_budget
     if not include_stop:
         actions = [
             action
@@ -54,7 +66,7 @@ def generate_sibling_artifact(
     trajectories: list[TrajectoryPrediction] = []
     for index, action in enumerate(actions):
         branch_id = f"branch:{index}"
-        predicted = world_model.predict(belief, action, overlay)
+        predicted = world_model.predict(model_belief, action, model_overlay)
         if action.action_type is NavigationActionType.STOP:
             observations = ()
             after = belief
@@ -99,10 +111,21 @@ def generate_sibling_artifact(
             }
         )
 
-    labels = [
-        preference_model.compare(left, right, belief)
-        for left, right in combinations(trajectories, 2)
-    ]
+    labels = []
+    if comparison_budget is None:
+        labels = [
+            preference_model.compare(left, right, model_belief)
+            for left, right in combinations(trajectories, 2)
+        ]
+    elif trajectories:
+        champion = trajectories[0]
+        for candidate in trajectories[1:]:
+            if comparison_budget is not None and len(labels) >= comparison_budget:
+                break
+            label = preference_model.compare(champion, candidate, model_belief)
+            labels.append(label)
+            if label.label.value == "prefer_right":
+                champion = candidate
     artifact = {
         "schema_version": "steam-preference-siblings/v0.1",
         "overlay_id": overlay.overlay_id,
@@ -116,7 +139,7 @@ def generate_sibling_artifact(
                 "right_branch_id": label.right_id,
                 "label": label.label.value,
                 "rationale": label.rationale,
-                "label_source": "rule_based_provisional/v0.1",
+                "label_source": label_source,
             }
             for label in labels
         ],

@@ -2,6 +2,13 @@
 
 ## 1. Goal
 
+> **Current architecture role:** this directory implements grounded evidence
+> memory plus the explicit graph artifact used by graph-based baselines,
+> diagnostics, teachers, and optional GTSAM correction. The target main method
+> uses this fixed L1/L1.5 graph as a shared evidence substrate. Existing graph
+> construction is necessary infrastructure but is not the primary IWM
+> contribution; final hop selection must depend on predicted future belief.
+
 This directory implements a temporal and predictive-dependency graph grounded
 in video memory nodes, with mechanism-grounded candidate causality retained as
 a smaller verified subset:
@@ -21,9 +28,9 @@ The design is inspired by SelectStream's fixed-capacity latent evidence graph, b
 
 Video_Skills can provide video segmentation, clip schemas, L1/L2 graphs, typed skills, provenance, verifiers, and trajectory logging. It is the data and execution interface, not the belief model proposed here.
 
-### Architecture decision: dependency-first navigation
+### Graph-baseline decision: dependency-first navigation
 
-The main runtime graph does not require every useful event relation to be
+The graph-based baseline does not require every useful event relation to be
 causal. It separates three levels:
 
 ```text
@@ -49,7 +56,7 @@ Question bridges are derived during navigation and are never written as
 question-independent observed facts. Correlation/dependency edges may choose a
 real graph read, but they may not enter the final answer as evidence.
 
-The navigation world model is therefore epistemic:
+The graph-baseline navigation world model is therefore epistemic:
 
 ```text
 P(next observation, belief change, answerability
@@ -815,14 +822,16 @@ Before executing an action, the world model predicts a belief transition:
 b^-_(t+1) = T_phi(b_t, a_t)
 ```
 
-The system executes only the first planned action and reads a real memory node:
+The system executes only the first planned operation and reads real grounded
+evidence memory:
 
 ```text
-o_(t+1) = ReadGraph(G_t, a_t)
+o_(t+1) = ReadMemory(M_t, a_t)
 b_(t+1) = Update(b^-_(t+1), o_(t+1))
 ```
 
-Imagined evidence must never enter the final answer directly. The posterior must be corrected and planning repeated after every real graph read.
+Imagined evidence must never enter the final answer directly. The belief must
+be corrected and planning repeated after every real evidence-memory read.
 
 ## 7. Are We Performing Causal Inference?
 
@@ -837,12 +846,17 @@ Here, a counterfactual means epistemic-action branching: execute different evide
 
 ## 8. Are We Using a Factor Graph?
 
-Yes, only for exploration-time belief maintenance. It is neither L2, the world
-model, nor a numeric reward model. The complete variable/factor definition,
-Active-SLAM analogy, strict preference-only LLM boundary, GTSAM discrete
-implementation, pilot, destructive controls, and migration status are
-centralized in [`factor_graph/README.md`](../factor_graph/README.md). This
-document treats that file as the canonical specification.
+The L1/L1.5 Memory Graph is required as the shared evidence substrate. The
+factor graph is not required as the main planner or ranking mechanism. The IWM
+uses the fixed memory graph to construct legal candidates and bounded context,
+then predicts future-belief effects to choose the next reasoning hop.
+
+Factor graph / GTSAM remains available as an optional real-evidence belief
+correction backup and as a graph-based baseline, diagnostic oracle, teacher,
+and visualization tool. It never consumes imagined evidence and does not rank
+reasoning operations. The complete backup boundary, existing implementation,
+pilot, destructive controls, and migration status are centralized in
+[`factor_graph/README.md`](../factor_graph/README.md).
 
 ## 9. Integration with Video_Skills
 

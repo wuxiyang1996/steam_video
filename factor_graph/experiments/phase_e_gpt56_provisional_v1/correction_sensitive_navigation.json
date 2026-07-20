@@ -1,5 +1,5 @@
 {
-  "schema_version": "steam-gtsam-correction-sensitive-navigation/v0.1",
+  "schema_version": "steam-gtsam-correction-sensitive-navigation/v0.2",
   "status": "derived_grounded_mechanism_pilot_not_gold",
   "production_ready": false,
   "llm_numeric_output": false,
@@ -183,33 +183,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "same_entity"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "same_entity"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "same_entity"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -288,33 +272,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "same_entity"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "same_entity"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "same_entity"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -419,33 +387,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "same_entity"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "same_entity"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "same_entity"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -546,30 +498,17 @@
             ]
           },
           "next_action": {
-            "action_type": "follow_dependency",
-            "source_id": "event:atomic:video_skills_l1:00258",
-            "target_ids": [
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "grounded_by"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "follow_dependency",
-              "source_id": "event:atomic:video_skills_l1:00258",
-              "target_ids": [
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "grounded_by"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7"
-              ],
-              "relation": "same_entity"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -650,33 +589,17 @@
             ]
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "state_transition"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -755,33 +678,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "state_transition"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -884,33 +791,17 @@
             ]
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "state_transition"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -923,9 +814,9 @@
         }
       },
       "separate_diagnostics": {
-        "correct_vs_verifier_only_next_action_differs": true,
-        "correct_vs_frozen_next_action_differs": true,
-        "correct_vs_shuffled_next_action_differs": true,
+        "correct_vs_verifier_only_next_action_differs": false,
+        "correct_vs_frozen_next_action_differs": false,
+        "correct_vs_shuffled_next_action_differs": false,
         "correct_probe_propagated_change_count": 1,
         "correct_probe_factor_activated": true
       }
@@ -1003,26 +894,12 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
             {
               "action_type": "stop",
               "source_id": null,
@@ -1106,33 +983,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "state_transition"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -1211,33 +1072,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "state_transition"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -1338,33 +1183,17 @@
             "blocked_edge_ids": []
           },
           "next_action": {
-            "action_type": "verify",
-            "source_id": "event:atomic:video_skills_l1:00140",
-            "target_ids": [
-              "event:atomic:video_skills_l1:00258",
-              "memory:evidence.event:faf09dbfa7",
-              "memory:evidence.event:47ecad373c"
-            ],
-            "relation": "state_transition"
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
           },
           "continuation_actions": [
             {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258",
-                "memory:evidence.event:faf09dbfa7",
-                "memory:evidence.event:47ecad373c"
-              ],
-              "relation": "state_transition"
-            },
-            {
-              "action_type": "verify",
-              "source_id": "event:atomic:video_skills_l1:00140",
-              "target_ids": [
-                "event:atomic:video_skills_l1:00258"
-              ],
-              "relation": "same_entity"
+              "action_type": "stop",
+              "source_id": null,
+              "target_ids": [],
+              "relation": null
             }
           ],
           "final_belief": {
@@ -1387,13 +1216,16 @@
   ],
   "summary": {
     "case_count": 3,
-    "support_propagation_changes_next_action": true,
-    "reject_propagation_changes_next_action": true,
+    "support_propagated_belief_change": true,
+    "reject_propagated_belief_change": true,
+    "support_action_divergence": true,
+    "reject_action_divergence": false,
     "inconclusive_is_negative_control": true
   },
   "limitations": [
     "Cases are transparently derived from grounded Phase D evidence, not independent human gold.",
     "Pilot measurement likelihoods are not calibrated production probabilities.",
-    "This isolates mechanism sensitivity; it is not an answer-accuracy benchmark."
+    "This isolates mechanism sensitivity; it is not an answer-accuracy benchmark.",
+    "Belief correction and action divergence are reported separately; neither is inferred from the other."
   ]
 }

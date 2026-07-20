@@ -13,7 +13,9 @@ from .contracts import (
     PlanDecision,
     PredictedTransition,
     RelationState,
+    ReasoningContext,
     TrajectoryPrediction,
+    reasoning_context_audit_to_dict,
 )
 
 
@@ -69,6 +71,17 @@ def delta_to_dict(delta: BeliefDeltaDescriptor) -> dict[str, Any]:
         "resolved_roles": list(delta.resolved_roles),
         "relation_updates": list(delta.relation_updates),
         "contradiction_updates": list(delta.contradiction_updates),
+        "hypothesis_updates": [
+            {
+                "edge_id": update.edge_id,
+                "disposition": update.disposition.value,
+            }
+            for update in delta.hypothesis_updates
+        ],
+        "frontier_change": delta.frontier_change.value,
+        "contradiction_change": delta.contradiction_change.value,
+        "path_change": delta.path_change.value,
+        "recovery_status": delta.recovery_status.value,
         "uncertainty_change": delta.uncertainty_change.value,
         "answerability_after": delta.answerability_after.value,
         "predicted_only": delta.predicted_only,
@@ -101,7 +114,10 @@ def trajectory_to_dict(trajectory: TrajectoryPrediction) -> dict[str, Any]:
 def plan_to_dict(plan: PlanDecision) -> dict[str, Any]:
     return {
         "selected_action": action_to_dict(plan.selected_action),
+        "selected_reasoning_hop": plan.selected_hop.hop_type.value,
         "selected_trajectory_id": plan.selected_trajectory_id,
+        "planning_status": plan.planning_status,
+        "ambiguity_reason": plan.ambiguity_reason,
         "trajectories": [
             trajectory_to_dict(trajectory) for trajectory in plan.trajectories
         ],
@@ -116,12 +132,41 @@ def plan_to_dict(plan: PlanDecision) -> dict[str, Any]:
         ],
         "undominated_trajectory_ids": list(plan.undominated_trajectory_ids),
         "fallback_policy": plan.fallback_policy,
+        "reasoning_context": (
+            reasoning_context_to_dict(plan.reasoning_context)
+            if plan.reasoning_context is not None
+            else None
+        ),
+    }
+
+
+def reasoning_context_to_dict(context: ReasoningContext) -> dict[str, Any]:
+    return {
+        "question": context.question,
+        "answerability": context.answerability.value,
+        "missing_roles": list(context.missing_roles),
+        "accepted_hypotheses": list(context.accepted_hypotheses),
+        "rejected_hypotheses": list(context.rejected_hypotheses),
+        "unresolved_hypotheses": list(context.unresolved_hypotheses),
+        "contradictions": list(context.contradictions),
+        "acquired_evidence_refs": list(context.acquired_evidence_refs),
+        "recent_hops": list(context.recent_hops),
+        "local_node_ids": list(context.local_node_ids),
+        "local_edge_ids": list(context.local_edge_ids),
+        "candidate_hops": [
+            {
+                "hop_type": hop.hop_type.value,
+                "action": action_to_dict(hop.action),
+            }
+            for hop in context.candidate_hops
+        ],
+        "audit": reasoning_context_audit_to_dict(context.audit),
     }
 
 
 def navigation_run_to_dict(run: NavigationRun) -> dict[str, Any]:
     return {
-        "schema_version": "steam-preference-navigation/v0.1",
+        "schema_version": "steam-preference-navigation/v0.2",
         "initial_belief_id": run.initial_belief_id,
         "final_belief": belief_to_dict(run.final_belief),
         "belief_snapshots": [

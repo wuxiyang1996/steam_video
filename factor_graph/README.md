@@ -4,9 +4,45 @@
 `memory_graph` 与 `l15_graph_navigator` 文档只保留接口摘要和链接，避免出现多套
 相互冲突的定义。
 
+## 0. 架构决策：GTSAM 是可选 backup，不是主方法
+
+目标主方法已明确为：在固定、共享的 L1/L1.5 Memory Graph 上进行
+implicit-world-model-guided reasoning。Memory Graph 是 evidence substrate，不是主要
+novelty；主要贡献是预测 reasoning hop 的 future-belief effect，并让 Planner 依赖该预测。
+
+本目录中的 GTSAM 实现继续保留，职责收缩为：
+
+- 可选的 real-evidence belief correction backup；
+- competing hypotheses、contradiction、identity consistency 和 correction persistence；
+- graph-based baseline、diagnostic oracle、teacher 和 visualization；
+- 机制与破坏性对照实验。
+
+GTSAM 不生成 reasoning operation，不做候选排序、graph traversal、world-model prediction、
+trajectory preference 或 final-answer grounding。只有执行真实 evidence query 后，经
+categorical verifier 得到的 measurement 可以写入 persistent factor state；imagined rollout
+绝不能写入。
+
+计划提供三个显式模式：
+
+```text
+iwm_belief_only             # 默认主方法
+iwm_with_gtsam_backup       # categorical trigger 按需纠错
+gtsam_always                # baseline / ablation
+```
+
+backup trigger 只能是 `contradiction_detected`、`identity_ambiguous`、
+`state_history_conflict`、`multiple_competing_hypotheses`、`correction_failed` 或
+`long_dependency_unresolved` 等 categorical condition，不使用手工 posterior threshold。
+对外只暴露 `accepted/rejected/unresolved/conflicted`；solver 数值保持内部。GTSAM 不可用时
+必须显式报告 `backup_unavailable`，不能静默切换 planner 或启用 heuristic ranking。
+
+当前 GTSAM closed loop 是已实现、可运行的 baseline；主方法继续使用同一个 L1/L1.5
+Memory Graph，但必须清除 graph priority/lexical/stable-order 对 winner 的影响。完整定义见
+[`l15_graph_navigator/README.md`](../steam_video_new/implicit_world_model/l15_graph_navigator/README.md#architecture-decision-fixed-l1l15-memory-iwm-reasoning-novelty)。
+
 分阶段实施与生产门禁见 [`PLAN.md`](PLAN.md)。
 
-## 1. 它在系统中的位置
+## 1. 它在 graph baseline / backup 中的位置
 
 ```text
 L1 / L1.5 grounded graph
@@ -30,8 +66,9 @@ L2
   → 只记录实际执行、真实证据、belief delta 和 preference 的审计轨迹
 ```
 
-所以因子图不替代 L2，也不替代 implicit world model。它是探索期间的 belief
-state；L2 是执行日志；world model 是候选轨迹的预测器和序数比较器。
+所以因子图不替代 L2，也不替代 implicit world model。在 `gtsam_always` baseline 中它是
+探索期间的 belief state；在 `iwm_with_gtsam_backup` 中它只在真实 evidence correction
+后按需维护一致性。L2 是执行日志；world model 是候选轨迹的预测器和序数比较器。
 
 这里的 `action` 不是机器人物理动作，而是多跳推理的下一跳：读取事件、沿
 temporal/causal/identity/state edge 扩展、验证 relation、查询冲突证据，或
@@ -42,6 +79,37 @@ Planner/LLM 的输入边界定义在
 [`l15_graph_navigator/README.md`](../steam_video_new/implicit_world_model/l15_graph_navigator/README.md#41-bounded-reasoning-context)。
 它只接收经检索和裁剪的局部子图、categorical belief 摘要和少量候选轨迹；完整
 Memory Graph、GTSAM 数值、raw embedding 向量和全部历史不进入 prompt。
+
+该边界现已由 `ReasoningContextBuilder` 接入主闭环和 sibling 分支生成。Planner 使用
+受 comparison budget 限制的 staged pairwise tournament，并在 L2 保存检索、裁剪、候选数、
+比较数和估算 prompt tokens 的 audit。`GraphReadAction` 继续作为执行兼容类型；Planner
+对外同时暴露 `ReasoningHop`，明确它选择的是 multi-hop reasoning 的下一跳。
+
+当前 implicit world model 与 preference planner 可显式选择
+`openai/gpt-oss-120b`。该 adapter 只接受 categorical descriptor/preference，模型 JSON
+中出现数值会直接失败；没有配置 OpenAI-compatible endpoint 时也不会静默退回 rule
+baseline。GPT-OSS 的预测或 preference 不是 factor、真实 evidence 或独立人工 gold。
+OpenRouter 可通过 `--reasoning-keys-py /fs/gamma-projects/vlm-robot/keys.py` 读取
+`OPENROUTER_API_KEY`；密钥不会进入 prompt、artifact 或日志。
+
+### 1.1 Non-heuristic 边界
+
+本项目的目标是 world-model-guided reasoning，不是 factor-priority-guided traversal。
+Factor graph 只维护当前 belief，并用于拒绝 illegal、blocked、重复或无 provenance 的 hop；
+embedding 只负责候选召回。两者都不能通过手工 score 或固定顺序决定最终下一跳。
+
+最终选择必须依赖 world model 预测的 categorical future-belief transition，再由 preference
+planner 比较候选轨迹。question-direction、lexical overlap、factor priority、stable structural
+order 和 rule projection 只能作为明确标记的 candidate-generation/baseline 机制，不能成为
+production winner policy。`tie/incomparable` 应扩大证据、继续比较或 abstain，不能默认选择
+第一个候选。
+
+正式门禁包括 candidate-order permutation invariance，以及 normal、null、shuffled、frozen、
+immediate-only、delayed-belief WM 六组固定条件干预。保持 query、belief、candidate set、planner
+和预算不变，只替换 WM prediction；分别报告 action divergence、categorical prediction
+accuracy、evidence completeness、reads 和 final-answer accuracy。若破坏 WM 后 action 与结果
+不发生系统性变化，就不能声称 planner 依赖 world model。完整定义见
+[`l15_graph_navigator/README.md`](../steam_video_new/implicit_world_model/l15_graph_navigator/README.md#43-non-heuristic-planning-boundary)。
 
 ## 2. Active SLAM 类比
 
@@ -401,7 +469,9 @@ matched_ablation_gtsam_closed_loop_v2.json \
 
 为确认机制确实能影响重新规划，新增三个 derived grounded correction-sensitive cases，见
 [`correction_sensitive_navigation.json`](experiments/phase_e_gpt56_provisional_v1/correction_sensitive_navigation.json)。
-state support 传播到 identity、identity reject 传播到 state rejection 时，normal 的下一步
-均与 verifier-direct-only/frozen/shuffled 不同；inconclusive 不激活 factor，且 normal 与
-verifier-direct-only 下一步相同。它证明了 propagation→replan 机制，而不是正式 accuracy
-收益；这些 cases 来自 Phase D fixture，不是独立人工 gold。因此生产状态仍为 false。
+state support 传播到 identity 时，normal 与 verifier-direct-only 的下一步不同；identity
+reject 也确实传播为 state rejection，但去除 factor-priority winner heuristic 后，两 arm
+都保守 abstain，所以下一步相同。inconclusive 不激活 factor，且两 arm 下一步相同。报告
+因此把 `propagated belief change` 与 `action divergence` 分开，禁止用前者冒充导航收益。
+这些 cases 只证明 correction 能持久改变 belief；只有 support case 显示 action divergence，
+且它们来自 Phase D fixture、不是独立人工 gold。因此 production 状态仍为 false。

@@ -12,6 +12,16 @@ from .belief import FactorizedBeliefBackend
 from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
 from .overlay_io import load_overlay_artifact
 from .planner import ClosedLoopNavigator, PreferenceOnlyPlanner
+from .context import ReasoningContextBuilder
+from .contracts import ReasoningContextBudget
+from .interventions import FrozenBeliefWorldModel, TransitionIntervention
+from .gpt_oss import (
+    DEFAULT_GPT_OSS_MODEL,
+    GPTOSSObservationBeliefModel,
+    GPTOSSTrajectoryPreferenceModel,
+    OpenAICompatibleCategoricalClient,
+    OPENROUTER_API_BASE,
+)
 from .siblings import generate_sibling_artifact
 from .video_skills_adapter import (
     VideoSkillsL2Adapter,
@@ -39,8 +49,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--factor-iterations", type=int, default=8)
     parser.add_argument("--horizon", type=int, choices=(1, 2), default=2)
+    parser.add_argument(
+        "--transition-intervention",
+        choices=tuple(value.value for value in TransitionIntervention),
+        default=TransitionIntervention.NORMAL.value,
+    )
+    parser.add_argument(
+        "--freeze-world-model",
+        action="store_true",
+        help="Predict every hop from the initial belief checkpoint",
+    )
     parser.add_argument("--max-steps", type=int)
     parser.add_argument("--max-second-actions", type=int, default=4)
+    parser.add_argument("--context-max-nodes", type=int, default=24)
+    parser.add_argument("--context-max-edges", type=int, default=32)
+    parser.add_argument("--candidate-hop-budget", type=int, default=8)
+    parser.add_argument("--comparison-budget", type=int, default=32)
+    parser.add_argument("--recent-hop-window", type=int, default=3)
+    parser.add_argument(
+        "--reasoning-model-backend",
+        choices=("rule", "gpt-oss-120b"),
+        default="rule",
+    )
+    parser.add_argument("--reasoning-model", default=DEFAULT_GPT_OSS_MODEL)
+    parser.add_argument("--reasoning-api-base")
+    parser.add_argument(
+        "--reasoning-keys-py",
+        type=Path,
+        help="Python file defining OPENROUTER_API_KEY",
+    )
+    parser.add_argument("--reasoning-api-key-env", default="OPENAI_API_KEY")
+    parser.add_argument("--reasoning-timeout-s", type=int, default=180)
+    parser.add_argument("--reasoning-max-tokens", type=int, default=1600)
+    parser.add_argument(
+        "--reasoning-effort",
+        choices=("low", "medium", "high"),
+        default="low",
+    )
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--video-skills-root", type=Path)
     parser.add_argument(
@@ -80,14 +125,55 @@ def main(argv: list[str] | None = None) -> int:
         ),
         graph_read_budget=args.graph_read_budget,
     )
-    world_model = RuleBasedObservationBeliefModel()
-    preference_model = RuleBasedTrajectoryPreferenceModel()
+    reasoning_client: OpenAICompatibleCategoricalClient | None = None
+    if args.reasoning_model_backend == "gpt-oss-120b":
+        reasoning_client = (
+            OpenAICompatibleCategoricalClient.from_openrouter_keys_file(
+                args.reasoning_keys_py,
+                api_base=(
+                    args.reasoning_api_base
+                    or OPENROUTER_API_BASE
+                ),
+                model=args.reasoning_model,
+                timeout_s=args.reasoning_timeout_s,
+                max_tokens=args.reasoning_max_tokens,
+                reasoning_effort=args.reasoning_effort,
+            )
+            if args.reasoning_keys_py is not None
+            else OpenAICompatibleCategoricalClient.from_environment(
+                api_base=args.reasoning_api_base,
+                model=args.reasoning_model,
+                api_key_env=args.reasoning_api_key_env,
+                timeout_s=args.reasoning_timeout_s,
+                max_tokens=args.reasoning_max_tokens,
+                reasoning_effort=args.reasoning_effort,
+            )
+        )
+        world_model = GPTOSSObservationBeliefModel(reasoning_client)
+        preference_model = GPTOSSTrajectoryPreferenceModel(reasoning_client)
+    else:
+        world_model = RuleBasedObservationBeliefModel()
+        preference_model = RuleBasedTrajectoryPreferenceModel()
+    if args.freeze_world_model:
+        world_model = FrozenBeliefWorldModel(world_model)
+    context_budget = ReasoningContextBudget(
+        max_nodes=args.context_max_nodes,
+        max_edges=args.context_max_edges,
+        max_candidate_hops=args.candidate_hop_budget,
+        max_comparisons=args.comparison_budget,
+        recent_hop_window=args.recent_hop_window,
+    )
     planner = PreferenceOnlyPlanner(
         world_model,
         preference_model,
         horizon=args.horizon,
         max_second_actions=args.max_second_actions,
+        context_builder=ReasoningContextBuilder(context_budget),
+        transition_intervention=TransitionIntervention(
+            args.transition_intervention
+        ),
     )
+    context_builder = planner.context_builder
     executor = VideoSkillsL2Adapter(
         args.video_skills_root,
         use_video_skills_runtime=not args.no_video_skills_runtime,
@@ -102,6 +188,12 @@ def main(argv: list[str] | None = None) -> int:
             executor=executor,
             world_model=world_model,
             preference_model=preference_model,
+            context_builder=context_builder,
+            label_source=(
+                "gpt-oss-120b_categorical_provisional/v0.1"
+                if args.reasoning_model_backend == "gpt-oss-120b"
+                else "rule_based_provisional/v0.1"
+            ),
         )
     run = ClosedLoopNavigator(backend, planner, executor).run(
         belief,
@@ -125,7 +217,7 @@ def main(argv: list[str] | None = None) -> int:
     if sibling_artifact is not None:
         _write_json(output_dir / "sibling_checkpoint.json", sibling_artifact)
     summary = {
-        "schema_version": "steam-preference-navigation-run-summary/v0.1",
+        "schema_version": "steam-preference-navigation-run-summary/v0.2",
         "source_overlay": str(loaded.source_path),
         "overlay_id": overlay.overlay_id,
         "example_id": overlay.example_id,
@@ -139,6 +231,49 @@ def main(argv: list[str] | None = None) -> int:
         "final_answerability": run.final_belief.answerability.value,
         "final_missing_roles": list(run.final_belief.missing_roles),
         "preference_output_contract": "ordinal_only",
+        "reasoning_model_backend": args.reasoning_model_backend,
+        "transition_intervention": args.transition_intervention,
+        "world_model_frozen": args.freeze_world_model,
+        "reasoning_model": (
+            args.reasoning_model
+            if args.reasoning_model_backend == "gpt-oss-120b"
+            else "rule_based_categorical_baseline"
+        ),
+        "reasoning_provider": (
+            "openrouter"
+            if args.reasoning_keys_py is not None
+            else (
+                "openai_compatible"
+                if args.reasoning_model_backend == "gpt-oss-120b"
+                else "offline_rule"
+            )
+        ),
+        "reasoning_transport_audit": (
+            {
+                "request_count": len(reasoning_client.response_audits),
+                "finish_reasons": [
+                    row.get("finish_reason")
+                    for row in reasoning_client.response_audits
+                ],
+                "prompt_tokens": [
+                    row.get("prompt_tokens")
+                    for row in reasoning_client.response_audits
+                ],
+                "completion_tokens": [
+                    row.get("completion_tokens")
+                    for row in reasoning_client.response_audits
+                ],
+            }
+            if reasoning_client is not None
+            else None
+        ),
+        "reasoning_context_budget": {
+            "max_nodes": context_budget.max_nodes,
+            "max_edges": context_budget.max_edges,
+            "max_candidate_hops": context_budget.max_candidate_hops,
+            "max_comparisons": context_budget.max_comparisons,
+            "recent_hop_window": context_budget.recent_hop_window,
+        },
         "sibling_branch_count": (
             len(sibling_artifact["branches"])
             if sibling_artifact is not None

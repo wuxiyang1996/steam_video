@@ -9,6 +9,9 @@ from .contracts import (
     Answerability,
     BeliefDeltaDescriptor,
     BeliefSnapshot,
+    FrontierChange,
+    HypothesisDisposition,
+    HypothesisUpdate,
     EvidenceRole,
     ObservationDescriptor,
     PairwisePreference,
@@ -77,6 +80,18 @@ class RuleBasedObservationBeliefModel:
                 )
             )
         )
+        hypothesis_updates = tuple(
+            HypothesisUpdate(
+                edge_id=state.edge_id,
+                disposition=(
+                    HypothesisDisposition.ACCEPTED
+                    if action.relation in state.verified_relations
+                    else HypothesisDisposition.UNRESOLVED
+                ),
+            )
+            for state in belief.relation_states
+            if state.edge_id in set(relation_updates)
+        )
         node_kind = _node_kind(action, overlay)
         observation = ObservationDescriptor(
             role=role,
@@ -87,6 +102,12 @@ class RuleBasedObservationBeliefModel:
         delta = BeliefDeltaDescriptor(
             resolved_roles=resolved_roles,
             relation_updates=relation_updates,
+            hypothesis_updates=hypothesis_updates,
+            frontier_change=(
+                FrontierChange.OPENED
+                if unseen_targets
+                else FrontierChange.UNCHANGED
+            ),
             uncertainty_change=(
                 UncertaintyChange.DECREASE
                 if unseen_targets

@@ -490,8 +490,10 @@ def test_correction_sensitive_navigation_separates_propagation_from_verifier(
 
     assert report["summary"] == {
         "case_count": 3,
-        "support_propagation_changes_next_action": True,
-        "reject_propagation_changes_next_action": True,
+        "support_propagated_belief_change": True,
+        "reject_propagated_belief_change": True,
+        "support_action_divergence": True,
+        "reject_action_divergence": False,
         "inconclusive_is_negative_control": True,
     }
     support, reject, inconclusive = report["cases"]
@@ -506,6 +508,12 @@ def test_correction_sensitive_navigation_separates_propagation_from_verifier(
         inconclusive["arms"]["correct"]["next_action"]
         == inconclusive["arms"]["verifier_only"]["next_action"]
     )
+    assert "phase-d:state" in reject["arms"]["correct"]["belief_after_probe"][
+        "blocked_edge_ids"
+    ]
+    assert "phase-d:state" not in reject["arms"]["verifier_only"][
+        "belief_after_probe"
+    ]["blocked_edge_ids"]
 
 
 def test_measurement_rejects_unexecuted_or_ungrounded_evidence() -> None:
