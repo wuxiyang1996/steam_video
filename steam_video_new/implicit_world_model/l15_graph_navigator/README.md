@@ -25,6 +25,62 @@ navigator
 
 The L1.5 graph is not the world model. It is the environment and structural prior over which the world model predicts, acts, and receives real observations.
 
+### 1.1 Runnable v0.1 implementation
+
+The first preference-only closed loop is implemented in this package:
+
+| File | Responsibility |
+|---|---|
+| `contracts.py` | Backend-neutral belief, categorical transition, four-way preference, plan, and L2-trace contracts |
+| `belief.py` | `FactorizedBeliefBackend`, which updates relation grounding only after real graph observations |
+| `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
+| `planner.py` | Horizon-one/two expansion, pairwise partial-order selection, real read, belief update, and replanning |
+
+Minimal use with an existing `CausalTemporalOverlay`:
+
+```python
+from steam_video_new.implicit_world_model.l15_graph_navigator import (
+    ClosedLoopNavigator,
+    FactorizedBeliefBackend,
+    PreferenceOnlyPlanner,
+    RuleBasedObservationBeliefModel,
+    RuleBasedTrajectoryPreferenceModel,
+)
+
+backend = FactorizedBeliefBackend()
+belief = backend.initialize(
+    question,
+    overlay,
+    seed_evidence=(initial_event_id,),
+    missing_roles=("dependency",),
+)
+planner = PreferenceOnlyPlanner(
+    RuleBasedObservationBeliefModel(),
+    RuleBasedTrajectoryPreferenceModel(),
+    horizon=2,
+)
+run = ClosedLoopNavigator(backend, planner).run(belief, overlay)
+l2_trace = run.to_l2_rollout()
+```
+
+Run the focused tests from the repository root:
+
+```bash
+pytest -q memory_graph/tests/test_preference_navigation.py
+```
+
+The older `memory_graph.navigation.plan_next_read` and
+`RuleBasedDependencyWorldModel` remain scalar legacy baselines for existing
+ablation compatibility. The new closed loop does not call them.
+
+Relation probabilities and correlation features are preserved in each
+`RelationState` as structural priors and audit metadata. Reading both endpoints
+of a candidate edge yields `endpoints_observed`; it does not resolve a missing
+dependency role. Promotion to `verified` requires a passed hard verifier (or an
+accepted identity track for the relevant identity/state relations). Exported
+L2 records contain real observation IDs, realized belief deltas, and ordinal
+trajectory labels, but no model-generated reward or utility.
+
 ## 2. Why Use the L1.5 Graph
 
 Relative to flat memory retrieval, the L1.5 overlay explicitly provides:
@@ -344,3 +400,35 @@ This design does not attempt to:
 - treat L1.5 hypotheses as L1 facts;
 - replace the existing `memory_graph` or Video_Skills stack with a new graph system;
 - enlarge the world-model claim before graph-aware retrieval is shown to help.
+
+## 14. Factor-Graph Upgrade Boundary
+
+The v0.1 backend is deliberately factorized, not a complete factor graph. A
+future `FactorGraphBeliefBackend` should implement the same two operations:
+
+```text
+initialize(question, overlay, seed_evidence, missing_roles, budget)
+  → BeliefSnapshot
+
+update(belief, real_action, real_observations, overlay)
+  → BeliefUpdateResult
+```
+
+The factor-graph implementation may keep a GTSAM, Pyro, or custom
+message-passing object behind `BeliefSnapshot.backend_ref`. It must still
+project its posterior into the shared snapshot fields: acquired evidence,
+frontier, missing roles, contradictions, relation grounding, uncertainty
+category, and answerability category. The following components must remain
+unchanged when that backend is introduced:
+
+- L1 evidence and L1.5 graph schemas;
+- graph action generation and real `ReadGraph` execution;
+- categorical observation/belief-delta world-model outputs;
+- four-way pairwise trajectory preference;
+- first-action execution and L2 rollout logging.
+
+Adopt the full factor graph only if the factorized backend fails a targeted
+global-consistency test—for example, later evidence cannot revise an earlier
+identity assignment, mutually exclusive hypotheses retain incompatible mass,
+or loop closure materially improves navigation. It is an evidence-triggered
+backend upgrade, not a prerequisite for the v0.1 closed loop.
