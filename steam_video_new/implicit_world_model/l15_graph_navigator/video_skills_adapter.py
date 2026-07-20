@@ -64,13 +64,32 @@ class VideoSkillsL2Adapter:
             outputs = {"evidence_refs": list(returned_refs)}
 
         returned = set(returned_refs)
-        observed_ids = tuple(
-            target
-            for target in action.target_ids
-            if target in returned and target in by_id
-        )
+        if action.action_type in {
+            NavigationActionType.FIND_BRIDGE,
+            NavigationActionType.SEARCH_COUNTEREVIDENCE,
+        }:
+            observed_ids = tuple(
+                node_id
+                for node_id in returned_refs
+                if node_id in by_id
+                and node_id not in set(belief.acquired_evidence)
+            )
+        else:
+            observed_ids = tuple(
+                target
+                for target in action.target_ids
+                if target in returned and target in by_id
+            )
         observations = tuple(by_id[node_id] for node_id in observed_ids)
         evidence_refs = _grounded_l1_refs(observations, overlay)
+        empty_search_observed = (
+            action.action_type is NavigationActionType.SEARCH_COUNTEREVIDENCE
+            and not observations
+            and self.use_video_skills_runtime
+            and (failure_code == "no_counterevidence" or not returned_refs)
+        )
+        if empty_search_observed and action.source_id in by_id:
+            evidence_refs = _grounded_l1_refs((by_id[action.source_id],), overlay)
         verifier_result = _categorical_verifier_result(
             belief=belief,
             action=action,
@@ -103,10 +122,12 @@ class VideoSkillsL2Adapter:
             "evidence_visibility": "discovered_runtime",
             "status": (
                 "executed"
-                if observations
+                if observations or empty_search_observed
                 else "insufficient" if skill_ok else "failed"
             ),
             "failure_code": failure_code,
+            "search_completed": empty_search_observed or bool(observations),
+            "grounded_empty_result": empty_search_observed and bool(evidence_refs),
             "verifier_result": {
                 "skill_ok": skill_ok,
                 "planned_target_returned": bool(observations),
@@ -115,6 +136,66 @@ class VideoSkillsL2Adapter:
                 ),
                 **verifier_result,
             },
+        }
+        return GraphReadExecution(observations, invocation)
+
+    def execute_review_anchored(
+        self,
+        belief: BeliefSnapshot,
+        action: GraphReadAction,
+        overlay: CausalTemporalOverlay,
+    ) -> GraphReadExecution:
+        """Execute a reviewed endpoint read without adding a relation to the graph.
+
+        Targetless searches still use the live Video_Skills runtime.  A reviewed
+        relation action whose edge was not admitted may read its explicitly
+        reviewed endpoints, but the invocation records that this was an endpoint
+        read rather than a graph traversal.
+        """
+
+        if action.action_type is NavigationActionType.SEARCH_COUNTEREVIDENCE:
+            return self.execute(belief, action, overlay)
+        if action.action_type is NavigationActionType.STOP:
+            return GraphReadExecution((), {})
+        by_id = {
+            node.node_id: node
+            for node in overlay.atomic_events + overlay.l1_observations
+        }
+        observed_ids = tuple(
+            node_id for node_id in action.target_ids if node_id in by_id
+        )
+        observations = tuple(by_id[node_id] for node_id in observed_ids)
+        verification_nodes = (
+            ((by_id[action.source_id],) if action.source_id in by_id else ())
+            + observations
+        )
+        evidence_refs = _grounded_l1_refs(verification_nodes, overlay)
+        verifier = _review_anchored_verifier(
+            action, verification_nodes, evidence_refs
+        )
+        invocation = {
+            "node_id": _stable_id(
+                "skill", belief.belief_id, "review_anchored", _action_signature(action)
+            ),
+            "skill_id": "review_anchored_endpoint_read",
+            "args": {
+                "action_type": action.action_type.value,
+                "source_id": action.source_id,
+                "target_ids": list(action.target_ids),
+                "relation": action.relation,
+            },
+            "outputs": {
+                "real_observation_ids": list(observed_ids),
+                "graph_edge_inserted": False,
+                "execution_semantics": "direct_persisted_endpoint_read",
+            },
+            "evidence_refs": list(evidence_refs),
+            "evidence_visibility": "review_restored_endpoint",
+            "status": "executed" if observations and evidence_refs else "failed",
+            "failure_code": None if observations and evidence_refs else "unknown_endpoint",
+            "search_completed": False,
+            "grounded_empty_result": False,
+            "verifier_result": verifier,
         }
         return GraphReadExecution(observations, invocation)
 
@@ -267,6 +348,84 @@ def _categorical_verifier_result(
         "reasons": [],
         "numeric_output_exposed": False,
     }
+
+
+def _review_anchored_verifier(
+    action: GraphReadAction,
+    observations: tuple[MemoryNode, ...],
+    evidence_refs: tuple[str, ...],
+) -> dict[str, Any]:
+    """Run only deterministic categorical checks on newly read endpoints."""
+
+    state_related = action.action_type is NavigationActionType.INSPECT_STATE_CHANGE or (
+        action.action_type is NavigationActionType.VERIFY
+        and action.relation == "state_transition"
+    )
+    if state_related:
+        supported = _has_explicit_state_delta(observations)
+        return {
+            "applicability": "applicable",
+            "categorical_outcome": "supports" if supported else "inconclusive",
+            "source": "review_anchored_post_read_state_verifier",
+            "post_read": True,
+            "evidence_refs": list(evidence_refs),
+            "reasons": [
+                "aligned grounded participant has an explicit attribute value change"
+                if supported
+                else "endpoint read did not establish a strict grounded state delta"
+            ],
+            "numeric_output_exposed": False,
+        }
+    return {
+        "applicability": (
+            "applicable" if action.action_type in _RELATION_ACTIONS else "not_applicable"
+        ),
+        "categorical_outcome": (
+            "inconclusive" if action.action_type in _RELATION_ACTIONS else "not_applicable"
+        ),
+        "source": "review_anchored_endpoint_read_no_relation_verdict",
+        "post_read": False,
+        "evidence_refs": list(evidence_refs),
+        "reasons": ["endpoint visibility does not itself verify the proposed relation"],
+        "numeric_output_exposed": False,
+    }
+
+
+def _has_explicit_state_delta(observations: tuple[MemoryNode, ...]) -> bool:
+    if len(observations) < 2:
+        return False
+    left, right = observations[0], observations[-1]
+    left_meta = dict(left.metadata or {})
+    right_meta = dict(right.metadata or {})
+    left_people = _participant_state_index(left_meta)
+    right_people = _participant_state_index(right_meta)
+    for identity in set(left_people) & set(right_people):
+        left_states = left_people[identity]
+        right_states = right_people[identity]
+        for attribute in set(left_states) & set(right_states):
+            if left_states[attribute] != right_states[attribute]:
+                return True
+    return False
+
+
+def _participant_state_index(metadata: dict[str, Any]) -> dict[tuple[str, str], dict[str, str]]:
+    identities: dict[str, tuple[str, str]] = {}
+    for participant in metadata.get("participants") or []:
+        mention_id = str(participant.get("mention_id") or "")
+        identity = (
+            str(participant.get("entity_type") or "").strip().casefold(),
+            str(participant.get("surface") or "").strip().casefold(),
+        )
+        if mention_id and all(identity):
+            identities[mention_id] = identity
+    indexed: dict[tuple[str, str], dict[str, str]] = {}
+    for state in metadata.get("states") or []:
+        identity = identities.get(str(state.get("mention_id") or ""))
+        attribute = str(state.get("attribute") or "").strip().casefold()
+        value = str(state.get("value") or "").strip().casefold()
+        if identity and attribute and value and state.get("polarity", "positive") == "positive":
+            indexed.setdefault(identity, {})[attribute] = value
+    return indexed
 
 
 def _persisted_relation_verifier_outcome(
@@ -425,6 +584,17 @@ def _skill_id_for_action(action: GraphReadAction) -> str:
     if action.action_type is NavigationActionType.VERIFY:
         return "verify_claim_support"
     return "preference_stop"
+
+
+def _action_signature(action: GraphReadAction) -> str:
+    return "|".join(
+        (
+            action.action_type.value,
+            action.source_id or "",
+            ",".join(action.target_ids),
+            action.relation or "",
+        )
+    )
 
 
 def _grounded_l1_refs(

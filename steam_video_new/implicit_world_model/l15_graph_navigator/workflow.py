@@ -21,7 +21,16 @@ from .executed_transitions import (
     lock_executed_transition_dataset,
     validate_executed_transition_dataset,
 )
+from .evidence_packets import (
+    apply_evidence_review,
+    build_balanced_evidence_packet,
+    import_evidence_annotations,
+    inspect_balanced_evidence_packet,
+    lock_balanced_evidence_packet,
+    validate_balanced_evidence_packet,
+)
 from .matched_ablation import evaluate_matched_navigation
+from .data_inspection import inspect_transition_gathering
 from .overlay_io import load_overlay_artifact
 from .preference_data import (
     build_preference_annotation_packet,
@@ -81,6 +90,44 @@ def build_parser() -> argparse.ArgumentParser:
     export_balanced.add_argument("--queue", required=True, type=Path)
     export_balanced.add_argument("--case-set-id", required=True)
     export_balanced.add_argument("--output", required=True, type=Path)
+
+    evidence = commands.add_parser("build-balanced-evidence")
+    evidence.add_argument("--queue", required=True, type=Path)
+    evidence.add_argument("--packet-id", required=True)
+    evidence.add_argument("--context-limit", type=int, default=6)
+    evidence.add_argument("--output", required=True, type=Path)
+    evidence.add_argument("--key-output", required=True, type=Path)
+
+    validate_evidence = commands.add_parser("validate-balanced-evidence")
+    validate_evidence.add_argument("--packet", required=True, type=Path)
+
+    lock_evidence = commands.add_parser("lock-balanced-evidence")
+    lock_evidence.add_argument("--packet", required=True, type=Path)
+    lock_evidence.add_argument("--output", required=True, type=Path)
+    lock_evidence.add_argument("--annotator", required=True)
+    lock_evidence.add_argument(
+        "--status", choices=("ai_provisional", "human_locked"), required=True
+    )
+
+    apply_evidence = commands.add_parser("apply-balanced-evidence-review")
+    apply_evidence.add_argument("--packet", required=True, type=Path)
+    apply_evidence.add_argument("--review", required=True, type=Path)
+    apply_evidence.add_argument("--output", required=True, type=Path)
+
+    import_evidence = commands.add_parser("import-balanced-evidence")
+    import_evidence.add_argument("--queue", required=True, type=Path)
+    import_evidence.add_argument("--packet", required=True, type=Path)
+    import_evidence.add_argument("--output", required=True, type=Path)
+    import_evidence.add_argument("--report", required=True, type=Path)
+
+    inspect_evidence = commands.add_parser("inspect-balanced-evidence")
+    inspect_evidence.add_argument("--packet", required=True, type=Path)
+    inspect_evidence.add_argument("--output", type=Path)
+
+    inspect_gathering = commands.add_parser("inspect-transition-gathering")
+    inspect_gathering.add_argument("--dataset", required=True, type=Path)
+    inspect_gathering.add_argument("--cases", required=True, type=Path)
+    inspect_gathering.add_argument("--output", required=True, type=Path)
 
     validate = commands.add_parser("validate-cases")
     validate.add_argument("--cases", required=True, type=Path)
@@ -230,6 +277,55 @@ def main(argv: list[str] | None = None) -> int:
         )
         _write_json(args.output, case_set)
         return 0
+    if args.command == "build-balanced-evidence":
+        packet, key = build_balanced_evidence_packet(
+            _read_json(args.queue),
+            packet_id=args.packet_id,
+            context_limit=args.context_limit,
+        )
+        _write_json(args.output, packet)
+        _write_json(args.key_output, key)
+        print(json.dumps(inspect_balanced_evidence_packet(packet), indent=2))
+        return 0
+    if args.command == "validate-balanced-evidence":
+        errors = validate_balanced_evidence_packet(_read_json(args.packet))
+        print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
+        return 0 if not errors else 1
+    if args.command == "lock-balanced-evidence":
+        packet = lock_balanced_evidence_packet(
+            _read_json(args.packet),
+            annotation_status=args.status,
+            annotator=args.annotator,
+        )
+        _write_json(args.output, packet)
+        return 0
+    if args.command == "apply-balanced-evidence-review":
+        packet = apply_evidence_review(
+            _read_json(args.packet), _read_json(args.review)
+        )
+        _write_json(args.output, packet)
+        return 0
+    if args.command == "import-balanced-evidence":
+        queue, report = import_evidence_annotations(
+            _read_json(args.queue), _read_json(args.packet)
+        )
+        _write_json(args.output, queue)
+        _write_json(args.report, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "inspect-balanced-evidence":
+        report = inspect_balanced_evidence_packet(_read_json(args.packet))
+        if args.output is not None:
+            _write_json(args.output, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0 if report["valid"] else 1
+    if args.command == "inspect-transition-gathering":
+        report = inspect_transition_gathering(
+            _read_json(args.dataset), _read_json(args.cases)
+        )
+        _write_json(args.output, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0 if report["dataset_valid"] and report["case_set_valid"] else 1
     if args.command == "validate-cases":
         payload = _read_json(args.cases)
         errors = validate_navigation_case_set(payload)

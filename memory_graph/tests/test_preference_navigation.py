@@ -4,6 +4,7 @@ from dataclasses import fields
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -26,6 +27,7 @@ from memory_graph.types import (
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator import (
     Answerability,
+    apply_evidence_review,
     BALANCED_CASE_CATEGORIES,
     ClosedLoopNavigator,
     FactorizedBeliefBackend,
@@ -42,6 +44,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     VideoSkillsL2Adapter,
     build_executed_transition_dataset,
     build_video_skills_l2_rollout,
+    build_balanced_evidence_packet,
     derive_realized_belief_delta,
     export_executed_transition_training_records,
     export_reviewed_balanced_case_set,
@@ -50,9 +53,14 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     load_overlay_artifact,
     lock_executed_transition_dataset,
     lock_balanced_review_queue,
+    lock_balanced_evidence_packet,
     mine_balanced_reasoning_cases,
+    import_evidence_annotations,
+    inspect_balanced_evidence_packet,
+    inspect_transition_gathering,
     validate_executed_transition_dataset,
     validate_balanced_review_queue,
+    validate_balanced_evidence_packet,
     validate_sibling_artifact,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.gpt_oss import (
@@ -996,6 +1004,37 @@ def test_video_skills_runtime_verify_exposes_only_categorical_measurement() -> N
         assert forbidden not in serialized
 
 
+def test_video_skills_empty_counterevidence_search_is_grounded_observation() -> None:
+    overlay = _overlay()
+    belief = FactorizedBeliefBackend().initialize(
+        "Could the proposed explanation be contradicted?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("counterevidence",),
+    )
+    action = GraphReadAction(
+        NavigationActionType.SEARCH_COUNTEREVIDENCE,
+        source_id="event:open",
+        relation="contradicts",
+    )
+    adapter = VideoSkillsL2Adapter()
+    adapter._execute_video_skills = lambda *_: SimpleNamespace(  # type: ignore[method-assign]
+        evidence_refs=[],
+        skill_id="search_counterevidence",
+        ok=False,
+        failure_code="no_counterevidence",
+        outputs={"evidence_refs": []},
+    )
+
+    execution = adapter.execute(belief, action, overlay)
+
+    assert execution.observations == ()
+    assert execution.skill_invocation["status"] == "executed"
+    assert execution.skill_invocation["search_completed"] is True
+    assert execution.skill_invocation["grounded_empty_result"] is True
+    assert execution.skill_invocation["evidence_refs"] == ["l1:open"]
+
+
 def test_cli_writes_navigation_l2_belief_and_sibling_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -1189,9 +1228,15 @@ def test_executed_transition_dataset_is_real_immutable_and_review_gated(
     assert dataset["checkpoints"] == repeated["checkpoints"]
     assert dataset["records"] == repeated["records"]
     assert dataset["annotation_status"] == "unreviewed"
+    assert dataset["schema_version"] == "steam-executed-transition-dataset/v0.2"
     assert dataset["formal_eligible"] is False
     assert dataset["records"]
     assert dataset["summary"]["post_read_verifier_count"] == 0
+    assert dataset["summary"]["action_origin_counts"]
+    assert all(
+        row["action_provenance"]["graph_mutated"] is False
+        for row in dataset["records"]
+    )
     assert len(dataset["checkpoints"]) == 1
     assert len({row["checkpoint_ref"] for row in dataset["records"]}) == 1
     assert all(
@@ -1206,6 +1251,11 @@ def test_executed_transition_dataset_is_real_immutable_and_review_gated(
         for node in row["local_context"]["nodes"]
         if node.get("embedding_ref") is not None
     )
+    gathering = inspect_transition_gathering(dataset, case_set)
+    assert gathering["dataset_valid"] is True
+    assert gathering["training_ready"] is False
+    assert gathering["training_performed"] is False
+    assert gathering["unreviewed_target_count"] == len(dataset["records"])
     with pytest.raises(ValueError, match="review_decision"):
         lock_executed_transition_dataset(
             dataset,
@@ -1224,6 +1274,8 @@ def test_executed_transition_dataset_is_real_immutable_and_review_gated(
     assert locked["formal_eligible"] is True
     training = export_executed_transition_training_records(locked)
     assert len(training) == len(locked["records"])
+    assert all(row["action_provenance"] for row in training)
+    assert all(row["execution_provenance"]["skill_id"] for row in training)
     serialized = json.dumps(training).lower()
     for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
         assert forbidden not in serialized
@@ -1255,6 +1307,53 @@ def test_transition_generation_rejects_unapproved_provisional_case_set(
             case_root=tmp_path,
             dataset_id="transitions:rejected",
         )
+
+
+def test_reviewed_action_restores_endpoint_read_without_mutating_graph(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    case_set = _navigation_case_set(overlay_path, overlay)
+    case = case_set["cases"][0]
+    case["missing_roles"] = ["state_transition"]
+    case["acceptable_first_actions"] = [
+        {
+            "action_type": "inspect_state_change",
+            "source_id": "event:open",
+            "target_ids": ["event:push"],
+            "relation": "state_transition",
+        }
+    ]
+    case["required_relation_types"] = ["state_transition"]
+    locked = lock_navigation_case_set(
+        case_set,
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+
+    dataset = build_executed_transition_dataset(
+        locked,
+        case_root=tmp_path,
+        dataset_id="transitions:review-restored",
+        executor_factory=lambda: VideoSkillsL2Adapter(
+            use_video_skills_runtime=False
+        ),
+    )
+    record = next(
+        row
+        for row in dataset["records"]
+        if row["action"]["action_type"] == "inspect_state_change"
+    )
+
+    assert record["action_provenance"]["origin"] == "review_anchored"
+    assert record["action_provenance"]["legality"] == "review_restored"
+    assert record["action_provenance"]["edge_admitted"] is False
+    assert record["action_provenance"]["graph_mutated"] is False
+    assert record["execution"]["grounded"] is True
+    assert record["execution"]["skill_id"] == "review_anchored_endpoint_read"
+    assert record["target"]["belief_delta"]["resolved_roles"] == []
 
 
 def test_realized_delta_recomputes_full_categorical_state_change() -> None:
@@ -1342,6 +1441,77 @@ def test_balanced_miner_reports_deficits_without_cross_category_backfill(
     serialized_reviews = json.dumps(queue["reviews"])
     assert "state_reject" not in serialized_reviews
     assert "counterevidence_empty" not in serialized_reviews
+
+
+def test_balanced_evidence_packet_is_blinded_grounded_and_importable(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay.relations[0].provenance["hard_verifier"]["state_transition"] = {
+        "passed": False,
+        "reasons": ["visible state delta is not established"],
+    }
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    quotas = {category: 0 for category in BALANCED_CASE_CATEGORIES}
+    quotas.update({"state_reject": 1, "counterevidence_empty": 1})
+    _, report, queue = mine_balanced_reasoning_cases(
+        [overlay_path], case_set_id="balanced:evidence", quotas=quotas
+    )
+
+    packet, key = build_balanced_evidence_packet(
+        queue, packet_id="evidence:test", context_limit=2
+    )
+    assert validate_balanced_evidence_packet(packet) == []
+    assert inspect_balanced_evidence_packet(packet)["training_performed"] is False
+    serialized_items = json.dumps(packet["items"]).lower()
+    for forbidden in (
+        "hard_verifier", "state_reject", "counterevidence_empty",
+        "relation_probabilities", "direction_confidence",
+    ):
+        assert forbidden not in serialized_items
+    assert key["items"]
+    assert key["items"][0]["overlay_path"] == str(overlay_path.resolve())
+
+    annotated = json.loads(json.dumps(packet))
+    for item in annotated["items"]:
+        reference = item["evidence"]["proposed_endpoints"][0]["node_id"]
+        is_state = item["stratum"] == "state"
+        item["annotation"] = {
+            "review_decision": "reject" if is_state else "accept",
+            "verifier_outcome": "rejects" if is_state else "not_applicable",
+            "evidence_chain_valid": not is_state,
+            "first_action_valid": not is_state,
+            "delayed_effect": "not_applicable",
+            "evidence_refs": [reference],
+            "rationale": "Visible evidence and proposed action were reviewed.",
+        }
+    locked_packet = lock_balanced_evidence_packet(
+        annotated,
+        annotation_status="ai_provisional",
+        annotator="gpt-5.6-test",
+    )
+    external_review = {
+        "schema_version": "steam-balanced-evidence-review/v0.1",
+        "packet_id": packet["packet_id"],
+        "labels_source": "model_provisional",
+        "annotator": "gpt-5.6-test",
+        "protocol": "categorical-only",
+        "decisions": [
+            {"item_id": item["item_id"], **item["annotation"]}
+            for item in annotated["items"]
+        ],
+    }
+    leaked_review = json.loads(json.dumps(external_review))
+    leaked_review["decisions"][0]["score"] = 0.5
+    with pytest.raises(ValueError, match="unexpected annotation fields"):
+        apply_evidence_review(packet, leaked_review)
+    assert apply_evidence_review(packet, external_review) == locked_packet
+    locked_queue, inspection = import_evidence_annotations(queue, locked_packet)
+    assert locked_queue["annotation_status"] == "ai_provisional"
+    assert inspection["formal_gate_eligible"] is False
+    assert inspection["training_performed"] is False
+    assert report["cross_category_backfill"] is False
 
 
 def test_blinded_packet_randomizes_sides_without_reading_labels() -> None:

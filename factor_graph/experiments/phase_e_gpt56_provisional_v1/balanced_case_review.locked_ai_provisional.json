@@ -1,0 +1,2848 @@
+{
+  "schema_version": "steam-balanced-case-review/v0.1",
+  "queue_id": "phase-e-balanced-reasoning-candidates-v1:review",
+  "annotation_status": "ai_provisional",
+  "annotator": "gpt-5.6-sol/current-session",
+  "locked_sha256": "764e010658a8f8bdbc815f2be91867c8b2896aa7c12c5bba2e58936af019ba1b",
+  "source_case_set_id": "phase-e-balanced-reasoning-candidates-v1",
+  "allowed_verifier_outcomes": [
+    "supports",
+    "rejects",
+    "inconclusive",
+    "not_applicable"
+  ],
+  "instructions": [
+    "Judge visible evidence and the proposed action, not the category name.",
+    "Rows, identifiers, questions, and tags hide the miner's expected categorical outcome.",
+    "A failed support check is inconclusive unless evidence directly contradicts the relation.",
+    "Confirm delayed effect only when the first hop opens evidence needed by a later hop.",
+    "Never provide a numeric reward, score, probability, confidence, or utility.",
+    "Edit the embedded draft case when its question, evidence chain, or legal action is wrong."
+  ],
+  "reviews": [
+    {
+      "review_id": "review:5c1ecc717779d9a05fa2",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:826136bc1a5e7164",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:1cf31fd17b8f7a281d6c",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:5f6cfb5b63114f71",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_002:006.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:006"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_006:006"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_002:006",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_006:006"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The distinctive woman in white remains compatible across the visible narrative context without a conflict."
+    },
+    {
+      "review_id": "review:1ec1911b8aae16553782",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:6b9eca66b80dfc10",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:b9c0f12c8eade0f0a0fc",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:8a99115a64e12d3c",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_005:006.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_005:006"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_005:006",
+          "event:atomic:memory:vh_seg_006:003"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_005:006",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_006:003"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The distinctive woman in black is continuous across the visible interaction and no incompatible identity appears."
+    },
+    {
+      "review_id": "review:f75c7671cb2aa897a025",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:b6ccc24367ef010d",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed identity reasoning path from event:atomic:video_skills_l1:00208.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00208"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00208",
+          "event:atomic:video_skills_l1:00214"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00208",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00214"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Adjacent observations show a compatible man, gaze, and object-handling sequence without identity conflict."
+    },
+    {
+      "review_id": "review:0d4f1df9c3d08942ae4b",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:f6454c43918303ba",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_002:003.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:003"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:003",
+          "event:atomic:memory:vh_seg_002:009"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_002:003",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:009"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The red-and-yellow clothing and continuous local sequence identify the same girl."
+    },
+    {
+      "review_id": "review:31c281b2a3b8f200750d",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:fec4daf5ea7aa435",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_002:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_002:007"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:memory:vh_seg_002:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:006"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The first temporal read exposes an intermediate observation needed to reach the later event."
+    },
+    {
+      "review_id": "review:4739239413506b9d6051",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:1d32a307bce6e2fa",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_002:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_002:007"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:memory:vh_seg_002:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:006"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The ordered observations form a grounded delayed sequence from entering the car through darkness to the reaction."
+    },
+    {
+      "review_id": "review:8f0654b5140cced189ce",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:29cd3882122bc4cd",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:dd5cb1e34af582b07d4f",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:beed6317ceb35d0c",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:cc040d5e9f81137406ac",
+      "category": "state",
+      "case": {
+        "case_id": "review-case:2c1f51ca5ae75bd0",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed state reasoning path from event:atomic:video_skills_l1:00147.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00147"
+        ],
+        "missing_roles": [
+          "state_transition"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00147",
+          "event:atomic:video_skills_l1:00159"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:video_skills_l1:00147",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00159"
+            ],
+            "relation": "state_transition"
+          }
+        ],
+        "required_relation_types": [
+          "state_transition"
+        ],
+        "tags": [
+          "review_stratum:state",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:state",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The continuous man changes the explicitly observed gaze attribute from forward to down at the box."
+    },
+    {
+      "review_id": "review:b3bb18730e67104eff0f",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:c8606920d73e61b3",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_001:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:005",
+          "event:atomic:memory:vh_seg_001:007",
+          "event:atomic:memory:vh_seg_003:002"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_001:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_001:007"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "Tracking the same girl through the earlier observations opens the later grounded action."
+    },
+    {
+      "review_id": "review:b4817e2ea9b8ed88d08c",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:9f6cb5116d9b71aa",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:video_skills_l1:00141.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00141"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00141",
+          "event:atomic:video_skills_l1:00156",
+          "event:atomic:video_skills_l1:00177",
+          "event:atomic:video_skills_l1:00181",
+          "event:atomic:video_skills_l1:00187"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Several unrelated visible branches remain and no proposed relation resolves them, so abstention is valid."
+    },
+    {
+      "review_id": "review:0a5b3d239265c9776f8d",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:01acbcb98e6aeb64",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_003:003.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_003:003"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_003:003",
+          "event:atomic:memory:vh_seg_003:004",
+          "event:atomic:memory:vh_seg_003:005"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_003:003",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_003:004"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity",
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "reject",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": false,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The path begins with Mia but ends on Smith, so the proposed identity chain does not support the delayed endpoint."
+    },
+    {
+      "review_id": "review:cd2948d7cb8f11ac822e",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:7a576c1849d28a56",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:video_skills_l1:00006.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00006"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00006"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:video_skills_l1:00006",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:b32e04b6746d6cf466e7",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:96040f64a1b160df",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:memory:vh_seg_001:003.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:003"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:003",
+          "event:atomic:memory:vh_seg_001:004",
+          "event:atomic:memory:vh_seg_001:005",
+          "event:atomic:memory:vh_seg_001:006",
+          "event:atomic:memory:vh_seg_001:007"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Multiple women and unrelated events make a unique next relation unsupported, so abstention is valid."
+    },
+    {
+      "review_id": "review:529d40a2d6f2b1dc50e1",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:7eb35bdd0de0a2ce",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed identity reasoning path from event:atomic:video_skills_l1:00075.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00075"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00075",
+          "event:atomic:video_skills_l1:00103"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00075",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00103"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The adjacent scene context and compatible appearance support the same man without a conflict."
+    },
+    {
+      "review_id": "review:56a0d379028a11806baf",
+      "category": "blocked_path_recovery",
+      "case": {
+        "case_id": "review-case:122afac52e671c77",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed blocked path recovery reasoning path from event:atomic:video_skills_l1:00179.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00179"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00179",
+          "event:atomic:video_skills_l1:00225"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00179",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00225"
+            ],
+            "relation": "state_transition"
+          }
+        ],
+        "required_relation_types": [
+          "state_transition"
+        ],
+        "tags": [
+          "review_stratum:blocked_path_recovery",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:blocked_path_recovery",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The same man visibly changes the possession attribute from tissue to other handled objects."
+    },
+    {
+      "review_id": "review:2a3215a85526c6aa4369",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:cb81a5a4ff36751e",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_002:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_002:007"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:memory:vh_seg_002:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:006"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The first temporal hop exposes the subsequent Smith event needed before the message evidence."
+    },
+    {
+      "review_id": "review:603ecdfa4ecadff5c340",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:de537f5750a2592e",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_001:003.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:003"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:003",
+          "event:atomic:memory:vh_seg_002:001",
+          "event:atomic:memory:vh_seg_002:004"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_001:003",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:001"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The visible man remains continuous across the intermediate movement and later interaction."
+    },
+    {
+      "review_id": "review:2c6d4aedc7f39758e1f8",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:364695ff40217a3b",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:memory:vh_seg_001:006.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:006"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:006",
+          "event:atomic:memory:vh_seg_001:007",
+          "event:atomic:memory:vh_seg_002:001",
+          "event:atomic:memory:vh_seg_002:002",
+          "event:atomic:memory:vh_seg_002:003"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The packet presents several possible continuations without a requested relation, making abstention valid."
+    },
+    {
+      "review_id": "review:e85431a7e27520534e29",
+      "category": "blocked_path_recovery",
+      "case": {
+        "case_id": "review-case:112af1a46d295c75",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/1TR9riaDzY8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1TR9riaDzY8:q138",
+        "question": "Review the proposed blocked path recovery reasoning path from event:atomic:memory:vh_seg_002:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:004"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:004",
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "verify",
+            "source_id": "event:atomic:memory:vh_seg_002:004",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:005"
+            ],
+            "relation": "state_transition"
+          }
+        ],
+        "required_relation_types": [
+          "state_transition"
+        ],
+        "tags": [
+          "review_stratum:blocked_path_recovery",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:blocked_path_recovery",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "Pickup and throwing are visible, but no same-attribute before and after state values are explicit."
+    },
+    {
+      "review_id": "review:32fc7681d0337e0529d9",
+      "category": "state",
+      "case": {
+        "case_id": "review-case:162d35c6827df701",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/1TR9riaDzY8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1TR9riaDzY8:q138",
+        "question": "Review the proposed state reasoning path from event:atomic:memory:vh_seg_001:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:004"
+        ],
+        "missing_roles": [
+          "state_transition"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:004",
+          "event:atomic:memory:vh_seg_001:005"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:memory:vh_seg_001:004",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_001:005"
+            ],
+            "relation": "state_transition"
+          }
+        ],
+        "required_relation_types": [
+          "state_transition"
+        ],
+        "tags": [
+          "review_stratum:state",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:state",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The action sequence is grounded, but explicit same-attribute before and after state values are absent."
+    },
+    {
+      "review_id": "review:a79f152c3e732a73af58",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:cf27d57189101eed",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_phase34_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:video_skills_l1:00108.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00108"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00108",
+          "event:atomic:video_skills_l1:00123",
+          "event:atomic:video_skills_l1:00131",
+          "event:atomic:video_skills_l1:00146",
+          "event:atomic:video_skills_l1:00150"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Several plausible object and state continuations remain, so the stop action is a valid abstention."
+    },
+    {
+      "review_id": "review:7a1418723eedb84acc3b",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:33627a2f56523762",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_003:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_003:001"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_003:001",
+          "event:atomic:memory:vh_seg_003:004",
+          "event:atomic:memory:vh_seg_003:006"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_003:001",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_003:004"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The Santa observations form a compatible identity path reached after the initial interaction."
+    },
+    {
+      "review_id": "review:99fe880f657445b8a209",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:bd2ce3d0e0aca8af",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:video_skills_l1:00019.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00019"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00019",
+          "event:atomic:video_skills_l1:00023",
+          "event:atomic:video_skills_l1:00030"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:video_skills_l1:00019",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00023"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The ordered camera and scene changes expose later evidence only after the first temporal hop."
+    },
+    {
+      "review_id": "review:c05988d4173cc198fb5b",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:b97284bf63de9ef0",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:21ae30347c9fff93b348",
+      "category": "state",
+      "case": {
+        "case_id": "review-case:183a34f143045bee",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed state reasoning path from event:atomic:video_skills_l1:00132.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00132"
+        ],
+        "missing_roles": [
+          "state_transition"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00132",
+          "event:atomic:video_skills_l1:00150"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "follow_dependency",
+            "source_id": "event:atomic:video_skills_l1:00132",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00150"
+            ],
+            "relation": "transition_support"
+          }
+        ],
+        "required_relation_types": [
+          "transition_support"
+        ],
+        "tags": [
+          "review_stratum:state",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:state",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "Putting down the white objects and picking up the brown object visibly supports the later brown-object possession."
+    },
+    {
+      "review_id": "review:ca98fd5f0d072ffed9cd",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:a3e19a49689b2370",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_001:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:005",
+          "event:atomic:memory:vh_seg_002:003",
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_001:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:003"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The same man's umbrella action is linked through the later observation before the subsequent look."
+    },
+    {
+      "review_id": "review:ae44d632f80ceb0ce948",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:883bfa003083adfa",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:video_skills_l1:00057.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00057"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00057",
+          "event:atomic:video_skills_l1:00058",
+          "event:atomic:video_skills_l1:00069"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:video_skills_l1:00057",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00058"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The first temporal transition exposes the later box evidence through the visible scene sequence."
+    },
+    {
+      "review_id": "review:d443f28aeccdbf8a46ca",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:c6765acb6cb75f3d",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:4d9f9f3ba00f5ab37f5f",
+      "category": "state",
+      "case": {
+        "case_id": "review-case:0cea93d10fe4b4f5",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed state reasoning path from event:atomic:video_skills_l1:00140.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00140"
+        ],
+        "missing_roles": [
+          "state_transition"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00140",
+          "event:atomic:video_skills_l1:00258"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:video_skills_l1:00140",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00258"
+            ],
+            "relation": "state_transition"
+          }
+        ],
+        "required_relation_types": [
+          "state_transition"
+        ],
+        "tags": [
+          "review_stratum:state",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:state",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The compatible man changes the explicit expression attribute from neutral to focused."
+    },
+    {
+      "review_id": "review:4cdabfd6af58f1ab4fcb",
+      "category": "blocked_path_recovery",
+      "case": {
+        "case_id": "review-case:fea0060dcb2ef5cb",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1iHavvOahH0/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1iHavvOahH0:q305",
+        "question": "Review the proposed blocked path recovery reasoning path from event:atomic:memory:vh_seg_001:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:004"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:004",
+          "event:atomic:memory:vh_seg_002:002"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "verify",
+            "source_id": "event:atomic:memory:vh_seg_001:004",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:002"
+            ],
+            "relation": "enables"
+          }
+        ],
+        "required_relation_types": [
+          "enables"
+        ],
+        "tags": [
+          "review_stratum:blocked_path_recovery",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:blocked_path_recovery",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "Calling and receiving no response are ordered, but the visible evidence does not establish an enabling relation."
+    },
+    {
+      "review_id": "review:d228ed2a04a3d2ca96fb",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:488cf60af031ee48",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_003:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_003:004"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_003:004",
+          "event:atomic:memory:vh_seg_003:006"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_003:004",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_003:006"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The Santa description and same local scene support a continuous identity."
+    },
+    {
+      "review_id": "review:3a101980d6c4a11692e7",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:3276b733350d5646",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:video_skills_l1:00001.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:video_skills_l1:00001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:91713cc16da49f560791",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:3016cedccb17e5c2",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:memory:vh_seg_003:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_003:001"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_003:001",
+          "event:atomic:memory:vh_seg_003:002",
+          "event:atomic:memory:vh_seg_003:003",
+          "event:atomic:memory:vh_seg_003:004",
+          "event:atomic:memory:vh_seg_003:005"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The local sequence contains several possible relations and no decisive requested edge, so abstention is valid."
+    },
+    {
+      "review_id": "review:0c5770ff6794e3da5488",
+      "category": "blocked_path_recovery",
+      "case": {
+        "case_id": "review-case:16c946dd35aebdfb",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed blocked path recovery reasoning path from event:atomic:video_skills_l1:00203.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00203"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00203",
+          "event:atomic:video_skills_l1:00208"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "verify",
+            "source_id": "event:atomic:video_skills_l1:00203",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00208"
+            ],
+            "relation": "transition_support"
+          }
+        ],
+        "required_relation_types": [
+          "transition_support"
+        ],
+        "tags": [
+          "review_stratum:blocked_path_recovery",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:blocked_path_recovery",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "Both observations are grounded, but they do not expose a clear state delta supporting the proposed transition dependency."
+    },
+    {
+      "review_id": "review:b5126e098a628f4edac2",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:a72fba99edc7f144",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_002:008.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:008"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:008",
+          "event:atomic:memory:vh_seg_003:006"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_002:008",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_003:006"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The named Smith remains continuous through leaving, returning, and the later action."
+    },
+    {
+      "review_id": "review:c12da77caee2224fb381",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:e87290b1165886d2",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:video_skills_l1:00099.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00099"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00099",
+          "event:atomic:video_skills_l1:00104",
+          "event:atomic:video_skills_l1:00112",
+          "event:atomic:video_skills_l1:00141",
+          "event:atomic:video_skills_l1:00156"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible road, driver, object, and camera branches do not determine a unique relation, so abstention is valid."
+    },
+    {
+      "review_id": "review:586989bb90643eb4e92c",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:9a42b443126119bb",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_002:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_002:007"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:memory:vh_seg_002:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:006"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The first temporal read exposes the hostage state needed before the later appearance evidence."
+    },
+    {
+      "review_id": "review:9425d27ea8904861280c",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:035d8b0fdcd62fe3",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_003:003.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_003:003"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_003:003",
+          "event:atomic:memory:vh_seg_003:004"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_003:003",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_003:004"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The same distinctive black-and-white dress appears in simultaneous compatible descriptions of one girl."
+    },
+    {
+      "review_id": "review:2f36fe6eaf2043a528d3",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:cf75af872efaf69c",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:video_skills_l1:00082.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00082"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00082",
+          "event:atomic:video_skills_l1:00095",
+          "event:atomic:video_skills_l1:00099"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:video_skills_l1:00082",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00095"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The first camera transition exposes driver evidence before the later road transition."
+    },
+    {
+      "review_id": "review:55d9379aeed624be1d01",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:6217f932863f2290",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:video_skills_l1:00179.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00179"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00179",
+          "event:atomic:video_skills_l1:00225",
+          "event:atomic:video_skills_l1:00258"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:video_skills_l1:00179",
+            "target_ids": [
+              "event:atomic:video_skills_l1:00225"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The compatible man persists across the intermediate object switch and later examination."
+    },
+    {
+      "review_id": "review:ad6bcca4e9a93497b08b",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:33fe5bc3c6eec50b",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_001:007.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:007"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:007",
+          "event:atomic:memory:vh_seg_003:002"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_001:007",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_003:002"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The generic girl descriptions are compatible, but the visible packet lacks distinctive attributes for strict identity."
+    },
+    {
+      "review_id": "review:411ad285940e809e4fe4",
+      "category": "state",
+      "case": {
+        "case_id": "review-case:4a0418d5d55c2be1",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/1TR9riaDzY8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1TR9riaDzY8:q138",
+        "question": "Review the proposed state reasoning path from event:atomic:memory:vh_seg_002:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:004"
+        ],
+        "missing_roles": [
+          "state_transition"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:004",
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "inspect_state_change",
+            "source_id": "event:atomic:memory:vh_seg_002:004",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:005"
+            ],
+            "relation": "state_transition"
+          }
+        ],
+        "required_relation_types": [
+          "state_transition"
+        ],
+        "tags": [
+          "review_stratum:state",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:state",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The paper actions are grounded, but explicit same-attribute before and after state values are absent."
+    },
+    {
+      "review_id": "review:58398ea128641bca0096",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:419a1b1045a9c0fe",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:video_skills_l1:00094.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00094"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00094",
+          "event:atomic:video_skills_l1:00101",
+          "event:atomic:video_skills_l1:00113",
+          "event:atomic:video_skills_l1:00134",
+          "event:atomic:video_skills_l1:00140"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Several person, box, and device continuations compete without a requested relation, so abstention is valid."
+    },
+    {
+      "review_id": "review:67e409c27ff6331bfb82",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:ea9d6b203a07cb85",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:memory:vh_seg_002:009.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:009"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:009",
+          "event:atomic:memory:vh_seg_003:001",
+          "event:atomic:memory:vh_seg_003:002",
+          "event:atomic:memory:vh_seg_003:003",
+          "event:atomic:memory:vh_seg_003:004"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The packet mixes distinct girls and the gloved hand across several branches, making abstention valid."
+    },
+    {
+      "review_id": "review:4ba18f6ed935278fb3ed",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:aa8cba2ca03dad7d",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:memory:vh_seg_002:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:004"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:004",
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_002:007",
+          "event:atomic:memory:vh_seg_002:008"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Several people and actions are visible without a unique proposed continuation, so abstention is valid."
+    },
+    {
+      "review_id": "review:1af26f5225151977715c",
+      "category": "ambiguity_abstention",
+      "case": {
+        "case_id": "review-case:04a4458b73523d1c",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed ambiguity abstention reasoning path from event:atomic:memory:vh_seg_001:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:005",
+          "event:atomic:memory:vh_seg_002:001",
+          "event:atomic:memory:vh_seg_002:002",
+          "event:atomic:memory:vh_seg_002:003",
+          "event:atomic:memory:vh_seg_002:004"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "stop",
+            "source_id": null,
+            "target_ids": [],
+            "relation": null
+          }
+        ],
+        "required_relation_types": [],
+        "tags": [
+          "review_stratum:ambiguity_abstention",
+          "correction_sensitive",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:ambiguity_abstention",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "Distinct girls and unrelated scene events leave competing paths, so abstention is valid."
+    },
+    {
+      "review_id": "review:fadd888b36a62b1a1f3b",
+      "category": "identity",
+      "case": {
+        "case_id": "review-case:70d2ea9aaf4759ae",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed identity reasoning path from event:atomic:memory:vh_seg_002:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:001"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:001",
+          "event:atomic:memory:vh_seg_002:008"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_002:001",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:008"
+            ],
+            "relation": "same_entity"
+          }
+        ],
+        "required_relation_types": [
+          "same_entity"
+        ],
+        "tags": [
+          "review_stratum:identity",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:identity",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "supports",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The named Smith remains compatible within the same segment and surrounding narrative."
+    },
+    {
+      "review_id": "review:607d42f42bd119884df3",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:9eba413cb9fcbd5c",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_002:004.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:004"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:004",
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "track_entity",
+            "source_id": "event:atomic:memory:vh_seg_002:004",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:005"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "same_entity",
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "reject",
+      "verifier_outcome": "rejects",
+      "evidence_chain_valid": false,
+      "first_action_valid": true,
+      "delayed_effect": "no",
+      "rationale": "The path starts with the red-and-yellow girl but ends with the distinct black-and-white girl, breaking identity continuity."
+    },
+    {
+      "review_id": "review:2f4895bb1f505897b70f",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:849527c453c5eb27",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:memory:vh_seg_001:001.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_001:001"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:memory:vh_seg_001:001",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "dev"
+        ],
+        "split": "dev",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:be4ef770d9bf1122fe31",
+      "category": "counterevidence",
+      "case": {
+        "case_id": "review-case:23029ec366ad4e1b",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+        "question": "Review the proposed counterevidence reasoning path from event:atomic:video_skills_l1:00019.",
+        "seed_event_ids": [
+          "event:atomic:video_skills_l1:00019"
+        ],
+        "missing_roles": [
+          "counterevidence"
+        ],
+        "graph_read_budget": 2,
+        "gold_event_ids": [
+          "event:atomic:video_skills_l1:00019"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "search_counterevidence",
+            "source_id": "event:atomic:video_skills_l1:00019",
+            "target_ids": [],
+            "relation": "contradicts"
+          }
+        ],
+        "required_relation_types": [
+          "contradicts"
+        ],
+        "tags": [
+          "review_stratum:counterevidence",
+          "correction_sensitive",
+          "test"
+        ],
+        "split": "test",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:counterevidence",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "inconclusive",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "not_applicable",
+      "rationale": "The visible search context contains no direct contradiction, so absence of support remains inconclusive."
+    },
+    {
+      "review_id": "review:29ed656e1a01098b4146",
+      "category": "delayed_two_hop",
+      "case": {
+        "case_id": "review-case:b7d4cb3d556d882e",
+        "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+        "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+        "question": "Review the proposed delayed two hop reasoning path from event:atomic:memory:vh_seg_002:005.",
+        "seed_event_ids": [
+          "event:atomic:memory:vh_seg_002:005"
+        ],
+        "missing_roles": [
+          "bridge"
+        ],
+        "graph_read_budget": 3,
+        "gold_event_ids": [
+          "event:atomic:memory:vh_seg_002:005",
+          "event:atomic:memory:vh_seg_002:006",
+          "event:atomic:memory:vh_seg_002:007"
+        ],
+        "acceptable_first_actions": [
+          {
+            "action_type": "temporal_forward",
+            "source_id": "event:atomic:memory:vh_seg_002:005",
+            "target_ids": [
+              "event:atomic:memory:vh_seg_002:006"
+            ]
+          }
+        ],
+        "required_relation_types": [
+          "temporal_next"
+        ],
+        "tags": [
+          "review_stratum:delayed_two_hop",
+          "delayed_preference",
+          "train"
+        ],
+        "split": "train",
+        "notes": "Outcome-blinded diagnostic candidate; judge visible evidence and online action legality."
+      },
+      "candidate_basis": [
+        "review_stratum:delayed_two_hop",
+        "candidate_only:not_gold",
+        "requires_visible_evidence_review",
+        "requires_categorical_verifier_outcome_review"
+      ],
+      "review_decision": "accept",
+      "verifier_outcome": "not_applicable",
+      "evidence_chain_valid": true,
+      "first_action_valid": true,
+      "delayed_effect": "yes",
+      "rationale": "The temporal hop reaches the arriving girl before the subsequent action, even though the actors differ."
+    }
+  ]
+}

@@ -57,6 +57,14 @@ from .executed_transitions import (
     require_valid_executed_transition_dataset,
     validate_executed_transition_dataset,
 )
+from .evidence_packets import (
+    apply_evidence_review,
+    build_balanced_evidence_packet,
+    import_evidence_annotations,
+    inspect_balanced_evidence_packet,
+    lock_balanced_evidence_packet,
+    validate_balanced_evidence_packet,
+)
 from .planner import (
     ClosedLoopNavigator,
     PersistedGraphReadExecutor,
@@ -65,6 +73,7 @@ from .planner import (
 )
 from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
 from .matched_ablation import MATCHED_STRATEGIES, evaluate_matched_navigation
+from .data_inspection import inspect_transition_gathering
 from .interventions import (
     FrozenBeliefWorldModel,
     TransitionIntervention,
@@ -103,6 +112,7 @@ from .siblings import (
 
 __all__ = [
     "Answerability",
+    "apply_evidence_review",
     "ALLOWED_PREFERENCE_LABELS",
     "BeliefBackend",
     "BALANCED_CASE_CATEGORIES",
@@ -154,6 +164,7 @@ __all__ = [
     "DEFAULT_BALANCED_QUOTAS",
     "build_video_skills_l2_rollout",
     "build_executed_transition_dataset",
+    "build_balanced_evidence_packet",
     "build_preference_annotation_packet",
     "build_balanced_review_queue",
     "belief_to_dict",
@@ -163,11 +174,15 @@ __all__ = [
     "export_reviewed_balanced_case_set",
     "export_executed_transition_training_records",
     "guided_navigation_actions",
+    "import_evidence_annotations",
+    "inspect_balanced_evidence_packet",
+    "inspect_transition_gathering",
     "intervene_trajectories",
     "derive_realized_belief_delta",
     "load_overlay_artifact",
     "lock_annotation_packet",
     "lock_balanced_review_queue",
+    "lock_balanced_evidence_packet",
     "lock_navigation_case_set",
     "lock_executed_transition_dataset",
     "mine_navigation_cases",
@@ -182,6 +197,7 @@ __all__ = [
     "validate_sibling_artifact",
     "validate_navigation_case_set",
     "validate_balanced_review_queue",
+    "validate_balanced_evidence_packet",
     "validate_executed_transition_dataset",
     "validate_preference_annotation_packet",
     "train_baselines",

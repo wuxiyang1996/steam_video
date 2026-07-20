@@ -179,6 +179,32 @@ class MeasurementJournal:
     def to_records(self) -> list[dict[str, object]]:
         return [measurement.to_dict() for measurement in self.measurements]
 
+    @classmethod
+    def from_records(cls, records: Iterable[dict[str, object]]) -> MeasurementJournal:
+        journal = cls()
+        for record in records:
+            measurement = RelationMeasurement(
+                measurement_id=str(record.get("measurement_id") or ""),
+                action_id=str(record.get("action_id") or ""),
+                overlay_id=str(record.get("overlay_id") or ""),
+                edge_id=str(record.get("edge_id") or ""),
+                relation=str(record.get("relation") or ""),
+                variable_id=str(record.get("variable_id") or ""),
+                outcome=MeasurementOutcome(str(record.get("outcome") or "")),
+                observation_ids=tuple(
+                    str(value) for value in record.get("observation_ids") or []
+                ),
+                evidence_refs=tuple(
+                    str(value) for value in record.get("evidence_refs") or []
+                ),
+                verifier_name=str(record.get("verifier_name") or ""),
+                verifier_version=str(record.get("verifier_version") or ""),
+                calibration_version=str(record.get("calibration_version") or ""),
+                reasons=tuple(str(value) for value in record.get("reasons") or []),
+            )
+            journal.append(measurement)
+        return journal
+
 
 def measurement_from_execution(
     *,

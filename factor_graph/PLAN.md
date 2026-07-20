@@ -6,7 +6,7 @@
 而不是 graph construction 或 propagation。GTSAM 不再是默认 planner dependency，而是可选
 belief-correction backup，以及 baseline/diagnostic。
 
-后续 runtime 统一为 `BeliefCorrector` 接口，并提供：
+runtime 已统一提供以下显式模式：
 
 - `iwm_belief_only`：默认主方法；
 - `iwm_with_gtsam_backup`：真实读取和 categorical verifier 后，在明确冲突/纠错条件下
@@ -18,14 +18,19 @@ GTSAM backup 只消费 real executed evidence，不消费 imagined transition；
 IWM predicted future-belief trajectory。backup 不可用时显式返回
 `backup_unavailable`，不得静默改变策略。
 
-下一实现顺序：
+工程 finalization 已完成：
 
-1. 冻结共享 L1/L1.5 graph、candidate set 和 evidence budget；
-2. 清除 graph priority、lexical 和 stable-order winner leakage；
-3. 将现有 GTSAM backend 包装为 optional `BeliefCorrector`；
-4. 实现 categorical backup triggers 和 correction audit；
-5. 比较 `iwm_belief_only`、`iwm_with_gtsam_backup`、`gtsam_always`，分别报告 backup activation、
-   correction persistence、action divergence、evidence completeness、accuracy 和成本。
+1. 三模式已接入主导航 CLI，缺少 GTSAM 时显式失败；
+2. categorical trigger 与 factor activation 分离记录；
+3. checkpoint journal 支持 checksum、overlay/calibration/mode 校验和跨进程恢复；
+4. sibling branch 通过 checkpoint fork 隔离 stateful measurement；
+5. empty counterevidence、review-restored 和 offline diagnostic execution boundary 已冻结；
+6. finalization pilot 通过 5/5 engineering gates。
+
+下一阶段只做实证，不再扩张 backup 职责：比较 `iwm_belief_only`、
+`iwm_with_gtsam_backup`、`gtsam_always`，分别报告 backup activation、correction persistence、
+action divergence、evidence completeness、accuracy 和成本；在获得独立 verifier confusion
+matrix 前保持 `production_calibrated=false`。
 
 这份计划把“求解器能运行”“能读真实 overlay”“能根据真实 query measurement
 纠错”和“能提高导航结果”分成不同门禁，禁止用 synthetic 成功替代真实数据结论。
@@ -190,6 +195,38 @@ deduplication 和预算，不能通过 lexical/question-direction/factor-priorit
 winner。建立 candidate permutation test，以及 normal/null/shuffled/frozen/immediate-only/
 delayed-belief WM intervention。只有破坏 WM prediction 会系统性改变 action trajectory 并降低
 reasoning outcome，才能支持 world-model-guided reasoning claim。
+
+### Phase E.4：Outcome-blinded evidence gathering（已完成，未训练）
+
+- public packet 只包含 endpoint、bounded temporal context、participant/state、真实 evidence
+  refs 与 opaque Qwen embedding ref；teacher probability、hard-verifier、confidence 和预期
+  outcome 位于 annotator 输入之外；
+- GPT-5.6 当前会话只输出 categorical review、evidence/action validity、delayed effect 与
+  文字理由，不输出数字；54 条中 accept 52、reject 2，但全部仍是 `ai_provisional`；
+- 52 个 reviewed cases 通过 live Video_Skills 收集 994 条 executed transitions，978 条
+  grounded；所有 transition targets 仍是 `unreviewed`；
+- inspection 发现只有 identity role 被 resolved，`inspect_state_change`、
+  `search_counterevidence`、`find_bridge` 三个 action family 没有执行，state/counterevidence
+  resolved records 均为空；
+- 本阶段硬停止于 `training_ready=false, training_performed=false`，不训练或调用 GPT-OSS。
+
+### Phase E.5：Review-anchored executed reads（已完成，未训练）
+
+- candidate pool 取 native legal actions 与审核接受的 first actions 的并集；每条 action 显式记录
+  `native_legal`、`review_restored`、`offline_diagnostic` 或 `not_executable`；
+- `review_restored` 只读取审核包指定的现存 endpoint，不新增 relation、不改 L1.5 graph，且每个
+  sibling 仍从同一干净 checkpoint 重建；
+- bridge/counterevidence runtime 返回节点不再被 `target_ids` 过滤掉；已真实执行但未找到反证的
+  搜索有独立 grounded-empty contract，不伪造 evidence node；
+- v2 收集 1025 条 records、1009 条 grounded；42 个非 STOP reviewed cases 的 proposed action
+  均精确执行且 grounded；resolved role 为 identity 44、bridge 13、counterevidence 10、
+  state_transition 2；
+- state 只有 strict post-read categorical verifier 发现“同一 grounded participant 的同一属性
+  值发生明确变化”才 resolve；另外 3 个 state cases 保持 inconclusive；
+- 4 个 blocked VERIFY 保持 `offline_diagnostic`，不冒充合法 graph traversal；未执行
+  `find_bridge` 是因为审核接受集合中没有该 action family，只作为可选覆盖缺口报告；
+- 剩余硬门禁仅为 1025 条 transition target 的独立 record-level 人工 review/lock。本阶段仍然
+  `training_ready=false, training_performed=false`，没有训练或调用 GPT-OSS-120B。
 
 ## Phase F：生产门禁
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable
 
@@ -11,7 +12,15 @@ from memory_graph.navigation import GraphReadAction, NavigationActionType
 
 from .artifacts import delta_to_dict
 from .belief import FactorizedBeliefBackend
-from .contracts import BeliefBackend, BeliefSnapshot, GraphReadExecutor, reasoning_hop_from_action
+from .contracts import (
+    Answerability,
+    BeliefBackend,
+    BeliefSnapshot,
+    GraphReadExecution,
+    GraphReadExecutor,
+    UncertaintyLevel,
+    reasoning_hop_from_action,
+)
 from .factor_graph import FactorGraphBeliefBackend
 from .overlay_io import load_overlay_artifact
 from .planner import PersistedGraphReadExecutor, guided_navigation_actions
@@ -80,6 +89,9 @@ def build_executed_transition_dataset(
     verifier_source_counts: dict[str, int] = {}
     post_read_verifier_count = 0
     grounded_count = 0
+    grounded_empty_result_count = 0
+    action_origin_counts: dict[str, int] = {}
+    action_legality_counts: dict[str, int] = {}
     checkpoints: list[dict[str, Any]] = []
 
     def make_backend() -> BeliefBackend:
@@ -103,7 +115,17 @@ def build_executed_transition_dataset(
             graph_read_budget=int(case["graph_read_budget"]),
         )
         checkpoint_id = _checkpoint_id(case_id, initial)
-        actions = guided_navigation_actions(initial, overlay)
+        native_actions = guided_navigation_actions(initial, overlay)
+        reviewed_actions = [
+            _reviewed_action(value)
+            for value in case.get("acceptable_first_actions") or []
+        ]
+        actions, provenance_by_key = _merge_actions(
+            native_actions,
+            reviewed_actions,
+            overlay,
+            source_status=source_status,
+        )
         checkpoints.append(
             {
                 "case_id": case_id,
@@ -139,7 +161,30 @@ def build_executed_transition_dataset(
                 after = before
                 audit = None
             else:
-                execution = executor.execute(before, action, overlay)
+                provenance = provenance_by_key[_action_key(action)]
+                execute_review_anchored = getattr(
+                    executor, "execute_review_anchored", None
+                )
+                if (
+                    provenance["origin"] == "review_anchored"
+                    and provenance["legality"] != "not_executable"
+                    and callable(execute_review_anchored)
+                ):
+                    execution = execute_review_anchored(before, action, overlay)
+                elif provenance["legality"] == "not_executable":
+                    execution = GraphReadExecution(
+                        (),
+                        {
+                            "skill_id": "review_anchored_endpoint_read",
+                            "status": "failed",
+                            "failure_code": "reviewed_action_endpoint_not_executable",
+                            "evidence_refs": [],
+                            "grounded_empty_result": False,
+                            "search_completed": False,
+                        },
+                    )
+                else:
+                    execution = executor.execute(before, action, overlay)
                 observations = execution.observations
                 update_from_execution = getattr(backend, "update_from_execution", None)
                 update = (
@@ -150,6 +195,20 @@ def build_executed_transition_dataset(
                 invocation = execution.skill_invocation
                 after = update.belief
                 audit = update.audit_record
+                after, semantic_audit = _apply_executed_operation_semantics(
+                    before=before,
+                    after=after,
+                    case=case,
+                    action=action,
+                    invocation=invocation,
+                    observations=observations,
+                    provenance=provenance,
+                )
+                if semantic_audit:
+                    audit = {
+                        "backend_update": audit,
+                        "executed_operation_correction": semantic_audit,
+                    }
             delta = derive_realized_belief_delta(before, after)
             answerability = delta.answerability_after.value
             answerability_counts[answerability] = answerability_counts.get(answerability, 0) + 1
@@ -185,12 +244,27 @@ def build_executed_transition_dataset(
                 verifier_source_counts.get(verifier_source, 0) + 1
             )
             post_read_verifier_count += int(verifier["post_read"] is True)
-            grounded = bool(observation_ids) and bool(evidence_refs)
+            grounded_empty_result = invocation.get("grounded_empty_result") is True
+            grounded = (
+                bool(observation_ids) and bool(evidence_refs)
+            ) or grounded_empty_result
             grounded_count += int(grounded)
+            grounded_empty_result_count += int(grounded_empty_result)
             action_name = action.action_type.value
             action_counts[action_name] = action_counts.get(action_name, 0) + 1
-            outcome = "observed" if observation_ids else "empty"
+            outcome = (
+                "observed"
+                if observation_ids
+                else "empty_search_observed"
+                if grounded_empty_result
+                else "empty"
+            )
             outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
+            provenance = provenance_by_key[_action_key(action)]
+            origin = str(provenance["origin"])
+            legality = str(provenance["legality"])
+            action_origin_counts[origin] = action_origin_counts.get(origin, 0) + 1
+            action_legality_counts[legality] = action_legality_counts.get(legality, 0) + 1
             records.append(
                 {
                     "record_id": _record_id(case_id, action),
@@ -202,6 +276,7 @@ def build_executed_transition_dataset(
                     "checkpoint_ref": checkpoint_id,
                     "local_context": _local_context(action, overlay),
                     "action": _action_payload(action),
+                    "action_provenance": provenance,
                     "reasoning_hop": reasoning_hop_from_action(action).hop_type.value,
                     "execution": {
                         "skill_id": str(invocation.get("skill_id") or "unknown"),
@@ -209,6 +284,8 @@ def build_executed_transition_dataset(
                         "real_observation_ids": list(observation_ids),
                         "evidence_refs": list(evidence_refs),
                         "grounded": grounded,
+                        "observation_outcome": outcome,
+                        "grounded_empty_result": grounded_empty_result,
                         "belief_update_audit": audit,
                         "verifier_measurement": verifier,
                     },
@@ -216,19 +293,23 @@ def build_executed_transition_dataset(
                         "observation_descriptor": {
                             "role": evidence_role_for_action(action).value,
                             "target_ids": list(observation_ids),
-                            "node_kind": _node_kind(observations),
+                            "node_kind": (
+                                "empty_counterevidence_search"
+                                if grounded_empty_result
+                                else _node_kind(observations)
+                            ),
                             "predicted_only": False,
                         },
                         "belief_delta": delta_to_dict(delta),
                     },
                     "review_decision": None,
                     "review_rationale": "",
-                    "target_source": "executed_read_plus_backend_recompute",
+                    "target_source": "executed_read_plus_backend_recompute_v2",
                 }
             )
 
     dataset = {
-        "schema_version": "steam-executed-transition-dataset/v0.1",
+        "schema_version": "steam-executed-transition-dataset/v0.2",
         "dataset_id": dataset_id,
         "annotation_status": "unreviewed",
         "annotator": None,
@@ -247,6 +328,9 @@ def build_executed_transition_dataset(
             "video_count": len(video_ids),
             "record_count": len(records),
             "grounded_record_count": grounded_count,
+            "grounded_empty_result_count": grounded_empty_result_count,
+            "action_origin_counts": dict(sorted(action_origin_counts.items())),
+            "action_legality_counts": dict(sorted(action_legality_counts.items())),
             "action_counts": dict(sorted(action_counts.items())),
             "outcome_counts": dict(sorted(outcome_counts.items())),
             "answerability_counts": dict(sorted(answerability_counts.items())),
@@ -288,9 +372,25 @@ def validate_executed_transition_dataset(payload: dict[str, Any]) -> list[str]:
     ids = [str(record.get("record_id") or "") for record in records]
     if len(ids) != len(set(ids)):
         errors.append("record_id values must be unique")
+    is_v2 = payload.get("schema_version") == "steam-executed-transition-dataset/v0.2"
+    if is_v2:
+        for field in (
+            "grounded_empty_result_count",
+            "action_origin_counts",
+            "action_legality_counts",
+        ):
+            if field not in (payload.get("summary") or {}):
+                errors.append(f"summary.{field} is required for v0.2")
     for index, record in enumerate(records):
         if record.get("checkpoint_ref") not in checkpoint_ids:
             errors.append(f"records.{index}.checkpoint_ref is unknown")
+        if is_v2:
+            if "action_provenance" not in record:
+                errors.append(f"records.{index}.action_provenance is required for v0.2")
+            execution = record.get("execution") or {}
+            for field in ("observation_outcome", "grounded_empty_result"):
+                if field not in execution:
+                    errors.append(f"records.{index}.execution.{field} is required for v0.2")
         target = record.get("target") or {}
         observation = target.get("observation_descriptor") or {}
         delta = target.get("belief_delta") or {}
@@ -376,6 +476,20 @@ def export_executed_transition_training_records(
             "checkpoint": checkpoints[record["checkpoint_ref"]],
             "local_context": record["local_context"],
             "action": record["action"],
+            "action_provenance": record.get("action_provenance"),
+            "execution_provenance": {
+                "skill_id": record["execution"]["skill_id"],
+                "grounded": record["execution"]["grounded"],
+                "observation_outcome": record["execution"].get(
+                    "observation_outcome", "legacy_unspecified"
+                ),
+                "grounded_empty_result": record["execution"].get(
+                    "grounded_empty_result", False
+                ),
+                "verifier_measurement": record["execution"][
+                    "verifier_measurement"
+                ],
+            },
             "target": record["target"],
             "label_source": status,
         }
@@ -459,6 +573,187 @@ def _action_payload(action: GraphReadAction) -> dict[str, Any]:
         "source_id": action.source_id,
         "target_ids": list(action.target_ids),
         "relation": action.relation,
+    }
+
+
+def _reviewed_action(payload: dict[str, Any]) -> GraphReadAction:
+    return GraphReadAction(
+        action_type=NavigationActionType(str(payload["action_type"])),
+        source_id=(
+            str(payload["source_id"])
+            if payload.get("source_id") is not None
+            else None
+        ),
+        target_ids=tuple(str(value) for value in payload.get("target_ids") or []),
+        relation=(
+            str(payload["relation"])
+            if payload.get("relation") is not None
+            else None
+        ),
+        rationale="independently reviewed acceptable first action",
+    )
+
+
+def _merge_actions(
+    native_actions: list[GraphReadAction],
+    reviewed_actions: list[GraphReadAction],
+    overlay,
+    *,
+    source_status: str,
+) -> tuple[list[GraphReadAction], dict[str, dict[str, Any]]]:
+    native = {_action_key(action): action for action in native_actions}
+    reviewed = {_action_key(action): action for action in reviewed_actions}
+    merged = {**native, **reviewed}
+    provenance: dict[str, dict[str, Any]] = {}
+    for key, action in merged.items():
+        is_native = key in native
+        is_reviewed = key in reviewed
+        if is_native and is_reviewed:
+            origin = "review_anchored_and_native"
+        elif is_reviewed:
+            origin = "review_anchored"
+        elif action.action_type is NavigationActionType.STOP:
+            origin = "control"
+        else:
+            origin = "native_candidate"
+        legality, edge_admitted = _action_legality(
+            action,
+            overlay,
+            native_legal=is_native,
+            reviewed=is_reviewed,
+        )
+        provenance[key] = {
+            "origin": origin,
+            "legality": legality,
+            "native_candidate": is_native,
+            "reviewed_accepted": is_reviewed,
+            "review_status": source_status if is_reviewed else None,
+            "edge_admitted": edge_admitted,
+            "graph_mutated": False,
+        }
+    return list(merged.values()), provenance
+
+
+def _action_legality(
+    action: GraphReadAction,
+    overlay,
+    *,
+    native_legal: bool,
+    reviewed: bool,
+) -> tuple[str, bool]:
+    edge_admitted = _matching_admitted_edge(action, overlay)
+    if native_legal:
+        return "native_legal", edge_admitted
+    if action.action_type is NavigationActionType.STOP:
+        return "not_applicable", False
+    known = {
+        node.node_id for node in overlay.atomic_events + overlay.l1_observations
+    }
+    source_known = action.source_id is None or action.source_id in known
+    targets_known = all(target in known for target in action.target_ids)
+    targetless_allowed = action.action_type in {
+        NavigationActionType.SEMANTIC,
+        NavigationActionType.SEARCH_COUNTEREVIDENCE,
+    }
+    if not source_known or (not action.target_ids and not targetless_allowed) or not targets_known:
+        return "not_executable", edge_admitted
+    if reviewed and action.action_type is NavigationActionType.VERIFY and not edge_admitted:
+        return "offline_diagnostic", False
+    return "review_restored", edge_admitted
+
+
+def _matching_admitted_edge(action: GraphReadAction, overlay) -> bool:
+    if not action.source_id or not action.target_ids or not action.relation:
+        return False
+    for edge in overlay.relations + overlay.l1_structural_relations:
+        if action.source_id not in {edge.src, edge.dst}:
+            continue
+        if not any(target in {edge.src, edge.dst} for target in action.target_ids):
+            continue
+        if action.relation in edge.relation_probabilities:
+            return True
+        if action.relation == "event_projection" and edge.provenance == "l1_grounding":
+            return True
+    return False
+
+
+def _apply_executed_operation_semantics(
+    *,
+    before: BeliefSnapshot,
+    after: BeliefSnapshot,
+    case: dict[str, Any],
+    action: GraphReadAction,
+    invocation: dict[str, object],
+    observations: tuple[Any, ...],
+    provenance: dict[str, Any],
+) -> tuple[BeliefSnapshot, dict[str, object] | None]:
+    """Apply categorical semantics of a completed reviewed operation.
+
+    This correction never admits an edge and never consumes the reviewer's
+    outcome label.  It only marks the requested evidence role as inspected
+    when the real execution contract itself establishes completion.
+    """
+
+    if provenance.get("reviewed_accepted") is not True:
+        return after, None
+    requested_roles = tuple(str(value) for value in case.get("missing_roles") or [])
+    verifier = invocation.get("verifier_result") or {}
+    verifier_outcome = (
+        verifier.get("categorical_outcome") if isinstance(verifier, dict) else None
+    )
+    completed_role: str | None = None
+    reason = ""
+    if (
+        "counterevidence" in requested_roles
+        and action.action_type is NavigationActionType.SEARCH_COUNTEREVIDENCE
+        and invocation.get("search_completed") is True
+    ):
+        completed_role = "counterevidence"
+        reason = "real counterevidence search completed, including a grounded empty result"
+    elif (
+        "state_transition" in requested_roles
+        and verifier_outcome == "supports"
+        and action.action_type
+        in {NavigationActionType.INSPECT_STATE_CHANGE, NavigationActionType.VERIFY}
+    ):
+        completed_role = "state_transition"
+        reason = "post-read categorical verifier established a strict grounded state delta"
+    elif (
+        "bridge" in requested_roles
+        and observations
+        and action.action_type
+        in {
+            NavigationActionType.FIND_BRIDGE,
+            NavigationActionType.TEMPORAL_BACK,
+            NavigationActionType.TEMPORAL_FORWARD,
+            NavigationActionType.TRACK_ENTITY,
+            NavigationActionType.FOLLOW_DEPENDENCY,
+        }
+    ):
+        completed_role = "bridge"
+        reason = "reviewed first-hop endpoint was actually read and opened the bridge frontier"
+    if completed_role is None or completed_role not in after.missing_roles:
+        return after, None
+    missing = tuple(role for role in after.missing_roles if role != completed_role)
+    uncertainty = UncertaintyLevel.LOW if not missing else UncertaintyLevel.MEDIUM
+    answerability = (
+        Answerability.READY
+        if after.acquired_evidence and not missing and not after.contradictions
+        else Answerability.NOT_READY
+    )
+    corrected = replace(
+        after,
+        missing_roles=missing,
+        uncertainty=uncertainty,
+        answerability=answerability,
+    )
+    return corrected, {
+        "role": completed_role,
+        "reason": reason,
+        "source": "executed_operation_categorical_semantics",
+        "graph_edge_inserted": False,
+        "review_outcome_used_as_measurement": False,
+        "numeric_output_exposed": False,
     }
 
 

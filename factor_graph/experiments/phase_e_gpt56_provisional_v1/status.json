@@ -5,6 +5,21 @@
   "runtime_pass": true,
   "production_ready": false,
   "formal_result": false,
+  "gtsam_backup_finalization": {
+    "runtime_ready": true,
+    "backup_engineering_complete": true,
+    "production_calibrated": false,
+    "navigation_benefit_proven": false,
+    "engineering_gates_passed": "5/5",
+    "runtime_modes": [
+      "iwm_belief_only",
+      "iwm_with_gtsam_backup",
+      "gtsam_always"
+    ],
+    "checkpoint_schema": "steam-gtsam-backup-checkpoint/v0.1",
+    "artifact": "../gtsam_backup_finalization_v1.json",
+    "artifact_sha256": "29b9a315dc8ec27823e62f3fd1716e5f7f8de3f577566c0d2ec50e3286ea6e5d"
+  },
   "annotation_provenance": {
     "annotator": "gpt-5.6-sol/current-session",
     "labels_source": "model_provisional",
@@ -173,6 +188,68 @@
     "post_read_reject_count": 0,
     "relation_verifier_validated": false,
     "formal_eligible": false
+  },
+  "balanced_evidence_gathering_v1": {
+    "training_performed": false,
+    "evidence_packet_item_count": 54,
+    "evidence_packet_status": "ai_provisional",
+    "review_decision_counts": {"accept": 52, "reject": 2},
+    "verifier_outcome_counts": {
+      "supports": 18,
+      "rejects": 1,
+      "inconclusive": 17,
+      "not_applicable": 18
+    },
+    "reviewed_case_count": 52,
+    "executed_transition_status": "unreviewed",
+    "executed_transition_record_count": 994,
+    "grounded_transition_record_count": 978,
+    "resolved_role_counts": {"identity": 44},
+    "missing_executed_action_families": [
+      "inspect_state_change", "search_counterevidence", "find_bridge"
+    ],
+    "training_ready": false,
+    "formal_eligible": false,
+    "artifacts": {
+      "unreviewed_evidence_packet_sha256": "4b6b22e3e6251afb24c47f7b3a474378cf7c4f0a51b3f6ea25964614ceb027ff",
+      "hidden_key_sha256": "e79f645f3f1a64c51ffd188a2cb15a17802deef141731cadecfb2ea8481314ce",
+      "gpt56_review_sha256": "97d4db2da1b982812a5e83e0bd783205649c1d885239ae668366e973eb007f69",
+      "locked_evidence_packet_sha256": "45c9fceb9926f15803e5bb77411f246a4cc74d7724a145fbb053a907448750ef",
+      "locked_case_set_sha256": "5b047086ffbfb7b20d1296e6a5e2fb4ae3cecec8e594330561db6b9e3bf0e7d8",
+      "executed_transitions_sha256": "2ef9b30128d8fe0cb319667dae711a69ea78199efb4dd4a03b4b739711145ace",
+      "inspection_sha256": "93a2aaa383495f9ee0931d61d4b13292992bb86a623aff582bf52daeec48ff03"
+    }
+  },
+  "balanced_review_anchored_gathering_v2": {
+    "training_performed": false,
+    "source_case_annotation_status": "ai_provisional",
+    "executed_transition_status": "unreviewed",
+    "case_count": 52,
+    "record_count": 1025,
+    "grounded_record_count": 1009,
+    "reviewed_non_stop_exact_execution": "42/42",
+    "reviewed_non_stop_exact_grounding": "42/42",
+    "action_legality_counts": {
+      "native_legal": 994,
+      "review_restored": 27,
+      "offline_diagnostic": 4
+    },
+    "resolved_role_counts": {
+      "identity": 44,
+      "bridge": 13,
+      "counterevidence": 10,
+      "state_transition": 2
+    },
+    "graph_mutated": false,
+    "missing_required_action_families": [],
+    "optional_unrepresented_action_families": ["find_bridge"],
+    "training_ready": false,
+    "formal_eligible": false,
+    "remaining_blocker": "independent record-level human review and lock",
+    "artifacts": {
+      "executed_transitions_sha256": "c7e759cc9d02db1b3680e0a4a75c18258705f5eaf7baeb0bfcf3b83c98d22d0e",
+      "inspection_sha256": "1444bad4609183ea49e2865a2f1c7ccb77f7ba6e04d0e3a6fd6ce88e494110d1"
+    }
   },
   "remaining_formal_gates": [
     "independent human identity/state annotation on a multi-video locked set",

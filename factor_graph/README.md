@@ -22,7 +22,7 @@ trajectory preference 或 final-answer grounding。只有执行真实 evidence q
 categorical verifier 得到的 measurement 可以写入 persistent factor state；imagined rollout
 绝不能写入。
 
-计划提供三个显式模式：
+主导航 CLI 现已提供三个显式模式：
 
 ```text
 iwm_belief_only             # 默认主方法
@@ -36,7 +36,7 @@ backup trigger 只能是 `contradiction_detected`、`identity_ambiguous`、
 对外只暴露 `accepted/rejected/unresolved/conflicted`；solver 数值保持内部。GTSAM 不可用时
 必须显式报告 `backup_unavailable`，不能静默切换 planner 或启用 heuristic ranking。
 
-当前 GTSAM closed loop 是已实现、可运行的 baseline；主方法继续使用同一个 L1/L1.5
+当前 GTSAM closed loop 与 categorical-triggered backup 均已实现、可运行；主方法继续使用同一个 L1/L1.5
 Memory Graph，但必须清除 graph priority/lexical/stable-order 对 winner 的影响。完整定义见
 [`l15_graph_navigator/README.md`](../steam_video_new/implicit_world_model/l15_graph_navigator/README.md#architecture-decision-fixed-l1l15-memory-iwm-reasoning-novelty)。
 
@@ -527,3 +527,100 @@ wiring 可用，不能证明 relation-level verifier 有效，更不能形成 co
 inconclusive、contradiction 和 useful-counterevidence 数据，完成独立 review/lock，再在同一
 fixed gold set 上分别报告 verifier-direct-only 与 GTSAM propagation 的 accuracy、read
 efficiency 和 action divergence。
+
+### 13.4 Evidence gathering v1：停在训练之前
+
+新增 public evidence packet 与 separate hidden key。public packet 为每个候选提供 endpoint、
+bounded temporal context、participant/state、真实 evidence refs，以及不含 raw vector/path 的
+opaque Qwen embedding reference；它不包含 teacher probability、hard-verifier、confidence
+或 miner 预期 outcome。annotation 必须引用 packet 内可见证据，且 numeric model output 会被
+拒绝。
+
+GPT-5.6 当前会话对 54 条 outcome-blinded items 做 categorical provisional review：52 accept、
+2 reject；outcome 为 18 supports、1 rejects、17 inconclusive、18 not-applicable。identity 是
+9 support / 1 inconclusive，state 是 3 support / 2 inconclusive。特别值得注意的是，miner 的
+pre-admission state-reject challenges 经盲审后没有形成 state reject，这再次证明 mined label
+不能当训练监督。
+
+随后从 52 条 `ai_provisional` cases 通过 live Video_Skills 收集 994 条 executed-transition
+records，其中 978 条 grounded。严格 inspection 发现：只有 44 条 record resolve identity；
+没有 state-transition 或 counterevidence resolution；`inspect_state_change`、
+`search_counterevidence`、`find_bridge` action family 完全未执行；只有 identity cases 的
+proposed actions 获得完整 grounded coverage。354 个 post-read claim-verifier calls 中仅 19
+supports、335 inconclusive，但它仍不是经过校准的 relation verifier。
+
+因此本轮明确停止在 data gathering：所有 transition targets 保持 `unreviewed`，报告为
+`training_ready=false, training_performed=false, formal_eligible=false`，没有训练或调用
+GPT-OSS-120B。完整诊断见
+[`balanced_transition_gathering_inspection.json`](experiments/phase_e_gpt56_provisional_v1/balanced_transition_gathering_inspection.json)。
+
+### 13.5 Evidence gathering v2：真实执行 reviewed action
+
+v1 的主要缺陷不是 evidence packet，而是 transition builder 只执行 native candidate pool，导致
+审核接受的 state、counterevidence 和部分 bridge first action 从未实际执行。v2 将 native legal
+actions 与 accepted reviewed actions 合并，但明确保留 execution boundary：`review_restored`
+只能直接读取 packet 中已存在的 endpoint，`offline_diagnostic` 只能做诊断，二者都不能新增
+relation 或修改 L1.5 graph。
+
+v2 共收集 1025 条 records、1009 条 grounded records。42 个非 STOP reviewed cases 均达到
+exact-action execution 与 exact-action grounding；provenance 为 994 `native_legal`、27
+`review_restored`、4 `offline_diagnostic`，`graph_mutated` 始终为 false。resolved role 为
+identity 44、bridge 13、counterevidence 10、state_transition 2。state 的 2 条 positive 只来自
+post-read strict categorical delta verifier；没有明确 grounded attribute delta 的 3 条仍保持
+inconclusive。counterevidence role 的 resolution 表示搜索义务已真实完成，不等价于 verifier
+宣告 contradiction。
+
+审核集合没有接受 `find_bridge` action，因此它被报告为 optional unrepresented family，而不是
+为了覆盖率手工生成启发式 action。当前唯一正式 blocker 是 transition target 仍为 unreviewed，
+需要独立人工逐条 accept/reject 后才能 lock/export；当前仍
+`training_ready=false, training_performed=false, formal_eligible=false`，未训练 GPT-OSS-120B。
+v2 诊断见
+[`balanced_transition_gathering_inspection.review_anchored_v2.json`](experiments/phase_e_gpt56_provisional_v1/balanced_transition_gathering_inspection.review_anchored_v2.json)。
+
+### 13.6 GTSAM backup engineering finalization
+
+optional backup 已完成工程封口，但没有升级为 production-calibrated 方法：
+
+- 主入口通过 `--belief-mode iwm_belief_only|iwm_with_gtsam_backup|gtsam_always`
+  显式选择模式；GTSAM 缺失会失败，不会静默切换 backend；
+- `iwm_with_gtsam_backup` 使用 verifier-direct categorical update 维护主 belief，并只由
+  categorical policy 启动 GTSAM propagation。普通 support 正常更新主 belief但不触发
+  GTSAM；reject、已有 contradiction、competing categorical outcomes 或 identity
+  inconclusive 会产生明确 audit；
+- trigger 与 factor activation 分开：inconclusive 可以触发检查，但不会增加数值 factor；
+- checkpoint 保存 categorical navigation state、append-only measurement journal、overlay
+  checksum 和 calibration version；不保存 solver marginal。checksum、overlay、mode 或
+  calibration 不一致时拒绝恢复；
+- sibling branches 使用 checkpoint fork，每个 action 拥有独立 GTSAM session，不发生
+  sibling measurement leakage；
+- grounded empty counterevidence 只更新“搜索已完成”的 operation state，不生成 relation
+  factor；review-restored/offline action 若没有已存在 typed edge，也不能写入 GTSAM；
+- `--belief-checkpoint-in/--belief-checkpoint-out` 支持跨进程恢复，restart 前后 categorical
+  belief 必须完全一致。
+
+运行主导航：
+
+```bash
+PYTHONPATH=. /tmp/steam-video-gtsam-venv/bin/python -m \
+  steam_video_new.implicit_world_model.l15_graph_navigator.run \
+  --overlay /path/to/causal_temporal_overlay.json \
+  --question "..." \
+  --belief-mode iwm_with_gtsam_backup \
+  --belief-checkpoint-out /path/to/gtsam_checkpoint.json \
+  --output-dir /path/to/run
+```
+
+finalization pilot 通过 5/5 engineering gates：support 不触发 backup；reject 触发 factor；
+identity inconclusive 触发诊断但不加 factor；三类 case restart categorical parity；checkpoint
+不暴露 numeric solver state。见
+[`gtsam_backup_finalization_v1.json`](experiments/gtsam_backup_finalization_v1.json)。正式状态是：
+
+```text
+runtime_ready = true
+backup_engineering_complete = true
+production_calibrated = false
+navigation_benefit_proven = false
+```
+
+原因不变：measurement likelihood 仍是明确标记的 pilot calibration，且尚无独立人工 gold
+confusion matrix 或 matched-budget navigation benefit。工程完成不能替代实证门禁。

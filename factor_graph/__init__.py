@@ -26,9 +26,15 @@ from .measurement import (
 from .session import GTSAMBeliefSession, SessionUpdateResult
 from .post_read_verifier import PostReadCategoricalVerifier
 from .navigation_backend import GTSAMExecutedReadBeliefBackend
+from .correction_policy import (
+    BackupTriggerDecision,
+    CategoricalBackupTriggerPolicy,
+    CorrectionMode,
+)
 
 __all__ = [
     "BeliefLabel",
+    "BackupTriggerDecision",
     "CalibrationEntry",
     "FactorSpec",
     "GTSAM_AVAILABLE",
@@ -38,6 +44,8 @@ __all__ = [
     "GTSAMOverlayAdapter",
     "InferenceResult",
     "MeasurementCalibrationRegistry",
+    "CategoricalBackupTriggerPolicy",
+    "CorrectionMode",
     "MeasurementJournal",
     "MeasurementOutcome",
     "OverlayInferenceResult",

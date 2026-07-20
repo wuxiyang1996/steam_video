@@ -98,6 +98,59 @@ def test_categorical_projection_has_three_public_states() -> None:
     assert project_probability(0.9) is BeliefLabel.ACCEPTED
 
 
+def test_backup_trigger_policy_is_categorical_and_conflict_only() -> None:
+    from factor_graph.correction_policy import CategoricalBackupTriggerPolicy
+    from factor_graph.measurement import MeasurementOutcome, VerifierDecision
+    from steam_video_new.implicit_world_model.l15_graph_navigator.belief import (
+        FactorizedBeliefBackend,
+    )
+
+    overlay = _persistent_navigation_overlay()
+    belief = FactorizedBeliefBackend().initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+    )
+    action = GraphReadAction(
+        NavigationActionType.TRACK_ENTITY,
+        source_id="event:a",
+        target_ids=("event:b",),
+        relation="same_entity",
+    )
+    policy = CategoricalBackupTriggerPolicy()
+
+    def decision(outcome: MeasurementOutcome) -> VerifierDecision:
+        return VerifierDecision(
+            edge_id="edge:identity",
+            relation="same_entity",
+            outcome=outcome,
+            verifier_name="test",
+            verifier_version="v1",
+            evidence_refs=("l1:b",),
+        )
+
+    support = policy.evaluate(
+        belief=belief,
+        action=action,
+        decision=decision(MeasurementOutcome.SUPPORTS),
+    )
+    reject = policy.evaluate(
+        belief=belief,
+        action=action,
+        decision=decision(MeasurementOutcome.REJECTS),
+    )
+    ambiguous = policy.evaluate(
+        belief=belief,
+        action=action,
+        decision=decision(MeasurementOutcome.INCONCLUSIVE),
+    )
+
+    assert support.activate is False
+    assert reject.reasons == ("contradiction_detected",)
+    assert ambiguous.reasons == ("identity_ambiguous",)
+
+
 @pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
 def test_correction_pilot_passes_all_gates() -> None:
     from factor_graph.experiment import run_experiment
@@ -400,6 +453,194 @@ def test_navigation_belief_excludes_persisted_verifier_and_persists_correction()
 
 
 @pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_backup_mode_activates_only_for_categorical_trigger() -> None:
+    from factor_graph.measurement import MeasurementOutcome
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+    overlay = _persistent_navigation_overlay()
+    action = GraphReadAction(
+        NavigationActionType.TRACK_ENTITY,
+        source_id="event:a",
+        target_ids=("event:b",),
+        relation="same_entity",
+    )
+    execution = GraphReadExecution(
+        observations=(overlay.atomic_events[1],),
+        skill_invocation={
+            "node_id": "skill:backup-trigger",
+            "status": "executed",
+            "outputs": {"real_observation_ids": ["event:b"]},
+            "evidence_refs": ["l1:b"],
+        },
+    )
+    support_backend = GTSAMExecutedReadBeliefBackend(
+        mode="backup",
+        verifier=_SequenceVerifier((MeasurementOutcome.SUPPORTS,)),
+    )
+    support_initial = support_backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=2,
+    )
+    support = support_backend.update_from_execution(
+        support_initial, action, execution, overlay
+    )
+    assert support.audit_record["measurement_status"] == "backup_not_triggered"
+    assert support.audit_record["backup_trigger"]["activate"] is False
+    assert support.belief.missing_roles == ()
+    assert support_backend.session.journal.measurements == ()
+
+    reject_backend = GTSAMExecutedReadBeliefBackend(
+        mode="backup",
+        verifier=_SequenceVerifier((MeasurementOutcome.REJECTS,)),
+    )
+    reject_initial = reject_backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=2,
+    )
+    rejected = reject_backend.update_from_execution(
+        reject_initial, action, execution, overlay
+    )
+    assert rejected.audit_record["measurement_status"] == "backup_activated"
+    assert rejected.audit_record["backup_trigger"]["reasons"] == [
+        "contradiction_detected"
+    ]
+    assert rejected.audit_record["factor_activated"] is True
+    assert "edge:identity" in rejected.belief.blocked_edge_ids
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_gtsam_checkpoint_round_trip_and_integrity_guards() -> None:
+    import json
+
+    from factor_graph.measurement import MeasurementOutcome
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+    overlay = _persistent_navigation_overlay()
+    backend = GTSAMExecutedReadBeliefBackend(
+        verifier=_SequenceVerifier((MeasurementOutcome.SUPPORTS,))
+    )
+    initial = backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=3,
+    )
+    action = GraphReadAction(
+        NavigationActionType.TRACK_ENTITY,
+        "event:a",
+        ("event:b",),
+        "same_entity",
+    )
+    execution = GraphReadExecution(
+        observations=(overlay.atomic_events[1],),
+        skill_invocation={
+            "node_id": "skill:checkpoint-support",
+            "status": "executed",
+            "outputs": {"real_observation_ids": ["event:b"]},
+            "evidence_refs": ["l1:b"],
+        },
+    )
+    corrected = backend.update_from_execution(initial, action, execution, overlay)
+    checkpoint = backend.export_checkpoint(corrected.belief)
+    restored_backend = GTSAMExecutedReadBeliefBackend()
+    restored = restored_backend.restore_checkpoint(checkpoint, overlay)
+
+    assert restored == corrected.belief
+    assert checkpoint["numeric_solver_state_exposed"] is False
+    assert len(restored_backend.session.journal.measurements) == 1
+
+    tampered = json.loads(json.dumps(checkpoint))
+    tampered["step"] += 1
+    with pytest.raises(ValueError, match="checksum"):
+        GTSAMExecutedReadBeliefBackend().restore_checkpoint(tampered, overlay)
+
+    foreign = _persistent_navigation_overlay()
+    foreign.overlay_id = "overlay:foreign"
+    with pytest.raises(ValueError, match="overlay mismatch"):
+        GTSAMExecutedReadBeliefBackend().restore_checkpoint(checkpoint, foreign)
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_grounded_empty_search_updates_operation_state_without_factor() -> None:
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+    overlay = _persistent_navigation_overlay()
+    backend = GTSAMExecutedReadBeliefBackend(mode="backup")
+    initial = backend.initialize(
+        "Is there counterevidence?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("counterevidence",),
+        graph_read_budget=2,
+    )
+    action = GraphReadAction(
+        NavigationActionType.SEARCH_COUNTEREVIDENCE,
+        source_id="event:a",
+        relation="contradicts",
+    )
+    execution = GraphReadExecution(
+        observations=(),
+        skill_invocation={
+            "node_id": "skill:empty-counterevidence",
+            "status": "executed",
+            "outputs": {"real_observation_ids": []},
+            "evidence_refs": ["l1:a"],
+            "search_completed": True,
+            "grounded_empty_result": True,
+        },
+    )
+    updated = backend.update_from_execution(initial, action, execution, overlay)
+
+    assert updated.belief.missing_roles == ()
+    assert updated.audit_record["measurement_status"] == "not_applicable"
+    assert backend.session.journal.measurements == ()
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_stateful_sibling_generation_forks_without_measurement_leakage() -> None:
+    from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+    from steam_video_new.implicit_world_model.l15_graph_navigator.planner import (
+        PersistedGraphReadExecutor,
+    )
+    from steam_video_new.implicit_world_model.l15_graph_navigator.siblings import (
+        generate_sibling_artifact,
+    )
+    from steam_video_new.implicit_world_model.l15_graph_navigator.world_model import (
+        RuleBasedObservationBeliefModel,
+        RuleBasedTrajectoryPreferenceModel,
+    )
+
+    overlay = _persistent_navigation_overlay()
+    backend = GTSAMExecutedReadBeliefBackend(mode="correct")
+    initial = backend.initialize(
+        "Who is the same person?",
+        overlay,
+        seed_evidence=("event:a",),
+        missing_roles=("identity",),
+        graph_read_budget=2,
+    )
+    artifact = generate_sibling_artifact(
+        initial,
+        overlay,
+        backend=backend,
+        executor=PersistedGraphReadExecutor(),
+        world_model=RuleBasedObservationBeliefModel(),
+        preference_model=RuleBasedTrajectoryPreferenceModel(),
+    )
+
+    assert artifact["branches"]
+    assert backend.session.journal.measurements == ()
+    assert backend.export_checkpoint(initial)["journal"] == []
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
 def test_navigation_reject_inconclusive_and_conflict_are_persistent() -> None:
     from factor_graph.measurement import MeasurementOutcome
     from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
@@ -514,6 +755,26 @@ def test_correction_sensitive_navigation_separates_propagation_from_verifier(
     assert "phase-d:state" not in reject["arms"]["verifier_only"][
         "belief_after_probe"
     ]["blocked_edge_ids"]
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_backup_finalization_pilot_passes_engineering_gates() -> None:
+    from factor_graph.backup_finalization_experiment import run_experiment
+
+    fixture_dir = Path(__file__).resolve().parents[1] / "fixtures"
+    report = run_experiment(
+        {
+            "support": fixture_dir / "phase_d_coupled_overlay.json",
+            "reject": fixture_dir / "phase_e_correction_reject_overlay.json",
+            "inconclusive": fixture_dir
+            / "phase_e_correction_inconclusive_overlay.json",
+        }
+    )
+
+    assert report["backup_engineering_complete"] is True
+    assert report["production_calibrated"] is False
+    assert report["navigation_benefit_proven"] is False
+    assert all(report["gates"].values())
 
 
 def test_measurement_rejects_unexecuted_or_ungrounded_evidence() -> None:

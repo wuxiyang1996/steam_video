@@ -121,6 +121,8 @@ The first preference-only closed loop is implemented in this package:
 | `realized.py` | Recompute complete categorical deltas from persisted before/after belief; never reuse imagined deltas |
 | `executed_transitions.py` | Immutable sibling execution, normalized transition dataset, review locking, and categorical training export |
 | `balanced_cases.py` | Correction-sensitive case mining with per-category quotas, no cross-category backfill, and independent review/export gates |
+| `evidence_packets.py` | Outcome-blinded visible-evidence packets, categorical review locking/import, hidden provenance keys, and leakage checks |
+| `data_inspection.py` | Data-only executed-transition coverage inspection; reports missing actions/roles and never trains a model |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
@@ -294,6 +296,46 @@ The Video_Skills runtime availability arm completed all 609 actions and exposed
 Runtime wiring is available, while relation-level verifier validity and
 negative coverage are not demonstrated. A failed support check maps to
 `inconclusive`, never automatically to `rejects`.
+
+### 1.6 Evidence gathering stop point
+
+The reviewed-transition workflow now has an explicit data-only stop before any
+GPT-OSS training. `build-balanced-evidence` converts the outcome-blinded queue
+into bounded visible evidence containing endpoint events, local temporal
+context, participants, states, evidence refs, and opaque
+`Qwen/Qwen3-VL-Embedding-2B` references. Raw vectors, teacher probabilities,
+hard-verifier output, confidence fields, and expected labels are excluded. A
+separate hidden key retains overlay and embedding paths.
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  build-balanced-evidence --queue /path/to/review.unreviewed.json \
+  --packet-id balanced-evidence-v1 --output /path/to/evidence.unreviewed.json \
+  --key-output /private/path/to/evidence.hidden_key.json
+
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  apply-balanced-evidence-review --packet /path/to/evidence.unreviewed.json \
+  --review /path/to/categorical_review.json \
+  --output /path/to/evidence.locked_ai_provisional.json
+
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  inspect-transition-gathering --dataset /path/to/transitions.unreviewed.json \
+  --cases /path/to/cases.locked_ai_provisional.json \
+  --output /path/to/gathering_inspection.json
+```
+
+Every accepted annotation must cite an ID or evidence ref visible in its own
+packet item. Annotation fields reject numeric model output. GPT-5.6 review is
+always `ai_provisional`; generated executed-transition targets remain
+`unreviewed` and cannot be exported as formal training data.
+
+The first data-gathering run reviewed 54 items, accepted 52, and collected 994
+live Video_Skills transition records, of which 978 were grounded. Inspection
+found that only identity was resolved; `inspect_state_change`,
+`search_counterevidence`, and `find_bridge` never executed, and no record
+resolved state-transition or counterevidence. The artifact is therefore useful
+for diagnosing candidate/executor coverage but is explicitly
+`training_ready=false`; no GPT-OSS model was trained.
 
 ```bash
 # Mine draft cases and report missing relation strata. This never creates gold.
@@ -624,8 +666,11 @@ remaining gap is empirical: train/validate the learned WM and preference model,
 construct delayed-effect and ambiguity cases, run the interventions below on a
 fixed multi-video gold set, and show that WM corruption changes actions and
 reduces end-task quality under a matched read budget. The categorical GTSAM
-backup-mode wrapper is also still pending; existing GTSAM code is currently an
-independent baseline/experiment backend.
+backup wrapper is now engineering-complete: the main CLI exposes all three
+belief modes, categorical activation is audited separately from factor
+activation, stateful sibling branches are checkpoint-forked, and categorical
+belief can be checksum-restored without exporting solver marginals. This does
+not establish production calibration or navigation benefit.
 
 The required dependence experiment keeps the query, current factor-graph
 belief, candidate set, planner, and budget fixed, changing only the world-model
@@ -950,3 +995,13 @@ accuracy proxies, mean reads, and action sequences, so no GTSAM navigation
 benefit is claimed. Three derived coupled mechanism cases separately show that
 support/reject propagation changes the next action while inconclusive remains
 a no-factor negative control. These mechanism cases are not independent gold.
+
+The review-anchored v2 collector fixes a separate data-generation gap:
+accepted reviewed actions are now executed in addition to native graph
+candidates. A restored action may read only its reviewed, already-persisted
+endpoints and never inserts an edge. Targetless counterevidence search has an
+auditable grounded-empty outcome, and state resolution requires a strict
+post-read categorical state-delta check. On the 52 provisional cases, all 42
+non-STOP reviewed actions are executed and grounded; the dataset remains
+unreviewed and no GPT-OSS training is performed. See the canonical factor
+graph README section 13.5 for counts and remaining gates.

@@ -83,11 +83,27 @@ def generate_sibling_artifact(
                 "status": "executed",
             }
         else:
-            execution = executor.execute(belief, action, overlay)
+            branch_backend = backend
+            branch_belief = belief
+            fork = getattr(backend, "fork_from_checkpoint", None)
+            if callable(fork):
+                branch_backend, branch_belief = fork(belief, overlay)
+            execution = executor.execute(branch_belief, action, overlay)
             observations = execution.observations
-            update = backend.update(belief, action, list(observations), overlay)
+            update_from_execution = getattr(
+                branch_backend, "update_from_execution", None
+            )
+            update = (
+                update_from_execution(
+                    branch_belief, action, execution, overlay
+                )
+                if callable(update_from_execution)
+                else branch_backend.update(
+                    branch_belief, action, list(observations), overlay
+                )
+            )
             after = update.belief
-            delta = derive_realized_belief_delta(belief, after)
+            delta = derive_realized_belief_delta(branch_belief, after)
             invocation = execution.skill_invocation
         real_transition = PredictedTransition(
             action=action,

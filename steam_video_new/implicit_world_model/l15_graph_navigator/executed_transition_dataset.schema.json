@@ -10,7 +10,7 @@
     "formal_eligible", "numeric_model_output", "summary", "checkpoints", "records"
   ],
   "properties": {
-    "schema_version": {"const": "steam-executed-transition-dataset/v0.1"},
+    "schema_version": {"enum": ["steam-executed-transition-dataset/v0.1", "steam-executed-transition-dataset/v0.2"]},
     "dataset_id": {"type": "string", "minLength": 1},
     "annotation_status": {
       "enum": ["unreviewed", "ai_provisional", "human_locked"]
@@ -55,6 +55,9 @@
         ,"verifier_outcome_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
         ,"verifier_source_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
         ,"post_read_verifier_count": {"type": "integer", "minimum": 0}
+        ,"grounded_empty_result_count": {"type": "integer", "minimum": 0}
+        ,"action_origin_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"action_legality_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
       }
     },
     "checkpoints": {
@@ -192,6 +195,20 @@
         "checkpoint_ref": {"type": "string", "minLength": 1},
         "local_context": {"$ref": "#/$defs/context"},
         "action": {"$ref": "#/$defs/action"},
+        "action_provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "legality", "native_candidate", "reviewed_accepted", "review_status", "edge_admitted", "graph_mutated"],
+          "properties": {
+            "origin": {"enum": ["native_candidate", "review_anchored", "review_anchored_and_native", "control"]},
+            "legality": {"enum": ["native_legal", "review_restored", "offline_diagnostic", "not_executable", "not_applicable"]},
+            "native_candidate": {"type": "boolean"},
+            "reviewed_accepted": {"type": "boolean"},
+            "review_status": {"type": ["string", "null"]},
+            "edge_admitted": {"type": "boolean"},
+            "graph_mutated": {"const": false}
+          }
+        },
         "reasoning_hop": {"type": "string", "minLength": 1},
         "execution": {
           "type": "object",
@@ -203,6 +220,8 @@
             "real_observation_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
             "evidence_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
             "grounded": {"type": "boolean"},
+            "observation_outcome": {"enum": ["observed", "empty_search_observed", "empty"]},
+            "grounded_empty_result": {"type": "boolean"},
             "belief_update_audit": {"type": ["object", "null"]},
             "verifier_measurement": {
               "type": "object",
@@ -231,7 +250,7 @@
         },
         "review_decision": {"enum": ["accept", "reject", null]},
         "review_rationale": {"type": "string"},
-        "target_source": {"const": "executed_read_plus_backend_recompute"}
+        "target_source": {"enum": ["executed_read_plus_backend_recompute", "executed_read_plus_backend_recompute_v2"]}
       }
     }
   }

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 import hashlib
+import json
 from typing import Any
 
 from memory_graph.navigation import GraphReadAction, NavigationActionType
@@ -32,8 +33,13 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.factor_graph impor
 )
 
 from .categorical import BeliefLabel
+from .correction_policy import (
+    AlwaysActivatePolicy,
+    CategoricalBackupTriggerPolicy,
+)
 from .measurement import (
     MeasurementCalibrationRegistry,
+    MeasurementJournal,
     MeasurementOutcome,
     RelationMeasurement,
     measurement_from_execution,
@@ -84,13 +90,36 @@ _ROLE_RELATIONS = {
     "counterevidence": {"contradicts"},
     "verification": _IDENTITY | _DEPENDENCY,
 }
+_CHECKPOINT_FIELDS = {
+    "schema_version",
+    "checksum",
+    "backend",
+    "mode",
+    "calibration_version",
+    "overlay_id",
+    "overlay_sha256",
+    "question",
+    "belief_id",
+    "acquired_evidence",
+    "frontier",
+    "initial_missing_roles",
+    "resolved_non_relation_roles",
+    "remaining_graph_reads",
+    "step",
+    "affected_variables",
+    "journal",
+    "verification_history",
+    "direct_measurements",
+    "categorical_projection",
+    "numeric_solver_state_exposed",
+}
 
 
 class GTSAMExecutedReadBeliefBackend:
     """Own persistent navigation belief independently of persisted verifiers."""
 
     name = "gtsam_executed_read_navigation/v0.2"
-    allowed_modes = {"correct", "verifier_only", "frozen", "shuffled"}
+    allowed_modes = {"correct", "backup", "verifier_only", "frozen", "shuffled"}
 
     def __init__(self, *, mode: str = "correct", verifier: Any | None = None) -> None:
         if mode not in self.allowed_modes:
@@ -104,8 +133,14 @@ class GTSAMExecutedReadBeliefBackend:
         self._initial_missing_roles: tuple[str, ...] = ()
         self._resolved_non_relation_roles: set[str] = set()
         self._direct_measurements: list[tuple[RelationMeasurement, str]] = []
+        self._verification_history: list[RelationMeasurement] = []
         self._affected_variables: set[str] = set()
         self._initial_inference: Any = None
+        self._trigger_policy = (
+            CategoricalBackupTriggerPolicy()
+            if mode == "backup"
+            else AlwaysActivatePolicy()
+        )
 
     def initialize(
         self,
@@ -137,6 +172,10 @@ class GTSAMExecutedReadBeliefBackend:
             if missing_roles is None
             else tuple(dict.fromkeys(missing_roles))
         )
+        self._resolved_non_relation_roles = set()
+        self._direct_measurements = []
+        self._verification_history = []
+        self._affected_variables = set()
         self._templates = tuple(
             replace(
                 state,
@@ -191,7 +230,16 @@ class GTSAMExecutedReadBeliefBackend:
         audit: dict[str, object]
         if edge is None or execution.skill_invocation.get("status") != "executed":
             role = _ACTION_ROLE.get(action.action_type)
-            if observed_ids and action.action_type in _NON_RELATION_RESOLVERS and role:
+            completed_empty_search = (
+                action.action_type is NavigationActionType.SEARCH_COUNTEREVIDENCE
+                and execution.skill_invocation.get("grounded_empty_result") is True
+                and execution.skill_invocation.get("search_completed") is True
+            )
+            if (
+                (observed_ids or completed_empty_search)
+                and action.action_type in _NON_RELATION_RESOLVERS
+                and role
+            ):
                 self._resolved_non_relation_roles.add(role)
             audit = {
                 "backend": self.name,
@@ -258,9 +306,23 @@ class GTSAMExecutedReadBeliefBackend:
         )
         injected: RelationMeasurement | None = None
         factor_activated = False
-        if self.mode == "correct":
+        trigger = self._trigger_policy.evaluate(
+            belief=belief,
+            action=action,
+            decision=decision,
+            verification_history=tuple(self._verification_history),
+        )
+        self._verification_history.append(measurement)
+        if self.mode == "backup":
+            self._direct_measurements.append(
+                (measurement, _ACTION_ROLE[action.action_type])
+            )
+        if self.mode == "correct" or (self.mode == "backup" and trigger.activate):
             self.session.journal.append(measurement)
-            self._direct_measurements.append((measurement, _ACTION_ROLE[action.action_type]))
+            if self.mode == "correct":
+                self._direct_measurements.append(
+                    (measurement, _ACTION_ROLE[action.action_type])
+                )
             factor_activated = decision.outcome is not MeasurementOutcome.INCONCLUSIVE
         elif self.mode == "verifier_only":
             self._direct_measurements.append((measurement, _ACTION_ROLE[action.action_type]))
@@ -271,7 +333,7 @@ class GTSAMExecutedReadBeliefBackend:
                 factor_activated = injected.outcome is not MeasurementOutcome.INCONCLUSIVE
         after = self._inference()
         changed = _categorical_changes(before, after)
-        if self.mode in {"correct", "shuffled"}:
+        if self.mode in {"correct", "backup", "shuffled"}:
             self._affected_variables.update(changed)
         if injected is not None and factor_activated:
             self._affected_variables.add(injected.variable_id)
@@ -281,10 +343,15 @@ class GTSAMExecutedReadBeliefBackend:
             "mode": self.mode,
             "measurement_status": {
                 "correct": "appended",
+                "backup": (
+                    "backup_activated" if trigger.activate else "backup_not_triggered"
+                ),
                 "verifier_only": "verifier_direct_only",
                 "frozen": "frozen",
                 "shuffled": "shuffled" if injected is not None else "shuffle_unavailable",
             }[self.mode],
+            "backup_trigger_policy": self._trigger_policy.name,
+            "backup_trigger": trigger.to_dict(),
             "factor_activated": factor_activated,
             "verifier_decision": decision.to_dict(),
             "measurement": measurement.to_dict(),
@@ -309,7 +376,12 @@ class GTSAMExecutedReadBeliefBackend:
         inference = self._inference()
         acquired_set = set(acquired)
         outcomes = _outcomes_by_variable(self._direct_measurements)
-        direct_roles = _resolved_roles(self._direct_measurements, inference, self.mode)
+        direct_roles = _resolved_roles(
+            self._direct_measurements,
+            inference,
+            self.mode,
+            self._affected_variables,
+        )
         resolved_roles = self._resolved_non_relation_roles | direct_roles
         missing = tuple(
             role for role in self._initial_missing_roles if role not in resolved_roles
@@ -416,6 +488,143 @@ class GTSAMExecutedReadBeliefBackend:
             step=step,
         )
 
+    def export_checkpoint(self, belief: BeliefSnapshot) -> dict[str, Any]:
+        """Serialize categorical navigation state and the append-only journal."""
+
+        self._require_session(self.overlay)  # type: ignore[arg-type]
+        if self.overlay is None or self.session is None:
+            raise RuntimeError("GTSAM backend is not initialized")
+        payload: dict[str, Any] = {
+            "schema_version": "steam-gtsam-backup-checkpoint/v0.1",
+            "checksum": None,
+            "backend": self.name,
+            "mode": self.mode,
+            "calibration_version": self.calibration.version,
+            "overlay_id": self.overlay.overlay_id,
+            "overlay_sha256": _overlay_sha256(self.overlay),
+            "question": belief.question,
+            "belief_id": belief.belief_id,
+            "acquired_evidence": list(belief.acquired_evidence),
+            "frontier": list(belief.frontier),
+            "initial_missing_roles": list(self._initial_missing_roles),
+            "resolved_non_relation_roles": sorted(self._resolved_non_relation_roles),
+            "remaining_graph_reads": belief.remaining_graph_reads,
+            "step": belief.step,
+            "affected_variables": sorted(self._affected_variables),
+            "journal": self.session.journal.to_records(),
+            "verification_history": [
+                measurement.to_dict() for measurement in self._verification_history
+            ],
+            "direct_measurements": [
+                {"measurement": measurement.to_dict(), "role": role}
+                for measurement, role in self._direct_measurements
+            ],
+            "categorical_projection": {
+                "missing_roles": list(belief.missing_roles),
+                "contradictions": list(belief.contradictions),
+                "blocked_edge_ids": list(belief.blocked_edge_ids),
+                "answerability": belief.answerability.value,
+                "uncertainty": belief.uncertainty.value,
+            },
+            "numeric_solver_state_exposed": False,
+        }
+        payload["checksum"] = _checkpoint_checksum(payload)
+        _validate_checkpoint_payload(payload)
+        return payload
+
+    def restore_checkpoint(
+        self,
+        payload: dict[str, Any],
+        overlay: CausalTemporalOverlay,
+    ) -> BeliefSnapshot:
+        """Restore an audited checkpoint and reject cross-overlay reuse."""
+
+        _validate_checkpoint_payload(payload)
+        if payload.get("schema_version") != "steam-gtsam-backup-checkpoint/v0.1":
+            raise ValueError("unsupported GTSAM backup checkpoint schema")
+        if payload.get("checksum") != _checkpoint_checksum(payload):
+            raise ValueError("GTSAM backup checkpoint checksum mismatch")
+        if payload.get("mode") != self.mode:
+            raise ValueError("GTSAM backup checkpoint mode mismatch")
+        if payload.get("calibration_version") != self.calibration.version:
+            raise ValueError("GTSAM backup checkpoint calibration mismatch")
+        if payload.get("overlay_id") != overlay.overlay_id or payload.get(
+            "overlay_sha256"
+        ) != _overlay_sha256(overlay):
+            raise ValueError("GTSAM backup checkpoint overlay mismatch")
+        initial_roles = tuple(str(value) for value in payload["initial_missing_roles"])
+        self.initialize(
+            str(payload["question"]),
+            overlay,
+            seed_evidence=tuple(
+                str(value) for value in payload.get("acquired_evidence") or []
+            ),
+            missing_roles=initial_roles,
+            graph_read_budget=int(payload["remaining_graph_reads"]),
+        )
+        if self.session is None:
+            raise RuntimeError("GTSAM backend restore failed to initialize")
+        journal = MeasurementJournal.from_records(payload.get("journal") or [])
+        for measurement in journal.measurements:
+            if measurement.overlay_id != overlay.overlay_id:
+                raise ValueError("checkpoint journal contains a foreign overlay")
+            if measurement.calibration_version != self.calibration.version:
+                raise ValueError("checkpoint journal calibration mismatch")
+        self.session.journal = journal
+        history = MeasurementJournal.from_records(
+            payload.get("verification_history") or []
+        )
+        self._verification_history = list(history.measurements)
+        direct: list[tuple[RelationMeasurement, str]] = []
+        for row in payload.get("direct_measurements") or []:
+            parsed = MeasurementJournal.from_records([row.get("measurement") or {}])
+            measurement = parsed.measurements[0]
+            if measurement.overlay_id != overlay.overlay_id:
+                raise ValueError("checkpoint direct measurement has a foreign overlay")
+            if measurement.calibration_version != self.calibration.version:
+                raise ValueError("checkpoint direct measurement calibration mismatch")
+            if not str(row.get("role") or ""):
+                raise ValueError("checkpoint direct measurement role is missing")
+            direct.append((measurement, str(row.get("role") or "")))
+        self._direct_measurements = direct
+        self._resolved_non_relation_roles = set(
+            str(value)
+            for value in payload.get("resolved_non_relation_roles") or []
+        )
+        self._affected_variables = set(
+            str(value) for value in payload.get("affected_variables") or []
+        )
+        restored = self._build_belief(
+            question=str(payload["question"]),
+            acquired=tuple(
+                str(value) for value in payload.get("acquired_evidence") or []
+            ),
+            frontier=tuple(str(value) for value in payload.get("frontier") or []),
+            remaining_graph_reads=int(payload["remaining_graph_reads"]),
+            step=int(payload["step"]),
+            belief_id=str(payload["belief_id"]),
+        )
+        expected = payload.get("categorical_projection") or {}
+        actual = {
+            "missing_roles": list(restored.missing_roles),
+            "contradictions": list(restored.contradictions),
+            "blocked_edge_ids": list(restored.blocked_edge_ids),
+            "answerability": restored.answerability.value,
+            "uncertainty": restored.uncertainty.value,
+        }
+        if actual != expected:
+            raise ValueError("restored GTSAM categorical projection mismatch")
+        return restored
+
+    def fork_from_checkpoint(
+        self,
+        belief: BeliefSnapshot,
+        overlay: CausalTemporalOverlay,
+    ) -> tuple[GTSAMExecutedReadBeliefBackend, BeliefSnapshot]:
+        clone = type(self)(mode=self.mode, verifier=self.verifier)
+        restored = clone.restore_checkpoint(self.export_checkpoint(belief), overlay)
+        return clone, restored
+
     def _inference(self) -> Any:
         if self.session is None:
             raise RuntimeError("GTSAM backend is not initialized")
@@ -481,13 +690,16 @@ def _resolved_roles(
     measurements: list[tuple[RelationMeasurement, str]],
     inference: Any,
     mode: str,
+    affected: set[str],
 ) -> set[str]:
     outcomes = _outcomes_by_variable(measurements)
     resolved: set[str] = set()
     for measurement, role in measurements:
         variable_outcomes = outcomes.get(measurement.variable_id, set())
         accepted = variable_outcomes == {MeasurementOutcome.SUPPORTS}
-        if mode == "correct":
+        if mode == "correct" or (
+            mode == "backup" and measurement.variable_id in affected
+        ):
             accepted = accepted and inference.categorical[measurement.variable_id] is BeliefLabel.ACCEPTED
         if accepted:
             resolved.add(role)
@@ -504,9 +716,11 @@ def _is_accepted(
     direct = outcomes.get(variable, set())
     if direct:
         return direct == {MeasurementOutcome.SUPPORTS} and (
-            mode == "verifier_only" or label is BeliefLabel.ACCEPTED
+            mode == "verifier_only"
+            or (mode == "backup" and variable not in affected)
+            or label is BeliefLabel.ACCEPTED
         )
-    return mode in {"correct", "shuffled"} and variable in affected and label is BeliefLabel.ACCEPTED
+    return mode in {"correct", "backup", "shuffled"} and variable in affected and label is BeliefLabel.ACCEPTED
 
 
 def _is_rejected(
@@ -518,9 +732,11 @@ def _is_rejected(
 ) -> bool:
     direct = outcomes.get(variable, set())
     if not direct:
-        return mode in {"correct", "shuffled"} and variable in affected and label is BeliefLabel.REJECTED
+        return mode in {"correct", "backup", "shuffled"} and variable in affected and label is BeliefLabel.REJECTED
     return direct == {MeasurementOutcome.REJECTS} and (
-        mode == "verifier_only" or label is BeliefLabel.REJECTED
+        mode == "verifier_only"
+        or (mode == "backup" and variable not in affected)
+        or label is BeliefLabel.REJECTED
     )
 
 
@@ -586,6 +802,58 @@ def _categorical_changes(before: Any, after: Any) -> tuple[str, ...]:
             if before.categorical[variable] is not after.categorical[variable]
         )
     )
+
+
+def _overlay_sha256(overlay: CausalTemporalOverlay) -> str:
+    encoded = json.dumps(
+        overlay.to_dict(),
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _checkpoint_checksum(payload: dict[str, Any]) -> str:
+    clone = json.loads(json.dumps(payload))
+    clone["checksum"] = None
+    encoded = json.dumps(
+        clone,
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _validate_checkpoint_payload(payload: dict[str, Any]) -> None:
+    if set(payload) != _CHECKPOINT_FIELDS:
+        missing = sorted(_CHECKPOINT_FIELDS - set(payload))
+        extra = sorted(set(payload) - _CHECKPOINT_FIELDS)
+        raise ValueError(
+            f"invalid GTSAM backup checkpoint fields; missing={missing}, extra={extra}"
+        )
+    if payload.get("numeric_solver_state_exposed") is not False:
+        raise ValueError("GTSAM backup checkpoint must not expose numeric solver state")
+    for field in (
+        "acquired_evidence",
+        "frontier",
+        "initial_missing_roles",
+        "resolved_non_relation_roles",
+        "affected_variables",
+        "journal",
+        "verification_history",
+    ):
+        if not isinstance(payload.get(field), list):
+            raise ValueError(f"GTSAM backup checkpoint {field} must be a list")
+    if not isinstance(payload.get("direct_measurements"), list) or not isinstance(
+        payload.get("categorical_projection"), dict
+    ):
+        raise ValueError("GTSAM backup checkpoint categorical maps are invalid")
+    if not isinstance(payload.get("step"), int) or not isinstance(
+        payload.get("remaining_graph_reads"), int
+    ):
+        raise ValueError("GTSAM backup checkpoint step and budget must be integers")
 
 
 def _active_measurement_count(session: GTSAMBeliefSession) -> int:

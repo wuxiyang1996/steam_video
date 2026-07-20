@@ -1,0 +1,37 @@
+{
+  "schema_version": "steam-balanced-evidence-inspection/v0.1",
+  "packet_id": "phase-e-balanced-evidence-gathering-v1",
+  "annotation_status": "ai_provisional",
+  "valid": true,
+  "validation_errors": [],
+  "item_count": 54,
+  "stratum_counts": {
+    "ambiguity_abstention": 10,
+    "blocked_path_recovery": 4,
+    "counterevidence": 10,
+    "delayed_two_hop": 15,
+    "identity": 10,
+    "state": 5
+  },
+  "review_decision_counts": {
+    "accept": 52,
+    "reject": 2
+  },
+  "verifier_outcome_counts": {
+    "inconclusive": 17,
+    "not_applicable": 18,
+    "rejects": 1,
+    "supports": 18
+  },
+  "endpoint_node_count": 143,
+  "bounded_context_node_count": 324,
+  "embedding_ref_count": 467,
+  "retrieved_relation_candidate_count": 11,
+  "empty_endpoint_item_ids": [],
+  "outcome_marker_leakage": false,
+  "numeric_annotation_output_present": false,
+  "formal_gate_eligible": false,
+  "training_performed": false,
+  "review_queue_status": "ai_provisional",
+  "review_queue_locked_sha256": "764e010658a8f8bdbc815f2be91867c8b2896aa7c12c5bba2e58936af019ba1b"
+}

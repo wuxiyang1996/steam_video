@@ -1,0 +1,111 @@
+{
+  "schema_version": "steam-gtsam-backup-finalization/v0.1",
+  "status": "engineering_complete_not_production_calibrated",
+  "backup_mode": "iwm_with_gtsam_backup",
+  "llm_numeric_output": false,
+  "pilot_calibration_only": true,
+  "cases": [
+    {
+      "case": "support",
+      "fixture": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_d_coupled_overlay.json",
+      "fixture_sha256": "1b52d60789a76dc8c5b560099c6f917ebafaeb83e696eb2bfa035ff6c04bb81f",
+      "verifier_outcome": "supports",
+      "measurement_status": "backup_not_triggered",
+      "backup_trigger": {
+        "activate": false,
+        "reasons": []
+      },
+      "factor_activated": false,
+      "changed_variables": [],
+      "categorical_belief_after": {
+        "acquired_evidence": [
+          "event:atomic:video_skills_l1:00140",
+          "event:atomic:video_skills_l1:00258"
+        ],
+        "missing_roles": [],
+        "contradictions": [],
+        "blocked_edge_ids": [],
+        "answerability": "ready",
+        "uncertainty": "low"
+      },
+      "checkpoint_restart_equal": true,
+      "checkpoint_numeric_solver_state_exposed": false
+    },
+    {
+      "case": "reject",
+      "fixture": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_e_correction_reject_overlay.json",
+      "fixture_sha256": "0150a31a9f40bda99a91555f6851c8b6e1363203bdd76d8d0bb26850e86ca617",
+      "verifier_outcome": "rejects",
+      "measurement_status": "backup_activated",
+      "backup_trigger": {
+        "activate": true,
+        "reasons": [
+          "contradiction_detected"
+        ]
+      },
+      "factor_activated": true,
+      "changed_variables": [
+        "relation::phase-d:identity::same_entity",
+        "relation::phase-d:state::state_transition"
+      ],
+      "categorical_belief_after": {
+        "acquired_evidence": [
+          "event:atomic:video_skills_l1:00140",
+          "event:atomic:video_skills_l1:00258"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "contradictions": [],
+        "blocked_edge_ids": [
+          "phase-d:identity",
+          "phase-d:state"
+        ],
+        "answerability": "not_ready",
+        "uncertainty": "medium"
+      },
+      "checkpoint_restart_equal": true,
+      "checkpoint_numeric_solver_state_exposed": false
+    },
+    {
+      "case": "inconclusive",
+      "fixture": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_e_correction_inconclusive_overlay.json",
+      "fixture_sha256": "0a46d75a9870204b0be2460922b195be6dc89cfd615b201a7ce0ec4b75b9146f",
+      "verifier_outcome": "inconclusive",
+      "measurement_status": "backup_activated",
+      "backup_trigger": {
+        "activate": true,
+        "reasons": [
+          "identity_ambiguous"
+        ]
+      },
+      "factor_activated": false,
+      "changed_variables": [],
+      "categorical_belief_after": {
+        "acquired_evidence": [
+          "event:atomic:video_skills_l1:00140",
+          "event:atomic:video_skills_l1:00258"
+        ],
+        "missing_roles": [
+          "identity"
+        ],
+        "contradictions": [],
+        "blocked_edge_ids": [],
+        "answerability": "not_ready",
+        "uncertainty": "medium"
+      },
+      "checkpoint_restart_equal": true,
+      "checkpoint_numeric_solver_state_exposed": false
+    }
+  ],
+  "gates": {
+    "support_does_not_activate_backup": true,
+    "reject_activates_backup_factor": true,
+    "inconclusive_trigger_adds_no_factor": true,
+    "checkpoint_restart_categorical_parity": true,
+    "numeric_solver_state_not_exported": true
+  },
+  "backup_engineering_complete": true,
+  "production_calibrated": false,
+  "navigation_benefit_proven": false
+}

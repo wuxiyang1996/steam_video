@@ -31,6 +31,7 @@ from .world_model import (
     RuleBasedObservationBeliefModel,
     RuleBasedTrajectoryPreferenceModel,
 )
+from factor_graph.correction_policy import CorrectionMode
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -46,6 +47,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--belief-backend",
         choices=("factor_graph", "factorized"),
         default="factor_graph",
+    )
+    parser.add_argument(
+        "--belief-mode",
+        choices=tuple(mode.value for mode in CorrectionMode),
+        default=CorrectionMode.IWM_BELIEF_ONLY.value,
+        help=(
+            "Main IWM belief, categorical-triggered GTSAM backup, or "
+            "GTSAM-always baseline. No mode silently falls back."
+        ),
+    )
+    parser.add_argument(
+        "--belief-checkpoint-in",
+        type=Path,
+        help="Resume an audited GTSAM backup checkpoint.",
+    )
+    parser.add_argument(
+        "--belief-checkpoint-out",
+        type=Path,
+        help="Write the final audited GTSAM backup checkpoint.",
     )
     parser.add_argument("--factor-iterations", type=int, default=8)
     parser.add_argument("--horizon", type=int, choices=(1, 2), default=2)
@@ -111,20 +131,43 @@ def main(argv: list[str] | None = None) -> int:
         verify_embedding_checksums=args.verify_embedding_checksums,
     )
     overlay = loaded.overlay
-    backend = (
-        FactorGraphBeliefBackend(inference_iterations=args.factor_iterations)
-        if args.belief_backend == "factor_graph"
-        else FactorizedBeliefBackend()
-    )
-    belief = backend.initialize(
-        args.question,
-        overlay,
-        seed_evidence=tuple(args.seed_event),
-        missing_roles=(
-            tuple(args.missing_role) if args.missing_role is not None else None
-        ),
-        graph_read_budget=args.graph_read_budget,
-    )
+    belief_mode = CorrectionMode(args.belief_mode)
+    if belief_mode is CorrectionMode.IWM_BELIEF_ONLY:
+        backend = (
+            FactorGraphBeliefBackend(inference_iterations=args.factor_iterations)
+            if args.belief_backend == "factor_graph"
+            else FactorizedBeliefBackend()
+        )
+    else:
+        from factor_graph.navigation_backend import GTSAMExecutedReadBeliefBackend
+
+        backend = GTSAMExecutedReadBeliefBackend(
+            mode=(
+                "backup"
+                if belief_mode is CorrectionMode.IWM_WITH_GTSAM_BACKUP
+                else "correct"
+            )
+        )
+    if args.belief_checkpoint_in is not None:
+        restore = getattr(backend, "restore_checkpoint", None)
+        if not callable(restore):
+            raise ValueError("belief checkpoint input requires a GTSAM belief mode")
+        belief = restore(
+            json.loads(args.belief_checkpoint_in.read_text(encoding="utf-8")),
+            overlay,
+        )
+        if belief.question != args.question:
+            raise ValueError("checkpoint question does not match --question")
+    else:
+        belief = backend.initialize(
+            args.question,
+            overlay,
+            seed_evidence=tuple(args.seed_event),
+            missing_roles=(
+                tuple(args.missing_role) if args.missing_role is not None else None
+            ),
+            graph_read_budget=args.graph_read_budget,
+        )
     reasoning_client: OpenAICompatibleCategoricalClient | None = None
     if args.reasoning_model_backend == "gpt-oss-120b":
         reasoning_client = (
@@ -216,6 +259,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     if sibling_artifact is not None:
         _write_json(output_dir / "sibling_checkpoint.json", sibling_artifact)
+    if args.belief_checkpoint_out is not None:
+        export_checkpoint = getattr(backend, "export_checkpoint", None)
+        if not callable(export_checkpoint):
+            raise ValueError("belief checkpoint output requires a GTSAM belief mode")
+        _write_json(args.belief_checkpoint_out, export_checkpoint(run.final_belief))
+    correction_audits = [
+        step.belief_update_audit
+        for step in run.steps
+        if step.belief_update_audit is not None
+    ]
     summary = {
         "schema_version": "steam-preference-navigation-run-summary/v0.2",
         "source_overlay": str(loaded.source_path),
@@ -224,8 +277,16 @@ def main(argv: list[str] | None = None) -> int:
         "embedding_problems": list(loaded.embedding_problems),
         "embedding_model": _embedding_model(overlay),
         "belief_backend": run.final_belief.backend_name,
+        "belief_mode": belief_mode.value,
         "belief_backend_ref": run.final_belief.backend_ref,
         "gtsam_available": GTSAM_AVAILABLE,
+        "gtsam_backup_activation_count": sum(
+            (audit.get("backup_trigger") or {}).get("activate") is True
+            for audit in correction_audits
+        ),
+        "gtsam_factor_activation_count": sum(
+            audit.get("factor_activated") is True for audit in correction_audits
+        ),
         "step_count": len(run.steps),
         "real_observation_count": sum(len(step.observation_ids) for step in run.steps),
         "final_answerability": run.final_belief.answerability.value,

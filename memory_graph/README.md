@@ -851,6 +851,24 @@ Its independent review rows also remove the miner's expected outcome from the
 ID, question, tags, and category, and use stable hash ordering to prevent label
 and row-position leakage.
 
+For annotation, a separate public evidence packet contains bounded visible
+L1/L1.5 endpoints and context plus opaque Qwen embedding references. Overlay
+paths and embedding paths stay in a hidden key; teacher probability,
+hard-verifier output, confidence, and expected outcomes are excluded. The first
+GPT-5.6 pass is explicitly model-provisional. Live executed-transition
+collection stops with unreviewed targets and a coverage inspection; no world
+model is trained from these artifacts.
+
+The review-anchored v2 collector executes accepted reviewed actions as well as
+native candidates. Restored actions may read only existing reviewed endpoints;
+they never write a missing edge back to L1.5. It also preserves returned
+bridge/counterevidence nodes and represents a completed empty counterevidence
+search as a grounded operation outcome rather than a fabricated evidence node.
+State-transition resolution requires a strict post-read categorical state
+delta. The v2 artifact reaches exact grounded execution for all 42 reviewed
+non-STOP cases, but remains unreviewed and therefore cannot be used for formal
+training.
+
 ## 7. Are We Performing Causal Inference?
 
 The current method does not perform classical causal inference:
@@ -875,6 +893,13 @@ and visualization tool. It never consumes imagined evidence and does not rank
 reasoning operations. The complete backup boundary, existing implementation,
 pilot, destructive controls, and migration status are centralized in
 [`factor_graph/README.md`](../factor_graph/README.md).
+
+The backup engineering interface is finalized with three explicit runtime
+modes, categorical-only activation, isolated sibling sessions, and
+checksum-validated checkpoint restore. Empty counterevidence searches and
+review-restored endpoint reads never fabricate relation factors. This means
+the backup is runnable and auditable; it remains uncalibrated and has not yet
+shown matched-budget navigation benefit.
 
 ## 9. Integration with Video_Skills
 
