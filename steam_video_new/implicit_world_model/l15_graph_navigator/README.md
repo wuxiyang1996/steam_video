@@ -49,6 +49,9 @@ The first preference-only closed loop is implemented in this package:
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
+| `preference_data.py` | Locked case validation, blinded annotation packets, trust gates, and train-record export |
+| `matched_ablation.py` | Eight matched-checkpoint policies under one real-read budget |
+| `workflow.py` | Batch generation, annotation, export, and evaluation CLI |
 | `run.py` | CLI that writes navigation, L2, belief, sibling, and summary artifacts |
 
 Minimal use with an existing `CausalTemporalOverlay`:
@@ -132,6 +135,59 @@ The output directory contains:
 not training gold until independently reviewed. Numeric retrieval similarity,
 edge probability, and runtime cost may remain audit metadata, but no numeric
 reward, Q-value, or utility is emitted.
+
+### 1.3 Fixed-case annotation and evaluation workflow
+
+Formal experiments use `navigation_case_set.schema.json`. Each case fixes the
+overlay ID, question, initial evidence, missing roles, real-read budget, gold
+evidence events, and acceptable first actions. Formal evaluation requires a
+`human_locked` case set plus a content checksum. `ai_provisional` is accepted
+only with an explicit command flag and must be reported as provisional.
+
+```bash
+# Validate and independently lock the fixed cases.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  validate-cases --cases /path/to/cases.json
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  lock-cases --cases /path/to/cases.json --output /path/to/cases.locked.json \
+  --status human_locked --annotator reviewer-id
+
+# Execute every legal sibling with real Video_Skills reads.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  generate --cases /path/to/cases.locked.json --output-dir /path/to/runs
+
+# Produce a blinded four-class packet with no rule label or posterior.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  make-annotation --runs-dir /path/to/runs --output /path/to/preferences.json \
+  --packet-id preference-round-001
+
+# After labels and rationales are filled, lock and export JSONL records.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  lock-annotation --packet /path/to/preferences.filled.json \
+  --output /path/to/preferences.locked.json --status human_locked \
+  --annotator reviewer-id
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  export-training --packet /path/to/preferences.locked.json \
+  --output /path/to/preference_training.jsonl
+
+# Run all policies from the same checkpoint and real-read-call budget.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  evaluate --cases /path/to/cases.locked.json \
+  --output /path/to/matched_ablation.json
+```
+
+The report contains semantic-only, event-only, native-L1-candidate,
+verified-dependency, factorized direct preference, factor-graph direct
+preference, factor-graph rule-world-model lookahead, and oracle rows. The
+current world-model row is an engineering baseline, not a learned result. When
+a case has `query_embedding_ref`, static retrieval uses persisted
+Qwen3-VL-Embedding-2B vectors with dimension and checksum checks; otherwise it
+uses lexical retrieval.
+
+GPT-5.6 may fill the blinded packet using only supplied branch outcomes, but
+those labels must be locked as `ai_provisional`. The exporter rejects them by
+default; `--allow-ai-provisional` exists only for clearly marked engineering
+experiments. No command converts a preference into a numeric reward.
 
 ## 2. Why Use the L1.5 Graph
 

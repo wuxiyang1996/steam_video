@@ -29,7 +29,17 @@ from .planner import (
     guided_navigation_actions,
 )
 from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
+from .matched_ablation import MATCHED_STRATEGIES, evaluate_matched_navigation
 from .overlay_io import LoadedOverlayArtifact, load_overlay_artifact, overlay_from_dict
+from .preference_data import (
+    ALLOWED_PREFERENCE_LABELS,
+    build_preference_annotation_packet,
+    export_training_records,
+    lock_annotation_packet,
+    lock_navigation_case_set,
+    validate_navigation_case_set,
+    validate_preference_annotation_packet,
+)
 from .world_model import (
     RuleBasedObservationBeliefModel,
     RuleBasedTrajectoryPreferenceModel,
@@ -47,6 +57,7 @@ from .siblings import (
 
 __all__ = [
     "Answerability",
+    "ALLOWED_PREFERENCE_LABELS",
     "BeliefBackend",
     "BeliefDeltaDescriptor",
     "BeliefSnapshot",
@@ -60,6 +71,7 @@ __all__ = [
     "NavigationRun",
     "NavigationStep",
     "LoadedOverlayArtifact",
+    "MATCHED_STRATEGIES",
     "ObservationDescriptor",
     "PairwisePreference",
     "PlanDecision",
@@ -75,13 +87,20 @@ __all__ = [
     "UncertaintyLevel",
     "VideoSkillsL2Adapter",
     "build_video_skills_l2_rollout",
+    "build_preference_annotation_packet",
     "belief_to_dict",
     "generate_sibling_artifact",
+    "evaluate_matched_navigation",
+    "export_training_records",
     "guided_navigation_actions",
     "load_overlay_artifact",
+    "lock_annotation_packet",
+    "lock_navigation_case_set",
     "navigation_run_to_dict",
     "overlay_from_dict",
     "overlay_to_video_skills_graph",
     "require_valid_sibling_artifact",
     "validate_sibling_artifact",
+    "validate_navigation_case_set",
+    "validate_preference_annotation_packet",
 ]

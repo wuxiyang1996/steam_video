@@ -150,6 +150,17 @@ future continuous latent time/track variables, and the factorized local-update
 backend remains available as an ablation. Sibling labels require independent
 review before training.
 
+For fixed multi-case generation, blinded four-way preference annotation,
+training-record export, and the eight-policy matched-budget ablation, use:
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow --help
+```
+
+Formal evaluation and training export require content-locked human case and
+preference annotations. GPT-5.6 outputs remain explicitly `ai_provisional` and
+cannot pass those gates without an opt-in intended only for engineering runs.
+
 Run the regression suite:
 
 ```bash

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/preference_annotation.schema.json",
+  "title": "BlindedTrajectoryPreferenceAnnotationPacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "packet_id", "annotation_status", "allowed_labels",
+    "instructions", "comparisons"
+  ],
+  "properties": {
+    "schema_version": {"const": "steam-trajectory-preference-annotation/v0.1"},
+    "packet_id": {"type": "string", "minLength": 1},
+    "annotation_status": {
+      "enum": ["unlabeled", "ai_provisional", "human_locked"]
+    },
+    "annotator": {"type": ["string", "null"]},
+    "locked_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "allowed_labels": {
+      "type": "array",
+      "const": ["prefer_left", "tie", "prefer_right", "incomparable"]
+    },
+    "instructions": {"type": "array", "items": {"type": "string"}},
+    "comparisons": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "#/$defs/comparison"}
+    }
+  },
+  "$defs": {
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "real_observation_ids", "observation_descriptor", "belief_delta"],
+      "properties": {
+        "action": {"type": "object"},
+        "real_observation_ids": {"type": "array", "items": {"type": "string"}},
+        "observation_descriptor": {"type": "object"},
+        "belief_delta": {"type": "object"}
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_id", "case_id", "question", "checkpoint_summary",
+        "left", "right", "label", "rationale"
+      ],
+      "properties": {
+        "comparison_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "question": {"type": "string", "minLength": 1},
+        "checkpoint_summary": {"type": "object"},
+        "left": {"$ref": "#/$defs/branch"},
+        "right": {"$ref": "#/$defs/branch"},
+        "label": {
+          "type": ["string", "null"],
+          "enum": [null, "prefer_left", "tie", "prefer_right", "incomparable"]
+        },
+        "rationale": {"type": "string"}
+      }
+    }
+  }
+}

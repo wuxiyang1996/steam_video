@@ -5,6 +5,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from memory_graph.navigation import (
     GraphReadAction,
     NavigationActionType,
@@ -33,6 +35,18 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     guided_navigation_actions,
     load_overlay_artifact,
     validate_sibling_artifact,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.matched_ablation import (
+    MATCHED_STRATEGIES,
+    evaluate_matched_navigation,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.preference_data import (
+    build_preference_annotation_packet,
+    export_training_records,
+    lock_annotation_packet,
+    lock_navigation_case_set,
+    validate_navigation_case_set,
+    validate_preference_annotation_packet,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.contracts import (
     PlanDecision,
@@ -658,3 +672,130 @@ def test_cli_writes_navigation_l2_belief_and_sibling_artifacts(
     assert summary["preference_output_contract"] == "ordinal_only"
     assert summary["belief_backend"] == "hybrid_factor_graph/v0.1"
     assert summary["sibling_branch_count"] > 1
+
+
+def _navigation_case_set(overlay_path: Path, overlay: CausalTemporalOverlay) -> dict:
+    return {
+        "schema_version": "steam-navigation-gold-cases/v0.1",
+        "case_set_id": "case-set:test",
+        "annotation_status": "draft",
+        "annotator": None,
+        "locked_sha256": None,
+        "cases": [
+            {
+                "case_id": "door-dependency",
+                "overlay_path": str(overlay_path),
+                "overlay_id": overlay.overlay_id,
+                "question": "Why did the door open?",
+                "seed_event_ids": ["event:open"],
+                "missing_roles": ["dependency"],
+                "graph_read_budget": 2,
+                "gold_event_ids": ["event:push", "event:open"],
+                "acceptable_first_actions": [
+                    {
+                        "action_type": "candidate_cause",
+                        "source_id": "event:open",
+                        "target_ids": ["event:push"],
+                        "relation": "enables",
+                    }
+                ],
+                "required_relation_types": ["enables"],
+                "tags": ["dependency"],
+            }
+        ],
+    }
+
+
+def test_case_lock_annotation_packet_and_training_export_enforce_trust_boundary(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    case_set = _navigation_case_set(overlay_path, overlay)
+    assert validate_navigation_case_set(case_set) == []
+    locked_cases = lock_navigation_case_set(
+        case_set,
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+    assert validate_navigation_case_set(locked_cases) == []
+    tampered_cases = json.loads(json.dumps(locked_cases))
+    tampered_cases["cases"][0]["question"] = "Tampered question"
+    assert any(
+        "locked_sha256" in error
+        for error in validate_navigation_case_set(tampered_cases)
+    )
+
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    artifact = generate_sibling_artifact(
+        belief,
+        overlay,
+        backend=backend,
+        executor=VideoSkillsL2Adapter(use_video_skills_runtime=False),
+        world_model=RuleBasedObservationBeliefModel(),
+        preference_model=RuleBasedTrajectoryPreferenceModel(),
+    )
+    packet = build_preference_annotation_packet(
+        [("door-dependency", artifact)],
+        packet_id="packet:test",
+    )
+    assert validate_preference_annotation_packet(packet) == []
+    serialized = json.dumps(packet)
+    assert "rule_based_provisional" not in serialized
+    assert "posterior_probabilities" not in serialized
+    for comparison in packet["comparisons"]:
+        comparison["label"] = "prefer_left"
+        comparison["rationale"] = "Left resolves the required evidence role."
+    provisional = lock_annotation_packet(
+        packet,
+        annotation_status="ai_provisional",
+        annotator="GPT-5.6 provisional",
+    )
+    assert validate_preference_annotation_packet(provisional) == []
+    tampered_packet = json.loads(json.dumps(provisional))
+    tampered_packet["comparisons"][0]["rationale"] = "Tampered rationale."
+    assert any(
+        "locked_sha256" in error
+        for error in validate_preference_annotation_packet(tampered_packet)
+    )
+    with pytest.raises(ValueError, match="human_locked"):
+        export_training_records(provisional)
+    records = export_training_records(provisional, allow_ai_provisional=True)
+    assert {row["task"] for row in records} == {
+        "observation_belief_transition",
+        "trajectory_pairwise_preference",
+    }
+    lowered = json.dumps(records).lower()
+    for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
+        assert forbidden not in lowered
+
+
+def test_matched_ablation_runs_all_policies_from_locked_checkpoint(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    locked = lock_navigation_case_set(
+        _navigation_case_set(overlay_path, overlay),
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+
+    report = evaluate_matched_navigation(locked, case_root=tmp_path)
+
+    assert tuple(report["strategies"]) == MATCHED_STRATEGIES
+    assert report["case_set_annotation_status"] == "human_locked"
+    assert report["strategies"]["factor_graph_direct_preference"][
+        "first_action_accuracy"
+    ] == 1.0
+    assert report["strategies"]["factor_graph_rule_world_model_lookahead"][
+        "answer_accuracy"
+    ] == 1.0
