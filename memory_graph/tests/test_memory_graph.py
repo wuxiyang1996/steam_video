@@ -18,6 +18,7 @@ from memory_graph.contracts import (
     StateAssertion,
 )
 from memory_graph.event_adapter import atomic_events_to_graph_nodes
+from memory_graph.embedding import EMBEDDING_TEXT_CONTRACT, embed_memory_nodes
 from memory_graph.graph_builder import LinearRelationScorer, build_memory_graph
 from memory_graph.identity_tracks import build_identity_tracks
 from memory_graph.identity_reread import (
@@ -1186,6 +1187,40 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EMBEDDING_DIM, 2048)
         self.assertEqual(embedding_schema["model"]["const"], DEFAULT_EMBEDDING_MODEL)
         self.assertEqual(embedding_schema["dimension"]["const"], DEFAULT_EMBEDDING_DIM)
+
+    def test_embedding_text_includes_participants_and_visible_states(self) -> None:
+        class RecordingProvider:
+            model_name = "fixture"
+            dimension = 2
+
+            def __init__(self) -> None:
+                self.texts: list[str] = []
+
+            def encode(self, texts, *, batch_size=8):
+                self.texts = list(texts)
+                return [[1.0, 0.0] for _ in texts]
+
+        node = _atomic_node(
+            "event:stateful",
+            0,
+            1,
+            "The man examines the box.",
+            mention_id="l1-track:man",
+            surface="the man",
+            state=("expression", "focused"),
+        )
+        provider = RecordingProvider()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "embeddings.npy"
+            embed_memory_nodes([node], provider, output_path=output)
+            manifest = json.loads(
+                output.with_suffix(".manifest.json").read_text(encoding="utf-8")
+            )
+
+        self.assertIn("The man examines the box", provider.texts[0])
+        self.assertIn("Participants: the man (person)", provider.texts[0])
+        self.assertIn("Visible states: expression=focused", provider.texts[0])
+        self.assertEqual(manifest["text_contract"], EMBEDDING_TEXT_CONTRACT)
 
     def test_overlay_schema_validation_resolves_local_references(self) -> None:
         overlay = CausalTemporalOverlay(

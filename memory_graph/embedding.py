@@ -13,6 +13,7 @@ from .types import DEFAULT_EMBEDDING_DIM, DEFAULT_EMBEDDING_MODEL, EmbeddingRef,
 DEFAULT_NODE_PROMPT = (
     "Represent this video event for temporal, entity-state, and explanatory relation retrieval."
 )
+EMBEDDING_TEXT_CONTRACT = "event+participants+states/v1"
 
 
 class EmbeddingProvider(Protocol):
@@ -88,7 +89,7 @@ def embed_memory_nodes(
     except ImportError as exc:
         raise RuntimeError("persisting embeddings requires numpy") from exc
 
-    texts = [node.text or _fallback_text(node) for node in nodes]
+    texts = [_embedding_text(node) for node in nodes]
     raw = provider.encode(texts, batch_size=batch_size)
     matrix = np.asarray(raw, dtype=np.float32)
     expected = (len(nodes), provider.dimension)
@@ -123,6 +124,7 @@ def embed_memory_nodes(
                 "model": provider.model_name,
                 "dimension": provider.dimension,
                 "normalized": True,
+                "text_contract": EMBEDDING_TEXT_CONTRACT,
                 "matrix_path": str(saved_path),
                 "checksum": checksum,
                 "rows": [{"row_index": index, "node_id": node.node_id} for index, node in enumerate(nodes)],
@@ -133,6 +135,37 @@ def embed_memory_nodes(
         encoding="utf-8",
     )
     return matrix.tolist()
+
+
+def _embedding_text(node: MemoryNode) -> str:
+    parts = [str(node.text or _fallback_text(node)).strip()]
+    participants: list[str] = []
+    for value in node.metadata.get("participants") or []:
+        if not isinstance(value, dict):
+            continue
+        surface = str(value.get("surface") or "").strip()
+        entity_type = str(value.get("entity_type") or "").strip()
+        label = surface or entity_type
+        if entity_type and surface and entity_type.casefold() not in surface.casefold():
+            label = f"{surface} ({entity_type})"
+        if label and label not in participants:
+            participants.append(label)
+    if participants:
+        parts.append("Participants: " + ", ".join(participants))
+    states: list[str] = []
+    for value in node.metadata.get("states") or []:
+        if not isinstance(value, dict):
+            continue
+        attribute = str(value.get("attribute") or "").strip()
+        state_value = str(value.get("value") or "").strip()
+        if not attribute or not state_value:
+            continue
+        state = f"{attribute}={state_value}"
+        if state not in states:
+            states.append(state)
+    if states:
+        parts.append("Visible states: " + ", ".join(states))
+    return ". ".join(part.rstrip(".") for part in parts if part) + "."
 
 
 def _fallback_text(node: MemoryNode) -> str:
