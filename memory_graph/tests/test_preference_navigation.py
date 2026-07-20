@@ -172,6 +172,7 @@ def test_factor_graph_updates_posteriors_and_prioritizes_unresolved_role() -> No
     assert belief.backend_name == "hybrid_factor_graph/v0.1"
     assert belief.backend_ref is not None
     assert "sum-product" in belief.backend_ref
+    assert "continuous=observed_intervals/v0.1:observed:1" in belief.backend_ref
     assert posterior["enables"] > dict(relation.relation_probabilities)["enables"]
     assert "hard_verified_relation" in relation.factor_sources
     assert relation.edge_id in belief.priority_edge_ids

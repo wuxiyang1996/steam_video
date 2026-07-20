@@ -44,6 +44,7 @@ The first preference-only closed loop is implemented in this package:
 | `contracts.py` | Backend-neutral belief, categorical transition, four-way preference, plan, and L2-trace contracts |
 | `belief.py` | `FactorizedBeliefBackend`, retained as a local-update ablation |
 | `factor_graph.py` | Default discrete sum-product backend, global conflict checks, posterior projection, and exploration priorities |
+| `continuous.py` | Plug-in protocol for a future continuous GTSAM/iSAM2 subgraph; current implementation records observed intervals only |
 | `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
 | `planner.py` | Horizon-one/two expansion, pairwise partial-order selection, real read, belief update, and replanning |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
@@ -542,6 +543,12 @@ sum-product engine matches the current variables more directly. Introduce an
 optional GTSAM-backed smoother only when the state contains continuous latent
 timestamps, track positions, motion constraints, or incremental nonlinear
 measurements. That backend must preserve:
+
+`ContinuousBeliefSmoother` is the implementation boundary for that future
+backend. `FactorGraphBeliefBackend` already accepts a smoother instance, while
+the default `ObservedIntervalSmoother` declares zero continuous latent
+variables and performs no optimization. A GTSAM implementation must not be
+added until continuous latent variables and measurement factors are specified.
 
 - L1 evidence and L1.5 graph schemas;
 - graph action generation and real `ReadGraph` execution;

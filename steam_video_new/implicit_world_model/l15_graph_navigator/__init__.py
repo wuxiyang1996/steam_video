@@ -22,6 +22,11 @@ from .contracts import (
     UncertaintyChange,
     UncertaintyLevel,
 )
+from .continuous import (
+    ContinuousBeliefSmoother,
+    ContinuousBeliefSummary,
+    ObservedIntervalSmoother,
+)
 from .planner import (
     ClosedLoopNavigator,
     PersistedGraphReadExecutor,
@@ -62,6 +67,8 @@ __all__ = [
     "BeliefDeltaDescriptor",
     "BeliefSnapshot",
     "ClosedLoopNavigator",
+    "ContinuousBeliefSmoother",
+    "ContinuousBeliefSummary",
     "EvidenceRole",
     "FactorizedBeliefBackend",
     "FactorGraphBeliefBackend",
@@ -73,6 +80,7 @@ __all__ = [
     "LoadedOverlayArtifact",
     "MATCHED_STRATEGIES",
     "ObservationDescriptor",
+    "ObservedIntervalSmoother",
     "PairwisePreference",
     "PlanDecision",
     "PreferenceLabel",

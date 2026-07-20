@@ -30,6 +30,7 @@ from .contracts import (
     RelationGrounding,
     RelationState,
 )
+from .continuous import ContinuousBeliefSmoother, ObservedIntervalSmoother
 
 
 GTSAM_AVAILABLE = importlib.util.find_spec("gtsam") is not None
@@ -220,10 +221,16 @@ class FactorGraphBeliefBackend:
 
     name = "hybrid_factor_graph/v0.1"
 
-    def __init__(self, *, inference_iterations: int = 8) -> None:
+    def __init__(
+        self,
+        *,
+        inference_iterations: int = 8,
+        continuous_smoother: ContinuousBeliefSmoother | None = None,
+    ) -> None:
         if inference_iterations <= 0:
             raise ValueError("inference_iterations must be positive")
         self.inference_iterations = inference_iterations
+        self.continuous_smoother = continuous_smoother or ObservedIntervalSmoother()
 
     def initialize(
         self,
@@ -353,6 +360,10 @@ class FactorGraphBeliefBackend:
             for edge in overlay.relations + overlay.l1_structural_relations
         )
         priority = _priority_edges(relation_states, missing_roles, blocked)
+        continuous = self.continuous_smoother.update(
+            overlay,
+            frozenset(acquired_set),
+        )
         answerability = (
             Answerability.READY
             if acquired and not missing_roles and not conflicts
@@ -360,7 +371,8 @@ class FactorGraphBeliefBackend:
         )
         backend_ref = (
             f"sum-product:{inference.variable_count}v:{inference.factor_count}f:"
-            f"{inference.iterations}i:continuous=observed_intervals"
+            f"{inference.iterations}i:continuous={continuous.backend_name}:"
+            f"{continuous.backend_ref}"
         )
         return BeliefSnapshot(
             belief_id=belief_id,
