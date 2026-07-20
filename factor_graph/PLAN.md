@@ -45,7 +45,7 @@ reward、score、confidence、probability 或 utility。
 
 验收：runtime gate 全通过。报告输入带 SHA256；当前仍不是导航 benchmark。
 
-## Phase C：真实 Measurement Adapter——下一步
+## Phase C：真实 Measurement Adapter——接口与 Pilot 已完成
 
 实现从一次真实 Video_Skills graph read 到 factor 的严格转换：
 
@@ -59,7 +59,12 @@ reward、score、confidence、probability 或 utility。
 验收数据：至少包含一个 verified identity measurement、一个 identity conflict，以及
 一个同 identity track 的 verified before/after state delta。
 
-## Phase D：Coupled Real-Graph Correction
+当前已实现 strict schema、内部 calibration registry、append-only/idempotent journal、
+action/observation/evidence grounding 校验，以及真实 Video_Skills
+`retrieve_by_relation` replay。真实 identity direct update 已通过；calibration 仍是
+明确标记的 pilot 常量，verified before/after state delta 数据仍未满足。
+
+## Phase D：Coupled Real-Graph Correction——机制已通过，真实证据待补
 
 在真实 artifact 上构造非空 coupled component：
 
@@ -72,6 +77,10 @@ reward、score、confidence、probability 或 utility。
 验收：正常组必须产生 direct update 和至少一个 propagated update；frozen 不更新；
 no-loop 只有 direct update；shuffled 不得复现正确 correction。若数据没有 verified
 measurement，实验应 abstain，而不是注入人工正例。
+
+受控 executed-measurement component 已通过 direct、propagated、frozen、no-loop、
+shuffled、idempotence 和 conflicting-evidence retention gate。真实 Video_Skills arm
+目前只有 direct update；还没有 verified measurement 落入真实 coupled component。
 
 ## Phase E：Closed-Loop Navigation Pilot
 
@@ -100,6 +109,6 @@ factor-guided preference、factor-guided frozen、no-loop、shuffled measurement
 - 延迟、component size、内存和失败回退策略符合预算；
 - GTSAM 不可用时显式失败或由配置选择 backend，不能静默改变结果。
 
-当前阻塞在 Phase C/D 的证据供给，而不是 GTSAM API：目标 smoke 有 state 和
+当前阻塞在 Phase C/D 的校准与 coupled 证据供给，而不是 GTSAM API：目标 smoke 有 state 和
 transition-support candidates，但没有 verified measurement，因此目前正确状态是
 `runtime_pass=true, production_ready=false`。

@@ -14,6 +14,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.factor_graph impor
 
 from .categorical import BeliefLabel, project_probability
 from .gtsam_backend import GTSAMDiscreteBeliefGraph
+from .measurement import MeasurementCalibrationRegistry, MeasurementJournal
 
 
 @dataclass(frozen=True)
@@ -60,6 +61,8 @@ class GTSAMOverlayAdapter:
         activate_verified_measurements: bool,
         include_pairwise_factors: bool = True,
         shuffle_verified_measurements: bool = False,
+        measurement_journal: MeasurementJournal | None = None,
+        calibration: MeasurementCalibrationRegistry | None = None,
     ) -> OverlayInferenceResult:
         started = time.perf_counter()
         graph, measurement_targets = self.prepare_binary_graph(
@@ -67,6 +70,8 @@ class GTSAMOverlayAdapter:
             activate_verified_measurements=activate_verified_measurements,
             include_pairwise_factors=include_pairwise_factors,
             shuffle_verified_measurements=shuffle_verified_measurements,
+            measurement_journal=measurement_journal,
+            calibration=calibration,
         )
         components = _connected_components(graph)
         posteriors: dict[str, float] = {}
@@ -125,15 +130,21 @@ class GTSAMOverlayAdapter:
         *,
         activate_verified_measurements: bool = True,
         inference_iterations: int = 8,
+        measurement_journal: MeasurementJournal | None = None,
+        calibration: MeasurementCalibrationRegistry | None = None,
     ) -> OverlayParityResult:
         graph, _ = self.prepare_binary_graph(
             overlay,
             activate_verified_measurements=activate_verified_measurements,
+            measurement_journal=measurement_journal,
+            calibration=calibration,
         )
         python_result = graph.infer(iterations=inference_iterations)
         gtsam_result = self.infer(
             overlay,
             activate_verified_measurements=activate_verified_measurements,
+            measurement_journal=measurement_journal,
+            calibration=calibration,
         )
         errors = {
             name: abs(value - python_result.posteriors[name])
@@ -161,6 +172,8 @@ class GTSAMOverlayAdapter:
         activate_verified_measurements: bool,
         include_pairwise_factors: bool = True,
         shuffle_verified_measurements: bool = False,
+        measurement_journal: MeasurementJournal | None = None,
+        calibration: MeasurementCalibrationRegistry | None = None,
     ) -> tuple[BinaryFactorGraph, set[str]]:
         source = _build_graph(overlay, set())
         graph = BinaryFactorGraph()
@@ -204,6 +217,30 @@ class GTSAMOverlayAdapter:
                     else "shuffled_hard_verifier_measurement",
                 )
                 targets.add(target)
+        if measurement_journal is not None:
+            if calibration is None:
+                raise ValueError("measurement journal requires an internal calibration")
+            for measurement in measurement_journal.measurements:
+                if measurement.overlay_id != overlay.overlay_id:
+                    raise ValueError("measurement belongs to a different overlay")
+                if measurement.calibration_version != calibration.version:
+                    raise ValueError("measurement calibration version mismatch")
+                if measurement.variable_id not in graph.variables:
+                    raise ValueError(
+                        f"measurement references unknown relation variable: "
+                        f"{measurement.variable_id}"
+                    )
+                likelihood = calibration.lookup(measurement.outcome)
+                if likelihood is None:
+                    continue
+                graph.add_unary(
+                    f"factor:{measurement.measurement_id}",
+                    measurement.variable_id,
+                    likelihood.likelihood_false,
+                    likelihood.likelihood_true,
+                    f"executed_graph_read:{measurement.outcome.value}",
+                )
+                targets.add(measurement.variable_id)
         return graph, targets
 
 

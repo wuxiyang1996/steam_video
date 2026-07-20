@@ -237,3 +237,41 @@ PYTHONPATH=. /tmp/steam-video-gtsam-venv/bin/python \
 [`gtsam_overlay_replay_v1.json`](experiments/gtsam_overlay_replay_v1.json)。下一步不是
 调整 pilot 常量，而是生成至少一个带 verified identity/state 或 dependency
 measurement 的 coupled real component，再验证 loop-closure propagation。
+
+## 11. Executed Read → Measurement → GTSAM
+
+Phase C 已实现 `measurement.py` 与 `session.py`：
+
+- `VerifierDecision` 只有 `supports / rejects / inconclusive` 和文本 reasons，不含
+  confidence/score/probability；
+- `measurement_from_execution` 要求 skill status 为 `executed`、observation 确实在
+  invocation outputs 中、action 覆盖 relation 两端、evidence refs 可由此次 read
+  grounding；
+- graph read 本身不创建 factor；只有独立 verifier decision 通过上述校验后才形成
+  `RelationMeasurement`；
+- numeric likelihood 只能由版本化的内部 `MeasurementCalibrationRegistry` 提供；
+- `MeasurementJournal` append-only、重复 replay 幂等、相反 measurement 并存；
+- journal audit record 不包含 numeric belief；GTSAM solver audit 可单独保存内部
+  marginal。
+
+真实 Video_Skills integration pilot：
+
+```bash
+PYTHONPATH=. /tmp/steam-video-gtsam-venv/bin/python \
+  -m factor_graph.executed_measurement_experiment \
+  --overlay memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/\
+memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json \
+  --output factor_graph/experiments/gtsam_executed_measurement_pilot_v1.json
+```
+
+结果：真实 `retrieve_by_relation` 返回一个 atomic event 和一个 grounded L1 ref；
+read 后、verifier 前 factor count 不变；categorical `supports` measurement 到达后只
+增加一个 factor，目标 identity 从 uncertain 变 accepted。受控 coupled arm 产生
+1 个 direct 和 1 个 propagated categorical update；no-loop 的 propagated update 为
+0；shuffled、幂等和 conflicting-evidence retention 均通过。九个 Phase C gate 全部
+通过。
+
+该结果仍不是 calibration benchmark：真实 arm 使用 persisted categorical hard
+verifier 做 replay，内部 likelihood 标为 `not-calibrated`；真实 arm 尚未出现 coupled
+propagation。完整记录见
+[`gtsam_executed_measurement_pilot_v1.json`](experiments/gtsam_executed_measurement_pilot_v1.json)。
