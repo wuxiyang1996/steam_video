@@ -120,10 +120,29 @@
     "independent_gold": false,
     "file_sha256": "f85be94468b6feefbf1bcfeb8c06db2fa077d421bf0ae373e923e89d2809ce3f"
   },
+  "executed_transition_supervision_pilot": {
+    "artifact": "executed_transitions.unreviewed.json",
+    "source_case_annotation_status": "ai_provisional",
+    "transition_annotation_status": "unreviewed",
+    "execution_mode": "persisted_replay",
+    "formal_eligible": false,
+    "case_count": 29,
+    "video_count": 8,
+    "record_count": 609,
+    "grounded_record_count": 609,
+    "resolved_role_counts": {
+      "identity": 20,
+      "state_transition": 1,
+      "temporal": 78
+    },
+    "coverage_warning": "state-transition and counterevidence supervision remain severely underrepresented",
+    "file_sha256": "0c487c66a72946ec89bf844adba203ae948f18562b475eaecae3b7ba84303bc3"
+  },
   "remaining_formal_gates": [
     "independent human identity/state annotation on a multi-video locked set",
     "actual categorical post-read verifier predictions and confusion matrix",
     "more non-empty state-transition, verified-dependency, and counter-evidence cases",
+    "independent review and locking of executed transition targets",
     "a larger correction-sensitive gold set showing answer-accuracy benefit, not only read-efficiency benefit"
   ]
 }

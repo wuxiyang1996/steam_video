@@ -118,6 +118,8 @@ The first preference-only closed loop is implemented in this package:
 | `context.py` | Bounded local-subgraph retrieval, categorical belief projection, candidate-hop pruning, and context audit |
 | `gpt_oss.py` | OpenAI-compatible `gpt-oss-120B` categorical world-model and pairwise-preference adapters; numeric model outputs are rejected |
 | `interventions.py` | Normal/null/shuffled transition controls and frozen-belief WM wrapper for causal dependence ablations |
+| `realized.py` | Recompute complete categorical deltas from persisted before/after belief; never reuse imagined deltas |
+| `executed_transitions.py` | Immutable sibling execution, normalized transition dataset, review locking, and categorical training export |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
@@ -219,6 +221,40 @@ overlay ID, question, initial evidence, missing roles, real-read budget, gold
 evidence events, and acceptable first actions. Formal evaluation requires a
 `human_locked` case set plus a content checksum. `ai_provisional` is accepted
 only with an explicit command flag and must be reported as provisional.
+
+### 1.4 Real executed-transition supervision
+
+World-model supervision is now generated independently of the provisional
+world model and preference labels. For every case, the generator reconstructs
+the same immutable checkpoint for every legal action, executes one real
+Video_Skills-compatible read, applies backend correction, and recomputes the
+complete categorical delta from the persisted before/after beliefs.
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  generate-transitions \
+  --cases /path/to/cases.human_locked.json \
+  --dataset-id executed-transitions-v1 \
+  --output /path/to/executed_transitions.unreviewed.json
+```
+
+The normalized dataset stores each checkpoint once and references it from
+action records. Each record retains a bounded endpoint-local context and an
+optional `Qwen/Qwen3-VL-Embedding-2B` reference, never a raw vector. Targets
+contain only real observation descriptors and categorical belief deltas; a
+numeric value in a target is rejected.
+
+Generated data is always `unreviewed` and `formal_eligible=false`, even when its
+source case set is human locked. An independent reviewer must set every record
+to `accept` or `reject` with a rationale before `lock-transitions` succeeds.
+Only `human_locked` transition datasets export by default; provisional export
+requires the explicit `--allow-ai-provisional` flag.
+
+The current persisted-replay 8-video/29-case provisional pilot produced 609 grounded records,
+but it is not balanced: only one action resolved a state-transition role and
+only two counterevidence actions were available. It is useful for pipeline and
+coverage diagnosis, not a live post-read-verifier, production, or research
+accuracy claim.
 
 ```bash
 # Mine draft cases and report missing relation strata. This never creates gold.

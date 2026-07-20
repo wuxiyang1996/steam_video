@@ -38,6 +38,12 @@ _ACTION_ROLE = {
 }
 
 
+def evidence_role_for_action(action: GraphReadAction) -> EvidenceRole:
+    """Return the fixed observation-role contract for a legal action."""
+
+    return _ACTION_ROLE[action.action_type]
+
+
 class RuleBasedObservationBeliefModel:
     """Transparent categorical baseline; it never produces action values."""
 
@@ -47,7 +53,7 @@ class RuleBasedObservationBeliefModel:
         action: GraphReadAction,
         overlay: CausalTemporalOverlay,
     ) -> PredictedTransition:
-        role = _ACTION_ROLE[action.action_type]
+        role = evidence_role_for_action(action)
         acquired = set(belief.acquired_evidence)
         unseen_targets = tuple(
             target for target in action.target_ids if target not in acquired

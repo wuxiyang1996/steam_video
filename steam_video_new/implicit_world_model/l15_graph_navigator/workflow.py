@@ -9,6 +9,12 @@ import re
 from typing import Any
 
 from .case_miner import mine_navigation_cases
+from .executed_transitions import (
+    build_executed_transition_dataset,
+    export_executed_transition_training_records,
+    lock_executed_transition_dataset,
+    validate_executed_transition_dataset,
+)
 from .matched_ablation import evaluate_matched_navigation
 from .overlay_io import load_overlay_artifact
 from .preference_data import (
@@ -21,6 +27,7 @@ from .preference_data import (
 )
 from .run import main as run_one
 from .train_models import train_baselines
+from .video_skills_adapter import VideoSkillsL2Adapter
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -64,6 +71,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     generate.add_argument("--factor-iterations", type=int, default=8)
     generate.add_argument("--horizon", type=int, choices=(1, 2), default=2)
+
+    transitions = commands.add_parser("generate-transitions")
+    transitions.add_argument("--cases", required=True, type=Path)
+    transitions.add_argument("--output", required=True, type=Path)
+    transitions.add_argument("--dataset-id", required=True)
+    transitions.add_argument("--video-skills-root", type=Path)
+    transitions.add_argument("--no-video-skills-runtime", action="store_true")
+    transitions.add_argument("--include-stop", action="store_true")
+    transitions.add_argument("--allow-ai-provisional", action="store_true")
+    transitions.add_argument(
+        "--belief-backend", choices=("factor_graph", "factorized"), default="factor_graph"
+    )
+    transitions.add_argument("--factor-iterations", type=int, default=8)
+
+    validate_transitions = commands.add_parser("validate-transitions")
+    validate_transitions.add_argument("--dataset", required=True, type=Path)
+
+    lock_transitions = commands.add_parser("lock-transitions")
+    lock_transitions.add_argument("--dataset", required=True, type=Path)
+    lock_transitions.add_argument("--output", required=True, type=Path)
+    lock_transitions.add_argument("--annotator", required=True)
+    lock_transitions.add_argument(
+        "--status", choices=("ai_provisional", "human_locked"), required=True
+    )
+
+    export_transitions = commands.add_parser("export-transitions")
+    export_transitions.add_argument("--dataset", required=True, type=Path)
+    export_transitions.add_argument("--output", required=True, type=Path)
+    export_transitions.add_argument("--allow-ai-provisional", action="store_true")
 
     packet = commands.add_parser("make-annotation")
     packet.add_argument("--runs-dir", required=True, type=Path)
@@ -146,6 +182,49 @@ def main(argv: list[str] | None = None) -> int:
             use_video_skills_runtime=not args.no_video_skills_runtime,
         )
         print(json.dumps(manifest, indent=2))
+        return 0
+    if args.command == "generate-transitions":
+        case_path = args.cases.expanduser().resolve()
+        dataset = build_executed_transition_dataset(
+            _read_json(case_path),
+            case_root=case_path.parent,
+            dataset_id=args.dataset_id,
+            belief_backend=args.belief_backend,
+            factor_iterations=args.factor_iterations,
+            executor_factory=lambda: VideoSkillsL2Adapter(
+                args.video_skills_root,
+                use_video_skills_runtime=not args.no_video_skills_runtime,
+            ),
+            include_stop=args.include_stop,
+            allow_ai_provisional=args.allow_ai_provisional,
+            execution_mode=(
+                "persisted_replay"
+                if args.no_video_skills_runtime
+                else "video_skills_runtime"
+            ),
+        )
+        _write_json(args.output, dataset)
+        print(json.dumps(dataset["summary"], indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "validate-transitions":
+        errors = validate_executed_transition_dataset(_read_json(args.dataset))
+        print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
+        return 0 if not errors else 1
+    if args.command == "lock-transitions":
+        dataset = lock_executed_transition_dataset(
+            _read_json(args.dataset),
+            annotation_status=args.status,
+            annotator=args.annotator,
+        )
+        _write_json(args.output, dataset)
+        return 0
+    if args.command == "export-transitions":
+        records = export_executed_transition_training_records(
+            _read_json(args.dataset),
+            allow_ai_provisional=args.allow_ai_provisional,
+        )
+        _write_jsonl(args.output, records)
+        print(json.dumps({"record_count": len(records)}, indent=2))
         return 0
     if args.command == "make-annotation":
         packet = make_annotation_packet(

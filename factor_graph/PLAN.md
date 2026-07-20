@@ -159,6 +159,19 @@ belief 变为 answer-ready。两次 prompt token 分别为 804 和 445；这些 
 下一实验步骤是做 context-budget ablation，并在独立 multi-video gold cases 上分别报告
 answer accuracy、evidence completeness、reads 和 action divergence。
 
+### Phase E.2：Executed transition supervision（pipeline 已实现，gold 未完成）
+
+- 每个 case/action 都从重新初始化的 immutable belief checkpoint 执行，禁止 sibling 间
+  correction state 泄漏；
+- observation descriptor 不再由 provisional WM 填写；role 来自 legal operation contract，
+  node kind 和 target IDs 来自真实 read；
+- `BeliefDeltaDescriptor` 从 persisted before/after belief 重新推导 hypothesis、frontier、
+  contradiction、path、recovery、uncertainty 和 answerability 类别；
+- dataset checkpoint 规范化存储，action 只引用 checkpoint，避免重复完整 belief；
+- 默认 `unreviewed/formal_eligible=false`；逐条独立 accept/reject review 之前不能锁定或训练导出；
+- 8-video/29-case provisional pilot 得到 609 个 grounded records，但 state-transition role
+  resolution 只有 1 条、counterevidence action 只有 2 条，当前覆盖严重不平衡。
+
 同时必须清除 heuristic leakage：candidate generator 只负责 legality、provenance、blocking、
 deduplication 和预算，不能通过 lexical/question-direction/factor-priority/stable-order 决定
 winner。建立 candidate permutation test，以及 normal/null/shuffled/frozen/immediate-only/

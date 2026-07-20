@@ -833,6 +833,14 @@ b_(t+1) = Update(b^-_(t+1), o_(t+1))
 Imagined evidence must never enter the final answer directly. The belief must
 be corrected and planning repeated after every real evidence-memory read.
 
+For IWM supervision, every legal action can also be executed independently
+from the same immutable L1/L1.5 checkpoint. The resulting dataset stores real
+observation descriptors and recomputes categorical belief deltas only after
+the persisted read and correction. It keeps Qwen embedding references for
+future retrieval but excludes raw vectors and numeric targets. Generated
+records remain unreviewed until independently accepted/rejected and locked;
+they are not automatically training gold.
+
 ## 7. Are We Performing Causal Inference?
 
 The current method does not perform classical causal inference:

@@ -475,3 +475,18 @@ reject 也确实传播为 state rejection，但去除 factor-priority winner heu
 因此把 `propagated belief change` 与 `action divergence` 分开，禁止用前者冒充导航收益。
 这些 cases 只证明 correction 能持久改变 belief；只有 support case 显示 action divergence，
 且它们来自 Phase D fixture、不是独立人工 gold。因此 production 状态仍为 false。
+
+### 13.2 Executed transition supervision pilot
+
+新增的 [`executed_transitions.unreviewed.json`](experiments/phase_e_gpt56_provisional_v1/executed_transitions.unreviewed.json)
+从相同 immutable checkpoint 独立执行每个合法 action。每条 target 都在真实 read 与 backend
+correction 后，从 before/after belief 重新计算；imagined WM delta、preference 和 solver 数值不进入
+target。checkpoint 只存一次，records 使用引用，endpoint-local context 保留 Qwen embedding
+metadata 但不保存 raw vector。
+
+该 pilot 明确使用 `persisted_replay`，不是 live Video_Skills runtime 或新的 post-read verifier
+测量。现有 8-video / 29-case `ai_provisional` 集合产生 609 条 grounded records，其中 99 条变为
+answer-ready；resolved roles 为 temporal 78、identity 20、state-transition 1。只有 2 个
+counterevidence actions。因此该 artifact 是 `unreviewed`、`formal_eligible=false` 的 pipeline
+与 coverage pilot，不能作为正式 WM accuracy 结果。下一步必须补充 state/counterevidence/
+reject/inconclusive cases，并由独立 reviewer 逐条 accept/reject 后锁定。

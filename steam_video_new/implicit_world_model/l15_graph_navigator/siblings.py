@@ -29,6 +29,7 @@ from .contracts import (
 )
 from .planner import guided_navigation_actions
 from .context import ReasoningContextBuilder
+from .realized import derive_realized_belief_delta
 
 
 def generate_sibling_artifact(
@@ -86,7 +87,7 @@ def generate_sibling_artifact(
             observations = execution.observations
             update = backend.update(belief, action, list(observations), overlay)
             after = update.belief
-            delta = update.delta
+            delta = derive_realized_belief_delta(belief, after)
             invocation = execution.skill_invocation
         real_transition = PredictedTransition(
             action=action,

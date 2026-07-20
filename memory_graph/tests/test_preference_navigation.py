@@ -39,10 +39,15 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     RuleBasedTrajectoryPreferenceModel,
     TransitionIntervention,
     VideoSkillsL2Adapter,
+    build_executed_transition_dataset,
     build_video_skills_l2_rollout,
+    derive_realized_belief_delta,
+    export_executed_transition_training_records,
     generate_sibling_artifact,
     guided_navigation_actions,
     load_overlay_artifact,
+    lock_executed_transition_dataset,
+    validate_executed_transition_dataset,
     validate_sibling_artifact,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.gpt_oss import (
@@ -1102,6 +1107,143 @@ def test_case_lock_annotation_packet_and_training_export_enforce_trust_boundary(
     lowered = json.dumps(records).lower()
     for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
         assert forbidden not in lowered
+
+
+def test_executed_transition_dataset_is_real_immutable_and_review_gated(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay.atomic_events[0].embedding_ref = EmbeddingRef(
+        path="event_embeddings.npy",
+        model="Qwen/Qwen3-VL-Embedding-2B",
+        dimension=2048,
+        row_index=0,
+    )
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    case_set = lock_navigation_case_set(
+        _navigation_case_set(overlay_path, overlay),
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+
+    dataset = build_executed_transition_dataset(
+        case_set,
+        case_root=tmp_path,
+        dataset_id="transitions:test",
+        belief_backend="factor_graph",
+        executor_factory=lambda: VideoSkillsL2Adapter(
+            use_video_skills_runtime=False
+        ),
+    )
+    repeated = build_executed_transition_dataset(
+        case_set,
+        case_root=tmp_path,
+        dataset_id="transitions:test",
+        belief_backend="factor_graph",
+        executor_factory=lambda: VideoSkillsL2Adapter(
+            use_video_skills_runtime=False
+        ),
+    )
+
+    assert validate_executed_transition_dataset(dataset) == []
+    assert dataset["checkpoints"] == repeated["checkpoints"]
+    assert dataset["records"] == repeated["records"]
+    assert dataset["annotation_status"] == "unreviewed"
+    assert dataset["formal_eligible"] is False
+    assert dataset["records"]
+    assert len(dataset["checkpoints"]) == 1
+    assert len({row["checkpoint_ref"] for row in dataset["records"]}) == 1
+    assert all(
+        row["target"]["observation_descriptor"]["predicted_only"] is False
+        and row["target"]["belief_delta"]["predicted_only"] is False
+        for row in dataset["records"]
+    )
+    assert any(
+        node.get("embedding_ref", {}).get("model")
+        == "Qwen/Qwen3-VL-Embedding-2B"
+        for row in dataset["records"]
+        for node in row["local_context"]["nodes"]
+        if node.get("embedding_ref") is not None
+    )
+    with pytest.raises(ValueError, match="review_decision"):
+        lock_executed_transition_dataset(
+            dataset,
+            annotation_status="human_locked",
+            annotator="transition-reviewer",
+        )
+    reviewed = json.loads(json.dumps(dataset))
+    for row in reviewed["records"]:
+        row["review_decision"] = "accept"
+        row["review_rationale"] = "Real read and categorical delta verified."
+    locked = lock_executed_transition_dataset(
+        reviewed,
+        annotation_status="human_locked",
+        annotator="transition-reviewer",
+    )
+    assert locked["formal_eligible"] is True
+    training = export_executed_transition_training_records(locked)
+    assert len(training) == len(locked["records"])
+    serialized = json.dumps(training).lower()
+    for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
+        assert forbidden not in serialized
+    tampered = json.loads(json.dumps(locked))
+    tampered["records"][0]["target"]["belief_delta"][
+        "answerability_after"
+    ] = "abstain"
+    assert any(
+        "locked_sha256" in error
+        for error in validate_executed_transition_dataset(tampered)
+    )
+
+
+def test_transition_generation_rejects_unapproved_provisional_case_set(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    provisional = lock_navigation_case_set(
+        _navigation_case_set(overlay_path, overlay),
+        annotation_status="ai_provisional",
+        annotator="GPT-5.6 provisional",
+    )
+
+    with pytest.raises(ValueError, match="human_locked"):
+        build_executed_transition_dataset(
+            provisional,
+            case_root=tmp_path,
+            dataset_id="transitions:rejected",
+        )
+
+
+def test_realized_delta_recomputes_full_categorical_state_change() -> None:
+    overlay = _overlay()
+    backend = FactorizedBeliefBackend()
+    before = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    action = next(
+        value
+        for value in guided_navigation_actions(before, overlay)
+        if value.action_type is NavigationActionType.CANDIDATE_CAUSE
+    )
+    observed = next(
+        node for node in overlay.atomic_events if node.node_id == "event:push"
+    )
+    after = backend.update(before, action, [observed], overlay).belief
+
+    delta = derive_realized_belief_delta(before, after)
+
+    assert delta.predicted_only is False
+    assert delta.resolved_roles == ("dependency",)
+    assert delta.hypothesis_updates[0].edge_id == "edge:push-open"
+    assert delta.hypothesis_updates[0].disposition.value == "accepted"
+    assert delta.frontier_change.value == "opened"
+    assert delta.recovery_status.value == "recovered"
 
 
 def test_blinded_packet_randomizes_sides_without_reading_labels() -> None:

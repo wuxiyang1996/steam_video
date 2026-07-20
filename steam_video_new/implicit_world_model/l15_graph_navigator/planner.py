@@ -39,6 +39,7 @@ from .contracts import (
 )
 from .context import ReasoningContextBuilder
 from .interventions import TransitionIntervention, intervene_trajectories
+from .realized import derive_realized_belief_delta
 
 
 class PreferenceOnlyPlanner:
@@ -271,7 +272,9 @@ class ClosedLoopNavigator:
                     decision=decision,
                     observation_ids=tuple(node.node_id for node in observations),
                     belief_after_id=update.belief.belief_id,
-                    realized_belief_delta=update.delta,
+                    realized_belief_delta=derive_realized_belief_delta(
+                        belief, update.belief
+                    ),
                     skill_invocation=execution.skill_invocation,
                     belief_update_audit=update.audit_record,
                 )

@@ -41,6 +41,13 @@ from .continuous import (
     ObservedIntervalSmoother,
 )
 from .case_miner import CASE_CATEGORIES, mine_navigation_cases
+from .executed_transitions import (
+    build_executed_transition_dataset,
+    export_executed_transition_training_records,
+    lock_executed_transition_dataset,
+    require_valid_executed_transition_dataset,
+    validate_executed_transition_dataset,
+)
 from .planner import (
     ClosedLoopNavigator,
     PersistedGraphReadExecutor,
@@ -54,6 +61,7 @@ from .interventions import (
     TransitionIntervention,
     intervene_trajectories,
 )
+from .realized import derive_realized_belief_delta
 from .overlay_io import LoadedOverlayArtifact, load_overlay_artifact, overlay_from_dict
 from .preference_data import (
     ALLOWED_PREFERENCE_LABELS,
@@ -134,16 +142,20 @@ __all__ = [
     "VideoSkillsL2Adapter",
     "DEFAULT_GPT_OSS_MODEL",
     "build_video_skills_l2_rollout",
+    "build_executed_transition_dataset",
     "build_preference_annotation_packet",
     "belief_to_dict",
     "generate_sibling_artifact",
     "evaluate_matched_navigation",
     "export_training_records",
+    "export_executed_transition_training_records",
     "guided_navigation_actions",
     "intervene_trajectories",
+    "derive_realized_belief_delta",
     "load_overlay_artifact",
     "lock_annotation_packet",
     "lock_navigation_case_set",
+    "lock_executed_transition_dataset",
     "mine_navigation_cases",
     "navigation_run_to_dict",
     "overlay_from_dict",
@@ -151,8 +163,10 @@ __all__ = [
     "predict_preference_label",
     "predict_transition_labels",
     "require_valid_sibling_artifact",
+    "require_valid_executed_transition_dataset",
     "validate_sibling_artifact",
     "validate_navigation_case_set",
+    "validate_executed_transition_dataset",
     "validate_preference_annotation_packet",
     "train_baselines",
 ]
