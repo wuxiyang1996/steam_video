@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import replace
 import hashlib
 from pathlib import Path
 from typing import Any
@@ -16,8 +17,9 @@ from memory_graph.navigation_ablation import (
 
 from .belief import FactorizedBeliefBackend
 from .contracts import BeliefBackend
+from .contracts import Answerability, BeliefDeltaDescriptor, BeliefUpdateResult
 from .factor_graph import FactorGraphBeliefBackend
-from .overlay_io import load_overlay_artifact
+from .overlay_io import load_overlay_artifact, overlay_from_dict
 from .planner import ClosedLoopNavigator, PersistedGraphReadExecutor, PreferenceOnlyPlanner
 from .preference_data import require_valid_navigation_case_set
 from .world_model import RuleBasedObservationBeliefModel, RuleBasedTrajectoryPreferenceModel
@@ -31,6 +33,8 @@ MATCHED_STRATEGIES = (
     "factorized_direct_preference",
     "factor_graph_direct_preference",
     "factor_graph_rule_world_model_lookahead",
+    "factor_graph_frozen_posterior_lookahead",
+    "factor_graph_shuffled_relations",
     "oracle",
 )
 
@@ -96,10 +100,15 @@ def evaluate_matched_navigation(
                 calls = len(reads)
                 contradictions = ()
             else:
+                planning_overlay = (
+                    _shuffled_relation_overlay(overlay, str(case["case_id"]))
+                    if strategy == "factor_graph_shuffled_relations"
+                    else overlay
+                )
                 acquired, first_action, calls, contradictions = _run_planner_strategy(
                     strategy,
                     case=case,
-                    overlay=overlay,
+                    overlay=planning_overlay,
                 )
             hits = gold & set(acquired)
             accepted = (
@@ -116,6 +125,7 @@ def evaluate_matched_navigation(
             rows[strategy].append(
                 {
                     "case_id": case["case_id"],
+                    "tags": list(case.get("tags") or []),
                     "acquired_event_ids": list(acquired),
                     "gold_event_ids": sorted(gold),
                     "hit_count": len(hits),
@@ -127,15 +137,21 @@ def evaluate_matched_navigation(
                     "contradictions": list(contradictions),
                 }
             )
+    summaries = {
+        strategy: {
+            **_summary(strategy_rows),
+            "by_tag": _summaries_by_tag(strategy_rows),
+        }
+        for strategy, strategy_rows in rows.items()
+    }
+    diagnostics = _diagnostic_gates(summaries, status)
     return {
         "schema_version": "steam-matched-navigation-ablation/v0.1",
         "case_set_id": case_set["case_set_id"],
         "case_set_annotation_status": status,
         "case_count": len(case_set["cases"]),
-        "strategies": {
-            strategy: _summary(strategy_rows)
-            for strategy, strategy_rows in rows.items()
-        },
+        "strategies": summaries,
+        "diagnostic_gates": diagnostics,
         "cases": rows,
         "semantics": {
             "matched_checkpoint": "all policies begin with the case seed_event_ids",
@@ -143,6 +159,7 @@ def evaluate_matched_navigation(
             "answerable": "all locked gold events acquired and no unresolved factor contradiction",
             "preference": "ordinal four-way comparison only; no numeric reward or utility",
             "world_model": "current lookahead row uses the transparent categorical rule baseline",
+            "diagnostics": "frozen-posterior and deterministically shuffled-relation controls must not be reported as learned policies",
         },
     }
 
@@ -237,6 +254,9 @@ def _run_planner_strategy(
     elif strategy == "factor_graph_direct_preference":
         backend = FactorGraphBeliefBackend()
         horizon = 1
+    elif strategy == "factor_graph_frozen_posterior_lookahead":
+        backend = _FrozenPosteriorBackend()
+        horizon = 2
     else:
         backend = FactorGraphBeliefBackend()
         horizon = 2
@@ -304,6 +324,44 @@ def _summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _summaries_by_tag(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    tags = sorted({str(tag) for row in rows for tag in row.get("tags") or []})
+    return {
+        tag: _summary([row for row in rows if tag in (row.get("tags") or [])])
+        for tag in tags
+    }
+
+
+def _diagnostic_gates(
+    summaries: dict[str, dict[str, Any]],
+    annotation_status: str,
+) -> dict[str, Any]:
+    direct = summaries["factor_graph_direct_preference"]["answer_accuracy"]
+    lookahead = summaries["factor_graph_rule_world_model_lookahead"]["answer_accuracy"]
+    frozen = summaries["factor_graph_frozen_posterior_lookahead"]["answer_accuracy"]
+    shuffled = summaries["factor_graph_shuffled_relations"]["answer_accuracy"]
+    gates = {
+        "lookahead_beats_direct": lookahead is not None and direct is not None and lookahead > direct,
+        "relation_shuffling_hurts": lookahead is not None and shuffled is not None and lookahead > shuffled,
+        "posterior_correction_helps": lookahead is not None and frozen is not None and lookahead > frozen,
+    }
+    return {
+        "annotation_status": annotation_status,
+        "formal_result": annotation_status == "human_locked",
+        "answer_accuracy_deltas": {
+            "lookahead_minus_direct": lookahead - direct,
+            "lookahead_minus_shuffled": lookahead - shuffled,
+            "lookahead_minus_frozen_posterior": lookahead - frozen,
+        },
+        "gates": gates,
+        "engineering_status": (
+            "provisional_only"
+            if annotation_status != "human_locked"
+            else "go" if all(gates.values()) else "no_go"
+        ),
+    }
+
+
 def _action_dict(action: Any) -> dict[str, Any]:
     return {
         "action_type": action.action_type.value,
@@ -362,3 +420,65 @@ def _verify_checksum(path: Path, expected: str) -> None:
     actual = hashlib.sha256(path.read_bytes()).hexdigest()
     if actual != expected:
         raise ValueError(f"embedding checksum mismatch for {path}")
+
+
+class _FrozenPosteriorBackend:
+    """Diagnostic backend that acquires evidence but freezes graph posterior state."""
+
+    name = "frozen_factor_posterior_ablation/v0.1"
+
+    def __init__(self) -> None:
+        self.base = FactorGraphBeliefBackend()
+
+    def initialize(self, *args: Any, **kwargs: Any) -> Any:
+        initial = self.base.initialize(*args, **kwargs)
+        return replace(initial, backend_name=self.name, backend_ref="frozen_after_initialization")
+
+    def update(self, belief: Any, action: Any, observations: Any, overlay: Any) -> BeliefUpdateResult:
+        computed = self.base.update(belief, action, observations, overlay)
+        candidate = computed.belief
+        answerability = (
+            Answerability.READY
+            if candidate.acquired_evidence and not candidate.missing_roles and not belief.contradictions
+            else Answerability.NOT_READY
+        )
+        frozen = replace(
+            candidate,
+            backend_name=self.name,
+            backend_ref="frozen_after_initialization",
+            contradictions=belief.contradictions,
+            relation_states=belief.relation_states,
+            priority_edge_ids=belief.priority_edge_ids,
+            blocked_edge_ids=belief.blocked_edge_ids,
+            answerability=answerability,
+        )
+        return BeliefUpdateResult(
+            belief=frozen,
+            delta=BeliefDeltaDescriptor(
+                resolved_roles=computed.delta.resolved_roles,
+                relation_updates=(),
+                contradiction_updates=(),
+                uncertainty_change=computed.delta.uncertainty_change,
+                answerability_after=answerability,
+                predicted_only=False,
+            ),
+        )
+
+
+def _shuffled_relation_overlay(overlay: Any, case_id: str) -> Any:
+    payload = overlay.to_dict()
+    relations = payload.get("relations") or []
+    if len(relations) < 2:
+        return overlay
+    keys = ("relation_probabilities", "status", "direction_confidence", "provenance", "warrant")
+    factor_payloads = [{key: row.get(key) for key in keys} for row in relations]
+    offset = 1 + int(hashlib.sha256(case_id.encode("utf-8")).hexdigest()[:8], 16) % (len(relations) - 1)
+    rotated = factor_payloads[offset:] + factor_payloads[:offset]
+    for row, replacement in zip(relations, rotated):
+        for key, value in replacement.items():
+            if value is None:
+                row.pop(key, None)
+            else:
+                row[key] = value
+    payload["overlay_id"] = f"{overlay.overlay_id}:shuffled:{offset}"
+    return overlay_from_dict(payload)

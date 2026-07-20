@@ -80,6 +80,7 @@
         "tags": {
           "type": "array", "items": {"type": "string"}, "uniqueItems": true
         },
+        "split": {"enum": ["train", "dev", "test"]},
         "notes": {"type": "string"}
       }
     }

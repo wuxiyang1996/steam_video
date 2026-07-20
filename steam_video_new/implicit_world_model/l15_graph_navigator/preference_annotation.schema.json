@@ -42,12 +42,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "comparison_id", "case_id", "question", "checkpoint_summary",
+        "comparison_id", "case_id", "video_id", "question", "checkpoint_summary",
         "left", "right", "label", "rationale"
       ],
       "properties": {
         "comparison_id": {"type": "string", "minLength": 1},
         "case_id": {"type": "string", "minLength": 1},
+        "video_id": {"type": "string", "minLength": 1},
         "question": {"type": "string", "minLength": 1},
         "checkpoint_summary": {"type": "object"},
         "left": {"$ref": "#/$defs/branch"},

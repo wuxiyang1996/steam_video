@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 from typing import Any
 
+from .case_miner import mine_navigation_cases
 from .matched_ablation import evaluate_matched_navigation
 from .overlay_io import load_overlay_artifact
 from .preference_data import (
@@ -19,11 +20,21 @@ from .preference_data import (
     validate_navigation_case_set,
 )
 from .run import main as run_one
+from .train_models import train_baselines
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+
+    mine = commands.add_parser("mine-cases")
+    mine.add_argument("--overlay-root", required=True, type=Path)
+    mine.add_argument("--glob", default="**/causal_temporal_overlay.json")
+    mine.add_argument("--case-set-id", required=True)
+    mine.add_argument("--desired-count", type=int, default=40)
+    mine.add_argument("--per-video-limit", type=int, default=5)
+    mine.add_argument("--output", required=True, type=Path)
+    mine.add_argument("--report", required=True, type=Path)
 
     validate = commands.add_parser("validate-cases")
     validate.add_argument("--cases", required=True, type=Path)
@@ -51,6 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
     packet.add_argument("--runs-dir", required=True, type=Path)
     packet.add_argument("--output", required=True, type=Path)
     packet.add_argument("--packet-id", required=True)
+    packet.add_argument("--max-comparisons-per-case", type=int, default=12)
 
     lock_packet = commands.add_parser("lock-annotation")
     lock_packet.add_argument("--packet", required=True, type=Path)
@@ -69,11 +81,27 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--cases", required=True, type=Path)
     evaluate.add_argument("--output", required=True, type=Path)
     evaluate.add_argument("--allow-ai-provisional", action="store_true")
+
+    train = commands.add_parser("train")
+    train.add_argument("--training-jsonl", required=True, type=Path)
+    train.add_argument("--output-dir", required=True, type=Path)
+    train.add_argument("--allow-ai-provisional", action="store_true")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "mine-cases":
+        case_set, report = mine_navigation_cases(
+            sorted(args.overlay_root.expanduser().resolve().glob(args.glob)),
+            case_set_id=args.case_set_id,
+            desired_count=args.desired_count,
+            per_video_limit=args.per_video_limit,
+        )
+        _write_json(args.output, case_set)
+        _write_json(args.report, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
     if args.command == "validate-cases":
         payload = _read_json(args.cases)
         errors = validate_navigation_case_set(payload)
@@ -103,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
         packet = make_annotation_packet(
             args.runs_dir,
             packet_id=args.packet_id,
+            max_comparisons_per_case=args.max_comparisons_per_case,
         )
         _write_json(args.output, packet)
         print(json.dumps({"comparisons": len(packet["comparisons"])}, indent=2))
@@ -132,6 +161,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         _write_json(args.output, report)
         print(json.dumps(report["strategies"], indent=2))
+        return 0
+    if args.command == "train":
+        records = [
+            json.loads(line)
+            for line in args.training_jsonl.expanduser().resolve().read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        report = train_baselines(
+            records,
+            output_dir=args.output_dir,
+            allow_ai_provisional=args.allow_ai_provisional,
+        )
+        print(json.dumps(report, indent=2, ensure_ascii=False))
         return 0
     raise AssertionError(f"unhandled command: {args.command}")
 
@@ -207,14 +249,23 @@ def generate_case_runs(
     return manifest
 
 
-def make_annotation_packet(runs_dir: Path, *, packet_id: str) -> dict[str, Any]:
+def make_annotation_packet(
+    runs_dir: Path,
+    *,
+    packet_id: str,
+    max_comparisons_per_case: int | None = 12,
+) -> dict[str, Any]:
     root = runs_dir.expanduser().resolve()
     manifest = _read_json(root / "batch_manifest.json")
     artifacts = []
     for row in manifest.get("runs") or []:
         path = Path(str(row["sibling_artifact"]))
         artifacts.append((str(row["case_id"]), _read_json(path)))
-    return build_preference_annotation_packet(artifacts, packet_id=packet_id)
+    return build_preference_annotation_packet(
+        artifacts,
+        packet_id=packet_id,
+        max_comparisons_per_case=max_comparisons_per_case,
+    )
 
 
 def _safe_name(value: str) -> str:

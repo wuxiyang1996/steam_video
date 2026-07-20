@@ -151,7 +151,8 @@ backend remains available as an ablation. Sibling labels require independent
 review before training.
 
 For fixed multi-case generation, blinded four-way preference annotation,
-training-record export, and the eight-policy matched-budget ablation, use:
+training-record export, lightweight categorical-model training, and the
+matched-budget ablation plus destructive controls, use:
 
 ```bash
 python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow --help
@@ -160,6 +161,9 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow --he
 Formal evaluation and training export require content-locked human case and
 preference annotations. GPT-5.6 outputs remain explicitly `ai_provisional` and
 cannot pass those gates without an opt-in intended only for engineering runs.
+The current provisional coverage/result, including negative lookahead and
+posterior-correction gates, is preserved in
+[`video_holmes_engineering_status_v3.json`](steam_video_new/implicit_world_model/l15_graph_navigator/baselines/video_holmes_engineering_status_v3.json).
 
 Run the regression suite:
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from itertools import combinations
+import re
 
 from memory_graph.navigation import (
     GraphReadAction,
@@ -314,6 +315,7 @@ def guided_navigation_actions(
             not bool(_action_edge_ids(action, overlay) & priority),
             _question_direction_rank(belief.question, action.action_type),
             action.action_type.value,
+            -_question_target_overlap(belief.question, action, overlay),
             action.source_id or "",
             action.target_ids,
             action.relation or "",
@@ -380,6 +382,33 @@ def _action_edge_ids(
         if action.source_id in {edge.src, edge.dst}
         and any(target in {edge.src, edge.dst} for target in action.target_ids)
         and (action.relation is None or action.relation in edge.relation_probabilities)
+    }
+
+
+def _question_target_overlap(
+    question: str,
+    action: GraphReadAction,
+    overlay: CausalTemporalOverlay,
+) -> int:
+    """Lexical fallback for structural tie-breaking; never an action reward."""
+
+    by_id = {
+        node.node_id: node for node in overlay.atomic_events + overlay.l1_observations
+    }
+    question_tokens = _navigation_tokens(question)
+    return sum(
+        len(question_tokens & _navigation_tokens(by_id[target].text or ""))
+        for target in action.target_ids
+        if target in by_id
+    )
+
+
+def _navigation_tokens(value: str) -> set[str]:
+    stop = {"after", "and", "does", "event", "immediately", "the", "to", "what", "which"}
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", value.casefold())
+        if len(token) > 1 and token not in stop
     }
 
 

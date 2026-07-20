@@ -62,6 +62,7 @@ def build_preference_annotation_packet(
     sibling_artifacts: Iterable[tuple[str, dict[str, Any]]],
     *,
     packet_id: str,
+    max_comparisons_per_case: int | None = None,
 ) -> dict[str, Any]:
     """Remove rule labels and expose only real categorical branch outcomes."""
 
@@ -81,7 +82,16 @@ def build_preference_annotation_packet(
             "answerability": checkpoint.get("answerability"),
             "remaining_graph_reads": checkpoint.get("remaining_graph_reads"),
         }
-        for index, row in enumerate(artifact.get("pairwise_preferences") or []):
+        pair_rows = list(artifact.get("pairwise_preferences") or [])
+        if max_comparisons_per_case is not None:
+            if max_comparisons_per_case <= 0:
+                raise ValueError("max_comparisons_per_case must be positive")
+            pair_rows = _select_informative_pairs(
+                pair_rows,
+                branches,
+                limit=max_comparisons_per_case,
+            )
+        for index, row in enumerate(pair_rows):
             left_id = str(row.get("left_branch_id") or "")
             right_id = str(row.get("right_branch_id") or "")
             if left_id not in branches or right_id not in branches:
@@ -90,6 +100,7 @@ def build_preference_annotation_packet(
                 {
                     "comparison_id": f"{case_id}:comparison:{index:05d}",
                     "case_id": case_id,
+                    "video_id": str(artifact.get("video_id") or artifact.get("example_id") or "unknown"),
                     "question": question,
                     "checkpoint_summary": checkpoint_summary,
                     "left": _blinded_branch(branches[left_id]),
@@ -202,6 +213,7 @@ def export_training_records(
                 {
                     "task": "observation_belief_transition",
                     "case_id": comparison["case_id"],
+                    "video_id": comparison["video_id"],
                     "question": comparison["question"],
                     "checkpoint": comparison["checkpoint_summary"],
                     "action": branch["action"],
@@ -217,6 +229,7 @@ def export_training_records(
                 "task": "trajectory_pairwise_preference",
                 "comparison_id": comparison["comparison_id"],
                 "case_id": comparison["case_id"],
+                "video_id": comparison["video_id"],
                 "question": comparison["question"],
                 "checkpoint": comparison["checkpoint_summary"],
                 "left": comparison["left"],
@@ -238,6 +251,68 @@ def _blinded_branch(branch: dict[str, Any]) -> dict[str, Any]:
         "observation_descriptor": transition.get("observation_descriptor") or {},
         "belief_delta": transition.get("belief_delta") or {},
     }
+
+
+def _select_informative_pairs(
+    rows: list[dict[str, Any]],
+    branches: dict[str, dict[str, Any]],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Select categorical disagreements without reading provisional labels."""
+
+    def rank(row: dict[str, Any]) -> tuple[object, ...]:
+        left_id = str(row.get("left_branch_id") or "")
+        right_id = str(row.get("right_branch_id") or "")
+        left = _branch_signature(branches[left_id])
+        right = _branch_signature(branches[right_id])
+        return (
+            -(left[1] != right[1]),
+            -(left[2] != right[2]),
+            -(left[3] != right[3]),
+            -(left[0] != right[0]),
+            -(left[4] != right[4]),
+            left_id,
+            right_id,
+        )
+
+    ranked = sorted(rows, key=rank)
+    selected: list[dict[str, Any]] = []
+    branch_counts: dict[str, int] = {}
+    action_pairs: set[tuple[str, str]] = set()
+    for diversify in (True, False):
+        for row in ranked:
+            if row in selected:
+                continue
+            left_id = str(row.get("left_branch_id") or "")
+            right_id = str(row.get("right_branch_id") or "")
+            left_action = _branch_signature(branches[left_id])[0]
+            right_action = _branch_signature(branches[right_id])[0]
+            action_pair = tuple(sorted((left_action, right_action)))
+            if diversify and action_pair in action_pairs:
+                continue
+            if branch_counts.get(left_id, 0) >= 3 or branch_counts.get(right_id, 0) >= 3:
+                continue
+            selected.append(row)
+            action_pairs.add(action_pair)
+            branch_counts[left_id] = branch_counts.get(left_id, 0) + 1
+            branch_counts[right_id] = branch_counts.get(right_id, 0) + 1
+            if len(selected) >= limit:
+                return selected
+    return selected
+
+
+def _branch_signature(branch: dict[str, Any]) -> tuple[str, tuple[str, ...], str, tuple[str, ...], str]:
+    transition = branch.get("realized_transition") or {}
+    delta = transition.get("belief_delta") or {}
+    action = branch.get("action") or {}
+    return (
+        str(action.get("action_type") or ""),
+        tuple(sorted(str(value) for value in delta.get("resolved_roles") or [])),
+        str(delta.get("answerability_after") or ""),
+        tuple(sorted(str(value) for value in delta.get("contradiction_updates") or [])),
+        str(delta.get("uncertainty_change") or ""),
+    )
 
 
 def _schema_errors(payload: dict[str, Any], schema_name: str) -> list[str]:

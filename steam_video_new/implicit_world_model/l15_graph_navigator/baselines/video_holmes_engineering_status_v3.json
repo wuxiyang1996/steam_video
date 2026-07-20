@@ -1,0 +1,84 @@
+{
+  "schema_version": "steam-preference-navigation-engineering-status/v0.1",
+  "case_set_id": "video-holmes-diagnostic-draft-v3",
+  "annotation_status": "ai_provisional",
+  "formal_result": false,
+  "case_mining": {
+    "requested_cases": 40,
+    "selected_cases": 40,
+    "selected_videos": 8,
+    "split_cases": {"train": 20, "dev": 10, "test": 10},
+    "selected_categories": {
+      "temporal": 8,
+      "identity": 8,
+      "verified_dependency": 1,
+      "delayed_bridge": 23,
+      "state_transition": 0,
+      "counterevidence": 0
+    },
+    "available_candidates": {
+      "temporal": 248,
+      "identity": 191,
+      "verified_dependency": 1,
+      "delayed_bridge": 634,
+      "state_transition": 0,
+      "counterevidence": 0
+    }
+  },
+  "real_sibling_generation": {
+    "case_runs": 40,
+    "executed_sibling_branches": 871,
+    "selected_comparisons": 480,
+    "comparisons_per_case": 12,
+    "packet_blinded": true,
+    "labels_complete": false,
+    "posterior_leak": false,
+    "rule_label_leak": false
+  },
+  "matched_ablation": {
+    "factorized_direct_preference": {
+      "answer_accuracy": 0.6,
+      "mean_evidence_recall": 0.8208333333333334,
+      "first_action_accuracy": 0.3
+    },
+    "factor_graph_direct_preference": {
+      "answer_accuracy": 0.6,
+      "mean_evidence_recall": 0.8208333333333334,
+      "first_action_accuracy": 0.3
+    },
+    "factor_graph_rule_world_model_lookahead": {
+      "answer_accuracy": 0.55,
+      "mean_evidence_recall": 0.7625,
+      "first_action_accuracy": 0.25
+    },
+    "factor_graph_frozen_posterior_lookahead": {
+      "answer_accuracy": 0.55,
+      "mean_evidence_recall": 0.7625,
+      "first_action_accuracy": 0.25
+    },
+    "factor_graph_shuffled_relations": {
+      "answer_accuracy": 0.35,
+      "mean_evidence_recall": 0.6958333333333333,
+      "first_action_accuracy": 0.1
+    },
+    "answer_accuracy_deltas": {
+      "lookahead_minus_direct": -0.05,
+      "lookahead_minus_shuffled": 0.2,
+      "lookahead_minus_frozen_posterior": 0.0
+    }
+  },
+  "engineering_gates": {
+    "lookahead_beats_direct": false,
+    "relation_shuffling_hurts": true,
+    "posterior_correction_helps": false
+  },
+  "formal_blockers": [
+    "cases and acceptable actions are not independently human locked",
+    "the selected preference packet is still unlabeled",
+    "no admitted state_transition candidates exist in the scanned overlays",
+    "only one admitted verified_dependency candidate exists",
+    "no admitted counterevidence candidates exist",
+    "the rule world-model lookahead does not beat direct preference",
+    "the frozen-posterior control matches normal posterior correction"
+  ]
+}

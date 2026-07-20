@@ -107,6 +107,7 @@ def generate_sibling_artifact(
         "schema_version": "steam-preference-siblings/v0.1",
         "overlay_id": overlay.overlay_id,
         "example_id": overlay.example_id,
+        "video_id": overlay.video_id,
         "checkpoint": belief_to_dict(belief),
         "branches": branches,
         "pairwise_preferences": [

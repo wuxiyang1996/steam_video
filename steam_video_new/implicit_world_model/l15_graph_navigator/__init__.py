@@ -27,6 +27,7 @@ from .continuous import (
     ContinuousBeliefSummary,
     ObservedIntervalSmoother,
 )
+from .case_miner import CASE_CATEGORIES, mine_navigation_cases
 from .planner import (
     ClosedLoopNavigator,
     PersistedGraphReadExecutor,
@@ -44,6 +45,11 @@ from .preference_data import (
     lock_navigation_case_set,
     validate_navigation_case_set,
     validate_preference_annotation_packet,
+)
+from .train_models import (
+    predict_preference_label,
+    predict_transition_labels,
+    train_baselines,
 )
 from .world_model import (
     RuleBasedObservationBeliefModel,
@@ -66,6 +72,7 @@ __all__ = [
     "BeliefBackend",
     "BeliefDeltaDescriptor",
     "BeliefSnapshot",
+    "CASE_CATEGORIES",
     "ClosedLoopNavigator",
     "ContinuousBeliefSmoother",
     "ContinuousBeliefSummary",
@@ -104,11 +111,15 @@ __all__ = [
     "load_overlay_artifact",
     "lock_annotation_packet",
     "lock_navigation_case_set",
+    "mine_navigation_cases",
     "navigation_run_to_dict",
     "overlay_from_dict",
     "overlay_to_video_skills_graph",
+    "predict_preference_label",
+    "predict_transition_labels",
     "require_valid_sibling_artifact",
     "validate_sibling_artifact",
     "validate_navigation_case_set",
     "validate_preference_annotation_packet",
+    "train_baselines",
 ]

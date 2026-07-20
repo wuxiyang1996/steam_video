@@ -50,8 +50,10 @@ The first preference-only closed loop is implemented in this package:
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
 | `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
 | `siblings.py` | Real one-step action branching with provisional four-way preference labels |
+| `case_miner.py` | Stratified draft-case mining, duplicate-overlay removal, video-disjoint splits, and coverage deficits |
 | `preference_data.py` | Locked case validation, blinded annotation packets, trust gates, and train-record export |
-| `matched_ablation.py` | Eight matched-checkpoint policies under one real-read budget |
+| `matched_ablation.py` | Eight primary matched-checkpoint policies plus frozen-posterior and shuffled-relation diagnostics |
+| `train_models.py` | Leakage-aware categorical transition heads and four-way preference baseline |
 | `workflow.py` | Batch generation, annotation, export, and evaluation CLI |
 | `run.py` | CLI that writes navigation, L2, belief, sibling, and summary artifacts |
 
@@ -146,6 +148,11 @@ evidence events, and acceptable first actions. Formal evaluation requires a
 only with an explicit command flag and must be reported as provisional.
 
 ```bash
+# Mine draft cases and report missing relation strata. This never creates gold.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  mine-cases --overlay-root /path/to/outputs --case-set-id diagnostic-v1 \
+  --output /path/to/cases.draft.json --report /path/to/coverage.json
+
 # Validate and independently lock the fixed cases.
 python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
   validate-cases --cases /path/to/cases.json
@@ -171,17 +178,23 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
   export-training --packet /path/to/preferences.locked.json \
   --output /path/to/preference_training.jsonl
 
+# Train categorical transition heads and an ordinal-label-only preference model.
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  train --training-jsonl /path/to/preference_training.jsonl \
+  --output-dir /path/to/models
+
 # Run all policies from the same checkpoint and real-read-call budget.
 python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
   evaluate --cases /path/to/cases.locked.json \
   --output /path/to/matched_ablation.json
 ```
 
-The report contains semantic-only, event-only, native-L1-candidate,
+The primary report contains semantic-only, event-only, native-L1-candidate,
 verified-dependency, factorized direct preference, factor-graph direct
-preference, factor-graph rule-world-model lookahead, and oracle rows. The
-current world-model row is an engineering baseline, not a learned result. When
-a case has `query_embedding_ref`, static retrieval uses persisted
+preference, factor-graph rule-world-model lookahead, and oracle rows. It also
+contains frozen-posterior and deterministically shuffled-relation diagnostic
+controls. The current world-model row is an engineering baseline, not a
+learned result. When a case has `query_embedding_ref`, static retrieval uses persisted
 Qwen3-VL-Embedding-2B vectors with dimension and checksum checks; otherwise it
 uses lexical retrieval.
 
@@ -189,6 +202,24 @@ GPT-5.6 may fill the blinded packet using only supplied branch outcomes, but
 those labels must be locked as `ai_provisional`. The exporter rejects them by
 default; `--allow-ai-provisional` exists only for clearly marked engineering
 experiments. No command converts a preference into a numeric reward.
+
+### 1.4 Current engineering evidence, not a formal result
+
+The latest reproducible provisional status is recorded in
+`baselines/video_holmes_engineering_status_v3.json`. Scanning 15 overlays from
+11 unique videos produced 40 draft cases over 8 selected videos, with 20/10/10
+video-disjoint train/dev/test cases. It also exposed decisive coverage gaps:
+zero admitted `state_transition`, one admitted verified dependency, and zero
+admitted counterevidence candidates. Forty real batch runs produced 480
+blinded comparisons with no posterior or rule-label leakage.
+
+The provisional ablation currently fails two of three engineering gates:
+rule-world-model lookahead trails direct preference by 0.05 answer accuracy,
+and freezing posterior correction changes nothing. Relation shuffling does
+hurt by 0.20, indicating that graph structure carries signal. These numbers
+must not be cited as formal results because the cases and preferences are not
+human locked. The next data-generation work must fill state/dependency/counter
+coverage before model training can test the central claim.
 
 ## 2. Why Use the L1.5 Graph
 

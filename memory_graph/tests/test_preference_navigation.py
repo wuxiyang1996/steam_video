@@ -40,6 +40,9 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.matched_ablation i
     MATCHED_STRATEGIES,
     evaluate_matched_navigation,
 )
+from steam_video_new.implicit_world_model.l15_graph_navigator.case_miner import (
+    mine_navigation_cases,
+)
 from steam_video_new.implicit_world_model.l15_graph_navigator.preference_data import (
     build_preference_annotation_packet,
     export_training_records,
@@ -47,6 +50,11 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.preference_data im
     lock_navigation_case_set,
     validate_navigation_case_set,
     validate_preference_annotation_packet,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.train_models import (
+    predict_preference_label,
+    predict_transition_labels,
+    train_baselines,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.contracts import (
     PlanDecision,
@@ -751,6 +759,12 @@ def test_case_lock_annotation_packet_and_training_export_enforce_trust_boundary(
     serialized = json.dumps(packet)
     assert "rule_based_provisional" not in serialized
     assert "posterior_probabilities" not in serialized
+    sampled_packet = build_preference_annotation_packet(
+        [("door-dependency", artifact)],
+        packet_id="packet:sampled",
+        max_comparisons_per_case=2,
+    )
+    assert len(sampled_packet["comparisons"]) == 2
     for comparison in packet["comparisons"]:
         comparison["label"] = "prefer_left"
         comparison["rationale"] = "Left resolves the required evidence role."
@@ -800,3 +814,126 @@ def test_matched_ablation_runs_all_policies_from_locked_checkpoint(
     assert report["strategies"]["factor_graph_rule_world_model_lookahead"][
         "answer_accuracy"
     ] == 1.0
+    assert "factor_graph_frozen_posterior_lookahead" in report["strategies"]
+    assert "factor_graph_shuffled_relations" in report["strategies"]
+    assert report["diagnostic_gates"]["engineering_status"] == "no_go"
+
+
+def test_case_miner_produces_video_disjoint_draft_and_reports_missing_strata(
+    tmp_path: Path,
+) -> None:
+    paths = []
+    for index in range(3):
+        overlay = _overlay()
+        overlay.video_id = f"video:{index}"
+        overlay.overlay_id = f"overlay:mine:{index}"
+        overlay.example_id = f"example:mine:{index}"
+        overlay.relations.append(
+            RelationBelief(
+                edge_id=f"temporal:{index}",
+                src="event:push",
+                dst="event:open",
+                relation_probabilities={"temporal_next": 1.0},
+                status=RelationStatus.DETERMINISTIC,
+                direction_confidence=1.0,
+            )
+        )
+        path = tmp_path / f"overlay-{index}.json"
+        path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+        paths.append(path)
+
+    cases, report = mine_navigation_cases(
+        paths,
+        case_set_id="mined:test",
+        desired_count=6,
+        per_video_limit=2,
+        quotas={
+            "temporal": 3,
+            "identity": 0,
+            "state_transition": 1,
+            "verified_dependency": 2,
+            "delayed_bridge": 0,
+            "counterevidence": 0,
+        },
+    )
+
+    assert validate_navigation_case_set(cases) == []
+    assert cases["annotation_status"] == "draft"
+    assert len(cases["cases"]) == 6
+    video_splits: dict[str, set[str]] = {}
+    for case in cases["cases"]:
+        video_splits.setdefault(case["overlay_id"], set()).add(case["split"])
+    assert all(len(splits) == 1 for splits in video_splits.values())
+    assert report["formal_ready"] is False
+    assert report["quota_deficits"]["state_transition"] == 1
+
+
+def test_lightweight_models_emit_categories_and_ordinal_labels_only(
+    tmp_path: Path,
+) -> None:
+    records = []
+    for index, (video_id, label) in enumerate(
+        (("video:a", "prefer_left"), ("video:b", "prefer_right"), ("video:c", "prefer_left"), ("video:d", "prefer_right"))
+    ):
+        checkpoint = {
+            "missing_roles": ["dependency"],
+            "answerability": "not_ready",
+        }
+        action = {"action_type": "candidate_cause", "target_ids": [f"event:{index}"]}
+        records.append(
+            {
+                "task": "observation_belief_transition",
+                "case_id": f"case:{index}",
+                "video_id": video_id,
+                "question": "Why did this happen?",
+                "checkpoint": checkpoint,
+                "action": action,
+                "target": {
+                    "observation_descriptor": {"role": "dependency"},
+                    "belief_delta": {
+                        "resolved_roles": ["dependency"],
+                        "uncertainty_change": "decrease",
+                        "answerability_after": "ready",
+                        "contradiction_updates": [],
+                    },
+                },
+                "label_source": "human_locked",
+            }
+        )
+        records.append(
+            {
+                "task": "trajectory_pairwise_preference",
+                "comparison_id": f"comparison:{index}",
+                "case_id": f"case:{index}",
+                "video_id": video_id,
+                "question": "Why did this happen?",
+                "checkpoint": checkpoint,
+                "left": {"action": action},
+                "right": {"action": {"action_type": "semantic"}},
+                "target": {"label": label},
+                "rationale": "Categorical preference.",
+                "label_source": "human_locked",
+            }
+        )
+
+    provisional_records = json.loads(json.dumps(records))
+    for row in provisional_records:
+        row["label_source"] = "ai_provisional"
+    with pytest.raises(ValueError, match="not human_locked"):
+        train_baselines(provisional_records, output_dir=tmp_path / "rejected")
+
+    report = train_baselines(records, output_dir=tmp_path / "models")
+    import joblib
+
+    transition = joblib.load(tmp_path / "models" / "transition_model.joblib")
+    preference = joblib.load(tmp_path / "models" / "preference_model.joblib")
+    transition_row = next(row for row in records if row["task"].startswith("observation"))
+    preference_row = next(row for row in records if row["task"].startswith("trajectory"))
+    assert predict_transition_labels(transition, transition_row)["observation_role"] == "dependency"
+    assert predict_preference_label(preference, preference_row) in {
+        "prefer_left",
+        "prefer_right",
+        "tie",
+        "incomparable",
+    }
+    assert report["reward_model"] is False
