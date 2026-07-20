@@ -9,6 +9,7 @@ from typing import Any
 
 from .artifacts import belief_to_dict, navigation_run_to_dict
 from .belief import FactorizedBeliefBackend
+from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
 from .overlay_io import load_overlay_artifact
 from .planner import ClosedLoopNavigator, PreferenceOnlyPlanner
 from .siblings import generate_sibling_artifact
@@ -31,6 +32,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed-event", action="append", default=[])
     parser.add_argument("--missing-role", action="append", default=None)
     parser.add_argument("--graph-read-budget", type=int, default=8)
+    parser.add_argument(
+        "--belief-backend",
+        choices=("factor_graph", "factorized"),
+        default="factor_graph",
+    )
+    parser.add_argument("--factor-iterations", type=int, default=8)
     parser.add_argument("--horizon", type=int, choices=(1, 2), default=2)
     parser.add_argument("--max-steps", type=int)
     parser.add_argument("--max-second-actions", type=int, default=4)
@@ -59,7 +66,11 @@ def main(argv: list[str] | None = None) -> int:
         verify_embedding_checksums=args.verify_embedding_checksums,
     )
     overlay = loaded.overlay
-    backend = FactorizedBeliefBackend()
+    backend = (
+        FactorGraphBeliefBackend(inference_iterations=args.factor_iterations)
+        if args.belief_backend == "factor_graph"
+        else FactorizedBeliefBackend()
+    )
     belief = backend.initialize(
         args.question,
         overlay,
@@ -120,6 +131,9 @@ def main(argv: list[str] | None = None) -> int:
         "example_id": overlay.example_id,
         "embedding_problems": list(loaded.embedding_problems),
         "embedding_model": _embedding_model(overlay),
+        "belief_backend": run.final_belief.backend_name,
+        "belief_backend_ref": run.final_belief.backend_ref,
+        "gtsam_available": GTSAM_AVAILABLE,
         "step_count": len(run.steps),
         "real_observation_count": sum(len(step.observation_ids) for step in run.steps),
         "final_answerability": run.final_belief.answerability.value,

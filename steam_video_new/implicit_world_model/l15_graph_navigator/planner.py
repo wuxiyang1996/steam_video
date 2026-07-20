@@ -97,9 +97,7 @@ class PreferenceOnlyPlanner:
         belief: BeliefSnapshot,
         overlay: CausalTemporalOverlay,
     ) -> list[TrajectoryPrediction]:
-        actions = _ordered_actions(
-            propose_navigation_actions(belief.navigation_view(), overlay)
-        )
+        actions = guided_navigation_actions(belief, overlay)
         trajectories: list[TrajectoryPrediction] = []
         sequence = 0
         for first_action in actions:
@@ -115,8 +113,9 @@ class PreferenceOnlyPlanner:
                 continue
 
             imagined_belief = _project_imagined_belief(belief, first)
-            second_actions = _ordered_actions(
-                propose_navigation_actions(imagined_belief.navigation_view(), overlay)
+            second_actions = guided_navigation_actions(
+                imagined_belief,
+                overlay,
             )[: self.max_second_actions]
             if not second_actions:
                 trajectories.append(
@@ -262,16 +261,148 @@ def _project_imagined_belief(
     )
 
 
-def _ordered_actions(actions: list[GraphReadAction]) -> list[GraphReadAction]:
-    """Stable structural fallback, deliberately not a learned utility score."""
+def guided_navigation_actions(
+    belief: BeliefSnapshot,
+    overlay: CausalTemporalOverlay,
+) -> list[GraphReadAction]:
+    """Use factor-graph directives to order/filter legal exploration actions."""
 
-    return sorted(
-        actions,
+    actions = propose_navigation_actions(belief.navigation_view(), overlay)
+    priority = set(belief.priority_edge_ids)
+    blocked = set(belief.blocked_edge_ids)
+    acquired = set(belief.acquired_evidence)
+    edges = {
+        edge.edge_id: edge
+        for edge in overlay.relations + overlay.l1_structural_relations
+    }
+    for edge_id in tuple(dict.fromkeys(belief.priority_edge_ids + belief.blocked_edge_ids)):
+        edge = edges.get(edge_id)
+        if edge is None:
+            continue
+        targets = _verification_targets(edge, overlay, acquired)
+        if not targets:
+            continue
+        relation = next(iter(sorted(edge.relation_probabilities)), None)
+        actions.append(
+            GraphReadAction(
+                action_type=NavigationActionType.VERIFY,
+                source_id=edge.src,
+                target_ids=targets,
+                relation=relation,
+                rationale="factor belief requests a grounded provenance reread",
+            )
+        )
+    kept: list[tuple[GraphReadAction, set[str]]] = []
+    for action in actions:
+        edge_ids = _action_edge_ids(action, overlay)
+        if (
+            edge_ids
+            and edge_ids <= blocked
+            and action.action_type
+            not in {
+                NavigationActionType.SEARCH_COUNTEREVIDENCE,
+                NavigationActionType.VERIFY,
+            }
+        ):
+            continue
+        kept.append((action, edge_ids))
+
+    ordered = sorted(
+        (action for action, _ in kept),
         key=lambda action: (
             action.action_type is NavigationActionType.STOP,
+            not bool(_action_edge_ids(action, overlay) & priority),
+            _question_direction_rank(belief.question, action.action_type),
             action.action_type.value,
             action.source_id or "",
             action.target_ids,
             action.relation or "",
         ),
+    )
+    result: list[GraphReadAction] = []
+    seen: set[tuple[object, ...]] = set()
+    for action in ordered:
+        key = (
+            action.action_type,
+            action.source_id,
+            action.target_ids,
+            action.relation,
+        )
+        if key not in seen:
+            seen.add(key)
+            result.append(action)
+    return result
+
+
+def _question_direction_rank(
+    question: str,
+    action_type: NavigationActionType,
+) -> int:
+    """Use an explicit temporal word only to break ordinal planning ties."""
+
+    normalized = question.casefold()
+    asks_forward = any(
+        marker in normalized
+        for marker in ("after", "following", "later", "next", "之后", "以后", "后来", "接下来")
+    )
+    asks_backward = any(
+        marker in normalized
+        for marker in ("before", "earlier", "prior", "之前", "以前", "此前")
+    )
+    if asks_forward == asks_backward:
+        return 0
+    preferred = (
+        NavigationActionType.TEMPORAL_FORWARD
+        if asks_forward
+        else NavigationActionType.TEMPORAL_BACK
+    )
+    opposite = (
+        NavigationActionType.TEMPORAL_BACK
+        if asks_forward
+        else NavigationActionType.TEMPORAL_FORWARD
+    )
+    if action_type is preferred:
+        return 0
+    if action_type is opposite:
+        return 2
+    return 1
+
+
+def _action_edge_ids(
+    action: GraphReadAction,
+    overlay: CausalTemporalOverlay,
+) -> set[str]:
+    if action.source_id is None:
+        return set()
+    return {
+        edge.edge_id
+        for edge in overlay.relations + overlay.l1_structural_relations
+        if action.source_id in {edge.src, edge.dst}
+        and any(target in {edge.src, edge.dst} for target in action.target_ids)
+        and (action.relation is None or action.relation in edge.relation_probabilities)
+    }
+
+
+def _verification_targets(
+    edge: object,
+    overlay: CausalTemporalOverlay,
+    acquired: set[str],
+) -> tuple[str, ...]:
+    known = {
+        node.node_id for node in overlay.atomic_events + overlay.l1_observations
+    }
+    by_id = {
+        node.node_id: node for node in overlay.atomic_events + overlay.l1_observations
+    }
+    candidates = [
+        str(value)
+        for value in getattr(edge, "evidence_refs", ())
+        if str(value) in known
+    ]
+    for endpoint in (getattr(edge, "src", ""), getattr(edge, "dst", "")):
+        node = by_id.get(endpoint)
+        if node is not None:
+            candidates.extend(ref for ref in node.source_segments if ref in known)
+    return tuple(
+        value for value in dict.fromkeys(candidates) if value not in acquired
     )

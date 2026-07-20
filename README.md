@@ -137,13 +137,18 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator \
   --question "What happened after the anchor event?" \
   --seed-event event:anchor \
   --missing-role temporal \
+  --belief-backend factor_graph \
   --output-dir /path/to/preference_navigation_run
 ```
 
-This is currently a rule-based engineering baseline with a replaceable belief
-backend. It emits categorical observation/belief deltas and ordinal trajectory
-preferences, never numeric reward or utility. Its sibling labels require
-independent review before training.
+The default backend is a discrete sum-product factor graph that maintains
+exploration belief, performs global conflict correction, and prioritizes which
+constraint to inspect. The world model remains a separate rule-based baseline
+that emits categorical observation/belief deltas; the planner uses ordinal
+trajectory preferences, never numeric reward or utility. GTSAM is reserved for
+future continuous latent time/track variables, and the factorized local-update
+backend remains available as an ablation. Sibling labels require independent
+review before training.
 
 Run the regression suite:
 

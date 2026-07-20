@@ -245,8 +245,8 @@ a_t^*=First(PreferredTrajectory({τ(a)}_a | b_t))</div>
 </ol>
 <p><strong>Go:</strong> audited candidate edges reach at least 70% precision; at least 20% of valid questions require a bridge event or delayed-preference hop; and world-model navigation improves supporting-event Recall@K by at least 10 absolute points or answer accuracy by at least 5 absolute points over both greedy and direct-preference baselines under equal retrieval calls. Edge/transition shuffling must materially reduce the gain. <strong>No-Go:</strong> the graph is too noisy, most questions are solved by direct semantic retrieval, a non-predictive beam/direct preference ranker matches the world model, or gains vanish under equal budgets.</p>
 
-<h3>15.10 Long-term vision (outside the current method and novelty claim)</h3>
-<p>The factor-graph and abstract-reasoning material below is retained only as a future-research note. The current paper does not implement a complete GTSAM-style factor graph, claim a general reasoning world model, or estimate classical causal effects. Its boundary is <strong>SelectStream latent memory substrate + uncertain causal-temporal belief + epistemic-action counterfactual training + implicit belief dynamics + real-observation posterior update</strong>.</p>
+<h3>15.10 Current factor-belief implementation and long-term vision</h3>
+<p>The current engineering baseline implements a discrete binary factor-graph backend with loopy sum-product inference for exploration-time belief maintenance, global identity/temporal conflict correction, and evidence-action prioritization. It does <strong>not</strong> implement a complete GTSAM-style continuous smoother, claim a general reasoning world model, or estimate classical causal effects. The operational split is: <strong>factor graph maintains and corrects belief; the implicit world model predicts categorical observation descriptors and belief deltas; the planner compares complete trajectories by pairwise preference, executes the preferred first skill, observes real evidence, updates belief, and replans.</strong> L2 remains the execution trace rather than being replaced by either component.</p>
 
 <h4>15.10.1 Starting question: a world model for abstract problem solving?</h4>
 <p>Classical world models learn physical or game transitions:</p>
@@ -284,6 +284,7 @@ a_t^*=First(PreferredTrajectory({τ(a)}_a | b_t))</div>
 <li><span class="math">φ_answer</span> — compatibility of intermediate variables with the final answer.</li>
 </ul>
 <p>Multi-hop reasoning then means: continuously acquire new evidence factors and perform incremental inference over latent variables.</p>
+<p><strong>Implemented boundary:</strong> the present backend represents relation hypotheses as binary variables and uses factors for deterministic/hard-verified evidence, admitted and grounded contradiction, temporal mutual exclusion, contradiction incompatibility, state-requires-identity, and causal-requires-temporal-precedence constraints. It also runs graph-level identity-component and verified-temporal-cycle checks. Its numeric marginals are internal belief probabilities, never reward or utility supervision.</p>
 
 <h4>15.10.4 Joint modeling of reasoning and evidence</h4>
 <p>We do not only “use a factor graph for reasoning.” More precisely, the factor graph jointly models reasoning, evidence acquisition, and belief update:</p>
@@ -317,6 +318,7 @@ a_t^*=First(PreferredTrajectory({τ(a)}_a | b_t))</div>
 <tr><td>Active SLAM</td><td>Actively choosing the next most valuable evidence</td></tr>
 </tbody></table>
 <p>The key value is <strong>incremental smoothing</strong>. Autoregressive reasoning <span class="math">A→B→C→D</span> often continues on an early error; a factor graph allows later evidence to trigger global posterior update and revise earlier variables — reasoning loop closure.</p>
+<p>Because current event time spans are observed intervals and current uncertainty is discrete, the runtime uses a compact sum-product engine. GTSAM becomes appropriate only after introducing continuous latent timestamps, track positions, motion constraints, or nonlinear incremental measurements; it should then be an optional belief backend behind the same snapshot contract, not a planner or reward model.</p>
 
 <h4>15.10.7 Factor graphs vs causality</h4>
 <p>A factor graph is not a causal graph. A factor <span class="math">φ(X,Y)</span> encodes local compatibility or dependence, not whether <span class="math">X→Y</span> or <span class="math">Y→X</span>. Factor graphs excel at evidence fusion, uncertainty, local constraint decomposition, global consistency, and posterior correction. Causal semantics must be injected by variable definitions and specific causal / temporal / transition factors. The system may mix non-causal identity factors, temporal factors, evidence-support factors, consistency factors, causal-mechanism factors, and action-conditioned transition factors. Accurate label:</p>

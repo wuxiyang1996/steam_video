@@ -837,17 +837,30 @@ Here, a counterfactual means epistemic-action branching: execute different evide
 
 ## 8. Are We Using a Factor Graph?
 
-The first version will not implement a complete GTSAM-style factor graph.
-
-It will use:
+Yes, for exploration-time belief maintenance—but not as L2, not as the world
+model, and not as a numeric reward model. The default L1.5 navigator now uses a
+discrete binary factor graph with loopy sum-product inference. It combines:
 
 - a sparse typed graph;
-- relation probabilities;
-- a question-conditioned factorized belief;
-- contradiction and missing-role updates;
+- relation priors and hard-verifier factors;
+- temporal, identity, state, causal, and contradiction compatibility factors;
+- question-conditioned posterior and missing-role updates;
+- global identity-conflict and temporal-cycle correction;
 - one- or two-step model-predictive planning.
 
-A complete factor graph may be considered later, but it is outside the first version and its novelty claim.
+The factor graph maintains belief and emits priority/blocked edges that guide
+the next evidence action. The implicit world model predicts categorical
+observation and belief deltas for candidate actions; the planner compares full
+candidate trajectories by pairwise preference, executes only the preferred
+first skill, observes real evidence, updates the factor graph, and replans.
+
+The current variables are discrete and event time spans are observed, so the
+implementation uses a small custom sum-product engine. It does not currently
+depend on GTSAM. GTSAM is reserved for a later optional backend if continuous
+latent timestamps, positions, track motion, or nonlinear measurement factors
+are introduced. Numeric factor marginals are belief probabilities only—never
+training rewards or utility labels. `FactorizedBeliefBackend` remains available
+as the matched local-update ablation.
 
 ## 9. Integration with Video_Skills
 

@@ -5,7 +5,11 @@ import hashlib
 import json
 from pathlib import Path
 
-from memory_graph.navigation import NavigationActionType, propose_navigation_actions
+from memory_graph.navigation import (
+    GraphReadAction,
+    NavigationActionType,
+    propose_navigation_actions,
+)
 from memory_graph.types import (
     CausalTemporalOverlay,
     EmbeddingRef,
@@ -18,6 +22,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     Answerability,
     ClosedLoopNavigator,
     FactorizedBeliefBackend,
+    FactorGraphBeliefBackend,
     PreferenceOnlyPlanner,
     RelationGrounding,
     RuleBasedObservationBeliefModel,
@@ -25,6 +30,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     VideoSkillsL2Adapter,
     build_video_skills_l2_rollout,
     generate_sibling_artifact,
+    guided_navigation_actions,
     load_overlay_artifact,
     validate_sibling_artifact,
 )
@@ -135,6 +141,252 @@ def test_factorized_backend_keeps_probabilities_as_relation_metadata() -> None:
     assert dict(relation.relation_probabilities)["enables"] == 0.82
     assert dict(relation.correlation_features)["correlation"] == 0.63
     assert belief.answerability is Answerability.NOT_READY
+
+
+def test_factor_graph_updates_posteriors_and_prioritizes_unresolved_role() -> None:
+    overlay = _overlay()
+    backend = FactorGraphBeliefBackend(inference_iterations=6)
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+
+    relation = belief.relation_states[0]
+    posterior = dict(relation.posterior_probabilities)
+    assert belief.backend_name == "hybrid_factor_graph/v0.1"
+    assert belief.backend_ref is not None
+    assert "sum-product" in belief.backend_ref
+    assert posterior["enables"] > dict(relation.relation_probabilities)["enables"]
+    assert "hard_verified_relation" in relation.factor_sources
+    assert relation.edge_id in belief.priority_edge_ids
+
+    actions = guided_navigation_actions(belief, overlay)
+    assert actions[0].action_type is NavigationActionType.CANDIDATE_CAUSE
+
+
+def test_factor_graph_does_not_promote_unverified_candidate_relation() -> None:
+    overlay = _overlay()
+    overlay.relations[0].provenance = {}
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    candidate = next(
+        action
+        for action in guided_navigation_actions(belief, overlay)
+        if action.action_type is NavigationActionType.CANDIDATE_CAUSE
+    )
+    observation = [node for node in overlay.atomic_events if node.node_id == "event:push"]
+
+    update = backend.update(belief, candidate, observation, overlay)
+
+    assert update.delta.resolved_roles == ()
+    assert update.belief.answerability is Answerability.NOT_READY
+    assert update.belief.relation_states[0].verified_relations == ()
+    assert (
+        update.belief.relation_states[0].grounding
+        is RelationGrounding.ENDPOINTS_OBSERVED
+    )
+
+
+def test_factor_guidance_uses_explicit_temporal_direction_as_tie_breaker() -> None:
+    overlay = _overlay()
+    backend = FactorGraphBeliefBackend()
+
+    after = backend.initialize(
+        "What happened after the person pushed the door?",
+        overlay,
+        seed_evidence=("event:push",),
+        missing_roles=("temporal",),
+    )
+    before = backend.initialize(
+        "What happened before the door opened?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("temporal",),
+    )
+
+    assert guided_navigation_actions(after, overlay)[0].action_type is (
+        NavigationActionType.TEMPORAL_FORWARD
+    )
+    assert guided_navigation_actions(before, overlay)[0].action_type is (
+        NavigationActionType.TEMPORAL_BACK
+    )
+
+
+def test_factor_graph_propagates_identity_component_contradiction() -> None:
+    l1_nodes = [
+        _node(f"l1:{name}", f"Observation {name}.", index * 2.0, node_type="observation")
+        for index, name in enumerate(("a", "b", "c"))
+    ]
+    events = [
+        _node(
+            f"event:{name}",
+            f"The same tracked person at {name}.",
+            index * 2.0,
+            node_type="atomic_event",
+            source_segments=[f"l1:{name}"],
+        )
+        for index, name in enumerate(("a", "b", "c"))
+    ]
+
+    def relation(
+        edge_id: str,
+        src: str,
+        dst: str,
+        name: str,
+        *,
+        verified: bool = False,
+    ) -> RelationBelief:
+        return RelationBelief(
+            edge_id=edge_id,
+            src=src,
+            dst=dst,
+            relation_probabilities={name: 0.9},
+            status=RelationStatus.UNCALIBRATED_PRIOR,
+            direction_confidence=0.9,
+            provenance=(
+                {"hard_verifier": {name: {"passed": True, "reasons": []}}}
+                if verified
+                else {}
+            ),
+        )
+
+    overlay = CausalTemporalOverlay(
+        overlay_id="overlay:identity-conflict",
+        example_id="example:identity-conflict",
+        video_id="video:preference",
+        l1_observations=l1_nodes,
+        atomic_events=events,
+        relations=[
+            relation("identity:ab", "event:a", "event:b", "same_entity", verified=True),
+            relation("identity:bc", "event:b", "event:c", "same_entity", verified=True),
+            relation(
+                "conflict:ac",
+                "event:a",
+                "event:c",
+                "contradicts",
+                verified=True,
+            ),
+        ],
+        metadata={"layer_contract": "l1_observations_plus_l1_5_atomic_overlay"},
+    )
+    backend = FactorGraphBeliefBackend()
+    belief = backend.initialize(
+        "Is this the same person?",
+        overlay,
+        seed_evidence=("event:a", "event:b"),
+        missing_roles=(),
+    )
+
+    assert belief.answerability is Answerability.READY
+    assert belief.contradictions == ()
+    assert next(
+        state for state in belief.relation_states if state.edge_id == "identity:ab"
+    ).grounding is RelationGrounding.VERIFIED
+
+    update = backend.update(
+        belief,
+        GraphReadAction(
+            action_type=NavigationActionType.SEMANTIC,
+            target_ids=("event:c",),
+        ),
+        [events[2]],
+        overlay,
+    )
+    belief = update.belief
+
+    assert belief.answerability is Answerability.NOT_READY
+    assert set(belief.contradictions) == {
+        "identity:ab",
+        "identity:bc",
+        "conflict:ac",
+    }
+    assert set(belief.blocked_edge_ids) == set(belief.contradictions)
+    assert all(
+        state.grounding is RelationGrounding.CONTRADICTED
+        for state in belief.relation_states
+    )
+    assert set(update.delta.contradiction_updates) == set(belief.contradictions)
+    actions = guided_navigation_actions(belief, overlay)
+    assert not any(
+        action.action_type is NavigationActionType.TRACK_ENTITY
+        for action in actions
+    )
+    verify = [
+        action
+        for action in actions
+        if action.action_type is NavigationActionType.VERIFY
+    ]
+    assert verify
+    assert set(verify[0].target_ids) <= {"l1:a", "l1:b", "l1:c"}
+
+
+def test_factor_graph_ignores_unverified_contradiction_candidate() -> None:
+    overlay = _overlay()
+    overlay.relations[0] = RelationBelief(
+        edge_id="candidate:contradiction",
+        src="event:push",
+        dst="event:open",
+        relation_probabilities={"contradicts": 0.9},
+        status=RelationStatus.UNCALIBRATED_PRIOR,
+        direction_confidence=0.9,
+    )
+
+    belief = FactorGraphBeliefBackend().initialize(
+        "Did these observations conflict?",
+        overlay,
+        seed_evidence=("event:push", "event:open"),
+        missing_roles=(),
+    )
+
+    assert belief.contradictions == ()
+    assert belief.blocked_edge_ids == ()
+    assert belief.relation_states[0].grounding is RelationGrounding.ENDPOINTS_OBSERVED
+
+
+def test_factor_graph_blocks_only_edges_on_verified_temporal_cycle() -> None:
+    overlay = _overlay()
+    extra = _node(
+        "event:later",
+        "A later event.",
+        4.0,
+        node_type="atomic_event",
+    )
+    overlay.atomic_events.append(extra)
+
+    def verified_before(edge_id: str, src: str, dst: str) -> RelationBelief:
+        return RelationBelief(
+            edge_id=edge_id,
+            src=src,
+            dst=dst,
+            relation_probabilities={"before": 0.9},
+            status=RelationStatus.UNCALIBRATED_PRIOR,
+            direction_confidence=0.9,
+            provenance={
+                "hard_verifier": {"before": {"passed": True, "reasons": []}}
+            },
+        )
+
+    overlay.relations = [
+        verified_before("upstream", "event:push", "event:open"),
+        verified_before("cycle:forward", "event:open", "event:later"),
+        verified_before("cycle:back", "event:later", "event:open"),
+    ]
+    belief = FactorGraphBeliefBackend().initialize(
+        "What happened next?",
+        overlay,
+        seed_evidence=("event:push", "event:open", "event:later"),
+        missing_roles=(),
+    )
+
+    assert set(belief.blocked_edge_ids) == {"cycle:forward", "cycle:back"}
+    assert "upstream" not in belief.contradictions
 
 
 def test_candidate_causal_edges_propose_directional_actions() -> None:
@@ -404,4 +656,5 @@ def test_cli_writes_navigation_l2_belief_and_sibling_artifacts(
     summary = json.loads((output_dir / "run_summary.json").read_text())
     assert summary["final_answerability"] == "ready"
     assert summary["preference_output_contract"] == "ordinal_only"
+    assert summary["belief_backend"] == "hybrid_factor_graph/v0.1"
     assert summary["sibling_branch_count"] > 1

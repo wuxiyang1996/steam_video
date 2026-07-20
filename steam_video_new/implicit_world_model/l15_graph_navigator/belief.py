@@ -205,6 +205,7 @@ def _relation_state(
         src=edge.src,
         dst=edge.dst,
         relation_probabilities=tuple(sorted(edge.relation_probabilities.items())),
+        posterior_probabilities=tuple(sorted(edge.relation_probabilities.items())),
         correlation_features=tuple(sorted(edge.features.items())),
         verified_relations=_verified_relations(edge),
         calibration_status=edge.status.value,

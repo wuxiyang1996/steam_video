@@ -33,8 +33,10 @@ def relation_state_to_dict(state: RelationState) -> dict[str, Any]:
         "src": state.src,
         "dst": state.dst,
         "relation_probabilities": dict(state.relation_probabilities),
+        "posterior_probabilities": dict(state.posterior_probabilities),
         "correlation_features": dict(state.correlation_features),
         "verified_relations": list(state.verified_relations),
+        "factor_sources": list(state.factor_sources),
         "calibration_status": state.calibration_status,
         "grounding": state.grounding.value,
     }
@@ -53,6 +55,8 @@ def belief_to_dict(belief: BeliefSnapshot) -> dict[str, Any]:
         "relation_states": [
             relation_state_to_dict(state) for state in belief.relation_states
         ],
+        "priority_edge_ids": list(belief.priority_edge_ids),
+        "blocked_edge_ids": list(belief.blocked_edge_ids),
         "uncertainty": belief.uncertainty.value,
         "answerability": belief.answerability.value,
         "remaining_graph_reads": belief.remaining_graph_reads,

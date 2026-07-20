@@ -14,10 +14,15 @@ L1.5 causal-temporal overlay
   → provide atomic events, temporal edges, and candidate explain / enable relations
   → define the structured hypothesis space for navigation
 
+factor-graph belief backend
+  → maintain question-conditioned relation posteriors and global consistency
+  → identify conflicts, blocked hypotheses, and the next constraint to inspect
+
 implicit world model
-  → predict observation and belief change, then compare candidate trajectories by preference
+  → predict categorical observation descriptors and belief deltas
 
 navigator
+  → compare complete candidate trajectories by pairwise preference
   → execute only the first planned action
   → read a real L1 / L1.5 node
   → update the belief and replan
@@ -25,14 +30,20 @@ navigator
 
 The L1.5 graph is not the world model. It is the environment and structural prior over which the world model predicts, acts, and receives real observations.
 
-### 1.1 Runnable v0.1 implementation
+The factor graph is neither L2 nor the learned world model. It is the
+exploration-time belief state used by both components. L2 remains the audited
+execution trace, while the world model predicts how an action may change this
+belief before the corresponding evidence is read.
+
+### 1.1 Runnable implementation
 
 The first preference-only closed loop is implemented in this package:
 
 | File | Responsibility |
 |---|---|
 | `contracts.py` | Backend-neutral belief, categorical transition, four-way preference, plan, and L2-trace contracts |
-| `belief.py` | `FactorizedBeliefBackend`, which updates relation grounding only after real graph observations |
+| `belief.py` | `FactorizedBeliefBackend`, retained as a local-update ablation |
+| `factor_graph.py` | Default discrete sum-product backend, global conflict checks, posterior projection, and exploration priorities |
 | `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
 | `planner.py` | Horizon-one/two expansion, pairwise partial-order selection, real read, belief update, and replanning |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
@@ -45,13 +56,13 @@ Minimal use with an existing `CausalTemporalOverlay`:
 ```python
 from steam_video_new.implicit_world_model.l15_graph_navigator import (
     ClosedLoopNavigator,
-    FactorizedBeliefBackend,
+    FactorGraphBeliefBackend,
     PreferenceOnlyPlanner,
     RuleBasedObservationBeliefModel,
     RuleBasedTrajectoryPreferenceModel,
 )
 
-backend = FactorizedBeliefBackend()
+backend = FactorGraphBeliefBackend()
 belief = backend.initialize(
     question,
     overlay,
@@ -93,6 +104,7 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator \
   --question "What happened after the person opened the door?" \
   --seed-event event:anchor \
   --missing-role temporal \
+  --belief-backend factor_graph \
   --horizon 2 \
   --graph-read-budget 4 \
   --output-dir /path/to/preference_navigation_run
@@ -441,10 +453,11 @@ This design does not attempt to:
 - replace the existing `memory_graph` or Video_Skills stack with a new graph system;
 - enlarge the world-model claim before graph-aware retrieval is shown to help.
 
-## 14. Factor-Graph Upgrade Boundary
+## 14. Factor-Graph Belief Backend and GTSAM Boundary
 
-The v0.1 backend is deliberately factorized, not a complete factor graph. A
-future `FactorGraphBeliefBackend` should implement the same two operations:
+`FactorGraphBeliefBackend` is now the default runtime backend. It implements a
+binary relation-hypothesis graph and loopy sum-product inference, then projects
+the result into the same backend-neutral `BeliefSnapshot` contract:
 
 ```text
 initialize(question, overlay, seed_evidence, missing_roles, budget)
@@ -454,12 +467,25 @@ update(belief, real_action, real_observations, overlay)
   → BeliefUpdateResult
 ```
 
-The factor-graph implementation may keep a GTSAM, Pyro, or custom
-message-passing object behind `BeliefSnapshot.backend_ref`. It must still
-project its posterior into the shared snapshot fields: acquired evidence,
-frontier, missing roles, contradictions, relation grounding, uncertainty
-category, and answerability category. The following components must remain
-unchanged when that backend is introduced:
+The implemented factors cover deterministic and hard-verified evidence,
+admitted and grounded contradiction, temporal mutual exclusion, contradiction
+incompatibility, state-requires-identity, and causal-requires-precedence.
+Global checks additionally detect identity-component contradictions and
+verified temporal cycles. Later observations reconstruct the active factor
+graph and can therefore revise earlier relation grounding: this is the current
+form of exploration-time smoothing and loop closure.
+
+Numeric marginals are internal belief values, not rewards, utilities, or
+preference labels. The world model still produces categorical observation and
+belief-delta descriptors, and the planner still selects among complete
+candidate trajectories using only four-way pairwise preference.
+
+GTSAM is deliberately not a runtime dependency today. Event time spans are
+observed intervals and relation hypotheses are discrete, so a small custom
+sum-product engine matches the current variables more directly. Introduce an
+optional GTSAM-backed smoother only when the state contains continuous latent
+timestamps, track positions, motion constraints, or incremental nonlinear
+measurements. That backend must preserve:
 
 - L1 evidence and L1.5 graph schemas;
 - graph action generation and real `ReadGraph` execution;
@@ -467,8 +493,10 @@ unchanged when that backend is introduced:
 - four-way pairwise trajectory preference;
 - first-action execution and L2 rollout logging.
 
-Adopt the full factor graph only if the factorized backend fails a targeted
-global-consistency test—for example, later evidence cannot revise an earlier
-identity assignment, mutually exclusive hypotheses retain incompatible mass,
-or loop closure materially improves navigation. It is an evidence-triggered
-backend upgrade, not a prerequisite for the v0.1 closed loop.
+Use `--belief-backend factorized` for the local-update ablation. Use
+`--factor-iterations N` to control message-passing iterations. The run summary
+records the selected backend, inference reference, and whether the optional
+`gtsam` package is importable; availability does not silently change inference.
+Explicit before/after wording is used only as a categorical tie-breaker between
+otherwise admissible temporal actions; it is not converted into an action
+score.

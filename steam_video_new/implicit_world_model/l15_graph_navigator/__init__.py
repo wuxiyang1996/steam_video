@@ -22,7 +22,13 @@ from .contracts import (
     UncertaintyChange,
     UncertaintyLevel,
 )
-from .planner import ClosedLoopNavigator, PersistedGraphReadExecutor, PreferenceOnlyPlanner
+from .planner import (
+    ClosedLoopNavigator,
+    PersistedGraphReadExecutor,
+    PreferenceOnlyPlanner,
+    guided_navigation_actions,
+)
+from .factor_graph import FactorGraphBeliefBackend, GTSAM_AVAILABLE
 from .overlay_io import LoadedOverlayArtifact, load_overlay_artifact, overlay_from_dict
 from .world_model import (
     RuleBasedObservationBeliefModel,
@@ -47,6 +53,8 @@ __all__ = [
     "ClosedLoopNavigator",
     "EvidenceRole",
     "FactorizedBeliefBackend",
+    "FactorGraphBeliefBackend",
+    "GTSAM_AVAILABLE",
     "GraphReadExecution",
     "GraphReadExecutor",
     "NavigationRun",
@@ -69,6 +77,7 @@ __all__ = [
     "build_video_skills_l2_rollout",
     "belief_to_dict",
     "generate_sibling_artifact",
+    "guided_navigation_actions",
     "load_overlay_artifact",
     "navigation_run_to_dict",
     "overlay_from_dict",

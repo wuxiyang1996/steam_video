@@ -73,8 +73,10 @@ class RelationState:
     src: str
     dst: str
     relation_probabilities: tuple[tuple[str, float], ...]
+    posterior_probabilities: tuple[tuple[str, float], ...] = ()
     correlation_features: tuple[tuple[str, float], ...] = ()
     verified_relations: tuple[str, ...] = ()
+    factor_sources: tuple[str, ...] = ()
     calibration_status: str = "uncalibrated_prior"
     grounding: RelationGrounding = RelationGrounding.UNSEEN
 
@@ -82,6 +84,9 @@ class RelationState:
         for name, value in self.relation_probabilities:
             if not math.isfinite(value) or not 0.0 <= value <= 1.0:
                 raise ValueError(f"{name} probability must be in [0, 1]")
+        for name, value in self.posterior_probabilities:
+            if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} posterior must be in [0, 1]")
         for name, value in self.correlation_features:
             if not math.isfinite(value):
                 raise ValueError(f"{name} correlation feature must be finite")
@@ -99,6 +104,8 @@ class BeliefSnapshot:
     missing_roles: tuple[str, ...] = ()
     contradictions: tuple[str, ...] = ()
     relation_states: tuple[RelationState, ...] = ()
+    priority_edge_ids: tuple[str, ...] = ()
+    blocked_edge_ids: tuple[str, ...] = ()
     uncertainty: UncertaintyLevel = UncertaintyLevel.HIGH
     answerability: Answerability = Answerability.NOT_READY
     remaining_graph_reads: int = 8

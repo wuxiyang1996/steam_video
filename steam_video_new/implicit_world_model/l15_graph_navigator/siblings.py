@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from memory_graph.navigation import NavigationActionType, propose_navigation_actions
+from memory_graph.navigation import NavigationActionType
 from memory_graph.types import CausalTemporalOverlay
 
 from .artifacts import (
@@ -27,6 +27,7 @@ from .contracts import (
     TrajectoryPreferenceModel,
     UncertaintyChange,
 )
+from .planner import guided_navigation_actions
 
 
 def generate_sibling_artifact(
@@ -41,16 +42,7 @@ def generate_sibling_artifact(
 ) -> dict[str, Any]:
     """Execute every branch against persisted graph state, never imagined text."""
 
-    actions = sorted(
-        propose_navigation_actions(belief.navigation_view(), overlay),
-        key=lambda action: (
-            action.action_type is NavigationActionType.STOP,
-            action.action_type.value,
-            action.source_id or "",
-            action.target_ids,
-            action.relation or "",
-        ),
-    )
+    actions = guided_navigation_actions(belief, overlay)
     if not include_stop:
         actions = [
             action
