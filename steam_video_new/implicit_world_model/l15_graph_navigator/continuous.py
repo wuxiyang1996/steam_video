@@ -1,4 +1,8 @@
-"""Optional continuous-belief boundary for a future GTSAM/iSAM2 smoother."""
+"""Compatibility continuous-belief boundary.
+
+The canonical GTSAM design and binding-status discussion live in
+``steam_video/factor_graph``.
+"""
 
 from __future__ import annotations
 

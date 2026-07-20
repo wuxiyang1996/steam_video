@@ -837,30 +837,12 @@ Here, a counterfactual means epistemic-action branching: execute different evide
 
 ## 8. Are We Using a Factor Graph?
 
-Yes, for exploration-time belief maintenance—but not as L2, not as the world
-model, and not as a numeric reward model. The default L1.5 navigator now uses a
-discrete binary factor graph with loopy sum-product inference. It combines:
-
-- a sparse typed graph;
-- relation priors and hard-verifier factors;
-- temporal, identity, state, causal, and contradiction compatibility factors;
-- question-conditioned posterior and missing-role updates;
-- global identity-conflict and temporal-cycle correction;
-- one- or two-step model-predictive planning.
-
-The factor graph maintains belief and emits priority/blocked edges that guide
-the next evidence action. The implicit world model predicts categorical
-observation and belief deltas for candidate actions; the planner compares full
-candidate trajectories by pairwise preference, executes only the preferred
-first skill, observes real evidence, updates the factor graph, and replans.
-
-The current variables are discrete and event time spans are observed, so the
-implementation uses a small custom sum-product engine. It does not currently
-depend on GTSAM. GTSAM is reserved for a later optional backend if continuous
-latent timestamps, positions, track motion, or nonlinear measurement factors
-are introduced. Numeric factor marginals are belief probabilities only—never
-training rewards or utility labels. `FactorizedBeliefBackend` remains available
-as the matched local-update ablation.
+Yes, only for exploration-time belief maintenance. It is neither L2, the world
+model, nor a numeric reward model. The complete variable/factor definition,
+Active-SLAM analogy, strict preference-only LLM boundary, GTSAM discrete
+implementation, pilot, destructive controls, and migration status are
+centralized in [`factor_graph/README.md`](../factor_graph/README.md). This
+document treats that file as the canonical specification.
 
 ## 9. Integration with Video_Skills
 

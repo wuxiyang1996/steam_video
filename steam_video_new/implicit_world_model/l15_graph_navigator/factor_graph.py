@@ -1,7 +1,8 @@
-"""Hybrid discrete factor-graph backend for exploration-time belief maintenance.
+"""Compatibility factor-graph backend for exploration-time belief maintenance.
 
 Numeric probabilities are internal belief marginals. They are never action
 rewards and never enter the preference-only planner as utility values.
+The canonical GTSAM implementation and design live in ``steam_video/factor_graph``.
 """
 
 from __future__ import annotations

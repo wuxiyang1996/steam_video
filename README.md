@@ -141,14 +141,12 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator \
   --output-dir /path/to/preference_navigation_run
 ```
 
-The default backend is a discrete sum-product factor graph that maintains
-exploration belief, performs global conflict correction, and prioritizes which
-constraint to inspect. The world model remains a separate rule-based baseline
-that emits categorical observation/belief deltas; the planner uses ordinal
-trajectory preferences, never numeric reward or utility. GTSAM is reserved for
-future continuous latent time/track variables, and the factorized local-update
-backend remains available as an ablation. Sibling labels require independent
-review before training.
+The default production-compatible backend is currently a discrete Python
+sum-product graph. The canonical factor-graph design, strict LLM/numeric
+boundary, real GTSAM discrete pilot, Active-SLAM correction experiment, and
+migration plan now live in [`factor_graph/README.md`](factor_graph/README.md).
+The factorized local-update backend remains an ablation, and sibling labels
+still require independent review before training.
 
 For fixed multi-case generation, blinded four-way preference annotation,
 training-record export, lightweight categorical-model training, and the

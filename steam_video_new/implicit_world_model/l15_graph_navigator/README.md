@@ -43,8 +43,8 @@ The first preference-only closed loop is implemented in this package:
 |---|---|
 | `contracts.py` | Backend-neutral belief, categorical transition, four-way preference, plan, and L2-trace contracts |
 | `belief.py` | `FactorizedBeliefBackend`, retained as a local-update ablation |
-| `factor_graph.py` | Default discrete sum-product backend, global conflict checks, posterior projection, and exploration priorities |
-| `continuous.py` | Plug-in protocol for a future continuous GTSAM/iSAM2 subgraph; current implementation records observed intervals only |
+| `factor_graph.py` | Production-compatible discrete sum-product adapter; canonical design and GTSAM pilot are in [`factor_graph/`](../../../factor_graph/) |
+| `continuous.py` | Compatibility protocol for optional continuous smoothing; canonical boundary is documented in [`factor_graph/`](../../../factor_graph/) |
 | `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
 | `planner.py` | Horizon-one/two expansion, pairwise partial-order selection, real read, belief update, and replanning |
 | `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
@@ -543,54 +543,16 @@ This design does not attempt to:
 
 ## 14. Factor-Graph Belief Backend and GTSAM Boundary
 
-`FactorGraphBeliefBackend` is now the default runtime backend. It implements a
-binary relation-hypothesis graph and loopy sum-product inference, then projects
-the result into the same backend-neutral `BeliefSnapshot` contract:
+The canonical specification has moved to
+[`factor_graph/README.md`](../../../factor_graph/README.md). It covers the
+belief/L2/world-model separation, reasoning-as-Active-SLAM mapping, variables
+and factors, preference-only LLM contract, GTSAM 4.2.1 binding limits, runnable
+correction pilot, four-arm destructive-control experiment, embedding boundary,
+and production migration gates.
 
-```text
-initialize(question, overlay, seed_evidence, missing_roles, budget)
-  → BeliefSnapshot
-
-update(belief, real_action, real_observations, overlay)
-  → BeliefUpdateResult
-```
-
-The implemented factors cover deterministic and hard-verified evidence,
-admitted and grounded contradiction, temporal mutual exclusion, contradiction
-incompatibility, state-requires-identity, and causal-requires-precedence.
-Global checks additionally detect identity-component contradictions and
-verified temporal cycles. Later observations reconstruct the active factor
-graph and can therefore revise earlier relation grounding: this is the current
-form of exploration-time smoothing and loop closure.
-
-Numeric marginals are internal belief values, not rewards, utilities, or
-preference labels. The world model still produces categorical observation and
-belief-delta descriptors, and the planner still selects among complete
-candidate trajectories using only four-way pairwise preference.
-
-GTSAM is deliberately not a runtime dependency today. Event time spans are
-observed intervals and relation hypotheses are discrete, so a small custom
-sum-product engine matches the current variables more directly. Introduce an
-optional GTSAM-backed smoother only when the state contains continuous latent
-timestamps, track positions, motion constraints, or incremental nonlinear
-measurements. That backend must preserve:
-
-`ContinuousBeliefSmoother` is the implementation boundary for that future
-backend. `FactorGraphBeliefBackend` already accepts a smoother instance, while
-the default `ObservedIntervalSmoother` declares zero continuous latent
-variables and performs no optimization. A GTSAM implementation must not be
-added until continuous latent variables and measurement factors are specified.
-
-- L1 evidence and L1.5 graph schemas;
-- graph action generation and real `ReadGraph` execution;
-- categorical observation/belief-delta world-model outputs;
-- four-way pairwise trajectory preference;
-- first-action execution and L2 rollout logging.
-
-Use `--belief-backend factorized` for the local-update ablation. Use
-`--factor-iterations N` to control message-passing iterations. The run summary
-records the selected backend, inference reference, and whether the optional
-`gtsam` package is importable; availability does not silently change inference.
-Explicit before/after wording is used only as a categorical tie-breaker between
-otherwise admissible temporal actions; it is not converted into an action
-score.
+This package retains `FactorGraphBeliefBackend` as the default
+production-compatible Python sum-product adapter and
+`FactorizedBeliefBackend` as its local-update ablation. Installing GTSAM does
+not silently change navigator inference. Use `--factor-iterations N` only for
+the compatibility backend; use the commands in the canonical document for the
+GTSAM pilot.
