@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import fields
+import hashlib
+import json
+from pathlib import Path
 
 from memory_graph.navigation import NavigationActionType, propose_navigation_actions
 from memory_graph.types import (
     CausalTemporalOverlay,
+    EmbeddingRef,
     MemoryNode,
     RelationBelief,
     RelationStatus,
@@ -18,12 +22,18 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     RelationGrounding,
     RuleBasedObservationBeliefModel,
     RuleBasedTrajectoryPreferenceModel,
+    VideoSkillsL2Adapter,
+    build_video_skills_l2_rollout,
+    generate_sibling_artifact,
+    load_overlay_artifact,
+    validate_sibling_artifact,
 )
 from steam_video_new.implicit_world_model.l15_graph_navigator.contracts import (
     PlanDecision,
     PredictedTransition,
     TrajectoryPrediction,
 )
+from steam_video_new.implicit_world_model.l15_graph_navigator.run import main as run_main
 
 
 def _node(
@@ -94,6 +104,11 @@ def _overlay() -> CausalTemporalOverlay:
         l1_observations=[l1_push, l1_open],
         atomic_events=[push, opened],
         relations=[relation],
+        metadata={
+            "layer_contract": "l1_observations_plus_l1_5_atomic_overlay",
+            "input_mode": "video_only",
+            "source_l1_graph_id": "clue_memory:preference",
+        },
     )
 
 
@@ -238,3 +253,155 @@ def test_unverified_candidate_edge_does_not_close_dependency_role() -> None:
         update.belief.relation_states[0].grounding
         is RelationGrounding.ENDPOINTS_OBSERVED
     )
+
+
+def test_disabled_hard_verifier_does_not_count_as_verified() -> None:
+    overlay = _overlay()
+    overlay.relations[0].provenance = {
+        "hard_verifier": {
+            "enables": {
+                "passed": True,
+                "reasons": ["hard verification disabled"],
+            }
+        }
+    }
+    backend = FactorizedBeliefBackend()
+    initial = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    candidate = next(
+        action
+        for action in propose_navigation_actions(initial.navigation_view(), overlay)
+        if action.action_type is NavigationActionType.CANDIDATE_CAUSE
+    )
+    observation = [node for node in overlay.atomic_events if node.node_id == "event:push"]
+
+    update = backend.update(initial, candidate, observation, overlay)
+
+    assert update.delta.resolved_roles == ()
+    assert (
+        update.belief.relation_states[0].grounding
+        is RelationGrounding.ENDPOINTS_OBSERVED
+    )
+
+
+def test_overlay_loader_preserves_qwen_embedding_and_provenance(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    embedding_path = tmp_path / "event_embeddings.npy"
+    embedding_path.write_bytes(b"embedding-matrix-placeholder")
+    checksum = hashlib.sha256(embedding_path.read_bytes()).hexdigest()
+    overlay.atomic_events[0].embedding_ref = EmbeddingRef(
+        path=str(embedding_path),
+        model="Qwen/Qwen3-VL-Embedding-2B",
+        dimension=2048,
+        row_index=0,
+        checksum=checksum,
+    )
+    artifact_path = tmp_path / "causal_temporal_overlay.json"
+    artifact_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+
+    loaded = load_overlay_artifact(
+        artifact_path,
+        require_embedding_files=True,
+        verify_embedding_checksums=True,
+    )
+
+    event = loaded.overlay.atomic_events[0]
+    assert loaded.embedding_problems == ()
+    assert event.embedding_ref is not None
+    assert event.embedding_ref.model == "Qwen/Qwen3-VL-Embedding-2B"
+    assert event.embedding_ref.row_index == 0
+    assert event.provenance["created_by"] == "test"
+
+
+def test_video_skills_adapter_and_siblings_emit_only_real_grounded_reads() -> None:
+    overlay = _overlay()
+    backend = FactorizedBeliefBackend()
+    belief = backend.initialize(
+        "Why did the door open?",
+        overlay,
+        seed_evidence=("event:open",),
+        missing_roles=("dependency",),
+    )
+    adapter = VideoSkillsL2Adapter(use_video_skills_runtime=False)
+    planner = _planner(horizon=1)
+    run = ClosedLoopNavigator(backend, planner, adapter).run(
+        belief,
+        overlay,
+        max_steps=2,
+    )
+    siblings = generate_sibling_artifact(
+        belief,
+        overlay,
+        backend=backend,
+        executor=adapter,
+        world_model=RuleBasedObservationBeliefModel(),
+        preference_model=RuleBasedTrajectoryPreferenceModel(),
+    )
+    l2 = build_video_skills_l2_rollout(
+        run,
+        overlay,
+        question=belief.question,
+    )
+
+    first_node = l2["nodes"][0]
+    assert first_node["skill_id"] == "retrieve_by_relation"
+    assert first_node["outputs"]["real_observation_ids"] == ["event:push"]
+    assert first_node["evidence_refs"] == ["l1:push"]
+    assert l2["preference_navigation"]["output_contract"] == "ordinal_only"
+    assert siblings["annotation_status"] == "requires_independent_annotation"
+    assert siblings["pairwise_preferences"]
+    assert validate_sibling_artifact(siblings) == []
+    assert {
+        row["belief_before_id"] for row in siblings["branches"]
+    } == {belief.belief_id}
+    serialized = json.dumps({"l2": l2, "siblings": siblings}).lower()
+    for forbidden in ('"reward"', '"utility"', '"q_value"', '"score"'):
+        assert forbidden not in serialized
+
+
+def test_cli_writes_navigation_l2_belief_and_sibling_artifacts(
+    tmp_path: Path,
+) -> None:
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(_overlay().to_dict()), encoding="utf-8")
+    output_dir = tmp_path / "run"
+
+    status = run_main(
+        [
+            "--overlay",
+            str(overlay_path),
+            "--question",
+            "Why did the door open?",
+            "--seed-event",
+            "event:open",
+            "--missing-role",
+            "dependency",
+            "--horizon",
+            "1",
+            "--max-steps",
+            "2",
+            "--output-dir",
+            str(output_dir),
+            "--no-video-skills-runtime",
+        ]
+    )
+
+    assert status == 0
+    expected = {
+        "navigation_run.json",
+        "l2_rollout.json",
+        "belief_snapshots.jsonl",
+        "sibling_checkpoint.json",
+        "run_summary.json",
+    }
+    assert {path.name for path in output_dir.iterdir()} == expected
+    summary = json.loads((output_dir / "run_summary.json").read_text())
+    assert summary["final_answerability"] == "ready"
+    assert summary["preference_output_contract"] == "ordinal_only"
+    assert summary["sibling_branch_count"] > 1

@@ -199,6 +199,7 @@ class NavigationStep:
     observation_ids: tuple[str, ...]
     belief_after_id: str
     realized_belief_delta: BeliefDeltaDescriptor | None = None
+    skill_invocation: dict[str, object] | None = None
 
     def to_l2_record(self) -> dict[str, object]:
         action = self.decision.selected_action
@@ -238,6 +239,7 @@ class NavigationStep:
                 if realized_delta is not None
                 else None
             ),
+            "skill_invocation": self.skill_invocation,
         }
 
 
@@ -246,6 +248,7 @@ class NavigationRun:
     initial_belief_id: str
     final_belief: BeliefSnapshot
     steps: tuple[NavigationStep, ...] = ()
+    belief_snapshots: tuple[BeliefSnapshot, ...] = ()
 
     def to_l2_rollout(self) -> list[dict[str, object]]:
         return [step.to_l2_record() for step in self.steps]
@@ -271,6 +274,21 @@ class BeliefBackend(Protocol):
         observations: list[MemoryNode],
         overlay: CausalTemporalOverlay,
     ) -> BeliefUpdateResult: ...
+
+
+@dataclass(frozen=True)
+class GraphReadExecution:
+    observations: tuple[MemoryNode, ...]
+    skill_invocation: dict[str, object]
+
+
+class GraphReadExecutor(Protocol):
+    def execute(
+        self,
+        belief: BeliefSnapshot,
+        action: GraphReadAction,
+        overlay: CausalTemporalOverlay,
+    ) -> GraphReadExecution: ...
 
 
 class ObservationBeliefWorldModel(Protocol):

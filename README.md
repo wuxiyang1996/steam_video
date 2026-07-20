@@ -129,6 +129,22 @@ python -m memory_graph.navigation_ablation \
   --output /path/to/navigation_report.json
 ```
 
+Run the preference-only L1.5 navigator with real Video_Skills retrieval calls:
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator \
+  --overlay /path/to/causal_temporal_overlay.json \
+  --question "What happened after the anchor event?" \
+  --seed-event event:anchor \
+  --missing-role temporal \
+  --output-dir /path/to/preference_navigation_run
+```
+
+This is currently a rule-based engineering baseline with a replaceable belief
+backend. It emits categorical observation/belief deltas and ordinal trajectory
+preferences, never numeric reward or utility. Its sibling labels require
+independent review before training.
+
 Run the regression suite:
 
 ```bash
@@ -160,4 +176,4 @@ are:
 - [L1 reliability contract](memory_graph/L1_RELIABILITY.md)
 - [Independent L1 audit protocol](memory_graph/INDEPENDENT_L1_AUDIT_PROTOCOL.md)
 - [Validation history and staged protocol](memory_graph/VALIDATION.md)
-
+- [Preference-only implicit world-model navigator](steam_video_new/implicit_world_model/l15_graph_navigator/README.md)

@@ -35,6 +35,10 @@ The first preference-only closed loop is implemented in this package:
 | `belief.py` | `FactorizedBeliefBackend`, which updates relation grounding only after real graph observations |
 | `world_model.py` | Categorical observation/belief-delta baseline and ordinal trajectory comparator |
 | `planner.py` | Horizon-one/two expansion, pairwise partial-order selection, real read, belief update, and replanning |
+| `overlay_io.py` | Strict `steam-causal-overlay/v0.2` loader with embedding-reference checks |
+| `video_skills_adapter.py` | Real Video_Skills retrieval execution and schema-compatible L2 rollout export |
+| `siblings.py` | Real one-step action branching with provisional four-way preference labels |
+| `run.py` | CLI that writes navigation, L2, belief, sibling, and summary artifacts |
 
 Minimal use with an existing `CausalTemporalOverlay`:
 
@@ -80,6 +84,42 @@ dependency role. Promotion to `verified` requires a passed hard verifier (or an
 accepted identity track for the relevant identity/state relations). Exported
 L2 records contain real observation IDs, realized belief deltas, and ordinal
 trajectory labels, but no model-generated reward or utility.
+
+### 1.2 Run on a persisted artifact
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator \
+  --overlay /path/to/causal_temporal_overlay.json \
+  --question "What happened after the person opened the door?" \
+  --seed-event event:anchor \
+  --missing-role temporal \
+  --horizon 2 \
+  --graph-read-budget 4 \
+  --output-dir /path/to/preference_navigation_run
+```
+
+By default the CLI discovers the sibling `Video_Skills` repository and calls
+its real `retrieve_by_event`, `retrieve_by_relation`,
+`bridge_evidence_hops`, and `search_counterevidence` functions. Use
+`--video-skills-root` when the repository is elsewhere. The explicit
+`--no-video-skills-runtime` option exists only for isolated tests and replay.
+
+The output directory contains:
+
+| Artifact | Contract |
+|---|---|
+| `navigation_run.json` | Plans, categorical predictions, real observations, and realized belief deltas |
+| `l2_rollout.json` | Video_Skills `SkillGraphRollout`-compatible execution record |
+| `belief_snapshots.jsonl` | Initial and post-observation backend-neutral beliefs |
+| `sibling_checkpoint.json` | Real branches from one immutable checkpoint and provisional pairwise labels |
+| `run_summary.json` | Counts, final answerability, embedding status, and output-contract audit |
+
+`sibling_checkpoint.json` is validated against
+`sibling_trajectory.schema.json`. Its rule-derived labels are always marked
+`rule_based_provisional/v0.1` and `requires_independent_annotation`; they are
+not training gold until independently reviewed. Numeric retrieval similarity,
+edge probability, and runtime cost may remain audit metadata, but no numeric
+reward, Q-value, or utility is emitted.
 
 ## 2. Why Use the L1.5 Graph
 

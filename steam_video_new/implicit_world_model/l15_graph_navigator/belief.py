@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 
 from memory_graph.navigation import GraphReadAction, NavigationActionType
@@ -150,7 +151,7 @@ class FactorizedBeliefBackend:
         uncertainty_change = _compare_uncertainty(previous_uncertainty, uncertainty)
         next_step = belief.step + 1
         next_belief = BeliefSnapshot(
-            belief_id=f"{overlay.overlay_id}:belief:{next_step}",
+            belief_id=_next_belief_id(overlay.overlay_id, next_step, action),
             backend_name=self.name,
             question=belief.question,
             acquired_evidence=acquired,
@@ -296,6 +297,27 @@ def _verified_relations(edge: RelationBelief) -> tuple[str, ...]:
             for name, result in hard_verifier.items()
             if isinstance(result, dict)
             and result.get("passed") is True
+            and not any(
+                "verification disabled" in str(reason).casefold()
+                for reason in result.get("reasons") or []
+            )
             and name in edge.relation_probabilities
         )
     return tuple(sorted(verified))
+
+
+def _next_belief_id(
+    overlay_id: str,
+    step: int,
+    action: GraphReadAction,
+) -> str:
+    raw = "|".join(
+        (
+            action.action_type.value,
+            action.source_id or "",
+            ",".join(action.target_ids),
+            action.relation or "",
+        )
+    )
+    branch = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:10]
+    return f"{overlay_id}:belief:{step}:{branch}"

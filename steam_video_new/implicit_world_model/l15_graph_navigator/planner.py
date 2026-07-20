@@ -16,6 +16,8 @@ from memory_graph.types import CausalTemporalOverlay
 from .contracts import (
     BeliefBackend,
     BeliefSnapshot,
+    GraphReadExecution,
+    GraphReadExecutor,
     NavigationRun,
     NavigationStep,
     ObservationBeliefWorldModel,
@@ -145,9 +147,11 @@ class ClosedLoopNavigator:
         self,
         backend: BeliefBackend,
         planner: PreferenceOnlyPlanner,
+        executor: GraphReadExecutor | None = None,
     ) -> None:
         self.backend = backend
         self.planner = planner
+        self.executor = executor or PersistedGraphReadExecutor()
 
     def run(
         self,
@@ -160,6 +164,7 @@ class ClosedLoopNavigator:
             raise ValueError("max_steps must be non-negative")
         initial_belief_id = belief.belief_id
         steps: list[NavigationStep] = []
+        snapshots = [belief]
         while belief.remaining_graph_reads > 0:
             if max_steps is not None and len(steps) >= max_steps:
                 break
@@ -173,10 +178,12 @@ class ClosedLoopNavigator:
                         observation_ids=(),
                         belief_after_id=belief.belief_id,
                         realized_belief_delta=None,
+                        skill_invocation=None,
                     )
                 )
                 break
-            observations = execute_real_graph_read(action, overlay)
+            execution = self.executor.execute(belief, action, overlay)
+            observations = list(execution.observations)
             update = self.backend.update(belief, action, observations, overlay)
             steps.append(
                 NavigationStep(
@@ -185,10 +192,45 @@ class ClosedLoopNavigator:
                     observation_ids=tuple(node.node_id for node in observations),
                     belief_after_id=update.belief.belief_id,
                     realized_belief_delta=update.delta,
+                    skill_invocation=execution.skill_invocation,
                 )
             )
             belief = update.belief
-        return NavigationRun(initial_belief_id, belief, tuple(steps))
+            snapshots.append(belief)
+        return NavigationRun(
+            initial_belief_id,
+            belief,
+            tuple(steps),
+            tuple(snapshots),
+        )
+
+
+class PersistedGraphReadExecutor:
+    """Default executor used when the Video_Skills runtime is unavailable."""
+
+    def execute(
+        self,
+        belief: BeliefSnapshot,
+        action: GraphReadAction,
+        overlay: CausalTemporalOverlay,
+    ) -> GraphReadExecution:
+        observations = tuple(execute_real_graph_read(action, overlay))
+        return GraphReadExecution(
+            observations=observations,
+            skill_invocation={
+                "skill_id": "persisted_graph_read",
+                "args": {
+                    "action_type": action.action_type.value,
+                    "source_id": action.source_id,
+                    "target_ids": list(action.target_ids),
+                    "relation": action.relation,
+                },
+                "outputs": {
+                    "real_observation_ids": [node.node_id for node in observations],
+                },
+                "status": "executed" if observations else "insufficient",
+            },
+        )
 
 
 def _project_imagined_belief(
