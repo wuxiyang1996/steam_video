@@ -24,6 +24,7 @@ from .measurement import (
     measurement_from_execution,
 )
 from .session import GTSAMBeliefSession, SessionUpdateResult
+from .post_read_verifier import PostReadCategoricalVerifier
 
 __all__ = [
     "BeliefLabel",
@@ -39,6 +40,7 @@ __all__ = [
     "MeasurementOutcome",
     "OverlayInferenceResult",
     "OverlayParityResult",
+    "PostReadCategoricalVerifier",
     "RelationMeasurement",
     "SessionUpdateResult",
     "VerifierDecision",

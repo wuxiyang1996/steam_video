@@ -71,6 +71,7 @@ class GTSAMBeliefSession:
         action: GraphReadAction,
         execution: GraphReadExecution,
         decision: VerifierDecision,
+        previously_grounded_evidence_refs: tuple[str, ...] = (),
     ) -> SessionUpdateResult:
         before = self.snapshot()
         measurement = measurement_from_execution(
@@ -79,6 +80,7 @@ class GTSAMBeliefSession:
             overlay=self.overlay,
             decision=decision,
             calibration_version=self.calibration.version,
+            previously_grounded_evidence_refs=previously_grounded_evidence_refs,
         )
         appended = self.journal.append(measurement)
         after = self.snapshot()

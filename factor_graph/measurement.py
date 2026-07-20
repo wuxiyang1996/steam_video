@@ -41,6 +41,19 @@ class VerifierDecision:
         if len(self.evidence_refs) != len(set(self.evidence_refs)):
             raise ValueError("verifier evidence refs must be unique")
 
+    def to_dict(self) -> dict[str, object]:
+        """Audit representation; categorical by contract and free of scores."""
+
+        return {
+            "edge_id": self.edge_id,
+            "relation": self.relation,
+            "outcome": self.outcome.value,
+            "verifier_name": self.verifier_name,
+            "verifier_version": self.verifier_version,
+            "evidence_refs": list(self.evidence_refs),
+            "reasons": list(self.reasons),
+        }
+
 
 @dataclass(frozen=True)
 class RelationMeasurement:
@@ -174,6 +187,7 @@ def measurement_from_execution(
     overlay: CausalTemporalOverlay,
     decision: VerifierDecision,
     calibration_version: str,
+    previously_grounded_evidence_refs: tuple[str, ...] = (),
 ) -> RelationMeasurement:
     """Create a measurement only from executed, grounded, independently verified data."""
 
@@ -219,6 +233,7 @@ def measurement_from_execution(
         str(value) for value in invocation.get("evidence_refs") or []
     }
     grounded.update(invocation_evidence)
+    grounded.update(previously_grounded_evidence_refs)
     if not set(decision.evidence_refs) <= grounded:
         raise ValueError("verifier cites evidence not grounded by the execution")
 

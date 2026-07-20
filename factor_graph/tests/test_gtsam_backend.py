@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+from pathlib import Path
 
 import pytest
 
@@ -289,3 +290,223 @@ def test_measurement_rejects_unexecuted_or_ungrounded_evidence() -> None:
             decision=decision,
             calibration_version="pilot",
         )
+
+
+def test_post_read_verifier_uses_acquired_structure_not_persisted_decision() -> None:
+    from factor_graph.measurement import MeasurementOutcome
+    from factor_graph.post_read_verifier import PostReadCategoricalVerifier
+
+    track = "l1-track:person"
+    l1_a = MemoryNode(
+        "l1:a",
+        "video:post-read",
+        TimeSpan(0.0, 1.0),
+        {"producer": "test"},
+        node_type="observation",
+    )
+    l1_b = MemoryNode(
+        "l1:b",
+        "video:post-read",
+        TimeSpan(2.0, 3.0),
+        {"producer": "test"},
+        node_type="observation",
+    )
+    event_a = MemoryNode(
+        "event:a",
+        "video:post-read",
+        l1_a.time_span,
+        {"producer": "test"},
+        node_type="atomic_event",
+        source_segments=[l1_a.node_id],
+        metadata={
+            "participants": [
+                {"mention_id": track, "entity_type": "person", "surface": "man"}
+            ],
+            "states": [
+                {
+                    "mention_id": track,
+                    "attribute": "expression",
+                    "value": "neutral",
+                    "polarity": "positive",
+                }
+            ],
+        },
+    )
+    event_b = MemoryNode(
+        "event:b",
+        "video:post-read",
+        l1_b.time_span,
+        {"producer": "test"},
+        node_type="atomic_event",
+        source_segments=[l1_b.node_id],
+        metadata={
+            "participants": [
+                {"mention_id": track, "entity_type": "person", "surface": "man"}
+            ],
+            "states": [
+                {
+                    "mention_id": track,
+                    "attribute": "expression",
+                    "value": "focused",
+                    "polarity": "positive",
+                }
+            ],
+        },
+    )
+    edge = RelationBelief(
+        "edge:state",
+        event_a.node_id,
+        event_b.node_id,
+        {"state_transition": 0.2},
+        RelationStatus.UNCALIBRATED_PRIOR,
+        0.5,
+        provenance={
+            "participant_alignment": {"src": track, "dst": track},
+            "hard_verifier": {
+                "state_transition": {
+                    "passed": False,
+                    "reasons": ["deliberately stale persisted result"],
+                }
+            },
+        },
+    )
+    overlay = CausalTemporalOverlay(
+        "overlay:post-read",
+        "example:post-read",
+        "video:post-read",
+        [l1_a, l1_b],
+        [event_a, event_b],
+        [edge],
+    )
+    action = GraphReadAction(
+        NavigationActionType.INSPECT_STATE_CHANGE,
+        event_a.node_id,
+        (event_b.node_id,),
+        "state_transition",
+    )
+    execution = GraphReadExecution(
+        (event_b,),
+        {
+            "node_id": "skill:state:a-b",
+            "status": "executed",
+            "outputs": {"real_observation_ids": [event_b.node_id]},
+            "evidence_refs": [l1_b.node_id],
+        },
+    )
+
+    decision = PostReadCategoricalVerifier().verify(
+        action=action,
+        execution=execution,
+        overlay=overlay,
+        edge_id=edge.edge_id,
+        acquired_observation_ids=(event_a.node_id,),
+    )
+
+    assert decision.outcome is MeasurementOutcome.SUPPORTS
+    assert decision.evidence_refs == (l1_a.node_id, l1_b.node_id)
+    assert all("stale" not in reason for reason in decision.reasons)
+
+
+def test_post_read_verifier_requires_both_endpoints_to_be_observed() -> None:
+    from factor_graph.post_read_verifier import PostReadCategoricalVerifier
+
+    first = MemoryNode(
+        "event:a",
+        "video:guard",
+        TimeSpan(0.0, 1.0),
+        {"producer": "test"},
+        node_type="atomic_event",
+    )
+    second = MemoryNode(
+        "event:b",
+        "video:guard",
+        TimeSpan(2.0, 3.0),
+        {"producer": "test"},
+        node_type="atomic_event",
+    )
+    edge = RelationBelief(
+        "edge:guard",
+        first.node_id,
+        second.node_id,
+        {"same_entity": 0.5},
+        RelationStatus.UNCALIBRATED_PRIOR,
+        0.5,
+    )
+    overlay = CausalTemporalOverlay(
+        "overlay:guard-post-read",
+        "example:guard",
+        "video:guard",
+        [],
+        [first, second],
+        [edge],
+    )
+    action = GraphReadAction(
+        NavigationActionType.TRACK_ENTITY,
+        first.node_id,
+        (second.node_id,),
+        "same_entity",
+    )
+    execution = GraphReadExecution(
+        (second,),
+        {
+            "node_id": "skill:guard-post-read",
+            "status": "executed",
+            "outputs": {"real_observation_ids": [second.node_id]},
+        },
+    )
+
+    with pytest.raises(ValueError, match="both verifier endpoints"):
+        PostReadCategoricalVerifier().verify(
+            action=action,
+            execution=execution,
+            overlay=overlay,
+            edge_id=edge.edge_id,
+            acquired_observation_ids=(),
+        )
+
+
+def test_phase_d_fixture_has_verified_coupling_and_qwen_embedding_refs() -> None:
+    from memory_graph.verifiers import verify_relation
+    from steam_video_new.implicit_world_model.l15_graph_navigator import (
+        load_overlay_artifact,
+    )
+
+    fixture = Path(__file__).parents[1] / "fixtures" / "phase_d_coupled_overlay.json"
+    overlay = load_overlay_artifact(
+        fixture,
+        require_embedding_files=True,
+        verify_embedding_checksums=True,
+    ).overlay
+    events = {node.node_id: node for node in overlay.atomic_events}
+    decisions = {
+        relation: verify_relation(edge, events[edge.src], events[edge.dst], relation)
+        for edge in overlay.relations
+        for relation in edge.relation_probabilities
+    }
+
+    assert set(decisions) == {
+        "same_entity",
+        "state_transition",
+        "transition_support",
+        "contradicts",
+    }
+    assert all(decision.passed for decision in decisions.values())
+    assert "expression" in decisions["state_transition"].reasons[0]
+    assert all(
+        node.embedding_ref is not None
+        and Path(node.embedding_ref.path).is_absolute()
+        and node.embedding_ref.model == "Qwen/Qwen3-VL-Embedding-2B"
+        for node in overlay.atomic_events
+    )
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gtsam") is None, reason="GTSAM optional")
+def test_phase_d_grounded_experiment_passes_all_gates() -> None:
+    from factor_graph.phase_d_experiment import run_experiment
+
+    fixture = Path(__file__).parents[1] / "fixtures" / "phase_d_coupled_overlay.json"
+    report = run_experiment(fixture)
+
+    assert report["all_gates_pass"] is True
+    assert report["arms"]["normal"]["decision"]["outcome"] == "supports"
+    assert "confidence" not in report["arms"]["normal"]["decision"]

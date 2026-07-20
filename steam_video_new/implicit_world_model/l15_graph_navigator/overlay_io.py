@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -43,6 +44,7 @@ def load_overlay_artifact(
     if validate_schema:
         require_valid_overlay_artifact(payload)
     overlay = overlay_from_dict(payload)
+    _resolve_relative_embedding_paths(overlay, source.parent)
     problems = _embedding_problems(
         overlay,
         verify_checksums=verify_embedding_checksums,
@@ -55,6 +57,22 @@ def load_overlay_artifact(
         build_report=dict(payload.get("build_report") or {}),
         embedding_problems=tuple(problems),
     )
+
+
+def _resolve_relative_embedding_paths(
+    overlay: CausalTemporalOverlay,
+    artifact_directory: Path,
+) -> None:
+    """Resolve portable serialized refs relative to their overlay artifact."""
+
+    for node in overlay.l1_observations + overlay.atomic_events:
+        ref = node.embedding_ref
+        if ref is None or Path(ref.path).is_absolute():
+            continue
+        node.embedding_ref = replace(
+            ref,
+            path=str((artifact_directory / ref.path).resolve()),
+        )
 
 
 def overlay_from_dict(payload: dict[str, Any]) -> CausalTemporalOverlay:

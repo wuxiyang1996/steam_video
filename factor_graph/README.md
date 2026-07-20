@@ -275,3 +275,51 @@ read 后、verifier 前 factor count 不变；categorical `supports` measurement
 verifier 做 replay，内部 likelihood 标为 `not-calibrated`；真实 arm 尚未出现 coupled
 propagation。完整记录见
 [`gtsam_executed_measurement_pilot_v1.json`](experiments/gtsam_executed_measurement_pilot_v1.json)。
+
+## 12. Phase D：Post-read Verifier 与真实耦合 Smoke
+
+`post_read_verifier.py` 把“读取图”和“产生 belief measurement”严格分开：
+
+- 只接受 status 为 `executed` 的真实 graph read；
+- relation 两个端点都必须已经读取，不能只看到 target 就推断 source；
+- decision 只含 `supports / rejects / inconclusive`、evidence refs 和文本 reasons；
+- 验证前删除 edge provenance 中旧的 `hard_verifier` / `visual_verification`，防止把
+  persisted replay 当成新的观测；
+- `measurement_from_execution` 可显式接收此前已经 grounded 的 source refs，同时仍
+  拒绝任何不在本次或历史已读集合内的 verifier citation。
+
+fixture 生成方法：
+
+```bash
+python -m factor_graph.phase_d_smoke \
+  memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/\
+memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json \
+  factor_graph/fixtures/phase_d_coupled_overlay.json
+```
+
+该 fixture 来自真实 Video_Skills L1/L1.5 event 与 evidence refs；两个
+`Qwen/Qwen3-VL-Embedding-2B` row 会复制到 fixture 自有的 `.npy`，serialized ref 使用
+相对路径，由 loader 按 overlay 所在目录解析，因此运行时不依赖旧 smoke 输出。它透明地将源 edge 的两个人物 mention
+remap 到固定 accepted identity track，并将 `downward / looking down` 归一为同义状态，
+使唯一明确 delta 是 `expression: neutral → focused`。这是 integration smoke，不是
+新增人工真值；源 artifact 不会被修改。
+
+运行真实耦合实验：
+
+```bash
+PYTHONPATH=. /tmp/steam-video-gtsam-venv/bin/python \
+  -m factor_graph.phase_d_experiment \
+  --overlay factor_graph/fixtures/phase_d_coupled_overlay.json \
+  --output factor_graph/experiments/gtsam_phase_d_grounded_v1.json
+```
+
+当前 11 个 gate 全部通过：3 次实际 Video_Skills relation read 均执行成功；post-read
+state、dependency 和 contradiction verifier 均产生 categorical support；state 的直接
+更新通过 GTSAM factor 传播到 identity；no-loop 阻止传播；shuffled target 改变结果；
+dependency measurement 非空；冲突 measurement 被 append-only journal 保留。完整记录
+见 [`gtsam_phase_d_grounded_v1.json`](experiments/gtsam_phase_d_grounded_v1.json)。
+
+这仍不是生产校准：内部 likelihood 明确标记为 `not-calibrated`，accepted-track remap
+不是独立人工 gold。下一步必须建立多视频固定 case set，完成 identity/state 双盲人工
+审计与 categorical verifier confusion matrix，再运行 closed-loop matched-budget 导航
+消融。只有这些门禁通过后，才应考虑替换默认 backend。

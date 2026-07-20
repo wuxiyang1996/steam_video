@@ -45,7 +45,7 @@ reward、score、confidence、probability 或 utility。
 
 验收：runtime gate 全通过。报告输入带 SHA256；当前仍不是导航 benchmark。
 
-## Phase C：真实 Measurement Adapter——接口与 Pilot 已完成
+## Phase C：真实 Measurement Adapter——完成
 
 实现从一次真实 Video_Skills graph read 到 factor 的严格转换：
 
@@ -61,10 +61,11 @@ reward、score、confidence、probability 或 utility。
 
 当前已实现 strict schema、内部 calibration registry、append-only/idempotent journal、
 action/observation/evidence grounding 校验，以及真实 Video_Skills
-`retrieve_by_relation` replay。真实 identity direct update 已通过；calibration 仍是
-明确标记的 pilot 常量，verified before/after state delta 数据仍未满足。
+`retrieve_by_relation`。Phase D 又补上 post-read categorical verifier：它只读取本次
+执行后已获得的两个端点、grounded L1 refs 和 relation contract，并在验证前移除旧
+artifact 的 persisted verifier 字段，因此 replay 结论不能伪装成新 measurement。
 
-## Phase D：Coupled Real-Graph Correction——机制已通过，真实证据待补
+## Phase D：Coupled Grounded-Graph Correction——Integration Smoke 已完成
 
 在真实 artifact 上构造非空 coupled component：
 
@@ -78,9 +79,17 @@ action/observation/evidence grounding 校验，以及真实 Video_Skills
 no-loop 只有 direct update；shuffled 不得复现正确 correction。若数据没有 verified
 measurement，实验应 abstain，而不是注入人工正例。
 
-受控 executed-measurement component 已通过 direct、propagated、frozen、no-loop、
-shuffled、idempotence 和 conflicting-evidence retention gate。真实 Video_Skills arm
-目前只有 direct update；还没有 verified measurement 落入真实 coupled component。
+已从真实 Video_Skills overlay 中固定抽取两个有 L1 grounding 和
+`Qwen/Qwen3-VL-Embedding-2B` refs 的 event，透明地 remap 到同一个 accepted track，
+并生成 identity、明确 expression before/after state delta、transition dependency 和
+contradiction 四个 relation。该 fixture 明确标注为 derived integration smoke，不是
+独立 gold label，也不改变源 artifact。
+
+真实 `retrieve_by_relation` + post-read verifier + GTSAM 实验已通过 11 个 gate：
+normal 的 state measurement 同时产生 direct state update 和 propagated identity
+update；frozen 不注入 measurement；no-loop 阻止传播；shuffled 与 normal 不同；
+dependency 非空；相互冲突的 categorical measurements 都保留在 journal。LLM-facing
+记录只有 `supports/rejects/inconclusive`，没有数值字段。
 
 ## Phase E：Closed-Loop Navigation Pilot
 
@@ -109,6 +118,7 @@ factor-guided preference、factor-guided frozen、no-loop、shuffled measurement
 - 延迟、component size、内存和失败回退策略符合预算；
 - GTSAM 不可用时显式失败或由配置选择 backend，不能静默改变结果。
 
-当前阻塞在 Phase C/D 的校准与 coupled 证据供给，而不是 GTSAM API：目标 smoke 有 state 和
-transition-support candidates，但没有 verified measurement，因此目前正确状态是
-`runtime_pass=true, production_ready=false`。
+当前阻塞已经从“GTSAM 机制与 coupled 数据接口”后移到“独立标注、校准和导航收益”：
+Phase D 的 derived smoke 证明端到端链路能工作，但不能替代 ≥90% strict precision 的
+独立人工 identity/state 审计，也不能替代多视频 locked gold navigation benchmark。
+因此目前正确状态仍是 `runtime_pass=true, production_ready=false`。
