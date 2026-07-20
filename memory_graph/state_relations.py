@@ -11,17 +11,38 @@ from .types import MemoryNode, RelationBelief, RelationStatus
 def derive_state_transition_candidates(
     events: list[MemoryNode],
 ) -> list[RelationBelief]:
-    """Return graph-grounded before/after deltas on one accepted track."""
+    """Return adjacent graph-grounded deltas on one accepted identity track."""
 
     ordered = sorted(events, key=lambda node: (node.time_span.start_s, node.node_id))
     candidates: list[RelationBelief] = []
     seen: set[tuple[str, str, str, str]] = set()
-    for index, src in enumerate(ordered):
-        for dst in ordered[index + 1 :]:
-            if src.time_span.end_s > dst.time_span.start_s:
+    previous_by_track_attribute: dict[
+        tuple[str, str], tuple[MemoryNode, dict[str, Any], str]
+    ] = {}
+    for dst in ordered:
+        for track_id, states in _states_by_mention(dst).items():
+            if not track_id.startswith("l1-track:"):
                 continue
-            for before, after, track_id in _track_state_deltas(src, dst):
-                attribute = str(before["attribute"])
+            for after in states:
+                if not _formal_state_contract(after):
+                    continue
+                attribute, after_value = _canonical_state(after)
+                if not attribute or not after_value:
+                    continue
+                state_key = (track_id, attribute)
+                previous = previous_by_track_attribute.get(state_key)
+                previous_by_track_attribute[state_key] = (dst, after, after_value)
+                if previous is None:
+                    continue
+                src, before, before_value = previous
+                if src.time_span.end_s > dst.time_span.start_s:
+                    continue
+                if before_value == after_value:
+                    continue
+                if str(before.get("polarity") or "positive") != "positive":
+                    continue
+                if str(after.get("polarity") or "positive") != "positive":
+                    continue
                 key = (src.node_id, dst.node_id, track_id, attribute.casefold())
                 if key in seen:
                     continue
@@ -60,39 +81,16 @@ def derive_state_transition_candidates(
                             ],
                             "before_state": dict(before),
                             "after_state": dict(after),
+                            "normalized_state_delta": {
+                                "attribute": attribute,
+                                "before": before_value,
+                                "after": after_value,
+                            },
                             "derivation": "accepted_track_grounded_state_delta/v1",
                         },
                     )
                 )
     return candidates
-
-
-def _track_state_deltas(
-    src: MemoryNode,
-    dst: MemoryNode,
-) -> list[tuple[dict[str, Any], dict[str, Any], str]]:
-    src_states = _states_by_mention(src)
-    dst_states = _states_by_mention(dst)
-    deltas: list[tuple[dict[str, Any], dict[str, Any], str]] = []
-    for track_id in sorted(set(src_states) & set(dst_states)):
-        if not track_id.startswith("l1-track:"):
-            continue
-        for before in src_states[track_id]:
-            for after in dst_states[track_id]:
-                if not _formal_state_contract(before) or not _formal_state_contract(
-                    after
-                ):
-                    continue
-                if _norm(before.get("attribute")) != _norm(after.get("attribute")):
-                    continue
-                if _norm(before.get("value")) == _norm(after.get("value")):
-                    continue
-                if str(before.get("polarity") or "positive") != "positive":
-                    continue
-                if str(after.get("polarity") or "positive") != "positive":
-                    continue
-                deltas.append((before, after, track_id))
-    return deltas
 
 
 def _states_by_mention(node: MemoryNode) -> dict[str, list[dict[str, Any]]]:
@@ -112,6 +110,35 @@ def _states_by_mention(node: MemoryNode) -> dict[str, list[dict[str, Any]]]:
             continue
         grouped.setdefault(mention_id, []).append(value)
     return grouped
+
+
+def _canonical_state(value: dict[str, Any]) -> tuple[str, str]:
+    attribute = _norm(value.get("attribute")).replace(" ", "_")
+    state_value = _norm(value.get("value"))
+    if attribute == "visibility" and state_value in {"open", "closed"}:
+        attribute = "openness"
+    if attribute == "gaze_direction":
+        state_value = _canonical_gaze(state_value)
+    return attribute, state_value
+
+
+def _canonical_gaze(value: str) -> str:
+    token_set = set(re.findall(r"[a-z]+", value))
+    if "down" in token_set or "downward" in token_set:
+        return "downward"
+    if "up" in token_set or "upward" in token_set:
+        return "upward"
+    if "forward" in token_set or "ahead" in token_set:
+        return "forward"
+    if "outward" in token_set or (
+        "out" in token_set and "window" in token_set
+    ):
+        return "outward"
+    if "left" in token_set:
+        return "left"
+    if "right" in token_set:
+        return "right"
+    return value
 
 
 def _confidence(value: dict[str, Any]) -> float:

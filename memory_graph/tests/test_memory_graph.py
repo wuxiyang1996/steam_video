@@ -1855,6 +1855,93 @@ class MemoryGraphTest(unittest.TestCase):
         after.metadata["states"][0]["mention_id"] = "door:lookalike"
         self.assertEqual(derive_state_transition_candidates([before, after]), [])
 
+    def test_state_transition_collapses_gaze_synonyms(self) -> None:
+        before = _atomic_node(
+            "event:gaze-down",
+            0,
+            1,
+            "The person looks down.",
+            mention_id="l1-track:person",
+            surface="the person",
+            state=("gaze_direction", "looking down"),
+        )
+        after = _atomic_node(
+            "event:gaze-downward",
+            2,
+            3,
+            "The person's gaze is downward.",
+            mention_id="l1-track:person",
+            surface="the person",
+            state=("gaze_direction", "downward"),
+        )
+
+        self.assertEqual(derive_state_transition_candidates([before, after]), [])
+
+    def test_state_transition_uses_only_adjacent_track_snapshots(self) -> None:
+        events = [
+            _atomic_node(
+                "event:gaze-down",
+                0,
+                1,
+                "The person looks down.",
+                mention_id="l1-track:person",
+                surface="the person",
+                state=("gaze_direction", "downward"),
+            ),
+            _atomic_node(
+                "event:gaze-forward",
+                2,
+                3,
+                "The person looks forward.",
+                mention_id="l1-track:person",
+                surface="the person",
+                state=("gaze_direction", "looking forward"),
+            ),
+            _atomic_node(
+                "event:gaze-left",
+                4,
+                5,
+                "The person looks left.",
+                mention_id="l1-track:person",
+                surface="the person",
+                state=("gaze_direction", "looking left"),
+            ),
+        ]
+
+        candidates = derive_state_transition_candidates(events)
+
+        self.assertEqual(
+            [(candidate.src, candidate.dst) for candidate in candidates],
+            [
+                ("event:gaze-down", "event:gaze-forward"),
+                ("event:gaze-forward", "event:gaze-left"),
+            ],
+        )
+
+    def test_state_transition_rejects_visibility_open_attribute_mismatch(self) -> None:
+        before = _atomic_node(
+            "event:box-open",
+            0,
+            1,
+            "The box is open.",
+            mention_id="l1-track:box",
+            entity_type="object",
+            surface="the box",
+            state=("visibility", "open"),
+        )
+        after = _atomic_node(
+            "event:box-obscured",
+            2,
+            3,
+            "The box is partially obscured.",
+            mention_id="l1-track:box",
+            entity_type="object",
+            surface="the box",
+            state=("visibility", "partially obscured"),
+        )
+
+        self.assertEqual(derive_state_transition_candidates([before, after]), [])
+
     def test_regression_5P_6Q2Q0NLk_timer_narrative_does_not_enable(self) -> None:
         src = _atomic_node(
             "event:src", 0, 1, "A timer starts.", mention_id="timer:1", surface="a timer"
