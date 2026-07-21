@@ -188,7 +188,10 @@ baseline/ablation：gtsam_always</div>
   <table>
     <thead><tr><th>部分</th><th>截至 2026-07-21 的状态</th></tr></thead>
     <tbody>
-      <tr><td>IWM/planner contract</td><td>已实现 bounded context、horizon-1/2 rollout、categorical pairwise planner、real-read correction 和 audit trace</td></tr>
+      <tr><td>L1 retained memory</td><td>已实现可插入 learned representation 的 surprise windows，以及真正 materialized fixed-capacity consolidation、lineage、embedding refresh invalidation、edge rewiring 和 temporal-chain rebuild</td></tr>
+      <tr><td>L1.5 correlations</td><td>已实现全部 retained pairs 进入 categorical evaluator；edge 保留 candidate/verified/rejected/inconclusive，embedding similarity 不能作为 admission proof</td></tr>
+      <tr><td>Full-graph IWM/planner</td><td>已在 <code>full_graph_iwm</code> 实现 virtual root、单一 active cursor、全部合法 retained-node actions、无 Top-K、无泄漏 horizon-1/2 rollout、categorical partial order 和显式 abstention</td></tr>
+      <tr><td>Legacy IWM/planner workflows</td><td>现有 bounded-context navigator 继续作为 data/review/baseline 路径，不会被静默当作新主方法</td></tr>
       <tr><td>GPT-OSS-120B</td><td>已实现 strict categorical adapter；仅 inference/data gathering；numeric output 会被拒绝</td></tr>
       <tr><td>GTSAM</td><td>已实现 correction pilot 和 optional backup mode；不是默认研究方法</td></tr>
       <tr><td>CG-Bench v2</td><td>256 cases、205 videos、672 条人工 clue transitions；完整 Qwen grounding/embedding validation 正在运行</td></tr>
@@ -212,6 +215,6 @@ baseline/ablation：gtsam_always</div>
   <p>当前科学瓶颈是候选证据是否可获得。如果 L1.5 根本没有暴露所需 evidence，就无法证明 planner 是否具备 world-model-guided reasoning 能力。</p>
 </section>
 
-<footer class="small">实现细节见 <a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>、<a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。</footer>
+<footer class="small">实现细节见 <a href="implicit_world_model/full_graph_iwm/README.md">full_graph_iwm</a>、<a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>、<a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。</footer>
 </body>
 </html>

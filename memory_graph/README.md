@@ -595,7 +595,8 @@ Candidate-causal evidence affects bounded-memory value:
 
 ```text
 memory_value =
-    semantic_relevance
+    write_surprise
+  + optional semantic_relevance (baseline only)
   + temporal_bridge_value
   + state_change_value
   + predictive_dependency_value
@@ -609,6 +610,16 @@ unresolved candidates. `merge` is permitted only when temporal order, entity
 continuity, before/after states, mechanism, and provenance survive. `evict`
 prefers redundant background observations and must not remove only one member
 of a protected witness set.
+
+The implementation is no longer plan-only. `adaptive_windowing.py` provides a
+question-independent representation-surprise writer; a learned feature
+provider is pluggable and the OpenCV representation is an explicit smoke
+fallback. `consolidation.materialize_bounded_memory` executes a policy decision,
+stores merge lineage, invalidates merged embeddings for refresh, rewires
+surviving relations, removes orphans, and rebuilds the retained temporal chain.
+`correlation_overlay.py` then evaluates every retained-node pair through a
+categorical contract and stores `candidate|verified|rejected|inconclusive`
+L1.5 edges without treating an embedding similarity as proof.
 
 ## 2. Core Distinctions
 
@@ -970,9 +981,11 @@ python -m memory_graph.cli \
 `--visual-reread` is opt-in because it requires a running VLM endpoint and a
 valid raw-video path in the canonical example. `--require-visual-verification`
 turns a failed or inconclusive reread into a hard rejection for `explains` and
-`enables`. `--memory-capacity` plans keep/merge/evict actions without mutating
-the immutable evidence graph; executing safe consolidation remains a separate
-writer responsibility.
+`enables`. `--memory-capacity` on the legacy CLI still records a compatibility
+plan without mutating that artifact. The full-IWM main path calls
+`materialize_bounded_memory` through
+`steam_video_new.implicit_world_model.full_graph_iwm.graph_adapter`, producing a
+separate retained graph with a hard capacity and an explicit lineage audit.
 
 The embedding path requires:
 

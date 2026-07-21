@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
+from .adaptive_windowing import AdaptiveWindowProvider
 from .atomic_events import atomicity_issues
 from .contracts import AtomicEvent, EntityMention, StateAssertion
 from .types import MemoryNode, TimeSpan
@@ -131,6 +132,7 @@ class QwenVideoL1Extractor:
     client: VLMClient
     config: VideoL1Config = field(default_factory=VideoL1Config)
     model: str = "Qwen/Qwen3.5-9B"
+    window_provider: AdaptiveWindowProvider | None = None
 
     def __post_init__(self) -> None:
         client_model = getattr(self.client, "model", None)
@@ -153,7 +155,11 @@ class QwenVideoL1Extractor:
         if duration_s <= 0:
             raise ValueError("raw video has no readable duration")
 
-        windows = _coarse_windows(duration_s, self.config)
+        windows = (
+            self.window_provider.windows(path, duration_s=duration_s)
+            if self.window_provider is not None
+            else _coarse_windows(duration_s, self.config)
+        )
         candidates: list[dict[str, Any]] = []
         rejected: list[dict[str, Any]] = []
         for window_index, window in enumerate(windows):

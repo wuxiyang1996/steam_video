@@ -188,7 +188,10 @@ baseline/ablation:     gtsam_always</div>
   <table>
     <thead><tr><th>Area</th><th>Status on 2026-07-21</th></tr></thead>
     <tbody>
-      <tr><td>IWM/planner contracts</td><td>Implemented: bounded context, horizon-1/2 rollout, categorical pairwise planner, real-read correction, audit traces</td></tr>
+      <tr><td>L1 retained memory</td><td>Implemented: pluggable representation-surprise windows plus materialized fixed-capacity consolidation, lineage, embedding refresh invalidation, edge rewiring, and temporal-chain rebuild</td></tr>
+      <tr><td>L1.5 correlations</td><td>Implemented: all retained pairs enter a categorical evaluator; edges keep candidate/verified/rejected/inconclusive state and never use embedding similarity as admission proof</td></tr>
+      <tr><td>Full-graph IWM/planner</td><td>Implemented in <code>full_graph_iwm</code>: virtual root, one active cursor, all legal retained-node actions, no Top-K, leakage-safe horizon-1/2 rollout, categorical partial order, and explicit abstention</td></tr>
+      <tr><td>Legacy IWM/planner workflows</td><td>Existing bounded-context navigator remains the data/review/baseline path and is not silently used as the new main arm</td></tr>
       <tr><td>GPT-OSS-120B</td><td>Strict categorical adapters implemented; inference/data gathering only; numeric output rejected</td></tr>
       <tr><td>GTSAM</td><td>Correction pilot and optional backup modes implemented; not the default research method</td></tr>
       <tr><td>CG-Bench v2</td><td>256 cases, 205 videos, 672 human-clue transitions; full Qwen grounding/embedding validation in progress</td></tr>
@@ -212,6 +215,6 @@ baseline/ablation:     gtsam_always</div>
   <p>The next scientific bottleneck is candidate evidence availability. A planner cannot demonstrate world-model-guided reasoning if L1.5 never exposes the required evidence.</p>
 </section>
 
-<footer class="small">Canonical implementation notes live in <a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>, <a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a>, and <a href="../factor_graph/README.md">factor_graph</a>.</footer>
+<footer class="small">Canonical implementation notes live in <a href="implicit_world_model/full_graph_iwm/README.md">full_graph_iwm</a>, <a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>, <a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a>, and <a href="../factor_graph/README.md">factor_graph</a>.</footer>
 </body>
 </html>

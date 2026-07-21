@@ -259,11 +259,24 @@ actions and outcomes, or if gains come from candidate retrieval/order heuristics
 
 Implemented:
 
+- pluggable representation-surprise L1 windowing and a materialized fixed-
+  capacity consolidation path with lineage, embedding invalidation, relation
+  rewiring, and retained temporal-chain rebuilding;
+- categorical retained-node L1.5 correlations with all-pair evaluation and
+  `candidate|verified|rejected|inconclusive` admission states;
+- a separate `full_graph_iwm` main path with a virtual query root, one active
+  cursor, every visible retained node as a semantic action, no Top-K pruning,
+  batched horizon-1/2 prediction, and explicit abstention for a non-unique
+  partial order;
+- unread-value and imagined-rollout leakage guards: unread nodes expose only
+  compact keys/embedding references, and imagined reads never reveal real text;
 - L1/L1.5 overlay adapter, legal graph-read actions, bounded reasoning context,
   horizon-1/2 trajectory expansion, pairwise partial-order planning, real-read
   execution, belief snapshots, and L2-compatible audit traces;
 - strict categorical GPT-OSS-120B observation/belief and trajectory-preference
-  adapters; numeric model output is rejected;
+  adapters; numeric model output is rejected, output IDs use pure-alphabetic
+  aliases, and a real OpenRouter full-graph smoke passed strict transition and
+  exhaustive pairwise coverage (returning explicit abstention on ambiguity);
 - executed-transition, sibling, blinded review, targeted gathering, and
   matched-ablation workflows;
 - optional Python factor backend and isolated GTSAM correction pilots/backups;
@@ -293,6 +306,7 @@ steam_video_new/
 ├── problem-formulation-zh.html
 └── implicit_world_model/
     ├── l15_graph_navigator/        # IWM/planner contracts and data workflows
+    ├── full_graph_iwm/             # single-cursor no-Top-K main-method path
     ├── cgbench_grounded_navigation/ # CG-Bench grounding and L1.5 smoke
     └── datasets/                    # versioned local data artifacts/reports
 
@@ -304,6 +318,7 @@ steam_video_new/
 See component documentation:
 
 - [`implicit_world_model/l15_graph_navigator/README.md`](implicit_world_model/l15_graph_navigator/README.md)
+- [`implicit_world_model/full_graph_iwm/README.md`](implicit_world_model/full_graph_iwm/README.md)
 - [`implicit_world_model/cgbench_grounded_navigation/README.md`](implicit_world_model/cgbench_grounded_navigation/README.md)
 - [`../factor_graph/README.md`](../factor_graph/README.md)
 - [`../memory_graph/README.md`](../memory_graph/README.md)
