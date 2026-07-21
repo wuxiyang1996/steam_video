@@ -355,10 +355,11 @@ def _coarse_prompt(
         "Scan this time window for directly visible atomic actions or state changes. "
         "The images are sparse samples, so do not claim an event between frames. "
         f"Return at most {max_events} events. Each event needs predicate, "
-        "coarse_start_s, coarse_end_s, confidence, action_kind "
+        "coarse_start_s, coarse_end_s, grounding_status (observed|inconclusive), action_kind "
         "(action|motion|contact|transfer|state_change|visible_response|other), "
         "participants [{role, entity_type, surface}], and visible states "
-        "[{participant_index, attribute, value, polarity}]. Return JSON as "
+        "[{participant_index, attribute, value, polarity}]. Do not output confidence, "
+        "probability, score, reward, or utility. Return JSON as "
         '{"events": [...]}.\n'
         f"window={window}\nframe_records={frame_records}"
     )
@@ -372,12 +373,13 @@ def _fine_prompt(
     return (
         "Verify and localize this coarse event using the labeled frames. If it is "
         "not directly visible, set observed=false. Otherwise return observed=true, "
-        "predicate, confidence, visible_start_frame, visible_end_frame, "
+        "predicate, visible_start_frame, visible_end_frame, "
         "evidence_frames, action_kind, participants with role/entity_type/surface/"
         "visual_signature/evidence_frames, visible states with participant_index/attribute/value/"
         "polarity/evidence_frames, and optional state_change with participant_index/"
         "attribute/before/after/evidence_frames. Do not infer causes or intent. "
-        "All evidence fields contain integer frame indices. Return strict JSON.\n"
+        "All evidence fields contain integer frame indices. Do not output confidence, "
+        "probability, score, reward, or utility. Return strict JSON.\n"
         f"candidate={candidate}\nframe_records={frame_records}"
     )
 
@@ -405,7 +407,7 @@ def _parse_coarse_response(
             reason = "event is not an object"
         else:
             predicate = str(raw.get("predicate") or "").strip()
-            confidence = _probability(raw.get("confidence"))
+            confidence = _grounding_value(raw)
             event_start = _number(raw.get("coarse_start_s"))
             event_end = _number(raw.get("coarse_end_s"))
             if atomicity_issues(predicate):
@@ -433,7 +435,7 @@ def _parse_coarse_response(
             {
                 **raw,
                 "predicate": str(raw["predicate"]).strip(),
-                "confidence": float(raw["confidence"]),
+                "confidence": float(confidence),
                 "coarse_start_s": float(raw["coarse_start_s"]),
                 "coarse_end_s": float(raw["coarse_end_s"]),
                 "coarse_window": dict(window),
@@ -467,7 +469,7 @@ def _parse_fine_response(
     issues = atomicity_issues(predicate)
     if issues:
         raise ValueError(f"localized predicate failed atomicity checks: {issues}")
-    confidence = _probability(payload.get("confidence"))
+    confidence = _grounding_value(payload, observed_default=True)
     if confidence is None or confidence < minimum_confidence:
         raise ValueError("localized event confidence is below threshold")
     participants = _parse_visual_participants(payload.get("participants"), by_index)
@@ -489,6 +491,27 @@ def _parse_fine_response(
         state_change=state_change,
         coarse_window=dict(candidate.get("coarse_window") or {}),
     )
+
+
+def _grounding_value(
+    payload: dict[str, Any], *, observed_default: bool = False
+) -> float | None:
+    """Adapt categorical grounding to the legacy numeric storage field.
+
+    The returned value is a deterministic compatibility marker, never model
+    confidence, reward, action utility, or a training target. Legacy persisted
+    payloads containing numeric confidence remain readable.
+    """
+
+    status = str(payload.get("grounding_status") or "").strip().lower()
+    if status == "observed":
+        return 1.0
+    if status in {"inconclusive", "not_observed", "rejected"}:
+        return None
+    legacy = _probability(payload.get("confidence"))
+    if legacy is not None:
+        return legacy
+    return 1.0 if observed_default and payload.get("observed") is True else None
 
 
 def _parse_visual_participants(

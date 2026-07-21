@@ -69,3 +69,8 @@ question、choices、answer、clue intervals 或 hidden alignment。
 
 候选文件约 19MB，但不会整体进入模型上下文。candidate sets 按视频去重；每一步只向 IWM/
 planner 提供经过外部 embedding/structure retrieval 的 bounded top-K hops。
+
+`l15_graph_smoke_selection.json` 已固定 12 个不重复视频，覆盖 train/validation/test × 有/无
+字幕六个 strata，每组 2 个。selection 不读取 question、answer 或 clue intervals。smoke 只扫描
+每个视频前 120 秒；graph 冻结后才由 hidden evaluator 计算 native 与 embedding top-K clue
+recall，且只统计完整落在 observation horizon 内的 clues。

@@ -103,6 +103,31 @@ external retrieval；每步 planner 仍通过 embedding/structure 选取 bounded
 text。SRT 只称为 time-aligned text，不能冒充直接 audio observation；该报告只衡量模态是否
 可观测，不重写 CG-Bench 标签。
 
+## Question-independent L1/L1.5 graph smoke
+
+`l15_graph_worker.py` 消费不含 question/GT 的 graph-generation manifest。smoke selection 仅按
+video-disjoint split、字幕 fallback availability 和视频时长分层，固定选择 12 个视频；graph
+worker 只能读取 raw video frames。为了控制工程 smoke 成本，每个视频仅扫描前 120 秒，产物
+明确标记 `smoke_prefix_only=true`，不能冒充完整视频 graph。
+
+Qwen visual-L1 prompt 只输出 categorical `observed|inconclusive`，不输出 confidence、reward、
+score、probability 或 utility。旧图 schema 中的 numeric grounding field 只是确定性兼容标记，
+不进入 IWM/planner 或训练监督。
+
+graph 写盘冻结并计算 checksum 后，独立 evaluator 才能读取 question 与 hidden clue intervals。
+它分别报告 native candidate recall 和 embedding top-K recall；超出 120 秒 smoke horizon 的 clues
+从 recall 分母排除。无 temporal overlap 的 nodes 仍是 unlabeled，不是 semantic negatives。
+
+```bash
+python -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker select \
+  --manifest /path/to/l15_graph_generation_manifest.json \
+  --dataset-root /fs/gamma-projects/vlm-robot/datasets/CG-Bench \
+  --output /path/to/l15_graph_smoke_selection.json
+
+DEPENDENCY_JOB_ID=<grounding-validation-job> \
+  steam_video_new/implicit_world_model/cgbench_grounded_navigation/submit_l15_graph_smoke.sh
+```
+
 ## 已实现的 grounded-read 闭环
 
 `grounding.py` 将每个 opaque `read_video_interval` 送入本地

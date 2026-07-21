@@ -285,6 +285,80 @@ def test_real_candidate_hops_keep_gt_alignment_hidden_and_nonmatches_unlabeled(
     assert all(row["direct_audio_observed"] is False for row in details["clues"])
 
 
+def test_question_independent_l15_selection_and_frozen_coverage(tmp_path: Path) -> None:
+    import json
+    import numpy as np
+    from steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker import (
+        evaluate_frozen_graph_coverage,
+        select_smoke_videos,
+    )
+
+    videos = []
+    counter = 0
+    for split in ("train", "validation", "test"):
+        for source in ("time_aligned_subtitle_l1_fallback", "unavailable"):
+            for _ in range(2):
+                video_id = f"video-{counter}"
+                (tmp_path / f"{video_id}.mp4").write_bytes(b"container")
+                videos.append({
+                    "video_id": video_id,
+                    "video_ref": f"{video_id}.mp4",
+                    "current_candidate_source": source,
+                    "cases": [{"case_id": f"case-{counter}", "split": split}],
+                })
+                counter += 1
+    selection = select_smoke_videos(
+        {"dataset_id": "cgbench:smoke", "videos": videos},
+        dataset_root=tmp_path,
+        duration_probe=lambda path: float(len(path.name)),
+    )
+    assert len(selection["videos"]) == 12
+    assert selection["selection_uses_question_or_gt"] is False
+
+    (tmp_path / "video-a.mp4").write_bytes(b"container")
+    dataset, hidden, _ = build_cgbench_navigation_dataset(
+        [_row("video-a", 1, [[10, 14], [40, 46]])],
+        video_root=tmp_path, dataset_id="cgbench:frozen",
+        duration_probe=lambda _: 100.0,
+    )
+    graph_root = tmp_path / "graphs"
+    graph_dir = graph_root / "video-a"
+    graph_dir.mkdir(parents=True)
+    nodes = [
+        {"node_id": "node:hit", "video_id": "video-a", "node_type": "observation",
+         "time_span": {"start_s": 10, "end_s": 12}, "text": "relevant event"},
+        {"node_id": "node:other", "video_id": "video-a", "node_type": "observation",
+         "time_span": {"start_s": 80, "end_s": 82}, "text": "other event"},
+    ]
+    graph_path = graph_dir / "causal_temporal_overlay.json"
+    graph_path.write_text(json.dumps({
+        "schema_version": "steam-causal-overlay/v0.2", "overlay_id": "overlay:a",
+        "example_id": "example:a", "video_id": "video-a", "l1_observations": nodes,
+        "atomic_events": [], "relations": [], "l1_structural_relations": [],
+        "metadata": {"question_independent_contract": True},
+    }), encoding="utf-8")
+    matrix = np.zeros((2, 2048), dtype=np.float32)
+    matrix[0, 0] = 1.0
+    matrix[1, 1] = 1.0
+    np.save(graph_dir / "node_embeddings.npy", matrix)
+    (graph_dir / "node_embeddings.manifest.json").write_text(json.dumps({
+        "rows": [{"row_index": 0, "node_id": "node:hit"},
+                 {"row_index": 1, "node_id": "node:other"}],
+    }), encoding="utf-8")
+    frozen_selection = {
+        "observation_horizon_s": 100.0,
+        "videos": [{"video_id": "video-a", "observation_horizon_s": 100.0}],
+    }
+    report, details = evaluate_frozen_graph_coverage(
+        dataset, hidden, frozen_selection, graph_root=graph_root,
+        query_provider=_FakeEmbedding(), top_ks=(1, 2),
+    )
+    assert report["graph_video_count"] == 1
+    assert report["embedding_top_k_recall"]["1"]["covered"] == 1
+    assert report["nonoverlap_candidates_are_semantic_negatives"] is False
+    assert details["cases"][0]["clues"][0]["top_k_status"]["1"] == "covered"
+
+
 def test_gpt56_audit_is_categorical_and_only_joins_hidden_labels_after_review() -> None:
     from steam_video_new.implicit_world_model.cgbench_grounded_navigation.gpt56_audit import (
         _validate_decision,

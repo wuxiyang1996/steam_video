@@ -87,6 +87,7 @@ from memory_graph.video_l1 import (
     PayloadVideoL1Provider,
     VideoL1AtomicEventExtractor,
     _assign_track_ids,
+    _coarse_prompt,
     _event_to_l1_node,
     _parse_coarse_response,
     _parse_fine_response,
@@ -1287,6 +1288,27 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertEqual(accepted, [])
         self.assertIn("outside", rejected[0]["reason"])
+
+    def test_video_l1_accepts_categorical_grounding_without_model_confidence(self) -> None:
+        accepted, rejected = _parse_coarse_response(
+            {
+                "events": [{
+                    "predicate": "A hand touches the cup.",
+                    "coarse_start_s": 4.0,
+                    "coarse_end_s": 7.0,
+                    "grounding_status": "observed",
+                }]
+            },
+            window={"start_s": 0.0, "end_s": 8.0, "purpose": "coarse_scan"},
+            window_index=0,
+            minimum_confidence=0.5,
+            max_events=4,
+        )
+        self.assertEqual(rejected, [])
+        self.assertEqual(accepted[0]["confidence"], 1.0)
+        self.assertIn("Do not output confidence", _coarse_prompt(
+            window={"start_s": 0.0, "end_s": 8.0}, frame_records=[], max_events=4
+        ))
 
     def test_video_l1_fine_localization_tracks_states_and_frame_evidence(self) -> None:
         records = [
