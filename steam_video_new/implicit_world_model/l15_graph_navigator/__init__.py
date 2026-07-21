@@ -80,6 +80,10 @@ from .transition_review import (
     inspect_transition_review,
     validate_transition_review_packet,
 )
+from .visual_review import (
+    build_visual_review_bundle,
+    validate_visual_review_bundle,
+)
 from .targeted_gathering import (
     DEFAULT_TARGET_QUOTAS,
     FAILURE_SLICES,
@@ -183,6 +187,7 @@ __all__ = [
     "build_executed_transition_dataset",
     "build_balanced_evidence_packet",
     "build_transition_review_packet",
+    "build_visual_review_bundle",
     "build_targeted_transition_gathering",
     "build_preference_annotation_packet",
     "build_balanced_review_queue",
@@ -221,6 +226,7 @@ __all__ = [
     "validate_balanced_evidence_packet",
     "validate_executed_transition_dataset",
     "validate_transition_review_packet",
+    "validate_visual_review_bundle",
     "validate_preference_annotation_packet",
     "train_baselines",
 ]

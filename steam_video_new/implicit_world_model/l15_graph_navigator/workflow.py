@@ -37,6 +37,7 @@ from .transition_review import (
     inspect_transition_review,
     validate_transition_review_packet,
 )
+from .visual_review import build_visual_review_bundle
 from .targeted_gathering import (
     build_targeted_transition_gathering,
     inspect_inconclusive_failure_slices,
@@ -174,6 +175,14 @@ def build_parser() -> argparse.ArgumentParser:
     targeted.add_argument("--key-output", required=True, type=Path)
     targeted.add_argument("--manifest-output", required=True, type=Path)
     targeted.add_argument("--report-output", required=True, type=Path)
+
+    visual = commands.add_parser("build-visual-review")
+    visual.add_argument("--packet", required=True, type=Path)
+    visual.add_argument("--key", required=True, type=Path)
+    visual.add_argument("--video-root", required=True, type=Path)
+    visual.add_argument("--output", required=True, type=Path)
+    visual.add_argument("--key-output", required=True, type=Path)
+    visual.add_argument("--report", required=True, type=Path)
 
     validate = commands.add_parser("validate-cases")
     validate.add_argument("--cases", required=True, type=Path)
@@ -419,6 +428,17 @@ def main(argv: list[str] | None = None) -> int:
         _write_json(args.manifest_output, artifacts["manifest"])
         _write_json(args.report_output, artifacts["report"])
         print(json.dumps(artifacts["report"], indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "build-visual-review":
+        public_index, hidden_manifest, report = build_visual_review_bundle(
+            _read_json(args.packet),
+            _read_json(args.key),
+            video_root=args.video_root,
+        )
+        _write_json(args.output, public_index)
+        _write_json(args.key_output, hidden_manifest)
+        _write_json(args.report, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
         return 0
     if args.command == "validate-cases":
         payload = _read_json(args.cases)

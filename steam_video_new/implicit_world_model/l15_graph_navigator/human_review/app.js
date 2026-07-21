@@ -14,6 +14,7 @@ const FIELD_LABELS = {
 };
 
 let packet;
+let visualByItem = new Map();
 let state;
 let current = 0;
 let filter = "all";
@@ -21,8 +22,15 @@ let filter = "all";
 const el = id => document.getElementById(id);
 
 async function init() {
-  const response = await fetch("/api/packet", { cache: "no-store" });
-  packet = await response.json();
+  const [packetResponse, visualResponse] = await Promise.all([
+    fetch("/api/packet", { cache: "no-store" }),
+    fetch("/api/visual", { cache: "no-store" }),
+  ]);
+  if (!packetResponse.ok || !visualResponse.ok) throw new Error("review assets unavailable");
+  packet = await packetResponse.json();
+  const visualIndex = await visualResponse.json();
+  if (visualIndex.packet_id !== packet.packet_id) throw new Error("visual index packet mismatch");
+  visualByItem = new Map((visualIndex.items || []).map(item => [item.item_id, item]));
   const saved = JSON.parse(localStorage.getItem(storageKey()) || "null");
   state = saved && saved.packet_id === packet.packet_id ? saved : freshState();
   el("annotator").value = state.annotator || "";
@@ -108,12 +116,71 @@ function renderItem(index) {
   el("execution").textContent = `${item.executed_result.status}; ${item.executed_result.observation_outcome}`;
   el("flagged").checked = Boolean(state.flagged[item.item_id]);
   el("rationale").value = answer.rationale || "";
+  renderVisualEvidence(item);
   renderEvidence(item);
   renderCategorical(answer);
   renderCitations(item, answer);
   el("previous").disabled = current === 0;
   el("next").textContent = current === packet.items.length - 1 ? "保存" : "保存并下一条";
   renderList();
+}
+
+function renderVisualEvidence(item) {
+  const visual = visualByItem.get(item.item_id);
+  const assets = visual ? (visual.visual_evidence || []) : [];
+  const container = el("visualEvidence");
+  container.innerHTML = "";
+  if (!assets.length) {
+    container.innerHTML = '<div class="visual-missing">此条目没有绑定视频证据。请仅依据公开文本证据判断，并在理由中注明。</div>';
+    el("visualStatus").textContent = "未提供";
+    return;
+  }
+  const available = assets.filter(asset => asset.availability === "available").length;
+  el("visualStatus").textContent = `${available} / ${assets.length} 时间窗可播放`;
+  assets.forEach(asset => {
+    const card = document.createElement("article");
+    card.className = "visual-card";
+    const roles = (asset.roles || []).map(role => `<span class="role role-${escapeHtml(role)}">${escapeHtml(role)}</span>`).join("");
+    const interval = asset.start_s == null || asset.end_s == null ? "时间窗未知" : `${formatTime(asset.start_s)} – ${formatTime(asset.end_s)}`;
+    card.innerHTML = `<div class="visual-meta"><div class="roles">${roles}</div><span>${escapeHtml(interval)}</span></div><div class="node-id">${escapeHtml(asset.node_id || "")}</div>`;
+    if (asset.availability !== "available") {
+      const missing = document.createElement("div");
+      missing.className = "visual-missing";
+      missing.textContent = `视频不可用：${asset.missing_reason || "unknown"}`;
+      card.appendChild(missing);
+    } else {
+      const video = document.createElement("video");
+      video.controls = true;
+      video.preload = "metadata";
+      video.src = asset.media_url;
+      video.setAttribute("playsinline", "");
+      const seekStart = () => {
+        if (Number.isFinite(asset.start_s) && Math.abs(video.currentTime - asset.start_s) > 0.35) video.currentTime = asset.start_s;
+      };
+      video.addEventListener("loadedmetadata", seekStart, { once: true });
+      video.addEventListener("play", () => {
+        if (video.currentTime < asset.start_s || video.currentTime >= asset.end_s) seekStart();
+      });
+      video.addEventListener("timeupdate", () => {
+        if (!video.paused && video.currentTime >= asset.end_s) video.pause();
+      });
+      const replay = document.createElement("button");
+      replay.type = "button";
+      replay.className = "secondary replay-window";
+      replay.textContent = "重播此时间窗";
+      replay.addEventListener("click", async () => {
+        video.currentTime = asset.start_s;
+        try { await video.play(); } catch (_) { /* browser retains controls */ }
+      });
+      card.append(video, replay);
+    }
+    container.appendChild(card);
+  });
+}
+
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${(seconds - minutes * 60).toFixed(1).padStart(4, "0")}`;
 }
 
 function renderEvidence(item) {

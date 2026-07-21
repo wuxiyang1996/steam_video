@@ -31,18 +31,40 @@
 
 ## Human review website
 
-启动本地网页：
+本目录额外提供 outcome-blind 视觉绑定：
+
+- `human_review_visual_index.json`：reviewer 可见的 node、角色、视频 ID 与时间窗；不含本地路径、采样分层、stored target 或 verifier outcome。
+- `human_review_visual_coverage.json`：覆盖审计；当前 53/53 items、173/173 requested nodes 均可播放，覆盖 9 个视频。
+- `human_review_visual_assets.hidden_key.json`：本地视频绝对路径绑定；受 `*.hidden_key.json` 保护，不能交给 reviewer。
+
+如需从 packet 重建绑定：
+
+```bash
+python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow \
+  build-visual-review \
+  --packet steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_packet.unreviewed.json \
+  --key steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_packet.hidden_key.json \
+  --video-root /fs/gamma-projects/vlm-robot/datasets/Video-Holmes/Benchmark/videos_cropped \
+  --output steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_visual_index.json \
+  --key-output steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_visual_assets.hidden_key.json \
+  --report steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_visual_coverage.json
+```
+
+启动带真实视频时间窗的本地网页：
 
 ```bash
 python -m steam_video_new.implicit_world_model.l15_graph_navigator.human_review_server \
-  --packet steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_packet.unreviewed.json
+  --packet steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_packet.unreviewed.json \
+  --visual-index steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_visual_index.json \
+  --visual-key steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_visual_assets.hidden_key.json
 ```
 
-打开 `http://127.0.0.1:8765`。网页支持自动保存/恢复、未完成与待复核筛选、公开 evidence citation 选择、服务端 schema 校验，以及导出 `independent_human` review JSON。
+打开 `http://127.0.0.1:8765`。网页并排显示 source/target/observation 的真实视频区间；服务端通过 HTTP Range 读取原 MP4，浏览器只播放相应的 `start_s/end_s`，不会公开本地文件路径。网页同时支持自动保存/恢复、未完成与待复核筛选、公开 evidence citation 选择、服务端 schema 校验，以及导出 `independent_human` review JSON。
 
 审核期间不要读取：
 
 - `human_review_packet.hidden_key.json`
+- `human_review_visual_assets.hidden_key.json`
 - `targeted_gathering_manifest.hidden_key.json`
 - 第一轮 GPT-5.6 provisional annotations
 

@@ -44,6 +44,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     VideoSkillsL2Adapter,
     build_executed_transition_dataset,
     build_transition_review_packet,
+    build_visual_review_bundle,
     build_video_skills_l2_rollout,
     build_balanced_evidence_packet,
     derive_realized_belief_delta,
@@ -62,6 +63,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator import (
     inspect_transition_review,
     validate_executed_transition_dataset,
     validate_transition_review_packet,
+    validate_visual_review_bundle,
     validate_balanced_review_queue,
     validate_balanced_evidence_packet,
     validate_sibling_artifact,
@@ -1460,6 +1462,74 @@ def test_transition_review_packet_is_blinded_categorical_and_duplicate_audited(
     numeric["decisions"][0]["reward"] = 1
     with pytest.raises(ValueError, match="invalid transition review decision"):
         apply_transition_review(packet, numeric)
+
+
+def test_visual_review_bundle_binds_video_without_public_path_or_outcome_leak(
+    tmp_path: Path,
+) -> None:
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    locked_cases = lock_navigation_case_set(
+        _navigation_case_set(overlay_path, overlay),
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+    dataset = build_executed_transition_dataset(
+        locked_cases,
+        case_root=tmp_path,
+        dataset_id="transitions:visual-review",
+        executor_factory=lambda: VideoSkillsL2Adapter(use_video_skills_runtime=False),
+    )
+    packet, key = build_transition_review_packet(
+        dataset,
+        locked_cases,
+        packet_id="transition-review:visual",
+        native_controls_per_action=1,
+        consistency_duplicates=1,
+    )
+    video_root = tmp_path / "videos"
+    video_root.mkdir()
+    video_path = video_root / "video:preference.mp4"
+    video_path.write_bytes(b"synthetic-container-for-binding-test")
+
+    public, private, report = build_visual_review_bundle(
+        packet, key, video_root=video_root
+    )
+
+    assert validate_visual_review_bundle(packet, public, private) == []
+    assert report["fully_covered_item_count"] == len(packet["items"])
+    assert report["missing_node_count"] == 0
+    assert report["training_performed"] is False
+    public_text = json.dumps(public).lower()
+    assert str(tmp_path).lower() not in public_text
+    for forbidden in (
+        "video_path", "overlay_path", "sampling_stratum", "stored_target",
+        "verifier_measurement", "reward", "probability",
+    ):
+        assert forbidden not in public_text
+    assert all(
+        asset["media_url"].startswith("/api/media/visual:")
+        for item in public["items"]
+        for asset in item["visual_evidence"]
+    )
+    assert {row["video_path"] for row in private["assets"]} == {str(video_path)}
+
+
+def test_human_review_media_range_parser() -> None:
+    from steam_video_new.implicit_world_model.l15_graph_navigator.human_review_server import (
+        _parse_range_header,
+    )
+
+    assert _parse_range_header(None, 100) is None
+    assert _parse_range_header("bytes=0-9", 100) == (0, 9)
+    assert _parse_range_header("bytes=90-", 100) == (90, 99)
+    assert _parse_range_header("bytes=-10", 100) == (90, 99)
+    assert _parse_range_header("bytes=95-200", 100) == (95, 99)
+    with pytest.raises(ValueError):
+        _parse_range_header("bytes=100-101", 100)
+    with pytest.raises(ValueError):
+        _parse_range_header("bytes=0-1,4-5", 100)
 
 
 def test_realized_delta_recomputes_full_categorical_state_change() -> None:
