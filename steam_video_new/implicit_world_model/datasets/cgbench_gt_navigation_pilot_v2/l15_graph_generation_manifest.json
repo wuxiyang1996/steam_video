@@ -1,0 +1,2474 @@
+{
+  "schema_version": "steam-cgbench-l15-graph-generation-manifest/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "purpose": "generate real L1/L1.5 memory once per video without GT clue access",
+  "videos": [
+    {
+      "video_id": "-tpms_BbjHA",
+      "video_ref": "cg_videos/-tpms_BbjHA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:9d98d222d610d38c7a2e",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "07QhrrI5B4k",
+      "video_ref": "cg_videos/07QhrrI5B4k.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:46c7148149cfc39c669b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "18vPWQD9VfI",
+      "video_ref": "cg_videos/18vPWQD9VfI.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:165844a3a86959b47aee",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:66fd3c37b14dfe611d43",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:9ca2eb9604559d0822d6",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:e0d5c4becfe0bae5041d",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "2e1X8BD3yF8",
+      "video_ref": "cg_videos/2e1X8BD3yF8.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:04ad675538d27a07e695",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:6d05b53a83d3ecff63e3",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "372MYnr9nbM",
+      "video_ref": "cg_videos/372MYnr9nbM.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:5444837e3b6ef8918a7c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "3SvGJF7Gt_Q",
+      "video_ref": "cg_videos/3SvGJF7Gt_Q.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:2e497da0c1ffd018a450",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "3ZpmN3-2-Zo",
+      "video_ref": "cg_videos/3ZpmN3-2-Zo.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:b4146b623ad33f94bc1a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "3iOLbfYmgdQ",
+      "video_ref": "cg_videos/3iOLbfYmgdQ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:462520dd16b367b090bf",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "4FoD_ni_bQU",
+      "video_ref": "cg_videos/4FoD_ni_bQU.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:373856c241ea3ea2ced8",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "4MK89zVlYdQ",
+      "video_ref": "cg_videos/4MK89zVlYdQ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:4adc31710ef665c4ed2b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "4x8XQAPC4Vk",
+      "video_ref": "cg_videos/4x8XQAPC4Vk.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:cff924abdc0faaf95a2f",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "5D8TBicNIb8",
+      "video_ref": "cg_videos/5D8TBicNIb8.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:d9c80492a208bcc056e4",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "5Gm4ijmIjZQ",
+      "video_ref": "cg_videos/5Gm4ijmIjZQ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:6b4739ef1181f2c70eb6",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "5kozt0uDa4c",
+      "video_ref": "cg_videos/5kozt0uDa4c.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:1b7fe027d812710b6586",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "7b4_bVh5CUU",
+      "video_ref": "cg_videos/7b4_bVh5CUU.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:1d1135bfc09d90080c8f",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "8SncSXQM_x4",
+      "video_ref": "cg_videos/8SncSXQM_x4.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:fbf161a59ac9ba276269",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "9POxIUAORH4",
+      "video_ref": "cg_videos/9POxIUAORH4.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:5022b0b1805910bbe891",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:b54bf2f29a2825093457",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "AzzLMFPrVYg",
+      "video_ref": "cg_videos/AzzLMFPrVYg.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:8c54f632fc2102231909",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV12T41127be",
+      "video_ref": "cg_videos/BV12T41127be.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:f1b83d01b909caadabf2",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV141421m7D4",
+      "video_ref": "cg_videos/BV141421m7D4.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:b8af16b7f3703ba597d0",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV15W4y1J7sx",
+      "video_ref": "cg_videos/BV15W4y1J7sx.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:090e7b7c902b8cacae1a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV15x4y1i7ot",
+      "video_ref": "cg_videos/BV15x4y1i7ot.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:d9bf599410e21308a79e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV16A4m1F7Jc",
+      "video_ref": "cg_videos/BV16A4m1F7Jc.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:be04610b4c63a27fe6da",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV16f4y157pi",
+      "video_ref": "cg_videos/BV16f4y157pi.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:d371e59bdb2daa7c3fba",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV16u411s7iK",
+      "video_ref": "cg_videos/BV16u411s7iK.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:915940db9d4e39304170",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV17m421p7Ae",
+      "video_ref": "cg_videos/BV17m421p7Ae.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:bf7afb41d3f9292aa35f",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV17t421u7eZ",
+      "video_ref": "cg_videos/BV17t421u7eZ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:6190fa4319c2959dad22",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:8a161b3186da67351598",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1824y1U7f6",
+      "video_ref": "cg_videos/BV1824y1U7f6.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:505cde5d79280aaca378",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV18F411u7vQ",
+      "video_ref": "cg_videos/BV18F411u7vQ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:2fbe71c5295950622f65",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV18Z421s7iV",
+      "video_ref": "cg_videos/BV18Z421s7iV.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:6fb743a94fec392b649e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV18bmVY7EMy",
+      "video_ref": "cg_videos/BV18bmVY7EMy.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:ab6e983af66bff4ba87a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV18g41167yA",
+      "video_ref": "cg_videos/BV18g41167yA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:bb068ab0f222543c41db",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV19K421a7sc",
+      "video_ref": "cg_videos/BV19K421a7sc.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:621647e7b2a21c4fd8e5",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV19uWFegERp",
+      "video_ref": "cg_videos/BV19uWFegERp.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:af2b77836c091ec71c3f",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:b2101769a6b2902e04ee",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:c7faa1de288b1e81f2bf",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1AC4y1V7CC",
+      "video_ref": "cg_videos/BV1AC4y1V7CC.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:0f486516bb7e3a6801ad",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1AV411n7Jh",
+      "video_ref": "cg_videos/BV1AV411n7Jh.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:eb02b66d578a76006db2",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Ab4y1B76z",
+      "video_ref": "cg_videos/BV1Ab4y1B76z.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:9dcb8f6f9447d4dfca27",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Az421C7Tp",
+      "video_ref": "cg_videos/BV1Az421C7Tp.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:7713d95bacb57e7c6b58",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1BD4y187uF",
+      "video_ref": "cg_videos/BV1BD4y187uF.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:9eed50c1aadaca2c674f",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Bt411u7RX",
+      "video_ref": "cg_videos/BV1Bt411u7RX.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:49026e5555f5cf142920",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:c9ab132038a1789dca34",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1CN411u7ZG",
+      "video_ref": "cg_videos/BV1CN411u7ZG.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:0cd526b2a5bde9bc5fa4",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:0d3cc42085c0043a623a",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:e06fa08fc7388bae44b7",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Ci421h7rT",
+      "video_ref": "cg_videos/BV1Ci421h7rT.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:05bd737f1cd502c30c74",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:924f013496e9d9685766",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1FT421D74k",
+      "video_ref": "cg_videos/BV1FT421D74k.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:8a2c52c57c0596bded7b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Fz421B7Cq",
+      "video_ref": "cg_videos/BV1Fz421B7Cq.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:b1c74416770960866e17",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Gm4y1g7D4",
+      "video_ref": "cg_videos/BV1Gm4y1g7D4.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:b3389965414ad2e8c8b8",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1GpePe5EH4",
+      "video_ref": "cg_videos/BV1GpePe5EH4.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:cc18664cc7bfdc66c553",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1HF411F7iQ",
+      "video_ref": "cg_videos/BV1HF411F7iQ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:655a61033096ee28531b",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:f287c8b6b04eaf619b5c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1HJgue7EQA",
+      "video_ref": "cg_videos/BV1HJgue7EQA.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:e2bed844f15ae05d8bf5",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1KK41157zV",
+      "video_ref": "cg_videos/BV1KK41157zV.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:ad9c39b8577a9877d496",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Kj411Q7iQ",
+      "video_ref": "cg_videos/BV1Kj411Q7iQ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:1a123ac409792f752c39",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Kj411e7Ee",
+      "video_ref": "cg_videos/BV1Kj411e7Ee.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:89fc36fb3981c5f7ef01",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1L54y1n7hp",
+      "video_ref": "cg_videos/BV1L54y1n7hp.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:13c9ce268658640c0fbd",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:60d2479afaf7afe555ce",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:dc15e3f0a37faffb4340",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Mx4y1S7Tf",
+      "video_ref": "cg_videos/BV1Mx4y1S7Tf.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:e61e657cde0311e94fab",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1N1421k75c",
+      "video_ref": "cg_videos/BV1N1421k75c.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:0b7114acc71f17e266ac",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1NZ421q7Cb",
+      "video_ref": "cg_videos/BV1NZ421q7Cb.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:4b3610f3b09f0f834dea",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Na4y1D7E2",
+      "video_ref": "cg_videos/BV1Na4y1D7E2.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:71ccf45c0e4a7dccf537",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:e0e4a31186c6a1243b0c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Na4y1t7JK",
+      "video_ref": "cg_videos/BV1Na4y1t7JK.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:87b0694ee3ed1d3c339d",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1QG411q7Bx",
+      "video_ref": "cg_videos/BV1QG411q7Bx.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:76e954e7eea95209c673",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Qq4y1u7gc",
+      "video_ref": "cg_videos/BV1Qq4y1u7gc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:85bf9fc17ca9944b6af4",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Qt4y1f7zw",
+      "video_ref": "cg_videos/BV1Qt4y1f7zw.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:52e77f99db56a8ddfda3",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Qv411q7uo",
+      "video_ref": "cg_videos/BV1Qv411q7uo.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:645fdcf88a3e455c205d",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:ceb1b3607655e032792a",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Qz421R7vm",
+      "video_ref": "cg_videos/BV1Qz421R7vm.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:cf17d2cbc22acb5a81ae",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1S83EesEHq",
+      "video_ref": "cg_videos/BV1S83EesEHq.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:2f3878bc2fbccc5ba7fc",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:614697c35c617a2e52e1",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1SDYJejEcP",
+      "video_ref": "cg_videos/BV1SDYJejEcP.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:1f7aab0b75fda46477af",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:89f024c86733b16a27be",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1SL411J729",
+      "video_ref": "cg_videos/BV1SL411J729.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:63c7500c36b0fd4cfd1b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1TN411C782",
+      "video_ref": "cg_videos/BV1TN411C782.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:07673cef275c4742a1ab",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Tv42117jv",
+      "video_ref": "cg_videos/BV1Tv42117jv.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:44b92cf39bae484d2f7e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Uf4y1w7md",
+      "video_ref": "cg_videos/BV1Uf4y1w7md.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:b181047bb1df9a831b7c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Uv4y1h7Gb",
+      "video_ref": "cg_videos/BV1Uv4y1h7Gb.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:1096bf963dc6de928b96",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1VS4y197ZF",
+      "video_ref": "cg_videos/BV1VS4y197ZF.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:4eaacf6becdd96cfd0e0",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1VW42197UT",
+      "video_ref": "cg_videos/BV1VW42197UT.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:81157a2c5d7b335d296e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Ws4y177So",
+      "video_ref": "cg_videos/BV1Ws4y177So.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:fa645659221984e3663c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Xh411W7WL",
+      "video_ref": "cg_videos/BV1Xh411W7WL.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7bbc28a5b9a864531277",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Yy4y1L7jN",
+      "video_ref": "cg_videos/BV1Yy4y1L7jN.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:c74fd6186189895b3f05",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1ZD4y1B7T3",
+      "video_ref": "cg_videos/BV1ZD4y1B7T3.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:00124f4650bed2e1e01a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1ZV411y77x",
+      "video_ref": "cg_videos/BV1ZV411y77x.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:9a2cb5b84b6d038626ce",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1Zo4y1e7ki",
+      "video_ref": "cg_videos/BV1Zo4y1e7ki.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:8eff7cccd0d68a77f49d",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:ec195326528d2dd5eb56",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1b1421r76o",
+      "video_ref": "cg_videos/BV1b1421r76o.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:34b58ec79441983bf7ac",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1bQ4y1A7CM",
+      "video_ref": "cg_videos/BV1bQ4y1A7CM.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:6467356d33e00cbb2fca",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1bW41167FT",
+      "video_ref": "cg_videos/BV1bW41167FT.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:cf7411dfa8a832d5baba",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1dM4y1n7j4",
+      "video_ref": "cg_videos/BV1dM4y1n7j4.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:a60eddf1b746ea1f4812",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1dS411A7bX",
+      "video_ref": "cg_videos/BV1dS411A7bX.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:3ea72d2768b90f21816f",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1dS4y1R72i",
+      "video_ref": "cg_videos/BV1dS4y1R72i.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:3c0c2732e8e6e98923ea",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1dx4y1J7CF",
+      "video_ref": "cg_videos/BV1dx4y1J7CF.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:3349e2032ebcccd7345d",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1fS4y1P7mQ",
+      "video_ref": "cg_videos/BV1fS4y1P7mQ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:2ba7c1f1a0e0de8d3f80",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:a25e2e56384c0bef8a63",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1ft411Z7yp",
+      "video_ref": "cg_videos/BV1ft411Z7yp.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:1106cae201192d9faea5",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1gP411B7uZ",
+      "video_ref": "cg_videos/BV1gP411B7uZ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:10897b4e7a48b86aee57",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:6f8b2e7fd6522fc05167",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1gQ4y1H7HZ",
+      "video_ref": "cg_videos/BV1gQ4y1H7HZ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:9d2da072fb6474d13873",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1gbgWeBE92",
+      "video_ref": "cg_videos/BV1gbgWeBE92.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:00fdcdce97e5c7478498",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:03ae94a7899404983244",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1gm4y1h7ar",
+      "video_ref": "cg_videos/BV1gm4y1h7ar.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:9fb98a4f52db931f2ce4",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1k3411t7SU",
+      "video_ref": "cg_videos/BV1k3411t7SU.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a6d3e01225446e7865e2",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1k8411h7A3",
+      "video_ref": "cg_videos/BV1k8411h7A3.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:19ce986358594a69947a",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:2a798297068dceaac8a6",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:3a491972377f53b96d71",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1mD421777U",
+      "video_ref": "cg_videos/BV1mD421777U.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:37e705485ff6b8a88712",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1n1421r7xi",
+      "video_ref": "cg_videos/BV1n1421r7xi.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:20c557d0e7328eebd290",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1nY4y197Qe",
+      "video_ref": "cg_videos/BV1nY4y197Qe.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:a0cdcb0160e378305814",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1oB4y1z7FK",
+      "video_ref": "cg_videos/BV1oB4y1z7FK.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:0ed79e85867f7b96df88",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:2bb75052ef85a65f150a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1oS411P7pF",
+      "video_ref": "cg_videos/BV1oS411P7pF.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:f5a1db0ef3792cf138c7",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1oY4y1D7Ay",
+      "video_ref": "cg_videos/BV1oY4y1D7Ay.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:c9038d5230c8a42e8bd2",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:f03bd3d5dc54cc74d8a0",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1pM4m1174T",
+      "video_ref": "cg_videos/BV1pM4m1174T.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:ab87412b0a929fd09ecb",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1qT4y137Xq",
+      "video_ref": "cg_videos/BV1qT4y137Xq.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:def4d6523da65b948964",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1qx411C75N",
+      "video_ref": "cg_videos/BV1qx411C75N.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:01ccba377c612449d460",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1rb411P74P",
+      "video_ref": "cg_videos/BV1rb411P74P.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:4fee6a399b1859b28e86",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:fd14e61e9e1c92a0f26d",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1rh4y117Bs",
+      "video_ref": "cg_videos/BV1rh4y117Bs.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:e759f48f5af9ddcbd785",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1rj411V76x",
+      "video_ref": "cg_videos/BV1rj411V76x.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:6e290cc83c1edc5a1a61",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1rj411j7mx",
+      "video_ref": "cg_videos/BV1rj411j7mx.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:2cd0dbeb2487cee0079a",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:6e8564b86e13cace7e5d",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1tA4y1R7q7",
+      "video_ref": "cg_videos/BV1tA4y1R7q7.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:e6397d97710fff426f70",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1th411W795",
+      "video_ref": "cg_videos/BV1th411W795.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:329fa6e52e6b07e0c010",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:d3a30c3241b8a14c39d8",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1ts421T7kW",
+      "video_ref": "cg_videos/BV1ts421T7kW.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:57096f603ee3ee78d27e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1tu411f7ja",
+      "video_ref": "cg_videos/BV1tu411f7ja.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:b43fed28e3895dd1ea87",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1uC4y1278A",
+      "video_ref": "cg_videos/BV1uC4y1278A.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:22cea71c8e465f686a4c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1uM4m1m7oJ",
+      "video_ref": "cg_videos/BV1uM4m1m7oJ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:592724d74e36c95e49bb",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1uf421q7QH",
+      "video_ref": "cg_videos/BV1uf421q7QH.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:7ccc7c1f82bf96de1b64",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:f948901ce8a57f55f540",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1um4y1j7zB",
+      "video_ref": "cg_videos/BV1um4y1j7zB.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:b1bcca4b9e4293dc3032",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1uw411u7JL",
+      "video_ref": "cg_videos/BV1uw411u7JL.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:511e4a5d1f095b197d7e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1vM411z72t",
+      "video_ref": "cg_videos/BV1vM411z72t.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:aac229e6badcef00b8a1",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1vWebeSEVU",
+      "video_ref": "cg_videos/BV1vWebeSEVU.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:0be196686fb7a37cf6b8",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1vZ4y147f2",
+      "video_ref": "cg_videos/BV1vZ4y147f2.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:f974d5286c31d723a787",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1vi4y1Y7QF",
+      "video_ref": "cg_videos/BV1vi4y1Y7QF.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:b1ae3af1f13512af1bc4",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1vs41117ci",
+      "video_ref": "cg_videos/BV1vs41117ci.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a795b0a13ec6999f314b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1wo4y1C7Dz",
+      "video_ref": "cg_videos/BV1wo4y1C7Dz.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:06d80dceec0df74ea833",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1wu4y1e71i",
+      "video_ref": "cg_videos/BV1wu4y1e71i.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:0c5a20fea2c29863c97d",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:1b9609ddac5547bb7531",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1xe4y1Q7KD",
+      "video_ref": "cg_videos/BV1xe4y1Q7KD.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:c3b0b8895863b7131dc5",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1xq4y1F7Yj",
+      "video_ref": "cg_videos/BV1xq4y1F7Yj.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:bbfeea40df2475737898",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1y54y1b7tL",
+      "video_ref": "cg_videos/BV1y54y1b7tL.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:272c548a4be7c6a62177",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1y8H9eBEVd",
+      "video_ref": "cg_videos/BV1y8H9eBEVd.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:05ea3f62c6a0a46f3afe",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1yG411C7Xi",
+      "video_ref": "cg_videos/BV1yG411C7Xi.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:73bc93718d37748c5155",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:c25ccbb8dfdd90a096d3",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1zG41187EZ",
+      "video_ref": "cg_videos/BV1zG41187EZ.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:cd789d3fadc83c09d476",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1zH4y13792",
+      "video_ref": "cg_videos/BV1zH4y13792.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:86f3e1e873e6785418bf",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1zJ41187BP",
+      "video_ref": "cg_videos/BV1zJ41187BP.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:b1164e579fdb03f5e4d9",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "BV1zJhWeKELU",
+      "video_ref": "cg_videos/BV1zJhWeKELU.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:8bbda12ba6499a6672d4",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "BeAur755crI",
+      "video_ref": "cg_videos/BeAur755crI.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:3b083a46e1813676fa61",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "CeJVrBtSuQA",
+      "video_ref": "cg_videos/CeJVrBtSuQA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:59dd5ec2c8beb91900e1",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "E63yNWaZnQA",
+      "video_ref": "cg_videos/E63yNWaZnQA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7042ffe082a552e8d8fd",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "E_XW3mo9g40",
+      "video_ref": "cg_videos/E_XW3mo9g40.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:c9ce03a8f4cf6f757cb1",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "Er6Oj_nFz9U",
+      "video_ref": "cg_videos/Er6Oj_nFz9U.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:69e125b4983737afe770",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "GeTMB4hioIg",
+      "video_ref": "cg_videos/GeTMB4hioIg.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:1cef368d225335a3749a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "Jkgh_P2uz-g",
+      "video_ref": "cg_videos/Jkgh_P2uz-g.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:0a5e19e69d52ec2e5fb7",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "LF1cI7zeFm4",
+      "video_ref": "cg_videos/LF1cI7zeFm4.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7d0d0e98e22ee1d44147",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "LmrKejHOaG4",
+      "video_ref": "cg_videos/LmrKejHOaG4.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:19b9a2b5f8dcc8688273",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "MLW1CqdTbv0",
+      "video_ref": "cg_videos/MLW1CqdTbv0.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:b30452df588b87dc4574",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "MpiHQUCT1Cc",
+      "video_ref": "cg_videos/MpiHQUCT1Cc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:11293deeb988b218e337",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "PAA_lCutsfE",
+      "video_ref": "cg_videos/PAA_lCutsfE.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:250aa2b5d274f34321c9",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:2e201452a72bc2ad7435",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "PCSqrpAWq1s",
+      "video_ref": "cg_videos/PCSqrpAWq1s.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7f28f100c7db648c1c5b",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "PlxWf493en4",
+      "video_ref": "cg_videos/PlxWf493en4.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:7570f5c349bab3150df3",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:b32920a263f1c920d03a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "R8P8m4gTxuM",
+      "video_ref": "cg_videos/R8P8m4gTxuM.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:ec4a2c75f5f03be0ba59",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "SB5Qrk9YyB0",
+      "video_ref": "cg_videos/SB5Qrk9YyB0.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:6e87f765f10d0f1fc56c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "SUYK3QQdyXs",
+      "video_ref": "cg_videos/SUYK3QQdyXs.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:88958818e629075338ea",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:f0b22c1505956f119058",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "SeaiInbr92k",
+      "video_ref": "cg_videos/SeaiInbr92k.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:8984749d0827379f2f4e",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "T5PD8ofhiug",
+      "video_ref": "cg_videos/T5PD8ofhiug.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:28346e59ff1fbe1e21df",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "U6sKmhYxYnM",
+      "video_ref": "cg_videos/U6sKmhYxYnM.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:eb630bdf76a161550c04",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "V8_UKWRcpew",
+      "video_ref": "cg_videos/V8_UKWRcpew.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:384171a3df4bd574a1d6",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:b06f21dcd9532e2f04c5",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "VGAIFZOGdHE",
+      "video_ref": "cg_videos/VGAIFZOGdHE.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:53df297ef19c980213cd",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "W1X32VHJ7fM",
+      "video_ref": "cg_videos/W1X32VHJ7fM.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:3a80fe7762ad83424f3f",
+          "split": "validation"
+        },
+        {
+          "case_id": "cgcase:4c16b8196f39594b8505",
+          "split": "validation"
+        },
+        {
+          "case_id": "cgcase:7f9b5fb72c799e8696b2",
+          "split": "validation"
+        },
+        {
+          "case_id": "cgcase:fb2b6df618af31255e52",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "WHAMiF-YJtQ",
+      "video_ref": "cg_videos/WHAMiF-YJtQ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:054b93a704aacb60ecbe",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "Wb_Erxso2gA",
+      "video_ref": "cg_videos/Wb_Erxso2gA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:5df1a41433c4ddea3d08",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "XtQMytORBmM",
+      "video_ref": "cg_videos/XtQMytORBmM.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:13c806dbe9e5cce5b816",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:afedff2ca17b9ff6dc41",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "YDR31_nh70Q",
+      "video_ref": "cg_videos/YDR31_nh70Q.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:37d9db5b0e2a83eb7f62",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:8c0c9161f8659806dae9",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "YHRR9zBti94",
+      "video_ref": "cg_videos/YHRR9zBti94.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a147ba47499a36b5e571",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "YKR0KLrZgKY",
+      "video_ref": "cg_videos/YKR0KLrZgKY.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:8f4c4b793a7c6a908f6f",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:95b540b0ef077a515ef0",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "YN7SQHNFseU",
+      "video_ref": "cg_videos/YN7SQHNFseU.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:aea3da8dc8c6cbc36eaf",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "_PPWWRV6gbA",
+      "video_ref": "cg_videos/_PPWWRV6gbA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:3f77591f5b0a5862b259",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "_Xnkq0ZjBXc",
+      "video_ref": "cg_videos/_Xnkq0ZjBXc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:13e52be737dbcff439e5",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "_qh4yOwCgOg",
+      "video_ref": "cg_videos/_qh4yOwCgOg.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:ca2249c05a163319d6b8",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "aHEvCl1QNk0",
+      "video_ref": "cg_videos/aHEvCl1QNk0.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:c37c11423e6546a121d9",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:ff24809d810c73e6aecc",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "aTV3damvdZs",
+      "video_ref": "cg_videos/aTV3damvdZs.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:4bffde06a5198fad4805",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:eb630cf1bb7606c0b5aa",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "allhO_JSNzY",
+      "video_ref": "cg_videos/allhO_JSNzY.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:bed4d425cc3edbb2bd50",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "bj77B59nkTQ",
+      "video_ref": "cg_videos/bj77B59nkTQ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a4d144fca0cf8e51f8af",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "c5Lop01YxeM",
+      "video_ref": "cg_videos/c5Lop01YxeM.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:07395336daf8d64d08ef",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "cPzVRd9J4dg",
+      "video_ref": "cg_videos/cPzVRd9J4dg.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:637297ef7ca5dbda1af9",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:bd3ad3089265dbaf57c9",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "czqB8I4-BQY",
+      "video_ref": "cg_videos/czqB8I4-BQY.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:9932ab2c7103222b37cf",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "czvnma7ieps",
+      "video_ref": "cg_videos/czvnma7ieps.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a009ce1deb979489b4fe",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "d867YlU49uk",
+      "video_ref": "cg_videos/d867YlU49uk.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7575b696a5d01310ff71",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "doCljVMQAvU",
+      "video_ref": "cg_videos/doCljVMQAvU.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:b04086c3eb1030baa2ec",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "dqjk2152gho",
+      "video_ref": "cg_videos/dqjk2152gho.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:5092a2dfb430aed4972b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "eFpPaCUSleY",
+      "video_ref": "cg_videos/eFpPaCUSleY.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:67450c5f07549313d5cc",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "erCQKtuFu_0",
+      "video_ref": "cg_videos/erCQKtuFu_0.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:24fc29d73e481ddf9527",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "fpMo-aLnEEc",
+      "video_ref": "cg_videos/fpMo-aLnEEc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:15a8a07d5586999f4e8d",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:b99560a603da5b37805b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "gED3SwLUEzs",
+      "video_ref": "cg_videos/gED3SwLUEzs.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:03cbb8e4d893d9a2c2dd",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "iFbYFRWbVTQ",
+      "video_ref": "cg_videos/iFbYFRWbVTQ.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:58b35f8d3ae437df3f18",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "ilA2juRK8LI",
+      "video_ref": "cg_videos/ilA2juRK8LI.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:ccd0862ee219b400e15c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "ixzwSAkxj4c",
+      "video_ref": "cg_videos/ixzwSAkxj4c.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:ff3071a466406e7bfc2b",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "k-E6YthhO4g",
+      "video_ref": "cg_videos/k-E6YthhO4g.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7b5bab635a72a4a61b58",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "kl5IMeu-UhU",
+      "video_ref": "cg_videos/kl5IMeu-UhU.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:7e6bb9f733ca334747ce",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "lSDeo8H3aj0",
+      "video_ref": "cg_videos/lSDeo8H3aj0.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:c45447dfe6fd6c02a800",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "ne4zu5voovw",
+      "video_ref": "cg_videos/ne4zu5voovw.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:00a849f02cff0468d444",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "oxrN-oyUCvs",
+      "video_ref": "cg_videos/oxrN-oyUCvs.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:8c90b8825b7f70d585e2",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "pF8rcouqqdI",
+      "video_ref": "cg_videos/pF8rcouqqdI.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:676594dfc0e6faa7c6c0",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "pXbYjxxSk1M",
+      "video_ref": "cg_videos/pXbYjxxSk1M.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:574f35fee5f0718ec5f2",
+          "split": "test"
+        },
+        {
+          "case_id": "cgcase:bdb6857224c473dec7c3",
+          "split": "test"
+        }
+      ]
+    },
+    {
+      "video_id": "q1JcMFekKLc",
+      "video_ref": "cg_videos/q1JcMFekKLc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a203a164d8ebda994a1c",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "q1adV0O7JmA",
+      "video_ref": "cg_videos/q1adV0O7JmA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:ea955c55a1dff1fae9ff",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "qjcBCOQbLGA",
+      "video_ref": "cg_videos/qjcBCOQbLGA.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:18da18259e713a224d9f",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:626a72b3d1b43be650f1",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "tgm_QjUiwlk",
+      "video_ref": "cg_videos/tgm_QjUiwlk.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:463f8ad979c993f14e14",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "ul2qvUfisOE",
+      "video_ref": "cg_videos/ul2qvUfisOE.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:23ca0d7280297dedd68a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "v72EanuzqHc",
+      "video_ref": "cg_videos/v72EanuzqHc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:e1b31bfc190ecebfd342",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "v8_VSQkPDE4",
+      "video_ref": "cg_videos/v8_VSQkPDE4.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:f1fadbf8fcc56fc51b18",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "w8j9zNp8hNI",
+      "video_ref": "cg_videos/w8j9zNp8hNI.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:daec71dbc4ef887b1f23",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "wA82CD9YFG0",
+      "video_ref": "cg_videos/wA82CD9YFG0.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:a06a83a18cc63ef53eba",
+          "split": "train"
+        },
+        {
+          "case_id": "cgcase:ca0a852a5d11b31b7e6a",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "wL99SAaw3sw",
+      "video_ref": "cg_videos/wL99SAaw3sw.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:58631b729f65d6807e83",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "wgLE8D-HIFI",
+      "video_ref": "cg_videos/wgLE8D-HIFI.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:3d9e724fd1450c5f2007",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "xtJeKSDD0ho",
+      "video_ref": "cg_videos/xtJeKSDD0ho.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:cca056b9915476704b35",
+          "split": "validation"
+        },
+        {
+          "case_id": "cgcase:e1112c44e48be16668f6",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "xyDoP5a_dvo",
+      "video_ref": "cg_videos/xyDoP5a_dvo.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:874bf4d05b938ea5ac50",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "yZr5FOlKp30",
+      "video_ref": "cg_videos/yZr5FOlKp30.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:607cbc5599276e4adf83",
+          "split": "validation"
+        }
+      ]
+    },
+    {
+      "video_id": "yx9Y9YEH1uc",
+      "video_ref": "cg_videos/yx9Y9YEH1uc.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:2e866ce91725acf362f4",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "zPuLGkluoTY",
+      "video_ref": "cg_videos/zPuLGkluoTY.mp4",
+      "current_candidate_source": "unavailable",
+      "cases": [
+        {
+          "case_id": "cgcase:6482c8b79eb51cee4e60",
+          "split": "train"
+        }
+      ]
+    },
+    {
+      "video_id": "zqQM66uAig0",
+      "video_ref": "cg_videos/zqQM66uAig0.mp4",
+      "current_candidate_source": "time_aligned_subtitle_l1_fallback",
+      "cases": [
+        {
+          "case_id": "cgcase:49bc85b46745def398f5",
+          "split": "train"
+        }
+      ]
+    }
+  ],
+  "forbidden_builder_inputs": [
+    "question",
+    "choices",
+    "answer",
+    "clue_intervals",
+    "hop_alignment"
+  ],
+  "training_performed": false
+}

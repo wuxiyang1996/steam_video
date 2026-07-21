@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints/
 *.hidden_key.json
+steam_video_new/implicit_world_model/datasets/**/blinded_visual_assets/
+steam_video_new/implicit_world_model/datasets/**/slurm_logs/
+steam_video_new/implicit_world_model/datasets/**/qwen_grounding_server.log

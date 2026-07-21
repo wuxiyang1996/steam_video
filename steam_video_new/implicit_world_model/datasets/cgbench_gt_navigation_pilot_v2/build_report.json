@@ -1,0 +1,31 @@
+{
+  "schema_version": "steam-cgbench-grounded-navigation-report/v0.2",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "source_row_count": 12129,
+  "case_count": 256,
+  "video_count": 205,
+  "split_case_counts": {
+    "test": 27,
+    "train": 207,
+    "validation": 22
+  },
+  "transition_count": 672,
+  "trajectory_preference_count": 256,
+  "multi_clue_case_count": 256,
+  "skipped": {
+    "insufficient_clue_intervals": 2064,
+    "overlapping_clue_intervals": 2
+  },
+  "quarantined_video_count": 0,
+  "quarantined": [],
+  "answer_leakage_detected": false,
+  "numeric_reward_present": false,
+  "observation_descriptors": "pending_qwen_vl_grounded_reads",
+  "embedding_model": "Qwen/Qwen3-VL-Embedding-2B",
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false,
+  "next_gate": "ground real observations with Qwen-VL and run schema/coverage checks",
+  "human_review_gate": "not_required; optional diagnostics only",
+  "negative_supervision": "none"
+}
