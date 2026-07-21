@@ -50,6 +50,23 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     </tbody>
   </table>
   <p>Typed L1.5 relations are candidates unless admitted by their required evidence gates. Noisy identity, state, or candidate-causal edges must not be treated as truth merely because they exist in the graph.</p>
+  <h3>2.1 L1 storage contract</h3>
+  <p>L1 is a question-independent Video_Skills-compatible <code>ClueMemoryGraph</code>. Each node stores one local, time-scoped observation rather than a reasoning conclusion.</p>
+  <table>
+    <thead><tr><th>Node/field</th><th>Stored content</th></tr></thead>
+    <tbody>
+      <tr><td>Common fields</td><td>Stable node/video IDs, node type, grounded text descriptor, modality, time span, clip/local ID, evidence refs, source, producer, provenance, visibility, and optional embedding sidecar reference</td></tr>
+      <tr><td><code>clip</code></td><td>Addressable video span, granularity, and segmentation policy</td></tr>
+      <tr><td><code>observation</code>/<code>event</code></td><td>Directly visible/readable local description or atomic action, never an inferred motive</td></tr>
+      <tr><td><code>entity_mention</code></td><td>Local mention ID, entity type, visible attributes, time, and evidence; no automatic cross-clip identity</td></tr>
+      <tr><td><code>state</code></td><td>Subject, attribute, value, polarity, temporal scope, and evidence</td></tr>
+      <tr><td><code>dialogue_span</code>/OCR</td><td>Time-aligned text with its true modality; subtitles do not claim direct audio observation</td></tr>
+    </tbody>
+  </table>
+  <p>Reliable composition edges include <code>temporal_next</code>, <code>derived_from</code>, <code>entity_mention</code>, <code>state_of</code>, and <code>located_in</code>. Native <code>same_entity</code>, <code>same_object</code>, <code>reappears</code>, <code>before_after</code>, <code>state_change</code>, <code>supports_observation</code>, <code>contrasts_observation</code>, <code>causal_hint</code>, and <code>social_cue</code> retain provenance but remain candidates unless their specific verifier admits them.</p>
+  <h3>2.2 L1.5 correlation overlay</h3>
+  <p>L1.5 reuses the same L1 node IDs and adds question-independent navigation edges for semantic/entity recurrence, state continuity or candidate transitions, transition support, responses, missing bridges, contradictions, and sparse verified <code>explains/enables</code> witnesses. Each edge records source/destination, relation type, <code>candidate|verified|rejected|inconclusive</code> status, evidence refs, candidate source, alignment, verifier result, and provenance. Embedding similarity proposes pairs; it does not prove relations.</p>
+  <p>L1/L1.5 never stores the correct answer, hidden clue identity, question-conditioned belief, IWM imagination, predicted belief delta, planner trajectory, reward/utility/Q-value, GTSAM posterior, or final claim. These belong to hidden evaluation, latent belief, or the executed L2 trace.</p>
 </section>
 
 <section class="card">
@@ -58,13 +75,19 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
   <div class="equation">A = {semantic, temporal_before, temporal_after, same_entity,
      state_check, candidate_cause, effect, bridge,
      counterevidence, verify, stop_or_abstain}</div>
-  <p>Embedding and graph structure retrieve a bounded legal candidate set. They do not choose the winner. The main planner must use action-conditioned IWM predictions to distinguish candidates.</p>
+  <p>The main method has one active current-node cursor. Ordinary navigation actions use that cursor as their only source; acquired nodes remain in belief/frontier history and can be revisited through an explicit <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> operation. This avoids expanding all frontier sources against all graph targets.</p>
+  <div class="equation">A_t = outgoing_temporal(current)
+    ∪ outgoing_correlation(current)
+    ∪ semantic_probe(current, every visible retained node)
+    ∪ backtrack(acquired frontier history)
+    ∪ {stop, answer, abstain}</div>
+  <p>A deterministic Graph Action Compiler enumerates actions from endpoint validity, streaming visibility, relation status, provenance, executor availability, and budget. It never filters by question relevance. A virtual query root exposes <code>START_AT(node)</code> for every retained node at the first step. Fixed-capacity L1 keeps this set bounded, so the Full-IWM arm uses no embedding Top-K; Top-K is an explicit retrieval baseline only.</p>
 </section>
 
 <section class="card">
   <h2>4. Short-horizon model-predictive reasoning</h2>
   <ol>
-    <li>Build the same legal action set from the current L1.5 frontier.</li>
+    <li>Compile every legal action from the single current-node cursor and fixed L1.5 graph.</li>
     <li>Imagine horizon-one or horizon-two categorical transitions for each action.</li>
     <li>Compare complete candidate trajectories pairwise.</li>
     <li>Execute only the first action of a uniquely preferred trajectory.</li>
@@ -75,6 +98,7 @@ a_t* = First(τ*)
 o_{t+1} = Execute(M,a_t*)
 z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <p>The world model is useful when a low-immediate-gain bridge hop unlocks a decisive second hop. This delayed effect is the principal distinction from reactive retrieval or immediate information-gain ranking.</p>
+  <p>The learned IWM predicts all legal first hops in one batched graph/tensor forward. Horizon two may remove only strictly dominated first hops before expanding every second hop from the remaining partial-order set; it does not use fixed-K beam pruning.</p>
 </section>
 
 <section class="card boundary">
@@ -94,13 +118,13 @@ z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
 
 <section class="card">
   <h2>6. Keep the model input bounded</h2>
-  <p>The IWM/planner receives the question, compact categorical belief, a small retrieved local subgraph, legal actions, short recent history, and budget status. It does not receive the entire video, full memory graph, raw embedding matrix, all previous traces, or hidden answers.</p>
-  <div class="equation">full L1/L1.5 memory
-→ external embedding/structure retrieval
-→ bounded Top-K nodes + local provenance
-→ compact belief/action context
-→ IWM and pairwise planner</div>
-  <p><code>Qwen/Qwen3-VL-Embedding-2B</code> vectors remain in sidecars with row/checksum references. They support recall, not reward or supervision.</p>
+  <p>The IWM/planner does not receive the entire video, raw embedding matrix, hidden answers, or unconsolidated history. Because L1 memory has fixed capacity, it consumes the complete retained graph without Top-K truncation: question and belief tokens, the current cursor node's key and acquired value, every retained node key, all retained temporal/correlation edges, all legal cursor actions, recent history, and budget status.</p>
+  <div class="equation">surprise-written, fixed-capacity L1 nodes
++ complete retained temporal/correlation graph
++ one current-node cursor
+→ all legal actions in one batched IWM forward
+→ partial-order planner</div>
+  <p>Unread target nodes expose compact key/address representations; their full evidence values are revealed only after execution. <code>Qwen/Qwen3-VL-Embedding-2B</code> vectors remain in sidecars and serve as semantic action features—not a main-arm ranking gate, reward, or supervision.</p>
 </section>
 
 <section class="card">

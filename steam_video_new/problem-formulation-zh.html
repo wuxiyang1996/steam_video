@@ -50,6 +50,23 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     </tbody>
   </table>
   <p>L1.5 typed relation 在通过相应 evidence gate 前只是 candidate。Identity、state 或 candidate-causal edge 不能因为已经写入图就被当成事实。</p>
+  <h3>2.1 L1 存储协议</h3>
+  <p>L1 是 question-independent、兼容 Video_Skills 的 <code>ClueMemoryGraph</code>。每个 node 存一条局部、有时间范围的 observation，而不是 reasoning conclusion。</p>
+  <table>
+    <thead><tr><th>Node/字段</th><th>存储内容</th></tr></thead>
+    <tbody>
+      <tr><td>公共字段</td><td>稳定 node/video ID、node type、grounded text descriptor、modality、time span、clip/local ID、evidence refs、source、producer、provenance、visibility 和可选 embedding sidecar reference</td></tr>
+      <tr><td><code>clip</code></td><td>可寻址视频区间、粒度和 segmentation policy</td></tr>
+      <tr><td><code>observation</code>/<code>event</code></td><td>直接可见/可读的局部描述或 atomic action，不存推断出的 motive</td></tr>
+      <tr><td><code>entity_mention</code></td><td>局部 mention ID、entity type、可见属性、时间和 evidence；不自动声明跨 clip identity</td></tr>
+      <tr><td><code>state</code></td><td>Subject、attribute、value、polarity、temporal scope 和 evidence</td></tr>
+      <tr><td><code>dialogue_span</code>/OCR</td><td>带真实 modality 的 time-aligned text；字幕不能冒充直接 audio observation</td></tr>
+    </tbody>
+  </table>
+  <p>可靠 composition edges 包括 <code>temporal_next</code>、<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code> 和 <code>located_in</code>。Native <code>same_entity</code>、<code>same_object</code>、<code>reappears</code>、<code>before_after</code>、<code>state_change</code>、<code>supports_observation</code>、<code>contrasts_observation</code>、<code>causal_hint</code> 和 <code>social_cue</code> 保留 provenance，但只有通过各自 verifier 后才能提升。</p>
+  <h3>2.2 L1.5 correlation overlay</h3>
+  <p>L1.5 复用同一批 L1 node IDs，并增加 question-independent navigation edges：semantic/entity recurrence、state continuity 或 candidate transition、transition support、response、missing bridge、contradiction，以及稀疏 verified <code>explains/enables</code> witness。每条 edge 记录 source/destination、relation type、<code>candidate|verified|rejected|inconclusive</code> status、evidence refs、candidate source、alignment、verifier result 和 provenance。Embedding similarity 只提出 pair，不能证明 relation。</p>
+  <p>L1/L1.5 永不保存 correct answer、hidden clue identity、question-conditioned belief、IWM imagination、predicted belief delta、planner trajectory、reward/utility/Q-value、GTSAM posterior 或 final claim。这些分别属于 hidden evaluation、latent belief 或 executed L2 trace。</p>
 </section>
 
 <section class="card">
@@ -58,13 +75,19 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
   <div class="equation">A = {semantic, temporal_before, temporal_after, same_entity,
      state_check, candidate_cause, effect, bridge,
      counterevidence, verify, stop_or_abstain}</div>
-  <p>Embedding 和 graph structure 只召回有界合法候选，不能决定 winner。主 planner 必须依赖 action-conditioned IWM prediction 来区分候选。</p>
+  <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回，不能把全部 frontier sources 与全部 targets 做笛卡尔积展开。</p>
+  <div class="equation">A_t = outgoing_temporal(current)
+    ∪ outgoing_correlation(current)
+    ∪ semantic_probe(current, 每个可见 retained node)
+    ∪ backtrack(acquired frontier history)
+    ∪ {stop, answer, abstain}</div>
+  <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。由于 L1 容量固定，Full-IWM arm 不使用 embedding Top-K；Top-K 只作为显式 retrieval baseline。</p>
 </section>
 
 <section class="card">
   <h2>4. 短视界 model-predictive reasoning</h2>
   <ol>
-    <li>从当前 L1.5 frontier 构造相同的合法 action set；</li>
+    <li>从单一 current-node cursor 和固定 L1.5 graph 枚举全部合法 actions；</li>
     <li>为每个 action 想象 horizon-one 或 horizon-two categorical transition；</li>
     <li>对完整候选轨迹做 pairwise comparison；</li>
     <li>只执行唯一获偏好轨迹的第一跳；</li>
@@ -75,6 +98,7 @@ a_t* = First(τ*)
 o_{t+1} = Execute(M,a_t*)
 z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <p>World model 的价值体现在 delayed effect：第一跳可能几乎没有即时收益，却能打开一个 bridge，让第二跳补全关键证据。这是它区别于 reactive retrieval 或 immediate information-gain ranking 的核心。</p>
+  <p>Learned IWM 在一次 batched graph/tensor forward 中预测全部合法 first hops。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。</p>
 </section>
 
 <section class="card boundary">
@@ -94,13 +118,13 @@ z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
 
 <section class="card">
   <h2>6. 控制模型输入大小</h2>
-  <p>IWM/planner 只接收问题、紧凑 categorical belief、少量检索到的局部子图、合法 actions、短 recent history 和 budget status。它不能接收整个视频、完整 memory graph、raw embedding matrix、全部历史 trace 或 hidden answer。</p>
-  <div class="equation">完整 L1/L1.5 memory
-→ 外部 embedding/structure retrieval
-→ bounded Top-K nodes + local provenance
-→ compact belief/action context
-→ IWM 与 pairwise planner</div>
-  <p><code>Qwen/Qwen3-VL-Embedding-2B</code> 向量放在 sidecar 中，JSON 仅保存 row/checksum reference。Embedding 服务于候选召回，不是 reward 或 supervision。</p>
+  <p>IWM/planner 不接收整个视频、raw embedding matrix、hidden answer 或未 consolidation 的全部历史。由于 L1 memory 容量固定，它可以在不做 Top-K truncation 的情况下消费完整 retained graph：question/belief tokens、current cursor node 的 key 与已读取 value、全部 retained node keys、所有 temporal/correlation edges、全部合法 cursor actions、recent history 和 budget status。</p>
+  <div class="equation">surprise-written、fixed-capacity L1 nodes
++ 完整 retained temporal/correlation graph
++ 单一 current-node cursor
+→ 一次 batched IWM forward 预测全部合法 actions
+→ partial-order planner</div>
+  <p>未读取 target node 只暴露 compact key/address representation，完整 evidence value 只有执行后才能读取。<code>Qwen/Qwen3-VL-Embedding-2B</code> 向量保存在 sidecar，作为 semantic action feature，而不是主方法 ranking gate、reward 或 supervision。</p>
 </section>
 
 <section class="card">

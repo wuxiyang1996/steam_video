@@ -45,10 +45,70 @@ infrastructure, but not the main novelty.
 | GTSAM/factor graph | Optional correction backup, diagnostic baseline, teacher, and visualization for conflicts and persistent belief consistency | Generate actions, rank candidates, replace the IWM, or become required by the main method |
 | L2 trace | Record executed actions, real observations, realized belief deltas, and decisions for audit/training data | Act as the belief model or evidence source |
 
-The default paper method is **graph-free at the belief-model level**: it may use
-the explicit L1.5 memory to address evidence, while the reasoning belief and IWM
-state are latent. GTSAM remains available through explicit backup/baseline modes;
-it is not silently enabled.
+The default paper method **requires the shared L1/L1.5 evidence graph for
+navigation**, while its question-conditioned reasoning belief and IWM state are
+latent rather than an explicit graph posterior. GTSAM remains available through
+explicit backup/baseline modes; it is not silently enabled.
+
+### 2.1 What the L1 graph stores
+
+L1 is a question-independent `ClueMemoryGraph` compatible with Video_Skills. A
+node stores one local, time-scoped piece of grounded evidence—not a reasoning
+conclusion. Common fields are:
+
+```text
+node_id, node_type, video_id
+text / grounded descriptor, modality
+time_span, clip_id, local/mention ID
+entity attributes or structured state fields when applicable
+evidence_refs, source_type, producer, provenance
+visibility / hidden-supervision flag
+optional Qwen3-VL-Embedding-2B sidecar reference
+```
+
+The main node types are `clip`, `observation`, `event`, `entity_mention`,
+`state`, and `dialogue_span`/OCR. Entity mentions are local observations; they
+do not assert cross-clip identity. A state should identify its subject,
+attribute, value, polarity, time span, and evidence rather than merely say that
+something changed. Subtitle, OCR, direct audio, and visual descriptions remain
+separate modalities.
+
+L1 also stores composition structure over the same node IDs:
+
+```text
+temporal_next, derived_from, entity_mention, state_of, located_in
+```
+
+Native Video_Skills relations such as `same_entity`, `same_object`,
+`reappears`, `before_after`, `state_change`, `supports_observation`,
+`contrasts_observation`, `causal_hint`, and `social_cue` are retained with
+provenance, but unverified semantic labels are downgraded to candidates. In
+particular, `state_change` is not automatically an accepted state transition,
+and `causal_hint` is not causality.
+
+### 2.2 What the L1.5 overlay adds
+
+L1.5 does not duplicate the evidence nodes. It connects the existing L1 node
+IDs with question-independent temporal and cross-node navigation correlations:
+
+```text
+semantic/entity recurrence
+state continuity or candidate state transition
+transition support, response, and missing-bridge candidates
+contradiction candidates
+sparse verified explains/enables witnesses
+```
+
+Each correlation edge records `edge_id`, `src`, `dst`, relation type,
+`candidate|verified|rejected|inconclusive` status, evidence refs, candidate
+sources, mention/state alignment, verifier result, and provenance. Embedding
+similarity may propose a pair but does not prove its relation. Candidate edges
+may create inspect/verify actions; only admitted relations constrain belief.
+
+L1/L1.5 never stores the correct answer, hidden clue identity, question-
+conditioned belief, IWM imagined observation, predicted belief delta, planner
+trajectory, reward/utility/Q-value, GTSAM posterior, or final claim. Those
+belong to hidden evaluation, latent belief, or the executed L2 audit trace.
 
 ## 3. Reasoning actions
 
@@ -60,6 +120,32 @@ An action is a reasoning/evidence-acquisition hop, not a physical robot action:
 - candidate-cause/effect or missing-bridge lookup;
 - counterevidence or relation verification;
 - stop/answer/abstain.
+
+The main method uses a **single active current-node cursor**. Ordinary move,
+follow, inspect, and verify actions always use that cursor as their source; all
+previously acquired nodes remain in belief/frontier history but are not expanded
+simultaneously. This avoids the invalid `all frontier sources × all targets`
+action product. A recorded `BACKTRACK`/`SHIFT_FOCUS` operation can return the
+cursor to an acquired node without rereading evidence.
+
+Legal actions are compiled deterministically from executability, not proposed
+or ranked by the IWM:
+
+```text
+current-node temporal outgoing edges
++ current-node correlation inspect/follow/verify edges
++ semantic probes from the cursor to every visible retained node
++ backtrack to acquired frontier-history nodes
++ stop / answer / abstain
+```
+
+At the initial step, a virtual query root provides `START_AT(node)` for every
+visible retained node. Because L1 memory has fixed capacity, this action set is
+bounded. The main arm does not apply embedding Top-K: embedding is an action
+feature/key, not a gate. Structural legality may remove hidden, out-of-horizon,
+rejected, provenance-free, non-executable, or over-budget actions; it may not
+remove actions for low question relevance. Top-K remains an explicit retrieval
+baseline only.
 
 For a current belief `z_t` and legal action `a`, the IWM predicts:
 
@@ -80,30 +166,39 @@ answer value but reveal a bridge that makes the second hop decisive.
 
 The planner therefore performs horizon-1/2 model-predictive control:
 
-1. form the same legal action set from L1.5 memory;
+1. compile all legal actions from the single current-node cursor and the fixed L1.5 graph;
 2. imagine action-conditioned future belief transitions;
 3. compare full candidate trajectories pairwise;
 4. execute only the first hop of the selected trajectory;
 5. read real evidence, update belief, and replan.
 
 Candidate order, lexical overlap, graph priority, factor posterior, and embedding
-similarity may propose or filter actions, but cannot determine the final winner
-in the main arm. `tie` or `incomparable` causes more evidence, another comparison,
-or abstention—not an implicit first-item fallback.
+similarity cannot filter or determine the winner in the main arm. The IWM
+predicts all legal actions in one batched graph/tensor forward. For horizon two,
+strictly dominated first hops may be removed before expanding every second hop
+from the remaining partial-order set; this is not fixed-K beam pruning.
+`tie` or `incomparable` remains available and causes further evidence,
+backtracking, another comparison, or abstention—not an implicit first-item
+fallback.
 
 ## 5. Bounded input contract
 
-The IWM/planner never receives the whole video, complete memory graph, raw
-embedding matrix, hidden evaluator key, or full history. Each step receives:
+The IWM/planner never receives the whole video, raw embedding matrix, hidden
+evaluator key, or unconsolidated history. Because SelectStream-style L1 memory
+has fixed capacity, the main method can consume the complete **retained** graph
+without Top-K truncation. Each step receives:
 
 - the question and compact categorical belief summary;
-- a bounded set of retrieved L1/L1.5 evidence nodes and local provenance;
-- a small legal action set and short recent-hop history;
+- the current cursor node's key and full acquired evidence value;
+- every retained node key plus all retained temporal/correlation edges;
+- every legal action compiled from the current cursor, plus short recent-hop history;
 - remaining categorical budget/status;
 - at most one- or two-hop trajectory descriptors.
 
 `Qwen/Qwen3-VL-Embedding-2B` embeddings are stored as sidecars and referenced by
-row/checksum. They support future candidate retrieval, not reward or preference
+row/checksum. Unread targets expose compact keys/addresses rather than full
+evidence values; the value is revealed only after execution. Embeddings provide
+semantic action features, not main-arm ranking, reward, or preference
 supervision.
 
 ## 6. Supervision and post-training
