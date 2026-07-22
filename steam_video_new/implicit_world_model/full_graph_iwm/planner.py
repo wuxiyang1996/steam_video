@@ -23,6 +23,7 @@ from .contracts import (
     TrajectoryPair,
     TrajectoryPrediction,
 )
+from .model_input import build_iwm_graph_input
 
 
 class SetwisePreferenceModel(Protocol):
@@ -31,7 +32,6 @@ class SetwisePreferenceModel(Protocol):
         trajectories: Sequence[TrajectoryPrediction],
         belief: CursorBeliefState,
     ) -> tuple[str, ...]: ...
-from .model_input import build_iwm_graph_input
 
 
 class FullGraphIWMPlanner:
@@ -125,7 +125,9 @@ class FullGraphIWMPlanner:
                 status = "setwise_selected_unique_preferred_first_hop"
             else:
                 selected = next(
-                    action for action in first_actions if action.kind is ActionKind.ABSTAIN
+                    action
+                    for action in first_actions
+                    if action.kind is ActionKind.ABSTAIN
                 )
                 status = (
                     "setwise_abstain_incomparable"
@@ -231,7 +233,7 @@ class FullGraphIWMPlanner:
         return predictions
 
 
-def _project_imagined_belief(
+def project_imagined_belief(
     belief: CursorBeliefState,
     transition: ImaginedTransition,
 ) -> CursorBeliefState:
@@ -257,6 +259,10 @@ def _project_imagined_belief(
     missing.extend(
         role for role in transition.belief_delta.opened_roles if role not in missing
     )
+    required = list(belief.required_roles or belief.missing_roles)
+    required.extend(
+        role for role in transition.belief_delta.opened_roles if role not in required
+    )
     contradictions = belief.contradictions
     if transition.belief_delta.contradiction_change is ContradictionChange.RESOLVED:
         contradictions = ()
@@ -271,12 +277,17 @@ def _project_imagined_belief(
         acquired_evidence=acquired,
         imagined_evidence=imagined,
         cursor_history=history,
+        required_roles=tuple(required),
         missing_roles=tuple(missing),
         contradictions=contradictions,
         answerability=transition.belief_delta.answerability_after,
         remaining_reads=remaining,
         step=belief.step + 1,
     )
+
+
+# Backward-compatible private alias for callers from the original planner.
+_project_imagined_belief = project_imagined_belief
 
 
 def _trajectory(

@@ -69,9 +69,7 @@ class ReasoningTrajectory:
             raise ValueError("merged trajectory requires merged_into")
         if self.status is not TrajectoryStatus.MERGED and self.merged_into is not None:
             raise ValueError("only merged trajectories may set merged_into")
-        if not set(self.shared_observation_ids).issubset(
-            self.belief.acquired_evidence
-        ):
+        if not set(self.shared_observation_ids).issubset(self.belief.acquired_evidence):
             raise ValueError("shared observations must be acquired real evidence")
 
 
@@ -152,10 +150,18 @@ class MultiTrajectoryPlanDecision:
     lifecycle_predictions: tuple[PredictedLifecycle, ...]
     legal_expansion_count: int
     top_k_applied: bool = False
+    imagined_paths: tuple[Any, ...] = ()
+    preferred_path_ids: tuple[str, ...] = ()
+    planning_horizon: int = 0
+    preference_audit: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.top_k_applied:
             raise ValueError("multi-trajectory planner cannot apply Top-K")
+        if self.planning_horizon not in {0, 1, 2}:
+            raise ValueError(
+                "multi-trajectory planning horizon must be zero, one, or two"
+            )
 
 
 @dataclass(frozen=True)
@@ -207,6 +213,18 @@ class RealBeliefUpdater(Protocol):
     ) -> CursorBeliefState: ...
 
 
+class ActionAwareRealBeliefUpdater(Protocol):
+    def update_after_action(
+        self,
+        trajectory_id: str,
+        previous_belief: CursorBeliefState,
+        structurally_updated_belief: CursorBeliefState,
+        action: LegalGraphAction,
+        observation: MemoryNode,
+        graph: RetainedEvidenceGraph,
+    ) -> CursorBeliefState: ...
+
+
 class TrajectoryEvidenceAssessor(Protocol):
     def assess_batch(
         self,
@@ -248,13 +266,13 @@ class MultiTrajectoryIWMPlanner:
         if imagined.status is PoolPreferenceStatus.INCOMPARABLE and preferred:
             raise ValueError("incomparable IWM preference cannot select expansions")
         lifecycle_ids = [row.trajectory_id for row in imagined.lifecycle_predictions]
-        if len(lifecycle_ids) != len(set(lifecycle_ids)) or not set(
-            lifecycle_ids
-        ) <= {row.trajectory_id for row in pool.trajectories}:
+        if len(lifecycle_ids) != len(set(lifecycle_ids)) or not set(lifecycle_ids) <= {
+            row.trajectory_id for row in pool.trajectories
+        }:
             raise ValueError("IWM returned invalid lifecycle predictions")
 
         preferred_actions = {
-            known[expansion_id].action.action_id: known[expansion_id].action
+            shared_action_key(known[expansion_id].action): known[expansion_id].action
             for expansion_id in preferred
         }
         if len(preferred_actions) == 1:
@@ -355,7 +373,9 @@ class GPTOSSMultiTrajectoryIWM:
                 )
                 for row in expansions
             },
-            "allowed_preference_status": [value.value for value in PoolPreferenceStatus],
+            "allowed_preference_status": [
+                value.value for value in PoolPreferenceStatus
+            ],
             "allowed_lifecycle": [
                 TrajectoryStatus.ACTIVE.value,
                 TrajectoryStatus.SUPPORTED.value,
@@ -501,9 +521,7 @@ class GPTOSSRealTrajectoryEvidenceAssessor:
             "competing_trajectories": {
                 aliases[trajectory.trajectory_id]: {
                     "hypothesis": trajectory.hypothesis,
-                    "missing_roles_after_belief_correction": list(
-                        belief.missing_roles
-                    ),
+                    "missing_roles_after_belief_correction": list(belief.missing_roles),
                     "contradictions_after_belief_correction": list(
                         belief.contradictions
                     ),
@@ -553,8 +571,7 @@ class GPTOSSRealTrajectoryEvidenceAssessor:
                 if not isinstance(rows, dict) or set(rows) != set(aliases.values()):
                     raise ValueError("trajectory assessment coverage mismatch")
                 trajectory_by_alias = {
-                    alias: trajectory_id
-                    for trajectory_id, alias in aliases.items()
+                    alias: trajectory_id for trajectory_id, alias in aliases.items()
                 }
                 parsed: list[TrajectoryEvidenceAssessment] = []
                 for alias, row in rows.items():
@@ -608,11 +625,7 @@ def branch_trajectory_pool(
     """Add every supplied grounded interpretation; never select a fixed-K subset."""
 
     parent = next(
-        (
-            row
-            for row in pool.trajectories
-            if row.trajectory_id == parent_trajectory_id
-        ),
+        (row for row in pool.trajectories if row.trajectory_id == parent_trajectory_id),
         None,
     )
     if parent is None:
@@ -720,10 +733,19 @@ def execute_shared_trajectory_action(
             dict.fromkeys((*shared_observations, observation.node_id))
         )
         if belief_updater is not None:
-            belief = belief_updater.update(belief, observation)
-        pending.append(
-            (trajectory, belief, action_history, shared_observations)
-        )
+            action_aware = getattr(belief_updater, "update_after_action", None)
+            if callable(action_aware):
+                belief = action_aware(
+                    trajectory.trajectory_id,
+                    trajectory.belief,
+                    belief,
+                    action,
+                    observation,
+                    graph,
+                )
+            else:
+                belief = belief_updater.update(belief, observation)
+        pending.append((trajectory, belief, action_history, shared_observations))
 
     if assessor is not None:
         assessments = tuple(
@@ -743,9 +765,10 @@ def execute_shared_trajectory_action(
             for row in pending
         )
     expected_ids = {row[0].trajectory_id for row in pending}
-    if len(assessments) != len(pending) or {
-        row.trajectory_id for row in assessments
-    } != expected_ids:
+    if (
+        len(assessments) != len(pending)
+        or {row.trajectory_id for row in assessments} != expected_ids
+    ):
         raise ValueError("trajectory assessment coverage mismatch")
     assessment_by_id = {row.trajectory_id: row for row in assessments}
     updated_by_id = {row.trajectory_id: row for row in untouched}
@@ -887,6 +910,19 @@ def consolidate_trajectory_pool(pool: TrajectoryPool) -> TrajectoryPool:
     return TrajectoryPool(pool.pool_id, tuple(rows), top_k_applied=False)
 
 
+def shared_action_key(action: LegalGraphAction) -> tuple[str, ...]:
+    """Identify one real evidence read across trajectory-specific graph routes."""
+
+    if action.reads_evidence and action.target_id is not None:
+        return ("read_evidence", action.target_id)
+    return (
+        action.kind.value,
+        action.source_id or "",
+        action.target_id or "",
+        action.edge_id or "",
+    )
+
+
 def _share_execution_state(
     belief: CursorBeliefState,
     action: LegalGraphAction,
@@ -994,7 +1030,9 @@ def _expansion_payload(
             list(target_view.key.structural_tags) if target_view is not None else []
         ),
         "embedding_available": (
-            target_view.key.embedding_ref is not None if target_view is not None else False
+            target_view.key.embedding_ref is not None
+            if target_view is not None
+            else False
         ),
         "temporal_or_correlation_relation": action.relation,
         "reads_real_evidence": action.reads_evidence,
@@ -1005,7 +1043,11 @@ def _semantic_key(graph_input: Any, node_id: str | None) -> str | None:
     if node_id is None:
         return None
     return next(
-        (view.key.semantic_key for view in graph_input.nodes if view.key.node_id == node_id),
+        (
+            view.key.semantic_key
+            for view in graph_input.nodes
+            if view.key.node_id == node_id
+        ),
         None,
     )
 
@@ -1019,9 +1061,9 @@ def _shared_abstain(
 
 
 def _trajectory_id(pool_id: str, hypothesis: str) -> str:
-    digest = hashlib.sha256(
-        f"{pool_id}\x1f{hypothesis}".encode("utf-8")
-    ).hexdigest()[:20]
+    digest = hashlib.sha256(f"{pool_id}\x1f{hypothesis}".encode("utf-8")).hexdigest()[
+        :20
+    ]
     return f"reasoning_trajectory:{digest}"
 
 

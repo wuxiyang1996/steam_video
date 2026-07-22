@@ -36,6 +36,16 @@ backup trigger 只能是 `contradiction_detected`、`identity_ambiguous`、
 对外只暴露 `accepted/rejected/unresolved/conflicted`；solver 数值保持内部。GTSAM 不可用时
 必须显式报告 `backup_unavailable`，不能静默切换 planner 或启用 heuristic ranking。
 
+`steam_video_new/implicit_world_model/full_graph_iwm/gtsam_backup.py` 现已把该边界接入
+multi-trajectory 主闭环。adapter 接收 trajectory ID、执行前 belief、真实执行后的结构状态、
+合法 action 和真实 observation；同一次 shared read 只向 GTSAM 写入一次 measurement，随后把
+同一 categorical correction 投影给所有 active trajectories。它不接收 imagined transition，
+不返回 action preference，也不暴露 numeric marginal。CLI 通过 `--belief-backend latent`、
+`gtsam_backup` 或 `gtsam_always` 显式选择，默认仍为 latent。
+
+当前机器已在 Python 3.11 安装锁定的 `gtsam==4.2.1`；原有 backend 测试与新 shared-read
+adapter smoke 均通过。其他 Python interpreter 若未安装 GTSAM，会明确失败而不会 fallback。
+
 当前 GTSAM closed loop 与 categorical-triggered backup 均已实现、可运行；主方法继续使用同一个 L1/L1.5
 Memory Graph，但必须清除 graph priority/lexical/stable-order 对 winner 的影响。完整定义见
 [`l15_graph_navigator/README.md`](../steam_video_new/implicit_world_model/l15_graph_navigator/README.md#architecture-decision-fixed-l1l15-memory-iwm-reasoning-novelty)。

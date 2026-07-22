@@ -79,9 +79,7 @@ class _SharedFirstIWM:
     def prefer(self, pool, expansions, graph):
         del graph
         preferred = tuple(
-            row.expansion_id
-            for row in expansions
-            if row.action.target_id == "l1:first"
+            row.expansion_id for row in expansions if row.action.target_id == "l1:first"
         )
         return MultiTrajectoryIWMDecision(
             status=PoolPreferenceStatus.TIE,
@@ -98,12 +96,8 @@ class _DistinctActionIWM:
 
     def prefer(self, pool, expansions, graph):
         del pool, graph
-        first = next(
-            row for row in expansions if row.action.target_id == "l1:first"
-        )
-        second = next(
-            row for row in expansions if row.action.target_id == "l1:second"
-        )
+        first = next(row for row in expansions if row.action.target_id == "l1:first")
+        second = next(row for row in expansions if row.action.target_id == "l1:second")
         return MultiTrajectoryIWMDecision(
             status=PoolPreferenceStatus.TIE,
             preferred_expansion_ids=(first.expansion_id, second.expansion_id),
@@ -168,12 +162,56 @@ def test_one_real_read_is_broadcast_to_every_active_trajectory() -> None:
         row.belief.acquired_evidence == ("l1:first",)
         for row in execution.pool.trajectories
     )
-    assert all(
-        row.belief.remaining_reads == 1 for row in execution.pool.trajectories
-    )
+    assert all(row.belief.remaining_reads == 1 for row in execution.pool.trajectories)
     assert all(
         row.shared_observation_ids == ("l1:first",)
         for row in execution.pool.trajectories
+    )
+
+
+class _ActionAwareUpdater:
+    def __init__(self):
+        self.calls = []
+
+    def update_after_action(
+        self,
+        trajectory_id,
+        previous_belief,
+        structurally_updated_belief,
+        action,
+        observation,
+        graph,
+    ):
+        self.calls.append(
+            (
+                trajectory_id,
+                previous_belief.acquired_evidence,
+                structurally_updated_belief.acquired_evidence,
+                action.target_id,
+                observation.node_id,
+                graph.graph_id,
+            )
+        )
+        return structurally_updated_belief
+
+
+def test_action_aware_backup_receives_only_executed_real_observation() -> None:
+    pool = _pool()
+    decision = MultiTrajectoryIWMPlanner(_SharedFirstIWM()).plan(pool, _graph())
+    updater = _ActionAwareUpdater()
+
+    execute_shared_trajectory_action(
+        pool,
+        decision,
+        _graph(),
+        belief_updater=updater,
+    )
+
+    assert len(updater.calls) == 2
+    assert all(row[1] == () for row in updater.calls)
+    assert all(row[2] == ("l1:first",) for row in updater.calls)
+    assert all(
+        row[3:] == ("l1:first", "l1:first", "graph:test") for row in updater.calls
     )
 
 
@@ -181,9 +219,7 @@ def test_structural_consolidation_merges_only_exact_equivalents() -> None:
     belief = CursorBeliefState("belief:0", "question")
     first = ReasoningTrajectory("trajectory:a", "same hypothesis", belief)
     duplicate = replace(first, trajectory_id="trajectory:b")
-    alternative = ReasoningTrajectory(
-        "trajectory:c", "different hypothesis", belief
-    )
+    alternative = ReasoningTrajectory("trajectory:c", "different hypothesis", belief)
     consolidated = consolidate_trajectory_pool(
         TrajectoryPool("pool:test", (first, duplicate, alternative))
     )
@@ -238,11 +274,13 @@ class _RecordingMultiTrajectoryClient:
         }
 
 
-def test_direct_iwm_receives_joint_temporal_semantic_correlation_belief_context() -> None:
+def test_direct_iwm_receives_joint_temporal_semantic_correlation_belief_context() -> (
+    None
+):
     client = _RecordingMultiTrajectoryClient()
-    decision = MultiTrajectoryIWMPlanner(
-        GPTOSSMultiTrajectoryIWM(client)
-    ).plan(_pool(), _graph())
+    decision = MultiTrajectoryIWMPlanner(GPTOSSMultiTrajectoryIWM(client)).plan(
+        _pool(), _graph()
+    )
 
     assert decision.selected_action.target_id == "l1:first"
     assert client.payload is not None
@@ -254,8 +292,9 @@ def test_direct_iwm_receives_joint_temporal_semantic_correlation_belief_context(
         if row["target_semantic_key"] == "person enters room"
     )
     assert first_candidate["target_time_span"] == {"start_s": 0.0, "end_s": 1.0}
-    assert "temporal_semantic_correlation_and_belief_context_present" in (
-        client.payload["required_contract"]
+    assert (
+        "temporal_semantic_correlation_and_belief_context_present"
+        in (client.payload["required_contract"])
     )
     assert client.payload["required_contract"]["no_top_k_or_beam"] is True
 
@@ -276,9 +315,7 @@ class _SequentialSharedIWM:
             else "l1:second"
         )
         preferred = tuple(
-            row.expansion_id
-            for row in expansions
-            if row.action.target_id == target
+            row.expansion_id for row in expansions if row.action.target_id == target
         )
         return MultiTrajectoryIWMDecision(
             status=(

@@ -1,0 +1,735 @@
+"""Matched-budget CG-Bench runner for the multi-trajectory IWM main method."""
+
+from __future__ import annotations
+
+import argparse
+from collections import defaultdict
+from dataclasses import asdict, dataclass, is_dataclass
+from enum import Enum
+from pathlib import Path
+import json
+from statistics import fmean
+from typing import Any, Iterable, Sequence
+
+from steam_video_new.implicit_world_model.l15_graph_navigator.gpt_oss import (
+    DEFAULT_GPT_OSS_MODEL,
+    OpenAICompatibleCategoricalClient,
+)
+from steam_video_new.implicit_world_model.l15_graph_navigator.overlay_io import (
+    load_overlay_artifact,
+)
+
+from .cgbench_pilot import (
+    _build_graph_with_optional_caption_candidates,
+    _clues,
+    compile_cgbench_gate,
+)
+from .closed_loop import (
+    HiddenClueCoverageEvaluator,
+    action_divergence,
+    graph_fingerprint,
+    run_oracle_clue_ceiling,
+)
+from .contracts import CursorBeliefState, RetainedEvidenceGraph
+from .gpt_oss import GPTOSSQuestionBeliefInitializer, GPTOSSRealEvidenceBeliefUpdater
+from .gtsam_backup import GTSAMMultiTrajectoryBeliefUpdater
+from .multi_trajectory import (
+    GPTOSSRealTrajectoryEvidenceAssessor,
+    TrajectoryPool,
+    TrajectoryStatus,
+    initialize_trajectory_pool,
+    run_multi_trajectory_closed_loop,
+)
+from .multi_trajectory_rollout import (
+    GPTOSSCategoricalMultiTrajectoryModel,
+    MultiTrajectoryRolloutPlanner,
+    ReactiveMultiTrajectoryPlanner,
+    ShuffledHypothesisWorldModel,
+)
+from .transition_cache import (
+    PersistentCategoricalResponseCacheClient,
+    PersistentQuestionRoleCache,
+)
+
+
+MULTI_PILOT_SCHEMA = "steam-multi-trajectory-iwm-cgbench-pilot/v0.1"
+MULTI_ARMS = (
+    "world_model_guided",
+    "no_world_model",
+    "shuffled_world_model_prediction",
+    "immediate_effect_only",
+    "oracle_clue_ceiling",
+)
+
+
+@dataclass(frozen=True)
+class TerminalAnswerDecision:
+    status: str
+    selected_choice: str | None
+    rationale: str
+
+
+class GPTOSSMultiTrajectoryAnswerSelector:
+    """Select an answer categorically from real evidence and final trajectories."""
+
+    def __init__(self, client: Any) -> None:
+        self.client = client
+        self.model_name = str(getattr(client, "model", "openai/gpt-oss-120b"))
+
+    def select(
+        self,
+        pool: TrajectoryPool,
+        choices: Sequence[str],
+        graph: RetainedEvidenceGraph,
+    ) -> TerminalAnswerDecision:
+        if not choices or len(choices) != len(set(choices)):
+            raise ValueError("answer choices must be non-empty and unique")
+        choice_aliases = {
+            _alias("choice", index): value for index, value in enumerate(choices)
+        }
+        trajectory_aliases = {
+            _alias("trajectory", index): row
+            for index, row in enumerate(pool.trajectories)
+        }
+        acquired = set(
+            pool.trajectories[0].belief.acquired_evidence if pool.trajectories else ()
+        )
+        if not acquired:
+            return TerminalAnswerDecision(
+                status="abstain",
+                selected_choice=None,
+                rationale="no acquired real evidence",
+            )
+        payload = {
+            "question": pool.trajectories[0].belief.question,
+            "choices": choice_aliases,
+            "acquired_real_evidence": [
+                {
+                    "semantic_key": str(
+                        node.metadata.get("predicate") or node.text or node.node_id
+                    ),
+                    "evidence_value": str(
+                        node.text or node.metadata.get("predicate") or ""
+                    ),
+                }
+                for node in graph.nodes
+                if node.node_id in acquired
+            ],
+            "final_trajectories": {
+                alias: {
+                    "hypothesis": row.hypothesis,
+                    "status": row.status.value,
+                    "missing_roles": list(row.belief.missing_roles),
+                    "contradictions": list(row.belief.contradictions),
+                    "grounded_role_evidence": [
+                        {"role": role, "node_semantic_key": _node_key(graph, node_id)}
+                        for role, node_id in row.belief.grounded_role_evidence
+                    ],
+                }
+                for alias, row in trajectory_aliases.items()
+            },
+            "allowed_status": ["select", "abstain"],
+            "required_output": {
+                "only_keys": ["status", "choice", "rationale"],
+                "choice": "one exact choice alias when select; null when abstain",
+            },
+            "contract": {
+                "real_evidence_only": True,
+                "hidden_answer_unavailable": True,
+                "no_numeric_reward_score_probability_confidence_or_utility": True,
+            },
+        }
+        for attempt in range(2):
+            result = self.client.complete_json(
+                task=(
+                    "Select one answer only if acquired real evidence and the surviving "
+                    "reasoning trajectories support it; otherwise abstain."
+                    if attempt == 0
+                    else "Repair the response to the exact categorical answer schema, "
+                    "using one known alias or null and no numeric values."
+                ),
+                payload=payload,
+            )
+            try:
+                if not isinstance(result, dict) or set(result) != {
+                    "status",
+                    "choice",
+                    "rationale",
+                }:
+                    raise ValueError("terminal answer response schema is invalid")
+                if _contains_number(result):
+                    raise ValueError(
+                        "terminal answer response contains a numeric value"
+                    )
+                status = str(result.get("status") or "")
+                choice = result.get("choice")
+                if status == "select":
+                    if not isinstance(choice, str) or choice not in choice_aliases:
+                        raise ValueError("terminal answer selected an unknown choice")
+                    selected = choice_aliases[choice]
+                elif status == "abstain":
+                    if choice is not None:
+                        raise ValueError("terminal abstention must use a null choice")
+                    selected = None
+                else:
+                    raise ValueError("terminal answer status is invalid")
+                return TerminalAnswerDecision(
+                    status=status,
+                    selected_choice=selected,
+                    rationale=str(result.get("rationale") or ""),
+                )
+            except (TypeError, ValueError):
+                if attempt == 1:
+                    raise
+        raise RuntimeError("unreachable terminal answer repair state")
+
+
+def run_multi_trajectory_case(
+    *,
+    case_id: str,
+    question: str,
+    choices: Sequence[str],
+    graph: RetainedEvidenceGraph,
+    clue_intervals: Sequence[Any],
+    planner: Any,
+    answer_selector: GPTOSSMultiTrajectoryAnswerSelector,
+    read_budget: int,
+    arm: str,
+    initial_missing_roles: Sequence[str] = (),
+    belief_updater: Any | None = None,
+    assessor: Any | None = None,
+    evaluator_answer: str | None = None,
+    max_decisions: int | None = None,
+) -> dict[str, Any]:
+    """Run first, then join hidden clue/answer labels for evaluation only."""
+
+    if read_budget < 1:
+        raise ValueError("read budget must be positive")
+    belief = CursorBeliefState(
+        belief_id=f"belief:{case_id}:{arm}:initial",
+        question=question,
+        required_roles=tuple(initial_missing_roles),
+        missing_roles=tuple(initial_missing_roles),
+        remaining_reads=read_budget,
+    )
+    pool = initialize_trajectory_pool(
+        belief,
+        tuple(str(choice) for choice in choices),
+        pool_id=f"trajectory-pool:{case_id}:{arm}",
+    )
+    trace = run_multi_trajectory_closed_loop(
+        pool,
+        graph,
+        planner,
+        max_decisions=max_decisions or max(4, read_budget * 3 + 2),
+        belief_updater=belief_updater,
+        assessor=assessor,
+    )
+    # The selector has no access to evaluator_answer or clue intervals.
+    answer = answer_selector.select(trace.final_pool, choices, graph)
+
+    evaluator = HiddenClueCoverageEvaluator(clue_intervals)
+    realized_rows: list[dict[str, Any]] = []
+    for step in trace.steps:
+        if step.observation_id is None:
+            continue
+        realized, outcome, newly_covered = evaluator.score_read(
+            step.decision.selected_action,
+            graph,
+        )
+        realized_rows.append(
+            {
+                "observation_id": step.observation_id,
+                "observation_outcome": outcome.value,
+                "belief_delta": _jsonable(realized),
+                "newly_covered_clue_indices": list(newly_covered),
+                "fed_back_to_planner": False,
+            }
+        )
+    real_reads = len(realized_rows)
+    clue_count = len(evaluator.clues)
+    covered = len(evaluator.covered_indices)
+    correct_trajectory = next(
+        (
+            row
+            for row in trace.final_pool.trajectories
+            if evaluator_answer is not None and row.hypothesis == evaluator_answer
+        ),
+        None,
+    )
+    correct_survived = (
+        correct_trajectory is not None
+        and correct_trajectory.status
+        not in {
+            TrajectoryStatus.CONTRADICTED,
+            TrajectoryStatus.ABANDONED,
+            TrajectoryStatus.MERGED,
+        }
+    )
+    statuses = [row.status.value for row in trace.final_pool.trajectories]
+    steps = [_jsonable(row) for row in trace.steps]
+    return {
+        "schema_version": "steam-multi-trajectory-closed-loop-run/v0.1",
+        "case_id": case_id,
+        "arm": arm,
+        "graph_fingerprint": graph_fingerprint(graph),
+        "hypothesis_source": "public_answer_choices",
+        "initial_hypothesis_count": len(choices),
+        "steps": steps,
+        "realized_labels_evaluator_only": realized_rows,
+        "termination": trace.termination,
+        "terminal_answer": _jsonable(answer),
+        "final_trajectory_statuses": statuses,
+        "metrics": {
+            "answer_correct": (
+                answer.selected_choice == evaluator_answer
+                if evaluator_answer is not None
+                else None
+            ),
+            "answer_abstained": answer.selected_choice is None,
+            "clue_count": clue_count,
+            "covered_clue_count": covered,
+            "clue_recall": covered / clue_count,
+            "clue_coverage_complete": evaluator.complete,
+            "real_read_count": real_reads,
+            "read_efficiency": covered / real_reads if real_reads else 0.0,
+            "delayed_reasoning_success": evaluator.complete
+            and clue_count > 1
+            and real_reads > 1,
+            "correct_hypothesis_survived": correct_survived,
+            "false_correct_hypothesis_elimination": (
+                correct_trajectory is not None and not correct_survived
+            ),
+            "final_expandable_trajectory_count": len(trace.final_pool.expandable),
+            "shared_action_selection_count": sum(
+                row.decision.planning_status.endswith("preferred_first_hop")
+                or row.decision.planning_status
+                == "selected_shared_action_across_trajectories"
+                for row in trace.steps
+            ),
+            "complete_comparison_budget_failure": any(
+                row.decision.planning_status
+                == "rollout_abstain_complete_comparison_budget_exceeded"
+                for row in trace.steps
+            ),
+        },
+        "hidden_evaluator_feedback_to_planner": False,
+        "top_k_applied": False,
+        "training_performed": False,
+    }
+
+
+def run_multi_trajectory_matched_pilot(
+    *,
+    gate: dict[str, Any],
+    dataset: dict[str, Any],
+    hidden_key: dict[str, Any],
+    graph_root: Path,
+    client: Any,
+    capacity: int,
+    read_budget: int,
+    case_limit: int = 8,
+    case_ids: Iterable[str] = (),
+    arms: Iterable[str] = MULTI_ARMS,
+    transition_batch_size: int = 32,
+    comparison_batch_size: int = 24,
+    max_complete_pairs: int | None = 4096,
+    include_caption_candidates: bool = True,
+    question_role_cache_path: Path | None = None,
+    cache_mode: str = "record",
+    belief_backend: str = "latent",
+) -> dict[str, Any]:
+    if not gate.get("gate_passed"):
+        raise ValueError("CG-Bench compile gate did not pass")
+    requested_arms = tuple(dict.fromkeys(arms))
+    if set(requested_arms) - set(MULTI_ARMS):
+        raise ValueError("unsupported multi-trajectory matched arm")
+    if belief_backend not in {"latent", "gtsam_backup", "gtsam_always"}:
+        raise ValueError("unknown multi-trajectory belief backend")
+    public_by_case = {str(row["case_id"]): row for row in dataset.get("cases") or []}
+    hidden_by_case = {str(row["case_id"]): row for row in hidden_key.get("cases") or []}
+    requested_ids = set(case_ids)
+    selected = [
+        value
+        for value in gate.get("runnable_case_ids") or []
+        if not requested_ids or value in requested_ids
+    ][:case_limit]
+    if requested_ids - set(selected):
+        raise ValueError("some requested cases are not runnable under the frozen gate")
+
+    initializer: Any = GPTOSSQuestionBeliefInitializer(client)
+    if question_role_cache_path is not None:
+        initializer = PersistentQuestionRoleCache(
+            initializer,
+            question_role_cache_path,
+            mode=cache_mode,
+        )
+    runs: list[dict[str, Any]] = []
+    errors: list[dict[str, str]] = []
+    for case_id in selected:
+        public = public_by_case[case_id]
+        hidden = hidden_by_case[case_id]
+        video_id = str(public["video_id"])
+        graph_path = (
+            graph_root.expanduser().resolve()
+            / video_id
+            / "causal_temporal_overlay.json"
+        )
+        loaded = load_overlay_artifact(graph_path, validate_schema=True)
+        graph = _build_graph_with_optional_caption_candidates(
+            loaded.overlay,
+            sample_dir=graph_path.parent,
+            capacity=capacity,
+            include_caption_candidates=include_caption_candidates,
+        )
+        expected_fingerprint = next(
+            row["graph_fingerprint"]
+            for row in gate["cases"]
+            if row["case_id"] == case_id
+        )
+        if graph_fingerprint(graph) != expected_fingerprint:
+            raise ValueError(f"graph changed after gate for {case_id}")
+        question = str(public["planner_input"]["question"])
+        choices = tuple(
+            str(row) for row in public["planner_input"].get("choices") or []
+        )
+        if not choices:
+            raise ValueError(f"public choices are missing for {case_id}")
+        roles = initializer.initialize(question)
+        clues = _clues(hidden)
+        for arm in requested_arms:
+            try:
+                if arm == "oracle_clue_ceiling":
+                    run = run_oracle_clue_ceiling(
+                        case_id=case_id,
+                        question=question,
+                        graph=graph,
+                        clue_intervals=clues,
+                        read_budget=read_budget,
+                    )
+                    run["metrics"]["answer_correct"] = None
+                    run["metrics"]["correct_hypothesis_survived"] = None
+                    run["metrics"]["false_correct_hypothesis_elimination"] = None
+                else:
+                    model = GPTOSSCategoricalMultiTrajectoryModel(
+                        client,
+                        transition_batch_size=transition_batch_size,
+                        comparison_batch_size=comparison_batch_size,
+                    )
+                    planner = _planner_for_arm(
+                        arm,
+                        model,
+                        max_complete_pairs=max_complete_pairs,
+                    )
+                    updater: Any
+                    if belief_backend == "latent":
+                        updater = GPTOSSRealEvidenceBeliefUpdater(client)
+                    else:
+                        updater = GTSAMMultiTrajectoryBeliefUpdater(
+                            loaded.overlay,
+                            mode=(
+                                "backup"
+                                if belief_backend == "gtsam_backup"
+                                else "correct"
+                            ),
+                        )
+                    run = run_multi_trajectory_case(
+                        case_id=case_id,
+                        question=question,
+                        choices=choices,
+                        graph=graph,
+                        clue_intervals=clues,
+                        planner=planner,
+                        answer_selector=GPTOSSMultiTrajectoryAnswerSelector(client),
+                        read_budget=read_budget,
+                        arm=arm,
+                        initial_missing_roles=roles,
+                        belief_updater=updater,
+                        assessor=GPTOSSRealTrajectoryEvidenceAssessor(client),
+                        evaluator_answer=str(hidden.get("answer_text") or ""),
+                    )
+                    run["method_audit"] = {
+                        "planner_type": type(planner).__name__,
+                        "world_model_type": type(
+                            getattr(planner, "world_model", None)
+                        ).__name__,
+                        "complete_coverage": getattr(
+                            planner, "last_complete_coverage_audit", {}
+                        ),
+                        "transport": model.transport_audits,
+                        "top_k_applied": False,
+                        "belief_backend": belief_backend,
+                        "gtsam_audit": list(getattr(updater, "audit_records", ())),
+                    }
+                if run["graph_fingerprint"] != expected_fingerprint:
+                    raise ValueError("matched arm mutated the retained graph")
+                runs.append(run)
+            except Exception as exc:
+                errors.append(
+                    {
+                        "case_id": case_id,
+                        "arm": arm,
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+
+    divergences: list[dict[str, Any]] = []
+    by_case: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for run in runs:
+        by_case[str(run["case_id"])][str(run["arm"])] = run
+    for case_id, case_runs in by_case.items():
+        reference = case_runs.get("world_model_guided")
+        if reference is None:
+            continue
+        for arm, candidate in case_runs.items():
+            if arm != "world_model_guided":
+                divergences.append(
+                    {"case_id": case_id, **action_divergence(reference, candidate)}
+                )
+    return {
+        "schema_version": MULTI_PILOT_SCHEMA,
+        "dataset_id": dataset.get("dataset_id"),
+        "model": str(getattr(client, "model", "unknown")),
+        "arms": list(requested_arms),
+        "selected_case_ids": selected,
+        "matched_contract": {
+            "same_frozen_graph": True,
+            "same_public_choice_hypotheses": True,
+            "same_real_read_budget": read_budget,
+            "hidden_feedback_to_planner": False,
+            "model_output_is_categorical_only": True,
+            "top_k_applied": False,
+            "complete_pair_budget": max_complete_pairs,
+            "budget_overflow_policy": "explicit_abstain_not_candidate_pruning",
+            "belief_backend": belief_backend,
+            "gtsam_is_optional_and_never_ranks_actions": True,
+        },
+        "runs": runs,
+        "errors": errors,
+        "metrics_by_arm": _aggregate(runs, requested_arms),
+        "action_divergence": divergences,
+        "training_performed": False,
+    }
+
+
+def _planner_for_arm(
+    arm: str,
+    model: GPTOSSCategoricalMultiTrajectoryModel,
+    *,
+    max_complete_pairs: int | None,
+) -> Any:
+    if arm == "no_world_model":
+        return ReactiveMultiTrajectoryPlanner(model)
+    world_model: Any = model
+    horizon = 2
+    if arm == "shuffled_world_model_prediction":
+        world_model = ShuffledHypothesisWorldModel(model)
+    elif arm == "immediate_effect_only":
+        horizon = 1
+    elif arm != "world_model_guided":
+        raise ValueError(f"unsupported model-backed arm: {arm}")
+    return MultiTrajectoryRolloutPlanner(
+        world_model,
+        model,
+        horizon=horizon,
+        max_complete_pairs=max_complete_pairs,
+    )
+
+
+def _aggregate(runs: Sequence[dict[str, Any]], arms: Iterable[str]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for arm in arms:
+        metrics = [row["metrics"] for row in runs if row["arm"] == arm]
+        result[arm] = {
+            "case_count": len(metrics),
+            "answer_accuracy": _mean(row.get("answer_correct") for row in metrics),
+            "mean_clue_recall": _mean(row.get("clue_recall") for row in metrics),
+            "mean_real_reads": _mean(row.get("real_read_count") for row in metrics),
+            "mean_read_efficiency": _mean(
+                row.get("read_efficiency") for row in metrics
+            ),
+            "answer_abstain_rate": _mean(
+                row.get("answer_abstained") for row in metrics
+            ),
+            "delayed_success_rate": _mean(
+                row.get("delayed_reasoning_success") for row in metrics
+            ),
+            "correct_hypothesis_survival_rate": _mean(
+                row.get("correct_hypothesis_survived") for row in metrics
+            ),
+            "false_correct_hypothesis_elimination_rate": _mean(
+                row.get("false_correct_hypothesis_elimination") for row in metrics
+            ),
+            "complete_comparison_budget_failure_rate": _mean(
+                row.get("complete_comparison_budget_failure") for row in metrics
+            ),
+        }
+    return result
+
+
+def _mean(values: Iterable[Any]) -> float | None:
+    selected = [float(row) for row in values if row is not None]
+    return fmean(selected) if selected else None
+
+
+def _node_key(graph: RetainedEvidenceGraph, node_id: str) -> str:
+    node = graph.node_by_id.get(node_id)
+    return (
+        str(node.metadata.get("predicate") or node.text or node_id)
+        if node
+        else "unknown"
+    )
+
+
+def _jsonable(value: Any) -> Any:
+    if isinstance(value, Enum):
+        return value.value
+    if is_dataclass(value):
+        return {key: _jsonable(row) for key, row in asdict(value).items()}
+    if isinstance(value, dict):
+        return {str(key): _jsonable(row) for key, row in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(row) for row in value]
+    return value
+
+
+def _contains_number(value: Any) -> bool:
+    if isinstance(value, bool) or value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    if isinstance(value, dict):
+        return any(_contains_number(row) for row in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_contains_number(row) for row in value)
+    return False
+
+
+def _alias(prefix: str, index: int) -> str:
+    value = index
+    letters = ""
+    while True:
+        letters = chr(ord("a") + value % 26) + letters
+        value = value // 26 - 1
+        if value < 0:
+            break
+    return f"{prefix}_{letters}"
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"JSON root must be an object: {path}")
+    return value
+
+
+def _write_json(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", required=True, type=Path)
+    parser.add_argument("--hidden-key", required=True, type=Path)
+    parser.add_argument("--selection", required=True, type=Path)
+    parser.add_argument("--graph-root", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--keys-py", type=Path)
+    parser.add_argument(
+        "--mode", choices=("compile-gate", "run"), default="compile-gate"
+    )
+    parser.add_argument("--model", default=DEFAULT_GPT_OSS_MODEL)
+    parser.add_argument("--capacity", type=int, default=64)
+    parser.add_argument("--graph-read-budget", type=int, default=8)
+    parser.add_argument("--video-limit", type=int, default=8)
+    parser.add_argument("--cases-per-video", type=int, default=1)
+    parser.add_argument("--case-limit", type=int, default=8)
+    parser.add_argument("--case-id", action="append", default=[])
+    parser.add_argument("--arm", action="append", choices=MULTI_ARMS)
+    parser.add_argument("--transition-batch-size", type=int, default=32)
+    parser.add_argument("--comparison-batch-size", type=int, default=24)
+    parser.add_argument("--max-complete-pairs", type=int, default=4096)
+    parser.add_argument("--question-role-cache", type=Path)
+    parser.add_argument("--response-cache", type=Path)
+    parser.add_argument("--cache-mode", choices=("record", "replay"), default="record")
+    parser.add_argument("--timeout-s", type=int, default=180)
+    parser.add_argument("--max-tokens", type=int, default=8000)
+    parser.add_argument(
+        "--reasoning-effort", choices=("low", "medium", "high"), default="low"
+    )
+    parser.add_argument("--disable-caption-candidates", action="store_true")
+    parser.add_argument(
+        "--belief-backend",
+        choices=("latent", "gtsam_backup", "gtsam_always"),
+        default="latent",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    dataset = _read_json(args.dataset)
+    hidden = _read_json(args.hidden_key)
+    selection = _read_json(args.selection)
+    gate = compile_cgbench_gate(
+        dataset=dataset,
+        hidden_key=hidden,
+        selection=selection,
+        graph_root=args.graph_root,
+        capacity=args.capacity,
+        read_budget=args.graph_read_budget,
+        video_limit=args.video_limit,
+        cases_per_video=args.cases_per_video,
+        include_caption_candidates=not args.disable_caption_candidates,
+    )
+    if args.mode == "compile-gate":
+        _write_json(args.output, gate)
+        return 0 if gate["gate_passed"] else 2
+    if args.keys_py is None:
+        raise ValueError("--mode run requires --keys-py")
+    client: Any = OpenAICompatibleCategoricalClient.from_openrouter_keys_file(
+        args.keys_py,
+        model=args.model,
+        timeout_s=args.timeout_s,
+        max_tokens=args.max_tokens,
+        reasoning_effort=args.reasoning_effort,
+    )
+    if args.response_cache is not None:
+        client = PersistentCategoricalResponseCacheClient(
+            client,
+            args.response_cache,
+            mode=args.cache_mode,
+        )
+    result = run_multi_trajectory_matched_pilot(
+        gate=gate,
+        dataset=dataset,
+        hidden_key=hidden,
+        graph_root=args.graph_root,
+        client=client,
+        capacity=args.capacity,
+        read_budget=args.graph_read_budget,
+        case_limit=args.case_limit,
+        case_ids=args.case_id,
+        arms=args.arm or MULTI_ARMS,
+        transition_batch_size=args.transition_batch_size,
+        comparison_batch_size=args.comparison_batch_size,
+        max_complete_pairs=args.max_complete_pairs,
+        include_caption_candidates=not args.disable_caption_candidates,
+        question_role_cache_path=args.question_role_cache,
+        cache_mode=args.cache_mode,
+        belief_backend=args.belief_backend,
+    )
+    result["compile_gate"] = gate
+    _write_json(args.output, result)
+    print(json.dumps(result["metrics_by_arm"], indent=2))
+    return 0 if not result["errors"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

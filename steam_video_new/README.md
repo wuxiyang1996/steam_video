@@ -254,6 +254,21 @@ The belief backend is interchangeable. A latent updater is the default method;
 GTSAM/factor graph may maintain competing hypotheses and persistent corrections
 behind the same interface, but it does not rank expansions or choose actions.
 
+The experiment-facing implementation now represents horizon-two imagination as
+one complete action tree per possible next shared evidence read. Every tree
+contains its categorical first transition and all legal categorical second-hop
+transitions across the competing trajectory context. The planner exhaustively
+compares first-action trees with categorical pairwise labels, executes only the
+first real read, broadcasts the observation, and replans. This preserves every
+hypothesis and delayed continuation without multiplying the final comparison
+set by hypothesis count and without using Top-K.
+
+CG-Bench public answer choices initialize the trajectory pool. Hidden answers
+and clue intervals are evaluator-only. The runnable CLI and five matched arms
+live in `implicit_world_model/full_graph_iwm/multi_trajectory_cgbench.py`; the
+optional executed-read-only GTSAM adapter lives in
+`implicit_world_model/full_graph_iwm/gtsam_backup.py`.
+
 ## 5. Bounded input contract
 
 The IWM/planner never receives the whole video, raw embedding matrix, hidden

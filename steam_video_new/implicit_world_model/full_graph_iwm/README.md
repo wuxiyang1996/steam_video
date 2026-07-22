@@ -267,6 +267,105 @@ trace = run_multi_trajectory_closed_loop(
 )
 ```
 
+## Complete multi-trajectory rollout implementation
+
+`multi_trajectory_rollout.py` is the experiment-facing planner. It treats the
+next executed evidence read as the decision unit. Route-specific actions that
+read the same L1 target are one shared action, while their temporal/correlation
+provenance remains in the audit trace.
+
+For every shared first action, the IWM predicts a categorical observation and
+belief delta. At horizon two it projects an imagined-only belief, compiles all
+legal second hops, and predicts all of their categorical effects. These
+second-hop outcomes form a complete first-action tree:
+
+```text
+all competing hypotheses + current real beliefs
+  -> every unique legal shared first action
+  -> categorical first transition
+  -> every legal second action under imagined belief
+  -> categorical second transitions
+  -> one complete action tree per possible next real read
+  -> exhaustive categorical pairwise partial order over first-action trees
+  -> execute one first action only when the preferred execution key is unique
+  -> broadcast real evidence, correct every trajectory, and replan
+```
+
+This representation avoids the hypothesis-by-path comparison explosion without
+discarding a hypothesis or second hop. It is not Top-K: every legal first and
+second action remains visible, and every first-action tree participates in the
+pairwise partial order. Transport batching only splits complete prediction or
+comparison sets across requests. If a configured complete-pair budget is too
+small, the planner explicitly abstains with
+`rollout_abstain_complete_comparison_budget_exceeded`; it never runs a partial
+tournament.
+
+`multi_trajectory_cgbench.py` provides the end-to-end CG-Bench CLI. Public
+answer choices initialize the trajectory pool. Hidden answer and clue fields
+are joined only after execution for evaluation. A separate categorical terminal
+selector sees only acquired real evidence and the final trajectory pool.
+
+The matched arms are:
+
+- `world_model_guided`: complete horizon-two action trees;
+- `no_world_model`: reactive preference with imagined transitions removed;
+- `shuffled_world_model_prediction`: the same actions and planner with
+  categorical transition descriptors permuted;
+- `immediate_effect_only`: horizon-one categorical transitions;
+- `oracle_clue_ceiling`: hidden-alignment evaluator upper bound only.
+
+Metrics are reported separately: answer accuracy, clue recall, reads, read
+efficiency, action divergence, delayed success, correct-hypothesis survival,
+false correct-hypothesis elimination, abstention, and complete-comparison budget
+failure. No scalar reward or aggregate pass score is created.
+
+Compile the frozen gate without a model call:
+
+```bash
+python -m steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_cgbench \
+  --dataset /path/to/navigation_dataset.json \
+  --hidden-key /path/to/l15_candidate_alignment.hidden_key.json \
+  --selection /path/to/frozen_selection.json \
+  --graph-root /path/to/frozen_graphs \
+  --mode compile-gate \
+  --output /path/to/multi_trajectory_gate.json
+```
+
+Run the matched pilot with GPT-OSS-120B:
+
+```bash
+python -m steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_cgbench \
+  --dataset /path/to/navigation_dataset.json \
+  --hidden-key /path/to/l15_candidate_alignment.hidden_key.json \
+  --selection /path/to/frozen_selection.json \
+  --graph-root /path/to/frozen_graphs \
+  --mode run \
+  --keys-py /fs/gamma-projects/vlm-robot/keys.py \
+  --model openai/gpt-oss-120b \
+  --response-cache /path/to/responses.json \
+  --question-role-cache /path/to/roles.json \
+  --output /path/to/multi_trajectory_matched.json
+```
+
+`--belief-backend latent` is the main method. `gtsam_backup` and
+`gtsam_always` use `gtsam_backup.py` only after executed real reads. GTSAM
+numeric state never enters a prompt or preference, and missing GTSAM raises an
+explicit error rather than changing the planner.
+
+The July 2026 real GPT-OSS-120B schema smoke used two hypotheses, two L1 nodes,
+four shared first-action trees, ten complete transition predictions and six
+pairwise comparisons. All three API responses passed categorical coverage with
+no Top-K. The model retained multiple preferred first actions and the planner
+correctly abstained instead of using compiler order. On an actual 64-node
+CG-Bench smoke graph with eight public choices, deterministic scale validation
+produced 66 shared first-action trees, 566 horizon-two transition predictions,
+and all 2,145 first-action pairs.
+
+The 8-video frozen smoke gate currently has two runnable cases. A newer
+2-video held-out build is not runnable at capacity 64 because consolidation
+discarded part of its evaluator-only clue coverage. The gate blocks it; this is
+a remaining data-selection issue, not a planner fallback.
+
 Supporting L1 code lives in `memory_graph/`:
 
 - `adaptive_windowing.py`: surprise-driven write boundaries; the present
