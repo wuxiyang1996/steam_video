@@ -96,6 +96,7 @@ def build_targeted_transition_gathering(
     packet_id: str,
     quotas: dict[str, int] | None = None,
     consistency_duplicates: int = 6,
+    excluded_video_ids: set[str] | frozenset[str] = frozenset(),
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Select a diverse, executed candidate set and produce an outcome-blind packet."""
 
@@ -112,8 +113,13 @@ def build_targeted_transition_gathering(
         raise ValueError("targeted gathering quotas must be non-negative")
 
     cases = {str(case["case_id"]): case for case in case_set.get("cases") or []}
+    excluded_video_ids = {str(value) for value in excluded_video_ids}
+    excluded_record_ids: set[str] = set()
     available: dict[str, list[dict[str, Any]]] = {name: [] for name in TARGET_STRATA}
     for record in dataset.get("records") or []:
+        if str(record.get("video_id") or "") in excluded_video_ids:
+            excluded_record_ids.add(str(record.get("record_id") or ""))
+            continue
         action = record.get("action") or {}
         execution = record.get("execution") or {}
         verifier = execution.get("verifier_measurement") or {}
@@ -184,6 +190,8 @@ def build_targeted_transition_gathering(
         "selected_record_count": len(selected_rows),
         "selected_video_count": len(video_counts),
         "selected_video_counts": dict(sorted(video_counts.items())),
+        "excluded_video_ids": sorted(excluded_video_ids),
+        "excluded_record_count": len(excluded_record_ids),
         "public_packet_item_count": len(packet["items"]),
         "consistency_duplicate_count": consistency_duplicates,
         "counterevidence_outcome_coverage": "pending_independent_human_review",

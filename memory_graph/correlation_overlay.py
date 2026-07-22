@@ -1,4 +1,9 @@
-"""Categorical, question-independent L1.5 correlations over retained L1 nodes."""
+"""Legacy categorical relation audit over retained L1 nodes.
+
+The main L1.5 navigation layer now lives in :mod:`memory_graph.soft_correlation`.
+This module remains for strict typed-relation review and legacy artifact
+projection; its candidate edges are not generic navigation correlations.
+"""
 
 from __future__ import annotations
 
@@ -150,7 +155,7 @@ def build_categorical_correlation_overlay(
     seed_edges: Sequence[CorrelationEdge] = (),
     overlay_id: str | None = None,
 ) -> CategoricalCorrelationOverlay:
-    """Evaluate every retained pair without embedding Top-K pruning."""
+    """Evaluate every retained pair for optional typed-relation review."""
 
     ordered = tuple(
         sorted(

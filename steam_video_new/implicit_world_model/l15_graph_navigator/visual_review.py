@@ -6,6 +6,7 @@ from collections import Counter
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 from typing import Any
 
 from .transition_review import validate_transition_review_packet
@@ -48,9 +49,11 @@ def build_visual_review_bundle(
 
     root = video_root.expanduser().resolve()
     overlay_cache: dict[Path, tuple[dict[str, Any], dict[str, dict[str, Any]]]] = {}
+    duration_cache: dict[Path, float | None] = {}
     assets: dict[str, dict[str, Any]] = {}
     public_items: list[dict[str, Any]] = []
     missing_reasons: Counter[str] = Counter()
+    partial_reasons: Counter[str] = Counter()
     role_counts: Counter[str] = Counter()
     video_counts: Counter[str] = Counter()
     fully_covered = 0
@@ -79,6 +82,9 @@ def build_visual_review_bundle(
         video_path = (root / f"{video_id}.mp4").resolve()
         if root not in video_path.parents:
             raise ValueError(f"unsafe video id in overlay: {video_id}")
+        if video_path not in duration_cache:
+            duration_cache[video_path] = _probe_video_duration(video_path)
+        video_duration_s = duration_cache[video_path]
 
         action = item.get("action") or {}
         executed = item.get("executed_result") or {}
@@ -126,10 +132,29 @@ def build_visual_review_bundle(
                     missing_reason = "time_span_missing_or_invalid"
             if missing_reason is None and not video_path.is_file():
                 missing_reason = "video_file_missing"
+            partial_reason: str | None = None
+            if (
+                missing_reason is None
+                and video_duration_s is not None
+                and start_s is not None
+                and end_s is not None
+            ):
+                if start_s >= video_duration_s:
+                    missing_reason = "video_window_out_of_range"
+                elif end_s > video_duration_s:
+                    partial_reason = "video_window_exceeds_duration"
 
             digest_input = f"{video_id}\0{node_id}\0{start_s}\0{end_s}"
             asset_id = "visual:" + hashlib.sha256(digest_input.encode()).hexdigest()[:24]
-            availability = "available" if missing_reason is None else "missing"
+            if missing_reason is not None:
+                availability = "missing"
+                issue_reason = missing_reason
+            elif partial_reason is not None:
+                availability = "partial"
+                issue_reason = partial_reason
+            else:
+                availability = "available"
+                issue_reason = None
             public_asset = {
                 "asset_id": asset_id,
                 "node_id": node_id,
@@ -137,14 +162,16 @@ def build_visual_review_bundle(
                 "video_id": video_id,
                 "start_s": start_s,
                 "end_s": end_s,
-                "media_url": f"/api/media/{asset_id}" if availability == "available" else None,
+                "media_url": f"/api/media/{asset_id}" if availability != "missing" else None,
                 "availability": availability,
-                "missing_reason": missing_reason,
+                "missing_reason": issue_reason,
             }
             visual_evidence.append(public_asset)
             if missing_reason is not None:
                 missing_reasons[missing_reason] += 1
             else:
+                if partial_reason is not None:
+                    partial_reasons[partial_reason] += 1
                 video_counts[video_id] += 1
                 existing = assets.get(asset_id)
                 binding = {
@@ -159,8 +186,9 @@ def build_visual_review_bundle(
                     raise ValueError(f"visual asset id collision: {asset_id}")
                 assets[asset_id] = binding
 
-        available = sum(row["availability"] == "available" for row in visual_evidence)
-        if visual_evidence and available == len(visual_evidence):
+        available = sum(row["availability"] != "missing" for row in visual_evidence)
+        exact = sum(row["availability"] == "available" for row in visual_evidence)
+        if visual_evidence and exact == len(visual_evidence):
             coverage = "full"
             fully_covered += 1
         elif available:
@@ -210,11 +238,22 @@ def build_visual_review_bundle(
             for row in public_items
             for asset in row["visual_evidence"]
         ),
+        "partially_available_node_count": sum(
+            asset["availability"] == "partial"
+            for row in public_items
+            for asset in row["visual_evidence"]
+        ),
         "missing_node_count": sum(missing_reasons.values()),
         "unique_media_binding_count": len(assets),
         "role_counts": dict(sorted(role_counts.items())),
         "available_windows_by_video": dict(sorted(video_counts.items())),
         "missing_reasons": dict(sorted(missing_reasons.items())),
+        "partial_reasons": dict(sorted(partial_reasons.items())),
+        "video_durations_s": {
+            path.stem: duration
+            for path, duration in sorted(duration_cache.items(), key=lambda row: row[0].name)
+            if duration is not None
+        },
         "delivery": "original_mp4_http_range_with_browser_time_window",
         "pre_generated_clip_count": 0,
         "pre_generated_keyframe_count": 0,
@@ -271,7 +310,7 @@ def validate_visual_review_bundle(
     public_assets: dict[str, dict[str, Any]] = {}
     for item in public_index.get("items") or []:
         for asset in item.get("visual_evidence") or []:
-            if asset.get("availability") == "available":
+            if asset.get("availability") in {"available", "partial"}:
                 asset_id = str(asset.get("asset_id"))
                 referenced_assets.add(asset_id)
                 existing = public_assets.get(asset_id)
@@ -321,3 +360,37 @@ def _checksum(payload: dict[str, Any]) -> str:
         normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
     return hashlib.sha256(data).hexdigest()
+
+
+def _probe_video_duration(video_path: Path) -> float | None:
+    """Return container duration when ffprobe can read it; otherwise stay conservative."""
+
+    if not video_path.is_file():
+        return None
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "error", "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1", str(video_path),
+            ],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=15,
+        )
+        duration = float(result.stdout.strip())
+    except (FileNotFoundError, subprocess.TimeoutExpired, ValueError):
+        duration = 0.0
+    if duration > 0:
+        return duration
+    try:
+        import cv2  # type: ignore[import-not-found]
+
+        capture = cv2.VideoCapture(str(video_path))
+        fps = float(capture.get(cv2.CAP_PROP_FPS))
+        frames = float(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        capture.release()
+        duration = frames / fps if fps > 0 and frames > 0 else 0.0
+    except (ImportError, ValueError):
+        return None
+    return duration if duration > 0 else None

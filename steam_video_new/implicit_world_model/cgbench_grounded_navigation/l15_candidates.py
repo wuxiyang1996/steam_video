@@ -234,6 +234,11 @@ def build_closed_loop_protocol(public: dict[str, Any]) -> dict[str, Any]:
                 "planning_horizon": "short_rollout_then_replan",
             },
             {
+                "arm": "frozen_world_model",
+                "transition_source": "first_action_prediction_reused_after_real_reads",
+                "planning_horizon": "short_rollout_then_replan",
+            },
+            {
                 "arm": "immediate_effect_only",
                 "transition_source": "action_conditioned_iwm",
                 "planning_horizon": "one_hop_no_delayed_effect",

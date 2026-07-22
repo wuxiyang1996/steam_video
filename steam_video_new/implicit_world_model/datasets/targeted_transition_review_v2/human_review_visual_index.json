@@ -1,0 +1,2545 @@
+{
+  "schema_version": "steam-visual-transition-review/v0.1",
+  "packet_id": "targeted-transition-review-v2",
+  "packet_sha256": "13a20db61621b495e753ac8a9284bca511300ed19619e44c4dad71d194fe8305",
+  "output_contract": "outcome_blind_visual_evidence_only",
+  "items": [
+    {
+      "item_id": "transition-review:5c0502eb9708ba7b5c616148",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:c765a773b34f2d678cae1b31",
+          "node_id": "event:atomic:video_skills_l1:00030",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 30.0,
+          "end_s": 34.0,
+          "media_url": "/api/media/visual:c765a773b34f2d678cae1b31",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5fbd02c426acc08ea5287104",
+          "node_id": "event:atomic:video_skills_l1:00038",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 39.0,
+          "end_s": 43.0,
+          "media_url": "/api/media/visual:5fbd02c426acc08ea5287104",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b6bed2c35edf8035066168f6",
+          "node_id": "event:atomic:video_skills_l1:00046",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 48.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:b6bed2c35edf8035066168f6",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:ff5bc44153612e45e4326d0d",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:7bdec1307ba5d67814143135",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 48.0,
+          "end_s": 50.0,
+          "media_url": "/api/media/visual:7bdec1307ba5d67814143135",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:50d9b15943b8372c131b5fb0",
+          "node_id": "event:atomic:memory:vh_seg_002:003",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 50.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:50d9b15943b8372c131b5fb0",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:e23c7eb323c79168444979b3",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:9c68cbaa8d45833881d07cc7",
+          "node_id": "event:atomic:memory:vh_seg_003:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 71.0,
+          "end_s": 78.0,
+          "media_url": "/api/media/visual:9c68cbaa8d45833881d07cc7",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:f82c7b4a2bf7229bf3aa805a",
+          "node_id": "event:atomic:memory:vh_seg_003:004",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 82.0,
+          "end_s": 84.0,
+          "media_url": "/api/media/visual:f82c7b4a2bf7229bf3aa805a",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:c51f5dbb0d9cd56f16176367",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:dc73691c3819df497d2160c6",
+          "node_id": "event:atomic:video_skills_l1:00006",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:dc73691c3819df497d2160c6",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:7b0866b84380fa56614baecc",
+          "node_id": "memory:evidence.state:46adb1a343",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:7b0866b84380fa56614baecc",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:3378c75930d2185d10927974",
+          "node_id": "memory:evidence.state:a115c85b8e",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:3378c75930d2185d10927974",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5891bdaf2544b30e9c8144b1",
+          "node_id": "memory:evidence.state:eec327078f",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:5891bdaf2544b30e9c8144b1",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:424438e9cbf72ee6e6c0057d",
+          "node_id": "memory:obs:fine:clip:mKqiGQrHtW8:fine:0001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:424438e9cbf72ee6e6c0057d",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:78c82253e3bf53485a506731",
+          "node_id": "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:78c82253e3bf53485a506731",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:451fa33de9f8d4141932d461",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:5b2336a41d6d237bfad732a3",
+          "node_id": "event:atomic:video_skills_l1:00019",
+          "roles": [
+            "source"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 21.0,
+          "end_s": 25.0,
+          "media_url": "/api/media/visual:5b2336a41d6d237bfad732a3",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:bb870f7cd9c6d0705a739c42",
+          "node_id": "event:atomic:video_skills_l1:00023",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 24.0,
+          "end_s": 28.0,
+          "media_url": "/api/media/visual:bb870f7cd9c6d0705a739c42",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:ece6cff10fafdf8e170d4241",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:5b2336a41d6d237bfad732a3",
+          "node_id": "event:atomic:video_skills_l1:00019",
+          "roles": [
+            "source"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 21.0,
+          "end_s": 25.0,
+          "media_url": "/api/media/visual:5b2336a41d6d237bfad732a3",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:71739362fed544ebba7f0d7d",
+          "node_id": "memory:evidence.observation:118dcec06c",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:71739362fed544ebba7f0d7d",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c8667934a9ff5e6349b72f51",
+          "node_id": "memory:evidence.observation:7ff6fb9a47",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:c8667934a9ff5e6349b72f51",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:909f17a34b35a56eb99f34f8",
+          "node_id": "memory:evidence.state:e1c18bb4fb",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 6.0,
+          "end_s": 10.0,
+          "media_url": "/api/media/visual:909f17a34b35a56eb99f34f8",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5752cbdbb751db979ca0cd39",
+          "node_id": "memory:obs:fine:clip:TNYeYwYiAag:fine:0001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:5752cbdbb751db979ca0cd39",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:07a9bc6edd9c5a158cff071d",
+          "node_id": "memory:obs:fine:clip:TNYeYwYiAag:fine:0002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:07a9bc6edd9c5a158cff071d",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:9727e1e90a7873954f9d12bc",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:b365d71c9b19c95a9a328c82",
+          "node_id": "event:atomic:video_skills_l1:00140",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 81.0,
+          "end_s": 85.0,
+          "media_url": "/api/media/visual:b365d71c9b19c95a9a328c82",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5b9e71b448fe51b4538f55c7",
+          "node_id": "event:atomic:video_skills_l1:00258",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 141.0,
+          "end_s": 145.0,
+          "media_url": "/api/media/visual:5b9e71b448fe51b4538f55c7",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:39fac208aea2ebd50e9b7740",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:a25ceb11350ee5e4b7dfd01f",
+          "node_id": "event:atomic:memory:vh_seg_001:003",
+          "roles": [
+            "source"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "media_url": "/api/media/visual:a25ceb11350ee5e4b7dfd01f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c026740ff6751e8ddab31071",
+          "node_id": "event:atomic:memory:vh_seg_005:003",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 142.0,
+          "end_s": 146.0,
+          "media_url": "/api/media/visual:c026740ff6751e8ddab31071",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:870799f335ea6da23e6bbfb4",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 5.0,
+          "end_s": 47.0,
+          "media_url": "/api/media/visual:870799f335ea6da23e6bbfb4",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:0627bb904e1f264d1b4d531d",
+          "node_id": "memory:vh_seg_005",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 135.0,
+          "end_s": 182.0,
+          "media_url": "/api/media/visual:0627bb904e1f264d1b4d531d",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:c04d6dbac6b7c2cf32bbaddb",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:e6cf0c6af1dafaa9c7a4f8c9",
+          "node_id": "event:atomic:memory:vh_seg_002:004",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1TR9riaDzY8",
+          "start_s": 70.0,
+          "end_s": 80.0,
+          "media_url": "/api/media/visual:e6cf0c6af1dafaa9c7a4f8c9",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:1d4404959e99817871644f01",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1TR9riaDzY8",
+          "start_s": 80.0,
+          "end_s": 90.0,
+          "media_url": "/api/media/visual:1d4404959e99817871644f01",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:ec39908ef517b2a4b1a20060",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1TR9riaDzY8",
+          "start_s": 46.0,
+          "end_s": 100.0,
+          "media_url": "/api/media/visual:ec39908ef517b2a4b1a20060",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:48b7d4c35b2bd8a1709ce7b2",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:b365d71c9b19c95a9a328c82",
+          "node_id": "event:atomic:video_skills_l1:00140",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 81.0,
+          "end_s": 85.0,
+          "media_url": "/api/media/visual:b365d71c9b19c95a9a328c82",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5b9e71b448fe51b4538f55c7",
+          "node_id": "event:atomic:video_skills_l1:00258",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 141.0,
+          "end_s": 145.0,
+          "media_url": "/api/media/visual:5b9e71b448fe51b4538f55c7",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:b8b38c0028c08473d4213380",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:181b0f8af5f7cfc8a5096c2f",
+          "node_id": "event:atomic:video_skills_l1:00009",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 6.0,
+          "end_s": 10.0,
+          "media_url": "/api/media/visual:181b0f8af5f7cfc8a5096c2f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c1a7ed98eb9c4926a9d7f255",
+          "node_id": "event:atomic:video_skills_l1:00019",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 15.0,
+          "end_s": 19.0,
+          "media_url": "/api/media/visual:c1a7ed98eb9c4926a9d7f255",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:fff445738ba62cd000491794",
+          "node_id": "event:atomic:video_skills_l1:00028",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 24.0,
+          "end_s": 28.0,
+          "media_url": "/api/media/visual:fff445738ba62cd000491794",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:07d0737a3a6291d80c00d129",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:c765a773b34f2d678cae1b31",
+          "node_id": "event:atomic:video_skills_l1:00030",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 30.0,
+          "end_s": 34.0,
+          "media_url": "/api/media/visual:c765a773b34f2d678cae1b31",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5fbd02c426acc08ea5287104",
+          "node_id": "event:atomic:video_skills_l1:00038",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 39.0,
+          "end_s": 43.0,
+          "media_url": "/api/media/visual:5fbd02c426acc08ea5287104",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b6bed2c35edf8035066168f6",
+          "node_id": "event:atomic:video_skills_l1:00046",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 48.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:b6bed2c35edf8035066168f6",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:7de143a0542954ce8fb0c743",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:ffca3a46d72a84466aafd839",
+          "node_id": "event:atomic:memory:vh_seg_001:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 6.0,
+          "end_s": 17.5,
+          "media_url": "/api/media/visual:ffca3a46d72a84466aafd839",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:8c14238e797c38aa575271b0",
+          "node_id": "event:atomic:memory:vh_seg_001:002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 17.5,
+          "end_s": 29.0,
+          "media_url": "/api/media/visual:8c14238e797c38aa575271b0",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:69362d879e2a49ece01e1c9a",
+          "node_id": "event:atomic:memory:vh_seg_002:003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 114.8,
+          "end_s": 123.2,
+          "media_url": "/api/media/visual:69362d879e2a49ece01e1c9a",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:f9918fa90d24c62ed179c53a",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 6.0,
+          "end_s": 98.0,
+          "media_url": "/api/media/visual:f9918fa90d24c62ed179c53a",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:30c8516f54232466f6f0446b",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 98.0,
+          "end_s": 165.0,
+          "media_url": "/api/media/visual:30c8516f54232466f6f0446b",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:62d031cf586632d173680275",
+          "node_id": "memory:vh_seg_003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 165.0,
+          "end_s": 217.0,
+          "media_url": "/api/media/visual:62d031cf586632d173680275",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:8602420e533798d02d77846e",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:156d24e51a331db2952e5b4f",
+          "node_id": "event:atomic:memory:vh_seg_001:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 5.0,
+          "end_s": 10.0,
+          "media_url": "/api/media/visual:156d24e51a331db2952e5b4f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c23074fb7a17f80a7b93a29f",
+          "node_id": "event:atomic:memory:vh_seg_001:006",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 36.0,
+          "end_s": 42.0,
+          "media_url": "/api/media/visual:c23074fb7a17f80a7b93a29f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:1871fea828b03d444911fea6",
+          "node_id": "event:atomic:memory:vh_seg_002:001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 106.0,
+          "end_s": 115.0,
+          "media_url": "/api/media/visual:1871fea828b03d444911fea6",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:3df87e389d576a5d4c355a8c",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 115.0,
+          "end_s": 124.0,
+          "media_url": "/api/media/visual:3df87e389d576a5d4c355a8c",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c4bc3c28ade7bb43ea6b5a12",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 5.0,
+          "end_s": 106.0,
+          "media_url": "/api/media/visual:c4bc3c28ade7bb43ea6b5a12",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:656e687d2a7d786e08d7b525",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 106.0,
+          "end_s": 172.0,
+          "media_url": "/api/media/visual:656e687d2a7d786e08d7b525",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:886bf2a38d76710b88bd7437",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:fb299160f99636ac457b4011",
+          "node_id": "event:atomic:video_skills_l1:00057",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:fb299160f99636ac457b4011",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:9ef9e1c988f2d363ad491086",
+          "node_id": "event:atomic:video_skills_l1:00058",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:9ef9e1c988f2d363ad491086",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:a7866de75313eb4a74ecf365",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:6194540b8536d9fed4eb52ec",
+          "node_id": "event:atomic:video_skills_l1:00082",
+          "roles": [
+            "source"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 87.0,
+          "end_s": 91.0,
+          "media_url": "/api/media/visual:6194540b8536d9fed4eb52ec",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:f6c77d090a0679f5ebb17317",
+          "node_id": "event:atomic:video_skills_l1:00095",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 96.0,
+          "end_s": 100.0,
+          "media_url": "/api/media/visual:f6c77d090a0679f5ebb17317",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:c4b89ecc6ec46faeb050fe04",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:43562f31ad682e032f02d143",
+          "node_id": "event:atomic:video_skills_l1:00013",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 6.0,
+          "end_s": 10.0,
+          "media_url": "/api/media/visual:43562f31ad682e032f02d143",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:73c1c55283906ea7ab0f5cec",
+          "node_id": "event:atomic:video_skills_l1:00021",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 12.0,
+          "end_s": 16.0,
+          "media_url": "/api/media/visual:73c1c55283906ea7ab0f5cec",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:3b4f9fd58277a6eaecc80194",
+          "node_id": "event:atomic:video_skills_l1:00081",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 51.0,
+          "end_s": 55.0,
+          "media_url": "/api/media/visual:3b4f9fd58277a6eaecc80194",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:41747a4fb247f132b7c34909",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:b26827674fcb19914c109c67",
+          "node_id": "event:atomic:memory:vh_seg_001:004",
+          "roles": [
+            "source"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "media_url": "/api/media/visual:b26827674fcb19914c109c67",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b03ef9f0626a55ca3015ca16",
+          "node_id": "event:atomic:memory:vh_seg_001:007",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 12.0,
+          "end_s": 14.0,
+          "media_url": "/api/media/visual:b03ef9f0626a55ca3015ca16",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:e26915c35df7db766930ea9d",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 0.0,
+          "end_s": 30.0,
+          "media_url": "/api/media/visual:e26915c35df7db766930ea9d",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:d7590011ebda6c4d0518ae3f",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:d80c30d06da89d6afa713cd9",
+          "node_id": "event:atomic:memory:vh_seg_001:004",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1iHavvOahH0",
+          "start_s": 30.0,
+          "end_s": 38.0,
+          "media_url": "/api/media/visual:d80c30d06da89d6afa713cd9",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:d361f68f97fdda61d43cdf7a",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1iHavvOahH0",
+          "start_s": 110.0,
+          "end_s": 115.0,
+          "media_url": "/api/media/visual:d361f68f97fdda61d43cdf7a",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:9dacae6a4abc829e7666a558",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1iHavvOahH0",
+          "start_s": 6.0,
+          "end_s": 104.0,
+          "media_url": "/api/media/visual:9dacae6a4abc829e7666a558",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:1c2c4d756409188cbf85f86d",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1iHavvOahH0",
+          "start_s": 104.0,
+          "end_s": 217.0,
+          "media_url": "/api/media/visual:1c2c4d756409188cbf85f86d",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:4c1bb885ed1ba81e7dd92ec7",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:e6cf0c6af1dafaa9c7a4f8c9",
+          "node_id": "event:atomic:memory:vh_seg_002:004",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1TR9riaDzY8",
+          "start_s": 70.0,
+          "end_s": 80.0,
+          "media_url": "/api/media/visual:e6cf0c6af1dafaa9c7a4f8c9",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:1d4404959e99817871644f01",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1TR9riaDzY8",
+          "start_s": 80.0,
+          "end_s": 90.0,
+          "media_url": "/api/media/visual:1d4404959e99817871644f01",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:ec39908ef517b2a4b1a20060",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1TR9riaDzY8",
+          "start_s": 46.0,
+          "end_s": 100.0,
+          "media_url": "/api/media/visual:ec39908ef517b2a4b1a20060",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:20269fc5bafcb1ff425936d3",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:50d9b15943b8372c131b5fb0",
+          "node_id": "event:atomic:memory:vh_seg_002:003",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 50.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:50d9b15943b8372c131b5fb0",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:40f43ee0b3e953ef2acc2e54",
+          "node_id": "event:atomic:memory:vh_seg_002:009",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 62.0,
+          "end_s": 64.0,
+          "media_url": "/api/media/visual:40f43ee0b3e953ef2acc2e54",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:98136e56b73123c0c7d2822e",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 46.0,
+          "end_s": 110.0,
+          "media_url": "/api/media/visual:98136e56b73123c0c7d2822e",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:f0e756d34fc8e23ffc860cc4",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:618e3b9eea5fed64f025ac5b",
+          "node_id": "event:atomic:memory:vh_seg_001:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 8.0,
+          "end_s": 10.0,
+          "media_url": "/api/media/visual:618e3b9eea5fed64f025ac5b",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b03ef9f0626a55ca3015ca16",
+          "node_id": "event:atomic:memory:vh_seg_001:007",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 12.0,
+          "end_s": 14.0,
+          "media_url": "/api/media/visual:b03ef9f0626a55ca3015ca16",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:7b143dc9a547a0e43e056053",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:5977e37148bd318f7592436f",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 131.6,
+          "end_s": 140.0,
+          "media_url": "/api/media/visual:5977e37148bd318f7592436f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a42174973346c9e0a870748c",
+          "node_id": "event:atomic:memory:vh_seg_002:006",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 140.0,
+          "end_s": 148.4,
+          "media_url": "/api/media/visual:a42174973346c9e0a870748c",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:27492f2f6e45cbba4d70f229",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:b26827674fcb19914c109c67",
+          "node_id": "event:atomic:memory:vh_seg_001:004",
+          "roles": [
+            "source"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 6.0,
+          "end_s": 8.0,
+          "media_url": "/api/media/visual:b26827674fcb19914c109c67",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b03ef9f0626a55ca3015ca16",
+          "node_id": "event:atomic:memory:vh_seg_001:007",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 12.0,
+          "end_s": 14.0,
+          "media_url": "/api/media/visual:b03ef9f0626a55ca3015ca16",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:e26915c35df7db766930ea9d",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 0.0,
+          "end_s": 30.0,
+          "media_url": "/api/media/visual:e26915c35df7db766930ea9d",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:05e3444ad36cdaea41f2dc91",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:b69b97673004cbc3eadf14a3",
+          "node_id": "event:atomic:video_skills_l1:00179",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 102.0,
+          "end_s": 106.0,
+          "media_url": "/api/media/visual:b69b97673004cbc3eadf14a3",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:e75c3921c2e517edf07bd705",
+          "node_id": "event:atomic:video_skills_l1:00225",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 126.0,
+          "end_s": 130.0,
+          "media_url": "/api/media/visual:e75c3921c2e517edf07bd705",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:8b7b6917646b9381e40ce4ed",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:d23c2e0f24ebd419eec1251f",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 54.0,
+          "end_s": 56.0,
+          "media_url": "/api/media/visual:d23c2e0f24ebd419eec1251f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:afc4caac4ec127af6f5df22e",
+          "node_id": "event:atomic:memory:vh_seg_002:006",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 56.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:afc4caac4ec127af6f5df22e",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:8c7388f2c40fe11074bd7ec2",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:35903d22f7ad839987aac947",
+          "node_id": "event:atomic:video_skills_l1:00087",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:35903d22f7ad839987aac947",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:13deb4a22fd2863ee3fd21f7",
+          "node_id": "event:atomic:video_skills_l1:00094",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 57.0,
+          "end_s": 61.0,
+          "media_url": "/api/media/visual:13deb4a22fd2863ee3fd21f7",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:365bc100c37cdd95e3a84ae3",
+          "node_id": "event:atomic:video_skills_l1:00101",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 60.0,
+          "end_s": 64.0,
+          "media_url": "/api/media/visual:365bc100c37cdd95e3a84ae3",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:c7a8a5e5a683d69b3bd19426",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:acacf4d3894a20530a63f7d2",
+          "node_id": "event:atomic:memory:vh_seg_001:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 0.0,
+          "end_s": 2.0,
+          "media_url": "/api/media/visual:acacf4d3894a20530a63f7d2",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:8885da4ce1026d2272f1c71d",
+          "node_id": "event:atomic:memory:vh_seg_001:003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 4.0,
+          "end_s": 6.0,
+          "media_url": "/api/media/visual:8885da4ce1026d2272f1c71d",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:4529f73c545f0f31bb46e2be",
+          "node_id": "event:atomic:memory:vh_seg_002:001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 30.0,
+          "end_s": 38.0,
+          "media_url": "/api/media/visual:4529f73c545f0f31bb46e2be",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:e26915c35df7db766930ea9d",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 0.0,
+          "end_s": 30.0,
+          "media_url": "/api/media/visual:e26915c35df7db766930ea9d",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:0175d69ec6c86fbc3397a8fd",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 30.0,
+          "end_s": 71.0,
+          "media_url": "/api/media/visual:0175d69ec6c86fbc3397a8fd",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:ae2ee3aedf14452bad520417",
+          "node_id": "memory:vh_seg_003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 71.0,
+          "end_s": 103.0,
+          "media_url": "/api/media/visual:ae2ee3aedf14452bad520417",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:fe4b727322a4ebb348b75fe6",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:9982bf2dbfff8828b6f14db6",
+          "node_id": "event:atomic:memory:vh_seg_001:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 5.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:9982bf2dbfff8828b6f14db6",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:870799f335ea6da23e6bbfb4",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 5.0,
+          "end_s": 47.0,
+          "media_url": "/api/media/visual:870799f335ea6da23e6bbfb4",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:fd1968b281aeadfcf4b053cd",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 47.0,
+          "end_s": 66.0,
+          "media_url": "/api/media/visual:fd1968b281aeadfcf4b053cd",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:90c711cbf3bfcdbaf16dedf0",
+          "node_id": "memory:vh_seg_003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 66.0,
+          "end_s": 104.0,
+          "media_url": "/api/media/visual:90c711cbf3bfcdbaf16dedf0",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a59a83a2051f5b0c87f7ece9",
+          "node_id": "memory:vh_seg_004",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 105.0,
+          "end_s": 135.0,
+          "media_url": "/api/media/visual:a59a83a2051f5b0c87f7ece9",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:0627bb904e1f264d1b4d531d",
+          "node_id": "memory:vh_seg_005",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 135.0,
+          "end_s": 182.0,
+          "media_url": "/api/media/visual:0627bb904e1f264d1b4d531d",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:37b656cf93583982705e645e",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:c765a773b34f2d678cae1b31",
+          "node_id": "event:atomic:video_skills_l1:00030",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 30.0,
+          "end_s": 34.0,
+          "media_url": "/api/media/visual:c765a773b34f2d678cae1b31",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5fbd02c426acc08ea5287104",
+          "node_id": "event:atomic:video_skills_l1:00038",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 39.0,
+          "end_s": 43.0,
+          "media_url": "/api/media/visual:5fbd02c426acc08ea5287104",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b6bed2c35edf8035066168f6",
+          "node_id": "event:atomic:video_skills_l1:00046",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 48.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:b6bed2c35edf8035066168f6",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:c45e314d252a3a9b744068c2",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:d1aa34b1f0645d6fec0a9789",
+          "node_id": "event:atomic:memory:vh_seg_001:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 20.0,
+          "end_s": 24.0,
+          "media_url": "/api/media/visual:d1aa34b1f0645d6fec0a9789",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:dfd972495b732ace8e372634",
+          "node_id": "event:atomic:memory:vh_seg_001:004",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 34.0,
+          "end_s": 40.0,
+          "media_url": "/api/media/visual:dfd972495b732ace8e372634",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:8b09256d83fb1c292948d8b4",
+          "node_id": "event:atomic:memory:vh_seg_002:001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 46.0,
+          "end_s": 48.0,
+          "media_url": "/api/media/visual:8b09256d83fb1c292948d8b4",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:7bdec1307ba5d67814143135",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 48.0,
+          "end_s": 50.0,
+          "media_url": "/api/media/visual:7bdec1307ba5d67814143135",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:98136e56b73123c0c7d2822e",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 46.0,
+          "end_s": 110.0,
+          "media_url": "/api/media/visual:98136e56b73123c0c7d2822e",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:bffb444dd6e20c3974f1fa9b",
+          "node_id": "memory:vh_seg_003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 110.0,
+          "end_s": 135.0,
+          "media_url": "/api/media/visual:bffb444dd6e20c3974f1fa9b",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:89508211fbaedeb56c0c8646",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:2b6a412262b5d96ee78294eb",
+          "node_id": "event:atomic:memory:vh_seg_002:004",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 133.0,
+          "end_s": 142.0,
+          "media_url": "/api/media/visual:2b6a412262b5d96ee78294eb",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:1434cc4e39b5e81484a31967",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 142.0,
+          "end_s": 151.0,
+          "media_url": "/api/media/visual:1434cc4e39b5e81484a31967",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:676ccd7a10e41beeb8c9eb28",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:fb299160f99636ac457b4011",
+          "node_id": "event:atomic:video_skills_l1:00057",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:fb299160f99636ac457b4011",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:9ef9e1c988f2d363ad491086",
+          "node_id": "event:atomic:video_skills_l1:00058",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:9ef9e1c988f2d363ad491086",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:007868f845ad6770b6065af4",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:fe5b98605d30b72447410969",
+          "node_id": "event:atomic:memory:vh_seg_001:003",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1iHavvOahH0",
+          "start_s": 20.0,
+          "end_s": 30.0,
+          "media_url": "/api/media/visual:fe5b98605d30b72447410969",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:d80c30d06da89d6afa713cd9",
+          "node_id": "event:atomic:memory:vh_seg_001:004",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1iHavvOahH0",
+          "start_s": 30.0,
+          "end_s": 38.0,
+          "media_url": "/api/media/visual:d80c30d06da89d6afa713cd9",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:b5698c804b39badfd5cbac50",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:f8766845de9361f53642bd58",
+          "node_id": "event:atomic:video_skills_l1:00001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:f8766845de9361f53642bd58",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c8a97126c9b3a7d3add1c7fb",
+          "node_id": "memory:evidence.observation:86a2adfc64",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:c8a97126c9b3a7d3add1c7fb",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:dc2543f3edfd696b91365a19",
+          "node_id": "memory:evidence.observation:a79fdb8fd3",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:dc2543f3edfd696b91365a19",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:d3396726f416420cf3c924a2",
+          "node_id": "memory:evidence.state:0b5886ddd0",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:d3396726f416420cf3c924a2",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:424438e9cbf72ee6e6c0057d",
+          "node_id": "memory:obs:fine:clip:mKqiGQrHtW8:fine:0001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 0.0,
+          "end_s": 4.0,
+          "media_url": "/api/media/visual:424438e9cbf72ee6e6c0057d",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:78c82253e3bf53485a506731",
+          "node_id": "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 3.0,
+          "end_s": 7.0,
+          "media_url": "/api/media/visual:78c82253e3bf53485a506731",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:c6e2d4d4d1bb52844ef388ab",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:2ac06e0353ccd6bee1fd38b0",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 54.0,
+          "end_s": 56.0,
+          "media_url": "/api/media/visual:2ac06e0353ccd6bee1fd38b0",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:aea3cb5059110969b83f9223",
+          "node_id": "event:atomic:memory:vh_seg_002:006",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 56.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:aea3cb5059110969b83f9223",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:9a135cca245d6ee52cac54b1",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:de30b1b6aafad91137c653c7",
+          "node_id": "event:atomic:memory:vh_seg_001:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 10.0,
+          "end_s": 12.0,
+          "media_url": "/api/media/visual:de30b1b6aafad91137c653c7",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:9d40bfc76c9a9c41200a6d1a",
+          "node_id": "event:atomic:memory:vh_seg_001:005",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 38.0,
+          "end_s": 40.0,
+          "media_url": "/api/media/visual:9d40bfc76c9a9c41200a6d1a",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a08e5713ccd39cad5c6768d0",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 112.0,
+          "end_s": 118.0,
+          "media_url": "/api/media/visual:a08e5713ccd39cad5c6768d0",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a8295db8beff4e720cbcecd6",
+          "node_id": "event:atomic:memory:vh_seg_002:003",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 118.0,
+          "end_s": 124.0,
+          "media_url": "/api/media/visual:a8295db8beff4e720cbcecd6",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c4bc3c28ade7bb43ea6b5a12",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 5.0,
+          "end_s": 106.0,
+          "media_url": "/api/media/visual:c4bc3c28ade7bb43ea6b5a12",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:656e687d2a7d786e08d7b525",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 106.0,
+          "end_s": 172.0,
+          "media_url": "/api/media/visual:656e687d2a7d786e08d7b525",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:8d6f640002ea1943a739e824",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:5b2336a41d6d237bfad732a3",
+          "node_id": "event:atomic:video_skills_l1:00019",
+          "roles": [
+            "source"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 21.0,
+          "end_s": 25.0,
+          "media_url": "/api/media/visual:5b2336a41d6d237bfad732a3",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:bb870f7cd9c6d0705a739c42",
+          "node_id": "event:atomic:video_skills_l1:00023",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 24.0,
+          "end_s": 28.0,
+          "media_url": "/api/media/visual:bb870f7cd9c6d0705a739c42",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:43a3a5ec3b468d7102c6ec02",
+          "node_id": "memory:evidence.event:b8cc6ee186",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 21.0,
+          "end_s": 25.0,
+          "media_url": "/api/media/visual:43a3a5ec3b468d7102c6ec02",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:ae76d6e22859ebba1e3bffa5",
+          "node_id": "memory:evidence.event:fc4962e794",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 24.0,
+          "end_s": 28.0,
+          "media_url": "/api/media/visual:ae76d6e22859ebba1e3bffa5",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:f11fc7c284d0d2eda4efa560",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:c65946cd117c4aa235d77ac7",
+          "node_id": "event:atomic:memory:vh_seg_002:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 98.0,
+          "end_s": 106.4,
+          "media_url": "/api/media/visual:c65946cd117c4aa235d77ac7",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a42174973346c9e0a870748c",
+          "node_id": "event:atomic:memory:vh_seg_002:006",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 140.0,
+          "end_s": 148.4,
+          "media_url": "/api/media/visual:a42174973346c9e0a870748c",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:30c8516f54232466f6f0446b",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 98.0,
+          "end_s": 165.0,
+          "media_url": "/api/media/visual:30c8516f54232466f6f0446b",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:a85c94ae8f4ddf2ea4b6823e",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:9d40bfc76c9a9c41200a6d1a",
+          "node_id": "event:atomic:memory:vh_seg_001:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 38.0,
+          "end_s": 40.0,
+          "media_url": "/api/media/visual:9d40bfc76c9a9c41200a6d1a",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a8295db8beff4e720cbcecd6",
+          "node_id": "event:atomic:memory:vh_seg_002:003",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 118.0,
+          "end_s": 124.0,
+          "media_url": "/api/media/visual:a8295db8beff4e720cbcecd6",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:c4bc3c28ade7bb43ea6b5a12",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 5.0,
+          "end_s": 106.0,
+          "media_url": "/api/media/visual:c4bc3c28ade7bb43ea6b5a12",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:656e687d2a7d786e08d7b525",
+          "node_id": "memory:vh_seg_002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 106.0,
+          "end_s": 172.0,
+          "media_url": "/api/media/visual:656e687d2a7d786e08d7b525",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:6c5836fc15025727fb6bde40",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:a25ceb11350ee5e4b7dfd01f",
+          "node_id": "event:atomic:memory:vh_seg_001:003",
+          "roles": [
+            "source"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 9.0,
+          "end_s": 12.0,
+          "media_url": "/api/media/visual:a25ceb11350ee5e4b7dfd01f",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:377e02d34a8e8395f53ebf9c",
+          "node_id": "event:atomic:memory:vh_seg_001:004",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 12.0,
+          "end_s": 15.0,
+          "media_url": "/api/media/visual:377e02d34a8e8395f53ebf9c",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:870799f335ea6da23e6bbfb4",
+          "node_id": "memory:vh_seg_001",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "033fKtGdpPc",
+          "start_s": 5.0,
+          "end_s": 47.0,
+          "media_url": "/api/media/visual:870799f335ea6da23e6bbfb4",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:df1f995b4039a019bdf576ef",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:b69b97673004cbc3eadf14a3",
+          "node_id": "event:atomic:video_skills_l1:00179",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 102.0,
+          "end_s": 106.0,
+          "media_url": "/api/media/visual:b69b97673004cbc3eadf14a3",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:e75c3921c2e517edf07bd705",
+          "node_id": "event:atomic:video_skills_l1:00225",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 126.0,
+          "end_s": 130.0,
+          "media_url": "/api/media/visual:e75c3921c2e517edf07bd705",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:f6e98cb1aae8873e48a13190",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:fb299160f99636ac457b4011",
+          "node_id": "event:atomic:video_skills_l1:00057",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:fb299160f99636ac457b4011",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:9ef9e1c988f2d363ad491086",
+          "node_id": "event:atomic:video_skills_l1:00058",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 54.0,
+          "end_s": 58.0,
+          "media_url": "/api/media/visual:9ef9e1c988f2d363ad491086",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:55ec1c1f475d75424b22a873",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:43562f31ad682e032f02d143",
+          "node_id": "event:atomic:video_skills_l1:00013",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 6.0,
+          "end_s": 10.0,
+          "media_url": "/api/media/visual:43562f31ad682e032f02d143",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:73c1c55283906ea7ab0f5cec",
+          "node_id": "event:atomic:video_skills_l1:00021",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 12.0,
+          "end_s": 16.0,
+          "media_url": "/api/media/visual:73c1c55283906ea7ab0f5cec",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:3b4f9fd58277a6eaecc80194",
+          "node_id": "event:atomic:video_skills_l1:00081",
+          "roles": [
+            "target"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 51.0,
+          "end_s": 55.0,
+          "media_url": "/api/media/visual:3b4f9fd58277a6eaecc80194",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:adab69ab4bd9d1a19819c5a8",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:9c68cbaa8d45833881d07cc7",
+          "node_id": "event:atomic:memory:vh_seg_003:001",
+          "roles": [
+            "source"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 71.0,
+          "end_s": 78.0,
+          "media_url": "/api/media/visual:9c68cbaa8d45833881d07cc7",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:3a26bf9b0c39b43b330849ca",
+          "node_id": "event:atomic:memory:vh_seg_003:005",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "-3l2KFTj7yY",
+          "start_s": 84.0,
+          "end_s": 90.0,
+          "media_url": "/api/media/visual:3a26bf9b0c39b43b330849ca",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:2761dcddc2738da6e16476be",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:1434cc4e39b5e81484a31967",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 142.0,
+          "end_s": 151.0,
+          "media_url": "/api/media/visual:1434cc4e39b5e81484a31967",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:13f32fcaa6f28010ffad914f",
+          "node_id": "event:atomic:memory:vh_seg_002:006",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0CPoD4ZRTUQ",
+          "start_s": 151.0,
+          "end_s": 160.0,
+          "media_url": "/api/media/visual:13f32fcaa6f28010ffad914f",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:8d90a45156d5ec77a80a8cd1",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:7bdec1307ba5d67814143135",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 48.0,
+          "end_s": 50.0,
+          "media_url": "/api/media/visual:7bdec1307ba5d67814143135",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:50d9b15943b8372c131b5fb0",
+          "node_id": "event:atomic:memory:vh_seg_002:003",
+          "roles": [
+            "source"
+          ],
+          "video_id": "0-kQB8Jo80I",
+          "start_s": 50.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:50d9b15943b8372c131b5fb0",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:0a201c9e9f3a93ef6717dabd",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:f8cc387e0b553dc3c26397cd",
+          "node_id": "event:atomic:video_skills_l1:00075",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 69.0,
+          "end_s": 73.0,
+          "media_url": "/api/media/visual:f8cc387e0b553dc3c26397cd",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:36d29c744fc0a467dcfd0b4c",
+          "node_id": "event:atomic:video_skills_l1:00139",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 135.0,
+          "end_s": 139.0,
+          "media_url": "/api/media/visual:36d29c744fc0a467dcfd0b4c",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:ca80d4cc7e03a9be1dffd532",
+          "node_id": "memory:evidence.event:18e64971f3",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 135.0,
+          "end_s": 139.0,
+          "media_url": "/api/media/visual:ca80d4cc7e03a9be1dffd532",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:bd3288dfcf4a88f33acc927f",
+          "node_id": "memory:evidence.event:34542f829e",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 69.0,
+          "end_s": 73.0,
+          "media_url": "/api/media/visual:bd3288dfcf4a88f33acc927f",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:99a110715c7e47bc29296719",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:9760c2f4e6bd7c3e32cda12b",
+          "node_id": "event:atomic:video_skills_l1:00147",
+          "roles": [
+            "source"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 84.0,
+          "end_s": 88.0,
+          "media_url": "/api/media/visual:9760c2f4e6bd7c3e32cda12b",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:a0ed789bd27e025d18df0d43",
+          "node_id": "event:atomic:video_skills_l1:00159",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "mKqiGQrHtW8",
+          "start_s": 90.0,
+          "end_s": 94.0,
+          "media_url": "/api/media/visual:a0ed789bd27e025d18df0d43",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:34a3c80073ce4f7fd827409c",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:5b2336a41d6d237bfad732a3",
+          "node_id": "event:atomic:video_skills_l1:00019",
+          "roles": [
+            "source"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 21.0,
+          "end_s": 25.0,
+          "media_url": "/api/media/visual:5b2336a41d6d237bfad732a3",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:bb870f7cd9c6d0705a739c42",
+          "node_id": "event:atomic:video_skills_l1:00023",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 24.0,
+          "end_s": 28.0,
+          "media_url": "/api/media/visual:bb870f7cd9c6d0705a739c42",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:43a3a5ec3b468d7102c6ec02",
+          "node_id": "memory:evidence.event:b8cc6ee186",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 21.0,
+          "end_s": 25.0,
+          "media_url": "/api/media/visual:43a3a5ec3b468d7102c6ec02",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:ae76d6e22859ebba1e3bffa5",
+          "node_id": "memory:evidence.event:fc4962e794",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 24.0,
+          "end_s": 28.0,
+          "media_url": "/api/media/visual:ae76d6e22859ebba1e3bffa5",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:ed28b418f8d705f15714b52d",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:83ae1957ddb94a2054595a13",
+          "node_id": "event:atomic:memory:vh_seg_002:002",
+          "roles": [
+            "target",
+            "observation"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 106.4,
+          "end_s": 114.8,
+          "media_url": "/api/media/visual:83ae1957ddb94a2054595a13",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5977e37148bd318f7592436f",
+          "node_id": "event:atomic:memory:vh_seg_002:005",
+          "roles": [
+            "source"
+          ],
+          "video_id": "1IzpG2kJPdg",
+          "start_s": 131.6,
+          "end_s": 140.0,
+          "media_url": "/api/media/visual:5977e37148bd318f7592436f",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    },
+    {
+      "item_id": "transition-review:a5e74074d4d940e16cfb8f53",
+      "coverage": "full",
+      "visual_evidence": [
+        {
+          "asset_id": "visual:c765a773b34f2d678cae1b31",
+          "node_id": "event:atomic:video_skills_l1:00030",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 30.0,
+          "end_s": 34.0,
+          "media_url": "/api/media/visual:c765a773b34f2d678cae1b31",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:5fbd02c426acc08ea5287104",
+          "node_id": "event:atomic:video_skills_l1:00038",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 39.0,
+          "end_s": 43.0,
+          "media_url": "/api/media/visual:5fbd02c426acc08ea5287104",
+          "availability": "available",
+          "missing_reason": null
+        },
+        {
+          "asset_id": "visual:b6bed2c35edf8035066168f6",
+          "node_id": "event:atomic:video_skills_l1:00046",
+          "roles": [
+            "target"
+          ],
+          "video_id": "TNYeYwYiAag",
+          "start_s": 48.0,
+          "end_s": 52.0,
+          "media_url": "/api/media/visual:b6bed2c35edf8035066168f6",
+          "availability": "available",
+          "missing_reason": null
+        }
+      ]
+    }
+  ]
+}

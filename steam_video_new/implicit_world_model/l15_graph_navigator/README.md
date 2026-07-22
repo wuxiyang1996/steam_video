@@ -11,6 +11,18 @@ atomic events and relations, timestamps, provenance, acquired status, and Qwen
 embedding references. The research contribution is action-conditioned
 future-belief prediction and planning that depends on those predictions.
 
+The current main-method contract further separates node correlation from
+reasoning preference. L1.5 constructs question-independent correlations between
+L1 node IDs and thereby defines navigable adjacency. A legal-action compiler
+exposes cursor-incident graph hops; the IWM predicts the categorical belief
+effect of those hops; the planner chooses among them. Correlation strength may
+be a measured embedding/affinity feature, but it is neither a planner reward nor
+an action preference and cannot directly select the next hop. The IWM/planner
+does not invent or verify graph edges. Strict identity/state/causal facts remain
+an optional, separately admitted relation layer. See
+[`full_graph_iwm/README.md`](../full_graph_iwm/README.md) for the canonical
+current implementation boundary.
+
 The default target loop is:
 
 ```text
@@ -1135,3 +1147,32 @@ Before GRPO, it still needs independent human locking, Qwen on-policy sibling
 rollouts from identical checkpoints, real executed corrections, and blinded
 group-level ordinal preferences. No GRPO or GPT-OSS/Qwen training should begin
 from the current model-provisional packet alone.
+
+## 18. CG-Bench ground-truth-anchored data
+
+CG-Bench is now the primary source for scaling real-video navigation data. The
+independent builder lives in `../cgbench_grounded_navigation/`; the first pilot
+is stored in `../datasets/cgbench_grounded_navigation_pilot_v1/`.
+
+The builder uses manual question-linked `clue_intervals` to supervise evidence
+coverage and ordinal trajectory preference. It does not convert QA answers or
+explanations into invented identity, state-transition, or causal edges. Correct
+answers remain in a hidden terminal-target key; candidate action IDs and
+left/right trajectory order do not reveal clue identity. Every negative path
+uses the same video, read count, and per-read duration as its positive sibling.
+
+This source supports the graph-free IWM training formulation directly:
+
+```text
+question + acquired clue subset
+  -> choose a read_video_interval action
+  -> execute a real video read
+  -> predict categorical observation / clue-coverage delta
+  -> compare complete candidate trajectories ordinally
+  -> execute the preferred first read and replan
+```
+
+The pilot remains unverified until Qwen-VL produces grounded observation
+descriptors and a video-disjoint audit confirms that matched non-clue windows do
+not contain alternate valid evidence. Validation and test videos must never be
+used for post-training.

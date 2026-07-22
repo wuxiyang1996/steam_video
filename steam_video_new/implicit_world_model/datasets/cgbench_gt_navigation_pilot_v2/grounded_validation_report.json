@@ -1,0 +1,31 @@
+{
+  "schema_version": "steam-cgbench-grounded-artifact-validation/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "status": "fail",
+  "errors": [
+    "grounded transition count is 670, expected 672",
+    "grounding failure count is 2",
+    "available embedding count is 670, expected 672",
+    "embedding manifest shape mismatch",
+    "embedding matrix shape is [670, 2048], expected [672, 2048]",
+    "embedding row indices are not a complete contiguous range"
+  ],
+  "case_count": 256,
+  "split_case_counts": {
+    "test": 27,
+    "train": 207,
+    "validation": 22
+  },
+  "transition_count": 672,
+  "grounded_transition_count": 670,
+  "failed_transition_count": 2,
+  "available_embedding_count": 670,
+  "embedding_model": "Qwen/Qwen3-VL-Embedding-2B",
+  "embedding_shape": [
+    670,
+    2048
+  ],
+  "embedding_checksum": "87a4c4587f23635e1fc1b2d7f48f952f75df688e9680cc7d14b50634b32cbf61",
+  "human_review_required": false,
+  "training_performed": false
+}

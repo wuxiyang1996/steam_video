@@ -15,9 +15,9 @@ a smaller verified subset:
 
 ```text
 streaming video
-  → bounded memory nodes
-  → temporal + predictive-dependency graph
-  → optional verified causal witnesses
+  → bounded grounded semantic L1 nodes + temporal backbone
+  → soft embedding-derived L1.5 navigation correlations
+  → optional separately verified identity/state/causal relations
   → question-conditioned belief
   → evidence action
   → real memory read
@@ -617,9 +617,56 @@ provider is pluggable and the OpenCV representation is an explicit smoke
 fallback. `consolidation.materialize_bounded_memory` executes a policy decision,
 stores merge lineage, invalidates merged embeddings for refresh, rewires
 surviving relations, removes orphans, and rebuilds the retained temporal chain.
-`correlation_overlay.py` then evaluates every retained-node pair through a
-categorical contract and stores `candidate|verified|rejected|inconclusive`
-L1.5 edges without treating an embedding similarity as proof.
+`soft_correlation.py` scores every non-temporal retained-node pair with the
+Qwen embedding sidecar, collapses near-identical semantics into equivalence
+classes, represents recurrence as a time-ordered chain instead of a clique,
+and applies class-level standardized sparsemax. Symmetric embedding evidence
+creates bidirectional semantic hops rather than fabricating one-way facts. A
+frozen global admission policy may apply calibrated similarity/affinity gates,
+but never per-node Top-K. Every pair receives a separate audit row containing
+cosine, temporal gap, endpoint type/modality, semantic-class membership,
+admission outcome, and rejection reason. These values are navigation features,
+not probabilities, planner rewards, or verified facts. The compiler fingerprints
+source and retained L1 and raises if L1.5 construction mutates source L1. The legacy
+`correlation_overlay.py` categorical contract is retained only for optional
+typed fact-relation review; its unverified candidates do not become main-path
+navigation edges.
+
+The CG-Bench `audit-correlations` command compiles the graph and pair audit
+without an LLM, then joins hidden clue intervals only after graph freeze. It
+reports direct clue-bridge coverage separately from shortest-path coverage,
+because a sparse graph should not be penalized for replacing a direct clique
+edge with a short recurrence path. Unmatched pairs remain unlabeled; precision
+is reported as unavailable until trusted negative controls exist.
+
+`multichannel_correlation.py` adds a second, complete pair audit without
+changing the runtime topology. It keeps semantic affinity separate from
+grounded categorical descriptors for cross-window entity correspondence,
+same-attribute change candidates, and explicit contrast references. These
+descriptors are emitted only from structured L1 fields: local
+`candidate_visual_signature` IDs are not treated as cross-window identity,
+node-local `state_change` is not copied onto every incident pair, and text
+keywords are not used to manufacture contrast. Descriptor channels do not
+admit legal hops, verify identity/state, claim causality, or express planner
+preference. The compiler writes this audit as
+`l1_l15_multichannel_pair_audit.json` beside the existing semantic audit.
+
+A separate optional runtime artifact,
+`l1_l15_caption_candidates.json`, may add sparse scoreless navigation hops from
+one question-independent model pass over frozen structured L1 descriptors. It
+is deliberately not the multichannel audit and not a fact verifier. Each
+proposal must use an allowed categorical channel and quote exact grounding
+text from both endpoint descriptors; temporal/semantic duplicates are removed.
+These hops expand legal reachability but do not assert causality, same identity,
+state-transition truth, calibrated probability, confidence, relevance to a
+future question, or planner preference. Their endpoints are included in the
+closed-loop graph fingerprint.
+
+There is intentionally no separately trained L1.5 edge selector. CG-Bench clue
+chains and reviewed executed transitions supervise the action-conditioned IWM:
+L1.5 exposes a static evidence/navigation substrate, while the IWM learns how
+a legal hop may change belief for the current question. Training another
+question-independent bridge model would duplicate the central IWM contribution.
 
 ## 2. Core Distinctions
 
@@ -636,14 +683,19 @@ m_i = (h_i, τ_i, p_i)
 
 A memory node is what the system actually stores and reads. It is not necessarily identical to one event: one node may cover multiple events, and multiple nodes may describe the same event.
 
-### 2.2 Memory nodes are not event nodes
+### 2.2 Main navigation L1.5 is correlation, not a second node store
 
 ```text
-L1 memory node = grounded observation container
-L1.5 event node = atomic, revisable hypothesis grounded in one or more L1 nodes
+L1 = grounded semantic evidence nodes + deterministic temporal backbone
+L1.5 = soft nonlocal navigation correlation plus non-admitting grounded pair
+       descriptors over the same L1 node IDs
+optional strict overlay = revisable atomic/identity/state/causal hypotheses
 ```
 
-The earlier `1 memory node ≈ 1 event node` prototype assumption is retired because Video-Holmes segments contain multiple actions and state changes. The overlay must allow:
+The main IWM path does not duplicate L1 nodes into an event graph. Legacy
+Video-Holmes relation experiments may still construct atomic event hypotheses
+for strict fact verification and graph baselines. That optional overlay must
+allow:
 
 - one memory node to split into multiple event hypotheses;
 - multiple memory nodes to map to the same event;
@@ -1040,19 +1092,32 @@ python -m memory_graph.validate_vrbench \
 
 Use `--phase locked` for the fixed 100-example run. VRBench evaluates timestamp coverage, temporal order, and interior bridge recall only; Video-Holmes independent edge audits remain responsible for candidate-causal precision.
 
-## 11. First Implementation Phase
+## 11. Current implementation order
 
-1. Audit video-only L1 observations for factuality, coverage, atomicity, provenance, and leakage.
-2. Split coarse L1 observations into atomic L1.5 event hypotheses while preserving L1 references.
-3. Build a deterministic temporal skeleton from explicit time spans.
-4. Evaluate sparse candidate-pair recall separately from relation precision.
-5. Predict constrained `same_entity`, `state_transition`, `explains`, `enables`, and `contradicts` hypotheses.
-6. Reject edges that fail temporal, entity, state, grounding, or minimal-support checks.
-7. Calibrate relation scores against independent human labels.
-8. Implement question-conditioned belief and real graph-read updates.
-9. Record sibling action trajectories from the same checkpoint.
-10. Train transition, observation, and delayed-utility heads.
-11. Test whether one- or two-step MPC outperforms greedy retrieval and direct action ranking.
+1. Audit question-independent video L1 observations for factuality, coverage,
+   temporal grounding, provenance, and leakage.
+2. Treat retained L1 observations as grounded semantic nodes and rebuild their
+   deterministic temporal backbone after consolidation.
+3. Attach checksum-validated Qwen embedding sidecars; coalesce only adjacent
+   near-duplicate semantics.
+4. Build soft nonlocal L1.5 navigation correlations over the same node IDs,
+   with recurrence chains and class-level standardized sparsemax rather than a
+   fixed Top-K or dense pair clique.
+5. Compile cursor-local temporal/correlation actions and expose the complete
+   retained root set without a hand-written winner score.
+6. Optionally attach the frozen, question-independent, grounded categorical
+   candidate-hop overlay; keep it scoreless and distinct from verified facts.
+7. Use the IWM to predict categorical observation/belief deltas and use only
+   ordinal pairwise or setwise categorical trajectory preference in the planner.
+8. Execute one real read, discard imagined evidence, correct belief, and
+   replan; record the executed L2 trace.
+9. Keep typed `same_entity`, `state_transition`, `explains`, `enables`, and
+   `contradicts` proposals in an optional strict overlay; admit them only after
+   their independent evidence gates.
+10. Evaluate answer accuracy, clue coverage, read efficiency, action divergence,
+   abstention, and latency separately under matched budgets.
+11. Keep GTSAM as an optional belief-correction backup/baseline, never as the
+    default action ranker.
 
 ## 12. Go / No-Go Criteria
 
@@ -1060,7 +1125,7 @@ Go:
 
 - the L1 reliability gates in [`L1_RELIABILITY.md`](L1_RELIABILITY.md) pass on an independently audited video-only set;
 - manually audited candidate-relation precision is at least 70%;
-- at least 20% of valid questions require a bridge or delayed-utility hop;
+- at least 20% of valid questions require a bridge or delayed-belief-effect hop;
 - under the same graph-read budget, compared with greedy and direct-ranking baselines:
   - supporting-event Recall@K improves by at least 10 absolute points, or
   - answer accuracy improves by at least 5 absolute points;

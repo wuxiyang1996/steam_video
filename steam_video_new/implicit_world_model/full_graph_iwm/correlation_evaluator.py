@@ -1,4 +1,4 @@
-"""GPT-OSS categorical relation proposal over every retained-node pair."""
+"""Optional GPT-OSS strict fact-relation proposals for offline review."""
 
 from __future__ import annotations
 
@@ -16,12 +16,12 @@ from .gpt_oss import CategoricalJSONClient, _reject_numeric_output
 
 
 class GPTOSSCategoricalCorrelationEvaluator:
-    """Propose typed edges without producing confidence or admitting them.
+    """Propose typed fact relations without producing confidence or admission.
 
     Every input pair is evaluated.  Batching only controls request size; it is
-    not candidate retrieval and cannot drop a pair.  Model-proposed relations
-    remain candidate/rejected/inconclusive until an external evidence gate
-    supplies a verified seed edge.
+    not L1.5 navigation construction and cannot drop a pair. Model-proposed
+    relations remain candidate/rejected/inconclusive until an external evidence
+    gate supplies a verified seed edge.
     """
 
     def __init__(self, client: CategoricalJSONClient, *, batch_size: int = 32) -> None:
@@ -30,7 +30,7 @@ class GPTOSSCategoricalCorrelationEvaluator:
         self.client = client
         self.batch_size = batch_size
         self.evaluator_name = (
-            f"{getattr(client, 'model', 'gpt-oss-120b')}:categorical-l1.5"
+            f"{getattr(client, 'model', 'gpt-oss-120b')}:strict-fact-relation-proposal"
         )
 
     def evaluate(
@@ -44,7 +44,8 @@ class GPTOSSCategoricalCorrelationEvaluator:
             result = self.client.complete_json(
                 task=(
                     "For every question-independent retained-node pair, propose zero or "
-                    "more categorical navigation correlations. Do not infer the answer."
+                    "more typed fact relations for external review. These are not "
+                    "navigation edges. Do not infer the answer."
                 ),
                 payload={
                     "pairs": [

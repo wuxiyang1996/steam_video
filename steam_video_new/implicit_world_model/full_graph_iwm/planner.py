@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 import hashlib
 from itertools import combinations
+from typing import Protocol, Sequence
 
 from .action_compiler import GraphActionCompiler
 from .contracts import (
@@ -22,6 +23,14 @@ from .contracts import (
     TrajectoryPair,
     TrajectoryPrediction,
 )
+
+
+class SetwisePreferenceModel(Protocol):
+    def select(
+        self,
+        trajectories: Sequence[TrajectoryPrediction],
+        belief: CursorBeliefState,
+    ) -> tuple[str, ...]: ...
 from .model_input import build_iwm_graph_input
 
 
@@ -35,6 +44,9 @@ class FullGraphIWMPlanner:
         *,
         horizon: int = 2,
         action_compiler: GraphActionCompiler | None = None,
+        max_trajectory_pairs: int | None = None,
+        setwise_preference_model: SetwisePreferenceModel | None = None,
+        execute_stable_ties: bool = False,
     ) -> None:
         if horizon not in {1, 2}:
             raise ValueError("full-graph planner supports horizon one or two")
@@ -42,6 +54,11 @@ class FullGraphIWMPlanner:
         self.preference_model = preference_model
         self.horizon = horizon
         self.action_compiler = action_compiler or GraphActionCompiler()
+        if max_trajectory_pairs is not None and max_trajectory_pairs < 1:
+            raise ValueError("max_trajectory_pairs must be positive when supplied")
+        self.max_trajectory_pairs = max_trajectory_pairs
+        self.setwise_preference_model = setwise_preference_model
+        self.execute_stable_ties = execute_stable_ties
 
     def plan(
         self,
@@ -91,6 +108,67 @@ class FullGraphIWMPlanner:
         if not trajectories:
             raise RuntimeError("full-graph action compiler produced no trajectory")
 
+        if self.setwise_preference_model is not None:
+            preferred = self.setwise_preference_model.select(trajectories, belief)
+            preferred_set = set(preferred)
+            known = {trajectory.trajectory_id for trajectory in trajectories}
+            if not preferred_set <= known or len(preferred) != len(preferred_set):
+                raise ValueError("setwise preference returned invalid trajectory IDs")
+            first_hops = {
+                trajectory.first_action.action_id: trajectory.first_action
+                for trajectory in trajectories
+                if trajectory.trajectory_id in preferred_set
+            }
+            if len(first_hops) == 1:
+                selected = next(iter(first_hops.values()))
+                status = "setwise_selected_unique_preferred_first_hop"
+            elif first_hops and self.execute_stable_ties:
+                ordered_preferred = [
+                    action for action in first_actions if action.action_id in first_hops
+                ]
+                selected = next(
+                    (action for action in ordered_preferred if action.reads_evidence),
+                    ordered_preferred[0],
+                )
+                status = "setwise_selected_stable_tie_break"
+            else:
+                selected = next(
+                    action for action in first_actions if action.kind is ActionKind.ABSTAIN
+                )
+                status = (
+                    "setwise_abstain_incomparable"
+                    if not first_hops
+                    else "setwise_abstain_tied_first_hops"
+                )
+            return FullGraphPlanDecision(
+                selected_action=selected,
+                planning_status=status,
+                trajectories=tuple(trajectories),
+                preferences=(),
+                undominated_trajectory_ids=preferred,
+                legal_action_count=len(first_actions),
+                top_k_applied=False,
+            )
+
+        pair_count = len(trajectories) * (len(trajectories) - 1) // 2
+        if (
+            self.max_trajectory_pairs is not None
+            and pair_count > self.max_trajectory_pairs
+        ):
+            selected = next(
+                action for action in first_actions if action.kind is ActionKind.ABSTAIN
+            )
+            return FullGraphPlanDecision(
+                selected_action=selected,
+                planning_status="abstain_exhaustive_comparison_budget_exceeded",
+                trajectories=tuple(trajectories),
+                preferences=(),
+                undominated_trajectory_ids=tuple(
+                    trajectory.trajectory_id for trajectory in trajectories
+                ),
+                legal_action_count=len(first_actions),
+                top_k_applied=False,
+            )
         pairs = tuple(
             TrajectoryPair(left, right) for left, right in combinations(trajectories, 2)
         )

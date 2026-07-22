@@ -1516,6 +1516,47 @@ def test_visual_review_bundle_binds_video_without_public_path_or_outcome_leak(
     assert {row["video_path"] for row in private["assets"]} == {str(video_path)}
 
 
+def test_visual_review_bundle_reports_truncated_and_out_of_range_windows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from steam_video_new.implicit_world_model.l15_graph_navigator import visual_review
+
+    overlay = _overlay()
+    overlay_path = tmp_path / "overlay.json"
+    overlay_path.write_text(json.dumps(overlay.to_dict()), encoding="utf-8")
+    locked_cases = lock_navigation_case_set(
+        _navigation_case_set(overlay_path, overlay),
+        annotation_status="human_locked",
+        annotator="independent-reviewer",
+    )
+    dataset = build_executed_transition_dataset(
+        locked_cases,
+        case_root=tmp_path,
+        dataset_id="transitions:duration-check",
+        executor_factory=lambda: VideoSkillsL2Adapter(use_video_skills_runtime=False),
+    )
+    packet, key = build_transition_review_packet(
+        dataset, locked_cases, packet_id="transition-review:duration-check",
+        native_controls_per_action=1, consistency_duplicates=1,
+    )
+    video_root = tmp_path / "videos"
+    video_root.mkdir()
+    (video_root / "video:preference.mp4").write_bytes(b"container")
+    monkeypatch.setattr(visual_review, "_probe_video_duration", lambda _: 1.5)
+
+    public, private, report = build_visual_review_bundle(packet, key, video_root=video_root)
+
+    availabilities = {
+        asset["availability"]
+        for item in public["items"]
+        for asset in item["visual_evidence"]
+    }
+    assert "partial" in availabilities or "missing" in availabilities
+    assert report["fully_covered_item_count"] < len(packet["items"])
+    assert report["partially_available_node_count"] + report["missing_node_count"] > 0
+    assert validate_visual_review_bundle(packet, public, private) == []
+
+
 def test_human_review_media_range_parser() -> None:
     from steam_video_new.implicit_world_model.l15_graph_navigator.human_review_server import (
         _parse_range_header,

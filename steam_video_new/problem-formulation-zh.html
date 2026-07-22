@@ -10,7 +10,7 @@
 <header>
   <h1>基于真实视频证据记忆的世界模型引导多跳推理</h1>
   <p class="subtitle">预测下一跳推理会如何改变未来 belief，执行一次真实证据读取，修正并重新规划。</p>
-  <p class="meta">当前问题定义 · 2026-07-21 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a></p>
+  <p class="meta">当前问题定义 · 2026-07-22 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a></p>
 </header>
 
 <section class="card thesis">
@@ -44,12 +44,12 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     <thead><tr><th>层级</th><th>职责</th><th>研究定位</th></tr></thead>
     <tbody>
       <tr><td>L1</td><td>真实 visual/text observations、时间戳、provenance、embedding</td><td>基础设施</td></tr>
-      <tr><td>L1.5</td><td>event 与候选 temporal、identity、state、dependency、bridge、contradiction relation</td><td>证据寻址和候选生成</td></tr>
+      <tr><td>L1.5</td><td>L1 node IDs 之间 question-independent 的 soft navigation correlation；已验证 typed relations 单独保存</td><td>导航拓扑和候选生成</td></tr>
       <tr><td>Latent belief</td><td>问题条件下的 competing interpretations、missing links 和 answerability</td><td>主方法状态</td></tr>
       <tr><td>L2</td><td>已执行 action、真实 observation、realized delta 和决策审计</td><td>轨迹记录，不是 world model</td></tr>
     </tbody>
   </table>
-  <p>L1.5 typed relation 在通过相应 evidence gate 前只是 candidate。Identity、state 或 candidate-causal edge 不能因为已经写入图就被当成事实。</p>
+  <p>Identity、state 和 candidate-causal relation 属于可选 strict layer，在通过相应 evidence gate 前只是 candidate。它们不是通用 L1.5 correlation overlay 的定义，也不能因为被提出就当成事实。</p>
   <h3>2.1 L1 存储协议</h3>
   <p>L1 是 question-independent、兼容 Video_Skills 的 <code>ClueMemoryGraph</code>。每个 node 存一条局部、有时间范围的 observation，而不是 reasoning conclusion。</p>
   <table>
@@ -63,22 +63,26 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
       <tr><td><code>dialogue_span</code>/OCR</td><td>带真实 modality 的 time-aligned text；字幕不能冒充直接 audio observation</td></tr>
     </tbody>
   </table>
-  <p>可靠 composition edges 包括 <code>temporal_next</code>、<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code> 和 <code>located_in</code>。Native <code>same_entity</code>、<code>same_object</code>、<code>reappears</code>、<code>before_after</code>、<code>state_change</code>、<code>supports_observation</code>、<code>contrasts_observation</code>、<code>causal_hint</code> 和 <code>social_cue</code> 保留 provenance，但只有通过各自 verifier 后才能提升。</p>
+  <p>L1 的主导航结构是 grounded semantic nodes 上确定性的 <code>temporal_next/before/overlaps/during</code> backbone。<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code>、<code>located_in</code> 等 composition links 只保留为 provenance/audit structure。Native <code>same_entity</code>、<code>state_change</code>、<code>causal_hint</code> 属于可选 strict-relation 路径，未通过各自 verifier 绝不成为 navigation fact。</p>
   <h3>2.2 L1.5 correlation overlay</h3>
-  <p>L1.5 复用同一批 L1 node IDs，并增加 question-independent navigation edges：semantic/entity recurrence、state continuity 或 candidate transition、transition support、response、missing bridge、contradiction，以及稀疏 verified <code>explains/enables</code> witness。每条 edge 记录 source/destination、relation type、<code>candidate|verified|rejected|inconclusive</code> status、evidence refs、candidate source、alignment、verifier result 和 provenance。Embedding similarity 只提出 pair，不能证明 relation。</p>
+  <p>L1.5 复用同一批 L1 node IDs，使用 <code>Qwen/Qwen3-VL-Embedding-2B</code> 生成 question-independent soft nonlocal navigation correlations。所有非 temporal pairs 都会被打分；相邻近重复语义先合并，剩余近相同 occurrences 用时间 recurrence chain 连接而不是形成 clique，再在 semantic equivalence classes 之间用 standardized sparsemax 产生 directional affinity，不使用固定 Top-K。Similarity/affinity 不是 probability、confidence、identity、state transition、support 或 causality；独立验证过的 categorical fact relations 单独保存。</p>
+  <h3>2.3 Correlation 不是 action preference</h3>
+  <div class="equation">L1.5 correlation：确定有支持的 node-to-node 可导航邻接
+→ legal-action compiler：暴露可执行的 cursor-incident hops
+→ IWM：预测每一跳的 categorical observation 和 belief effect
+→ planner：根据这些预测选择下一跳</div>
+  <p>这条边界是强制的。Correlation 负责构建 question-independent graph topology，不负责针对问题选出 winner。IWM/planner 可以消费固定 correlation edges，但不能在 action selection 时创建、验证或重分类这些 edges。来自测量的 embedding similarity、directional affinity、calibration 和 provenance 可以是数值 graph features。“模型不输出数字”的规则限制的是用于 planning 的虚构 reward、utility、Q-value、probability 或 confidence，不是这些可测量的建图特征。Edge affinity 绝不能直接排序并决定获胜 action。</p>
   <p>L1/L1.5 永不保存 correct answer、hidden clue identity、question-conditioned belief、IWM imagination、predicted belief delta、planner trajectory、reward/utility/Q-value、GTSAM posterior 或 final claim。这些分别属于 hidden evaluation、latent belief 或 executed L2 trace。</p>
 </section>
 
 <section class="card">
   <h2>3. Reasoning actions</h2>
   <p>Action 表示 reasoning/evidence query，不是机器人在物理世界中的动作：</p>
-  <div class="equation">A = {semantic, temporal_before, temporal_after, same_entity,
-     state_check, candidate_cause, effect, bridge,
-     counterevidence, verify, stop_or_abstain}</div>
+  <div class="equation">A = {start_at, temporal_before, temporal_after,
+     follow_soft_correlation, backtrack, stop, answer, abstain}</div>
   <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回，不能把全部 frontier sources 与全部 targets 做笛卡尔积展开。</p>
   <div class="equation">A_t = outgoing_temporal(current)
-    ∪ outgoing_correlation(current)
-    ∪ semantic_probe(current, 每个可见 retained node)
+    ∪ positive_direction_soft_correlation(current)
     ∪ backtrack(acquired frontier history)
     ∪ {stop, answer, abstain}</div>
   <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。由于 L1 容量固定，Full-IWM arm 不使用 embedding Top-K；Top-K 只作为显式 retrieval baseline。</p>
@@ -189,13 +193,14 @@ baseline/ablation：gtsam_always</div>
     <thead><tr><th>部分</th><th>截至 2026-07-21 的状态</th></tr></thead>
     <tbody>
       <tr><td>L1 retained memory</td><td>已实现可插入 learned representation 的 surprise windows，以及真正 materialized fixed-capacity consolidation、lineage、embedding refresh invalidation、edge rewiring 和 temporal-chain rebuild</td></tr>
-      <tr><td>L1.5 correlations</td><td>已实现全部 retained pairs 进入 categorical evaluator；edge 保留 candidate/verified/rejected/inconclusive，embedding similarity 不能作为 admission proof</td></tr>
-      <tr><td>Full-graph IWM/planner</td><td>已在 <code>full_graph_iwm</code> 实现 virtual root、单一 active cursor、全部合法 retained-node actions、无 Top-K、无泄漏 horizon-1/2 rollout、categorical partial order 和显式 abstention</td></tr>
+      <tr><td>L1.5 correlations</td><td>已实现 Qwen embedding soft navigation correlation、semantic duplicate coalescing、recurrence chain 代替 clique、class-level standardized sparsemax、directional affinity，以及独立的可选 verified fact-relation layer</td></tr>
+      <tr><td>Full-graph IWM/planner</td><td>已在 <code>full_graph_iwm</code> 实现 virtual root、单一 active cursor、cursor-local temporal/correlation hops、不用 Top-K 选 winner、无泄漏 horizon-1/2 rollout、匿名 consequence preference、分批但不采样的完整 pair comparison、资源超限显式 abstention，以及真实读取后重新规划</td></tr>
       <tr><td>Legacy IWM/planner workflows</td><td>现有 bounded-context navigator 继续作为 data/review/baseline 路径，不会被静默当作新主方法</td></tr>
       <tr><td>GPT-OSS-120B</td><td>已实现 strict categorical adapter；仅 inference/data gathering；numeric output 会被拒绝</td></tr>
       <tr><td>GTSAM</td><td>已实现 correction pilot 和 optional backup mode；不是默认研究方法</td></tr>
-      <tr><td>CG-Bench v2</td><td>256 cases、205 videos、672 条人工 clue transitions；完整 Qwen grounding/embedding validation 正在运行</td></tr>
-      <tr><td>真实 L1/L1.5 candidates</td><td>Question-independent 12-video、120 秒 prefix smoke 将在数据验证后运行</td></tr>
+      <tr><td>CG-Bench v2</td><td>256 cases、205 videos、672 条人工 clue transitions；当前 Qwen grounding/embedding validation 为 670/672，剩余 2 条失败</td></tr>
+      <tr><td>真实 L1/L1.5 candidates</td><td>8 个 question-independent 120 秒 smoke graphs 与 Qwen embedding sidecars 已存在。修复后的 builder 保留 15–64 nodes，生成 22–133 条 soft edges；原来的 dense climbing case 已降到 15 nodes/22 edges。仍需重新运行 matched pilot。</td></tr>
+      <tr><td>Matched closed loop</td><td>已实现 full IWM、no-WM、prediction shuffle、frozen WM、immediate-only 与 oracle ceiling；hidden clue 只做执行后评分，不回灌 planner belief</td></tr>
       <tr><td>Learned IWM result</td><td>尚未训练，没有正式性能结论</td></tr>
       <tr><td>Production readiness</td><td>尚未达到</td></tr>
     </tbody>
@@ -206,13 +211,13 @@ baseline/ablation：gtsam_always</div>
   <span class="label">近期门禁</span>
   <h2>13. 下一步</h2>
   <ol>
-    <li>完成并验证全部 672 条 grounded CG-Bench reads 和 embedding sidecars；</li>
-    <li>运行冻结的、question-independent 12-video L1/L1.5 smoke；</li>
-    <li>按 split 和 subtitle stratum 报告 native candidate recall 与 embedding Recall@4/8/16/32；</li>
-    <li>检查 empty graph、grounding failure、temporal miss 和超出 smoke horizon 的 clue；</li>
-    <li>Candidate recall 足够才扩大 graph construction，否则先修 candidate generation，再测试 planner。</li>
+    <li>在修复后的 soft-correlation graph fingerprint 上重跑 capacity=64 的 8-video compile gate；</li>
+    <li>检查 retained clue coverage、embedding checksum、correlation density/degree、hidden leakage 和 legal-action coverage；</li>
+    <li>运行 matched GPT-OSS horizon-one IWM、no-WM、shuffle、frozen、immediate-only 和 oracle arms；</li>
+    <li>分别报告 coverage、read efficiency、action divergence、abstention、delayed success 和 latency，不汇总为单一分数；</li>
+    <li>然后再构造固定 delayed two-hop subset，进行资源可承受的 exhaustive horizon-two 实验。</li>
   </ol>
-  <p>当前科学瓶颈是候选证据是否可获得。如果 L1.5 根本没有暴露所需 evidence，就无法证明 planner 是否具备 world-model-guided reasoning 能力。</p>
+  <p>修复后的图已经通过 structural gate；下一科学瓶颈是 GPT-OSS prediction 能否在 matched budget 下产生依赖 world model 的 action divergence，并改善真实 evidence acquisition。</p>
 </section>
 
 <footer class="small">实现细节见 <a href="implicit_world_model/full_graph_iwm/README.md">full_graph_iwm</a>、<a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>、<a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。</footer>

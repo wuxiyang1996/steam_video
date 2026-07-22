@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Mapping
 
 from .causal_witness import witness_from_provenance
 from .types import MemoryNode, RelationBelief
@@ -54,6 +54,7 @@ def plan_bounded_memory(
     capacity: int,
     semantic_relevance: dict[str, float] | None = None,
     redundancy: dict[str, float] | None = None,
+    pairwise_redundancy: Mapping[tuple[str, str], float] | None = None,
     weights: MemoryUtilityWeights = MemoryUtilityWeights(),
     merge_redundancy_threshold: float = 0.8,
 ) -> MemoryPolicyDecision:
@@ -69,6 +70,7 @@ def plan_bounded_memory(
     node_by_id = {node.node_id: node for node in nodes}
     semantic_relevance = semantic_relevance or {}
     redundancy = redundancy or {}
+    pairwise_redundancy = pairwise_redundancy or {}
     witness_sets = _protected_witness_sets(relations, known=set(node_by_id))
     protected = {node_id for group in witness_sets for node_id in group}
     if len(protected) > capacity:
@@ -108,11 +110,10 @@ def plan_bounded_memory(
         nodes,
         protected=protected,
         redundancy=redundancy,
+        pairwise_redundancy=pairwise_redundancy,
         threshold=merge_redundancy_threshold,
     )
-    merged_members = {
-        node_id for group in candidate_merge_groups for node_id in group
-    }
+    merged_members = {node_id for group in candidate_merge_groups for node_id in group}
     units = [*candidate_merge_groups]
     units.extend(
         (node.node_id,) for node in nodes if node.node_id not in merged_members
@@ -144,6 +145,7 @@ def plan_bounded_memory(
             "weights": asdict(weights),
             "merge_is_plan_only": True,
             "capacity_unit": "retained_node_after_merge",
+            "pairwise_redundancy_available": bool(pairwise_redundancy),
         },
     )
 
@@ -201,9 +203,7 @@ def _temporal_bridge_value(node_id: str, relations: list[RelationBelief]) -> flo
 def _write_surprise_value(node: MemoryNode) -> float:
     localization = node.metadata.get("localization")
     coarse_window = (
-        localization.get("coarse_window")
-        if isinstance(localization, dict)
-        else None
+        localization.get("coarse_window") if isinstance(localization, dict) else None
     )
     reason = (
         str(coarse_window.get("boundary_reason") or "")
@@ -292,6 +292,7 @@ def _safe_merge_groups(
     *,
     protected: set[str],
     redundancy: dict[str, float],
+    pairwise_redundancy: Mapping[tuple[str, str], float],
     threshold: float,
 ) -> tuple[tuple[str, ...], ...]:
     ordered = sorted(
@@ -299,22 +300,48 @@ def _safe_merge_groups(
         key=lambda node: (node.time_span.start_s, node.time_span.end_s, node.node_id),
     )
     groups: list[tuple[str, ...]] = []
-    assigned: set[str] = set()
-    for left, right in zip(ordered, ordered[1:]):
-        if left.node_id in assigned or right.node_id in assigned:
+    run: list[MemoryNode] = []
+
+    def flush() -> None:
+        if len(run) > 1:
+            groups.append(tuple(node.node_id for node in run))
+
+    for node in ordered:
+        if not run:
+            run.append(node)
             continue
-        if left.node_id in protected or right.node_id in protected:
+        left = run[-1]
+        pair_score = _pair_value(pairwise_redundancy, left.node_id, node.node_id)
+        pairwise_merge = pair_score is not None and pair_score >= threshold
+        legacy_scalar_merge = (
+            pair_score is None
+            and min(
+                _unit(redundancy.get(left.node_id, 0.0)),
+                _unit(redundancy.get(node.node_id, 0.0)),
+            )
+            >= threshold
+            and set(left.source_segments) == set(node.source_segments)
+        )
+        if (
+            left.node_id not in protected
+            and node.node_id not in protected
+            and (pairwise_merge or legacy_scalar_merge)
+        ):
+            run.append(node)
             continue
-        if min(
-            _unit(redundancy.get(left.node_id, 0.0)),
-            _unit(redundancy.get(right.node_id, 0.0)),
-        ) < threshold:
-            continue
-        if set(left.source_segments) != set(right.source_segments):
-            continue
-        groups.append((left.node_id, right.node_id))
-        assigned.update((left.node_id, right.node_id))
+        flush()
+        run = [node]
+    flush()
     return tuple(groups)
+
+
+def _pair_value(
+    values: Mapping[tuple[str, str], float], left: str, right: str
+) -> float | None:
+    value = values.get((left, right))
+    if value is None:
+        value = values.get((right, left))
+    return _unit(value) if value is not None else None
 
 
 def _unit(value: float) -> float:

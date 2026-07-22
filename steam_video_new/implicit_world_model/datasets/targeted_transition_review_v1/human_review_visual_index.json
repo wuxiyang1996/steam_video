@@ -6,7 +6,7 @@
   "items": [
     {
       "item_id": "transition-review:24533b7f12c28a0865aab8fb",
-      "coverage": "full",
+      "coverage": "partial",
       "visual_evidence": [
         {
           "asset_id": "visual:3fc8b234ab99f72a2aa1fc28",
@@ -60,8 +60,8 @@
           "start_s": 45.0,
           "end_s": 75.0,
           "media_url": "/api/media/visual:78be002faf6c8a405c845bca",
-          "availability": "available",
-          "missing_reason": null
+          "availability": "partial",
+          "missing_reason": "video_window_exceeds_duration"
         }
       ]
     },
@@ -401,7 +401,7 @@
     },
     {
       "item_id": "transition-review:de455f6e327a4454a4c3c829",
-      "coverage": "full",
+      "coverage": "partial",
       "visual_evidence": [
         {
           "asset_id": "visual:31032413e5847b22f8acc06d",
@@ -452,8 +452,8 @@
           "start_s": 45.0,
           "end_s": 75.0,
           "media_url": "/api/media/visual:78be002faf6c8a405c845bca",
-          "availability": "available",
-          "missing_reason": null
+          "availability": "partial",
+          "missing_reason": "video_window_exceeds_duration"
         },
         {
           "asset_id": "visual:d80d3adfe48ae48b65a33b22",
@@ -464,9 +464,9 @@
           "video_id": "0jq3JQ9YTqg",
           "start_s": 75.0,
           "end_s": 95.0,
-          "media_url": "/api/media/visual:d80d3adfe48ae48b65a33b22",
-          "availability": "available",
-          "missing_reason": null
+          "media_url": null,
+          "availability": "missing",
+          "missing_reason": "video_window_out_of_range"
         },
         {
           "asset_id": "visual:60615158fe2509a515678127",
@@ -477,9 +477,9 @@
           "video_id": "0jq3JQ9YTqg",
           "start_s": 95.0,
           "end_s": 145.0,
-          "media_url": "/api/media/visual:60615158fe2509a515678127",
-          "availability": "available",
-          "missing_reason": null
+          "media_url": null,
+          "availability": "missing",
+          "missing_reason": "video_window_out_of_range"
         }
       ]
     },
@@ -858,7 +858,7 @@
     },
     {
       "item_id": "transition-review:61c0a088afb6a15e827840bb",
-      "coverage": "full",
+      "coverage": "partial",
       "visual_evidence": [
         {
           "asset_id": "visual:478b2d994cdd411f2528522f",
@@ -898,8 +898,8 @@
           "start_s": 45.0,
           "end_s": 75.0,
           "media_url": "/api/media/visual:78be002faf6c8a405c845bca",
-          "availability": "available",
-          "missing_reason": null
+          "availability": "partial",
+          "missing_reason": "video_window_exceeds_duration"
         }
       ]
     },

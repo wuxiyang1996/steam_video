@@ -7,6 +7,7 @@ from typing import Any
 
 from memory_graph.types import MemoryNode
 
+from .action_compiler import visible_graph_nodes
 from .contracts import (
     CursorBeliefState,
     IWMGraphInput,
@@ -36,7 +37,7 @@ def build_iwm_graph_input(
                 else None
             ),
         )
-        for node in graph.nodes
+        for node in visible_graph_nodes(graph)
     )
     return IWMGraphInput(
         question=belief.question,
@@ -44,6 +45,8 @@ def build_iwm_graph_input(
         nodes=views,
         temporal_edges=graph.temporal_edges,
         correlation_edges=graph.correlation_edges,
+        candidate_edges=graph.candidate_edges,
+        verified_relations=graph.verified_relations,
         legal_actions=legal_actions,
         acquired_evidence=belief.acquired_evidence,
         missing_roles=belief.missing_roles,
@@ -60,14 +63,42 @@ def graph_input_to_categorical_payload(graph_input: IWMGraphInput) -> dict[str, 
         "current_node_id": graph_input.current_node_id,
         "nodes": [
             {
-                "key": asdict(view.key),
+                "key": {
+                    "node_id": view.key.node_id,
+                    "node_type": view.key.node_type,
+                    "start_s": view.key.start_s,
+                    "end_s": view.key.end_s,
+                    "semantic_key": view.key.semantic_key,
+                    "structural_tags": list(view.key.structural_tags),
+                    "embedding_available": view.key.embedding_ref is not None,
+                },
                 "acquired": view.acquired,
                 "evidence_value": view.evidence_value,
             }
             for view in graph_input.nodes
         ],
         "temporal_edges": [asdict(edge) for edge in graph_input.temporal_edges],
-        "correlation_edges": [edge.to_dict() for edge in graph_input.correlation_edges],
+        "correlation_edges": [
+            {
+                "edge_id": edge.edge_id,
+                "src": edge.src,
+                "dst": edge.dst,
+                "channel": edge.channel,
+                "direction": "bidirectional",
+            }
+            for edge in graph_input.correlation_edges
+        ],
+        "candidate_edges": [edge.to_dict() for edge in graph_input.candidate_edges],
+        "verified_relations": [
+            {
+                "edge_id": edge.edge_id,
+                "src": edge.src,
+                "dst": edge.dst,
+                "relation": edge.relation.value,
+                "status": edge.status.value,
+            }
+            for edge in graph_input.verified_relations
+        ],
         "legal_actions": [
             {
                 **asdict(action),
@@ -91,7 +122,17 @@ def graph_input_to_categorical_payload(graph_input: IWMGraphInput) -> dict[str, 
 
 
 def _node_key(node: MemoryNode) -> NodeKey:
-    embedding = asdict(node.embedding_ref) if node.embedding_ref is not None else None
+    embedding = (
+        {
+            "model": node.embedding_ref.model,
+            "dimension": node.embedding_ref.dimension,
+            "normalized": node.embedding_ref.normalized,
+            "row_index": node.embedding_ref.row_index,
+            "checksum": node.embedding_ref.checksum,
+        }
+        if node.embedding_ref is not None
+        else None
+    )
     tags = tuple(
         sorted(
             {
@@ -110,9 +151,50 @@ def _node_key(node: MemoryNode) -> NodeKey:
         node_type=node.node_type,
         start_s=node.time_span.start_s,
         end_s=node.time_span.end_s,
+        semantic_key=_semantic_key(node),
         embedding_ref=embedding,
         structural_tags=tags,
     )
+
+
+def _semantic_key(node: MemoryNode) -> str:
+    """Expose a discriminative grounded address, not the full evidence value."""
+
+    metadata = node.metadata
+    parts: list[str] = []
+    for name in ("semantic_key", "predicate", "action_kind", "grounded_descriptor"):
+        value = str(metadata.get(name) or "").strip()
+        if value and value not in parts:
+            parts.append(value)
+    for participant in metadata.get("participants") or []:
+        if not isinstance(participant, dict):
+            continue
+        values = [
+            str(participant.get(name) or "").strip()
+            for name in ("role", "entity_type", "surface", "visual_signature")
+        ]
+        description = " ".join(value for value in values if value)
+        if description:
+            parts.append(description)
+    for state in metadata.get("states") or []:
+        if not isinstance(state, dict):
+            continue
+        attribute = str(state.get("attribute") or "").strip()
+        value = str(state.get("value") or "").strip()
+        if attribute or value:
+            parts.append(" ".join(item for item in (attribute, value) if item))
+    state_change = metadata.get("state_change")
+    if isinstance(state_change, dict) and state_change:
+        compact = " ".join(
+            str(state_change.get(name) or "").strip()
+            for name in ("attribute", "before", "after")
+            if state_change.get(name) is not None
+        )
+        if compact:
+            parts.append(compact)
+    if not parts:
+        parts.append(str(node.text or node.node_type).strip())
+    return " | ".join(dict.fromkeys(part for part in parts if part))[:480]
 
 
 def _evidence_value(node: MemoryNode) -> str | None:

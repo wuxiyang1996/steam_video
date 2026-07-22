@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 import re
 import runpy
+import signal
+import threading
+from contextlib import contextmanager
 from typing import Any
 from urllib import error, request
 
@@ -155,11 +158,24 @@ class OpenAICompatibleCategoricalClient:
             headers=headers,
             method="POST",
         )
-        try:
-            with request.urlopen(api_request, timeout=self.timeout_s) as response:
-                response_payload = json.loads(response.read().decode("utf-8"))
-        except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise RuntimeError(f"GPT-OSS categorical request failed: {exc}") from exc
+        response_payload: dict[str, Any] | None = None
+        last_transport_error: Exception | None = None
+        for transport_attempt in range(2):
+            try:
+                with _hard_wall_clock_deadline(self.timeout_s):
+                    with request.urlopen(api_request, timeout=self.timeout_s) as response:
+                        candidate = json.loads(response.read().decode("utf-8"))
+                if not isinstance(candidate, dict):
+                    raise json.JSONDecodeError("response root is not an object", "", 0)
+                response_payload = candidate
+                break
+            except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+                last_transport_error = exc
+                if transport_attempt == 1:
+                    raise RuntimeError(
+                        f"GPT-OSS categorical request failed after retry: {exc}"
+                    ) from exc
+        assert response_payload is not None, last_transport_error
         try:
             choice = response_payload["choices"][0]
             content = choice["message"]["content"]
@@ -182,6 +198,34 @@ class OpenAICompatibleCategoricalClient:
             ) from exc
         _reject_numeric_output(result)
         return result
+
+
+@contextmanager
+def _hard_wall_clock_deadline(timeout_s: int):
+    """Bound the whole HTTP exchange, including slowly chunked responses."""
+
+    if (
+        timeout_s <= 0
+        or threading.current_thread() is not threading.main_thread()
+        or not hasattr(signal, "setitimer")
+    ):
+        yield
+        return
+
+    def _raise_timeout(_signum: int, _frame: Any) -> None:
+        raise TimeoutError(f"categorical request exceeded {timeout_s}s wall clock")
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
+    signal.signal(signal.SIGALRM, _raise_timeout)
+    signal.setitimer(signal.ITIMER_REAL, float(timeout_s))
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer[0] > 0:
+            signal.setitimer(signal.ITIMER_REAL, *previous_timer)
 
 
 class GPTOSSObservationBeliefModel:

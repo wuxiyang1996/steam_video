@@ -1,0 +1,39 @@
+{
+  "schema_version": "steam-cgbench-frozen-l15-coverage/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "graph_video_count": 2,
+  "graph_checksums": {
+    "BV16A4m1F7Jc": "12f87d07d7790882d0d3e3a2f298519873aa8f2f8630ce74bb38fc44563d5f03",
+    "BV1zJ41187BP": "872a4b03bfad283144c130b328a807e2b15879eedb43f4a902c7f064b33ee939"
+  },
+  "eligible_clue_count_within_smoke_horizon": 5,
+  "native_candidate_covered_clue_count": 5,
+  "native_candidate_recall": 1.0,
+  "embedding_top_k_recall": {
+    "4": {
+      "eligible": 5,
+      "covered": 5,
+      "recall": 1.0
+    },
+    "8": {
+      "eligible": 5,
+      "covered": 5,
+      "recall": 1.0
+    },
+    "16": {
+      "eligible": 5,
+      "covered": 5,
+      "recall": 1.0
+    },
+    "32": {
+      "eligible": 5,
+      "covered": 5,
+      "recall": 1.0
+    }
+  },
+  "out_of_horizon_clues_excluded_from_recall": true,
+  "nonoverlap_candidates_are_semantic_negatives": false,
+  "query_embedding_model": "Qwen/Qwen3-VL-Embedding-2B",
+  "human_review_required": false,
+  "training_performed": false
+}

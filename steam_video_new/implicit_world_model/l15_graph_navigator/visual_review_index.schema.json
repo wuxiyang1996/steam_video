@@ -37,7 +37,7 @@
                 "start_s": {"type": ["number", "null"], "minimum": 0},
                 "end_s": {"type": ["number", "null"], "exclusiveMinimum": 0},
                 "media_url": {"type": ["string", "null"]},
-                "availability": {"enum": ["available", "missing"]},
+                "availability": {"enum": ["available", "partial", "missing"]},
                 "missing_reason": {"type": ["string", "null"]}
               }
             }

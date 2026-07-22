@@ -34,7 +34,8 @@
 本目录额外提供 outcome-blind 视觉绑定：
 
 - `human_review_visual_index.json`：reviewer 可见的 node、角色、视频 ID 与时间窗；不含本地路径、采样分层、stored target 或 verifier outcome。
-- `human_review_visual_coverage.json`：覆盖审计；当前 53/53 items、173/173 requested nodes 均可播放，覆盖 9 个视频。
+- `human_review_visual_coverage.json`：容器时长覆盖审计。修正后的结果是 50/53 items 完整覆盖，3 条部分覆盖；3 个时间窗被截断、2 个时间窗完全越界。
+- `visual_grounding_audit.gpt56.provisional.json`：GPT-5.6 对 53 条公开视觉证据的 provisional 核查；分别判断 clip-description alignment 和 reasoning-evidence sufficiency，不等同于人工 ground truth。
 - `human_review_visual_assets.hidden_key.json`：本地视频绝对路径绑定；受 `*.hidden_key.json` 保护，不能交给 reviewer。
 
 如需从 packet 重建绑定：
@@ -59,7 +60,11 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator.human_review_
   --visual-key steam_video_new/implicit_world_model/datasets/targeted_transition_review_v1/human_review_visual_assets.hidden_key.json
 ```
 
-打开 `http://127.0.0.1:8765`。网页并排显示 source/target/observation 的真实视频区间；服务端通过 HTTP Range 读取原 MP4，浏览器只播放相应的 `start_s/end_s`，不会公开本地文件路径。网页同时支持自动保存/恢复、未完成与待复核筛选、公开 evidence citation 选择、服务端 schema 校验，以及导出 `independent_human` review JSON。
+打开 `http://127.0.0.1:8765`。网页右上角可在中文和 English 之间即时切换，切换不会清空当前答案或本地草稿。也可以直接使用 `http://127.0.0.1:8765/?lang=zh` 或 `http://127.0.0.1:8765/?lang=en`。界面文案、分类选项和状态提示会翻译；grounded evidence description 与 schema token 保留源语言，避免翻译改变审核语义。
+
+网页并排显示 source/target/observation 的真实视频区间；服务端通过 HTTP Range 读取原 MP4，浏览器只播放相应的 `start_s/end_s`，不会公开本地文件路径。网页同时支持自动保存/恢复、未完成与待复核筛选、公开 evidence citation 选择、服务端 schema 校验，以及导出 `independent_human` review JSON。
+
+重要：请暂缓正式人工锁定。GPT-5.6 provisional visual audit 发现，`0jq3JQ9YTqg.mp4` 实际只有 63.44 秒，但部分绑定延伸至 145 秒，而且现有画面与“新闻主播/上车/昼夜变化”等描述语义错配。全体 53 条中，30 条描述对齐、11 条部分对齐、12 条明显错配；只有 22 条的现有画面足以支持对应 reasoning judgment。模型审核只是数据清洗诊断，不能替代 independent human review。
 
 审核期间不要读取：
 
@@ -75,4 +80,6 @@ python -m steam_video_new.implicit_world_model.l15_graph_navigator.human_review_
 - formal eligible：false
 - training ready：false
 - training performed：false
-- next gate：独立人工完成全部条目并导出、锁定为 `human_locked`
+- next gate：先修复视频错配与时间窗，再重建 blinded packet；之后由独立人工完成全部条目并锁定为 `human_locked`
+
+修复后的重采样版本位于 `../targeted_transition_review_v2/`。v1 保留作为可追溯的失败诊断，不再作为正式审核入口。

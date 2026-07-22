@@ -1,145 +1,376 @@
 # Full-Graph IWM Navigation
 
-This package is the new main-method path. It navigates a fixed-capacity,
-question-independent L1/L1.5 evidence graph with one active cursor. It does not
-replace the existing `l15_graph_navigator` data/review workflows; that package
-remains the legacy baseline and dataset pipeline.
-
-## Implemented flow
+This package implements the main reasoning path over a fixed-capacity,
+question-independent video memory. The current layer contract is deliberately
+simple:
 
 ```text
-visual representations
-  -> surprise-driven adaptive L1 write windows
-  -> priority-preserving materialized consolidation
-  -> retained L1 nodes + temporal edges
-  -> all-pair categorical L1.5 correlations
-  -> one-cursor legal action compiler (no Top-K)
-  -> batched categorical IWM predictions
-  -> complete horizon-1/2 trajectory preferences
-  -> execute one real read, correct belief, replan
+L1   = grounded semantic evidence nodes + deterministic temporal backbone
+L1.5 = embedding-derived soft nonlocal correlations plus sparse, grounded,
+       categorical candidate hops over L1 nodes
+L1.5-strict (optional) = separately verified identity/state/causal relations
+
+question + current belief + current cursor + legal graph hops
+  -> IWM predicts categorical observation / belief delta for each hop
+  -> preference model compares imagined trajectories ordinally
+  -> planner executes one real hop
+  -> real evidence corrects belief, then the system replans
 ```
 
-The graph adapter consumes an existing `CausalTemporalOverlay`, consolidates
-its L1 observations, projects legacy L1/L1.5 relation evidence categorically,
-and returns a `RetainedEvidenceGraph`. Evidence nodes are reused; they are not
-copied into a second memory store.
+L1/L1.5 is the evidence and navigation substrate. It is not the learned
+reasoning belief, the reward, or the main research contribution. GTSAM remains
+an optional correction/diagnostic backend and is not required by this path.
 
-## Contracts that are enforced
+## Non-negotiable boundary: graph correlation versus planner preference
 
-- Legal actions are deterministic functions of the current cursor, retained
-  graph, visibility, relation status, provenance, executor availability, and
-  remaining budget. The question never filters the legal set.
-- The initial virtual root emits `START_AT` for every visible retained node.
-- From a real cursor, semantic probes cover every visible unread retained node;
-  temporal and correlation actions use only that cursor as source.
-- `BACKTRACK` changes focus to acquired evidence without rereading it.
-- Unread nodes expose time/type/structural keys and a Qwen embedding sidecar
-  reference, never the evidence text/value.
-- Imagined evidence remains address-only. A horizon-two rollout cannot reveal
-  the real value of its imagined first-hop target.
-- GPT-OSS outputs only categorical observation/belief deltas and four-way
-  pairwise preferences. Numeric output is rejected. Public action, trajectory,
-  and pair IDs are replaced with pure-alphabetic aliases in model outputs and
-  mapped back to graph IDs only after strict coverage validation.
-- The main planner applies no embedding Top-K, score, weighted utility,
-  lexicographic winner, or first-item tie break. Multiple undominated first
-  hops cause explicit abstention.
+These are two distinct relations:
+
+```text
+Correlation(node_i, node_j)
+  -> constructs question-independent L1.5 navigation topology
+
+Preference(trajectory_i, trajectory_j | belief, imagined transitions)
+  -> chooses a reasoning action at runtime
+```
+
+Correlation determines which node-to-node hops exist; it does not decide which
+hop wins for a question. The action compiler turns the fixed cursor-incident
+topology into legal actions. The IWM predicts the categorical observation and
+belief effect of each legal action, and only then may the planner choose the
+next hop. The IWM/planner must not invent, verify, or reclassify L1.5 edges, and
+the graph builder must not use planner preference or future questions to build
+them.
+
+Numeric embedding similarity and directional affinity are allowed graph
+features because they are measured or calibrated construction signals. They
+are not model-generated reward/utility/confidence, are not verified facts, and
+must not directly rank the planner's winner. Strict identity/state/causal
+relations remain a separately verified optional layer.
+
+## L1 and L1.5 construction
+
+`build_l1_l15_navigation_graph` consumes a persisted
+`CausalTemporalOverlay` and performs the following question-independent steps:
+
+1. Reuse its grounded L1 observations as semantic evidence nodes.
+2. Derive local embedding redundancy from the persisted
+   `Qwen/Qwen3-VL-Embedding-2B` sidecar.
+3. Coalesce only adjacent near-duplicate semantic observations and apply
+   priority-preserving fixed-capacity consolidation.
+4. Rebuild a deterministic temporal chain over retained nodes.
+5. Score every non-temporal retained-node pair with cosine similarity.
+6. Collapse near-identical embeddings into semantic equivalence classes,
+   represent recurrence as a temporal chain rather than a clique, and apply
+   standardized sparsemax between classes. This is not Top-K.
+7. Optionally run one question-independent caption/structured-node pass that
+   proposes sparse categorical `caption_bridge`, `entity_candidate`,
+   `change_candidate`, or `contrast_candidate` hops. Both endpoint evidence
+   snippets must be exact substrings of their persisted L1 descriptors, and
+   existing temporal/semantic pairs are removed.
+8. Keep explicitly verified fact relations in `verified_relations`. Candidate
+   hops remain navigation affordances and never become verified facts.
+
+Every soft correlation stores endpoint cosine similarity plus navigation
+affinities. These values come from embeddings, not an LLM. They are
+similarity/attention features, not calibrated probabilities or verified facts.
+Because cosine is symmetric, an admitted semantic correlation exposes both
+directions; only genuinely asymmetric temporal/strict evidence may claim a
+one-way relation. A frozen global admission policy may reject edges by a
+calibrated threshold, but it cannot apply per-node Top-K.
+
+Compilation also emits `l1_l15_correlation_pair_audit.json`. It records every
+retained pair's decomposed features, structural exclusion/admission reason,
+policy fingerprint, and source/retained L1 fingerprints without storing a
+question or answer. The compiler verifies that the source overlay checksum and
+source L1 fingerprint are unchanged.
+
+Compilation now also emits `l1_l15_multichannel_pair_audit.json`. It is a
+schema/audit extension, not a learned navigator. It may record independently
+sourced `entity_correspondence`, `change`, and `contrast` descriptors, but only
+when structured L1 metadata grounds them. Candidate/local track IDs, endpoint-
+local state-change fields, or caption keywords are insufficient. These
+descriptors never admit an edge by themselves, never become identity/state or
+causal facts, and never rank actions.
+
+This audit-only descriptor layer is distinct from the optional
+`l1_l15_caption_candidates.json` runtime overlay. The latter is built once per
+frozen video graph without question, answer, or clue access. It admits only
+scoreless, evidence-backed categorical hops; it does not emit probability,
+confidence, causal truth, identity truth, or planner preference. The graph
+fingerprint covers the resulting candidate edges, so they cannot change after
+the evaluation gate.
+
+We intentionally do **not** train a separate L1.5 bridge encoder. The learned
+model is the IWM itself:
+
+```text
+static L1/L1.5 hop + question + current belief
+  -> IWM predicts categorical observation and belief delta
+  -> planner compares imagined action trajectories
+```
+
+GT clue chains and grounded executed transitions are therefore reserved as IWM
+supervision rather than used to learn a second graph selector.
+
+The old `build_retained_graph_from_legacy_overlay` name remains only as a
+compatibility alias. Passing a categorical relation evaluator to it raises an
+error, because fact verification and generic navigation correlation are now
+separate concerns.
+
+After node embedding, the CG-Bench worker also persists this compiled view as
+`l1_l15_navigation_graph.json` next to the source overlay and embedding
+sidecar. Runtime compilation remains deterministic and the closed-loop gate
+fingerprints the resulting graph.
+
+## Legal actions
+
+The action compiler is structural and deterministic; the IWM does not invent
+actions. At the virtual root it exposes `START_AT(node)` for every visible
+retained node. At a real cursor it exposes only:
+
+- temporal forward/backward hops incident to the cursor;
+- positive-direction L1.5 correlation hops incident to the cursor;
+- permitted-direction categorical candidate hops incident to the cursor;
+- backtracking to already acquired nodes;
+- stop, answer (when ready), and abstain.
+
+There is no flat `current node x every unread node` semantic-probe product and
+no candidate `inspect/verify` action in the main navigation path. After the
+first real read, the eight current smoke graphs expose about four to five real
+read actions per cursor on average, rather than dozens or hundreds.
+
+## Leakage and model-output contracts
+
+- The complete retained graph is visible, but unread evidence values are not.
+  Unread nodes expose a compact semantic key, timestamp/type, and embedding
+  reference. A real executor reveals the evidence value only after the hop.
+- Imagined evidence remains predicted-only and never enters persistent belief.
+- A proxy LLM predicts categorical observation descriptors/belief deltas and
+  emits only ordinal pairwise labels or setwise `unique`, `tie`, and
+  `incomparable` decisions.
+  Model-generated reward, utility, probability, confidence, and Q-values are
+  rejected.
+- The preference model receives anonymous predicted consequences rather than
+  action/node/timestamp IDs, preventing lexical or construction-order shortcuts.
+- All retained candidates are considered; the main planner does not use an
+  embedding Top-K or a hand-written score to select a winner. Pair comparisons
+  are request-batched to keep model outputs bounded without sampling pairs.
+- Production mode abstains on a non-unique order. The diagnostic proxy may use
+  a deterministic stable-tie rule, preferring a real evidence read over a
+  cursor-only backtrack; this is logged and is not presented as learned
+  preference. Imagined consequence is never used as final-answer evidence.
+- Actions without a real read (`stop`, `answer`, `abstain`, `backtrack`) have
+  deterministic `inconclusive + unchanged` dynamics and cannot hallucinate an
+  observation.
 
 ## Components
 
 ```text
-contracts.py              strict graph, action, transition, and preference types
-graph_adapter.py          legacy overlay -> retained L1/categorical L1.5 graph
-action_compiler.py        single-cursor legal actions and real graph execution
-model_input.py            full retained graph with unread-value leakage guard
-planner.py                batched horizon-1/2 rollout and partial-order selection
-gpt_oss.py                strict GPT-OSS-120B categorical batch adapters
-correlation_evaluator.py  all-pair GPT-OSS categorical L1.5 proposal adapter
+contracts.py       graph/action/transition/preference contracts
+graph_adapter.py   persisted overlay -> retained semantic L1 + soft L1.5
+action_compiler.py cursor-local legal hops and real evidence execution
+model_input.py     leakage-safe full retained-graph model view
+planner.py         horizon-1/2 IWM rollout and ordinal partial-order selection
+gpt_oss.py         categorical GPT-OSS IWM and batched preference adapters
+caption_candidates.py question-independent grounded categorical hop builder
+reactive.py        matched no-world-model direct-policy baseline
+interventions.py   shuffled/frozen world-model controls
+closed_loop.py     execute/read/correct/replan loop and evaluator-only metrics
+cgbench_pilot.py   fixed-case compile gate and matched-budget experiment
 ```
 
-The L1 primitives live in `memory_graph/`:
+Supporting L1 code lives in `memory_graph/`:
 
-- `adaptive_windowing.py`: representation-surprise window writer with a
-  pluggable learned feature provider and an explicit OpenCV smoke fallback;
-- `consolidation.py`: materialized keep/merge/evict, lineage, embedding refresh
-  invalidation, relation rewiring, and temporal-chain rebuilding;
-- `correlation_overlay.py`: categorical correlation schema, structural
-  candidates, all-pair evaluator contract, and legacy relation projection.
+- `adaptive_windowing.py`: surprise-driven write boundaries; the present
+  OpenCV representation is explicitly a smoke fallback;
+- `selectstream_policy.py` and `consolidation.py`: priority-preserving
+  keep/merge/evict with lineage and temporal rebuilding;
+- `soft_correlation.py`: Qwen embedding soft L1.5 construction;
+- `correlation_overlay.py`: optional categorical fact-relation audit and legacy
+  relation projection, not the main navigation edge builder.
 
-## Minimal construction
+## Minimal use
 
 ```python
 from steam_video_new.implicit_world_model.full_graph_iwm import (
     CursorBeliefState,
     FullGraphIWMPlanner,
     GraphActionCompiler,
-    build_retained_graph_from_legacy_overlay,
+    build_l1_l15_navigation_graph,
 )
 
-graph = build_retained_graph_from_legacy_overlay(overlay, capacity=8)
+graph = build_l1_l15_navigation_graph(overlay, capacity=64)
 belief = CursorBeliefState(
     belief_id="belief:0",
     question=question,
     remaining_reads=8,
 )
 legal_actions = GraphActionCompiler().compile(belief, graph)
-decision = FullGraphIWMPlanner(world_model, preference_model, horizon=2).plan(
-    belief,
-    graph,
-)
+decision = FullGraphIWMPlanner(
+    world_model,
+    preference_model,
+    horizon=1,
+    max_trajectory_pairs=4096,
+).plan(belief, graph)
 ```
 
-The learned batched IWM can use the experiment's frozen capacity. For the
-provisional GPT-OSS API smoke, begin with capacity 8 and horizon 1; horizon 2
-is exhaustive and should be enabled only after checking the compiled action
-and trajectory counts. The planner abstains on ambiguity and never silently
-falls back to Top-K.
-
-For GPT-OSS-120B, instantiate the existing strict OpenRouter client from
-`l15_graph_navigator.gpt_oss.OpenAICompatibleCategoricalClient`, then pass it
-to `GPTOSSFullGraphWorldModel`, `GPTOSSFullGraphPreferenceModel`, and optionally
-`GPTOSSCategoricalCorrelationEvaluator`. The adapters are inference/data-
-gathering only; no GPT-OSS training is performed here.
-
-A compile-only smoke does not call any external model:
+Compile one graph without calling an external model:
 
 ```bash
 python -m steam_video_new.implicit_world_model.full_graph_iwm \
   --overlay /path/to/causal_temporal_overlay.json \
-  --question "What evidence connects the two events?" \
-  --capacity 8 \
-  --mode compile-only \
+  --question "What evidence connects the events?" \
+  --capacity 64 --mode compile-only \
   --output /tmp/full_graph_compile.json
 ```
 
-One GPT-OSS planning step through OpenRouter is:
+Run the fixed CG-Bench gate and GPT-OSS pilot with:
 
 ```bash
-python -m steam_video_new.implicit_world_model.full_graph_iwm \
-  --overlay /path/to/causal_temporal_overlay.json \
-  --question "What evidence connects the two events?" \
-  --capacity 8 \
-  --mode gpt-oss-120b \
-  --keys-py /fs/gamma-projects/vlm-robot/keys.py \
-  --output /tmp/full_graph_gpt_oss_plan.json
+bash steam_video_new/implicit_world_model/full_graph_iwm/run_cgbench_pilot_after_graph.sh
 ```
 
-Add `--gpt-correlation-proposals` only when all retained pairs should also be
-sent to GPT-OSS for provisional categorical relation proposals. Model proposals
-cannot self-admit a `verified` edge.
+For long horizon-two data-gathering runs, use all three persistence layers:
 
-## Current validation
+```bash
+python -m steam_video_new.implicit_world_model.full_graph_iwm.cgbench_pilot \
+  ... --rollout-horizon 2 --setwise-preference --execute-stable-ties \
+  --transition-cache /path/to/transitions.json \
+  --response-cache /path/to/categorical-responses.json \
+  --progress-output /path/to/run.progress.json \
+  --arm world_model_guided --arm no_world_model \
+  --arm shuffled_world_model_prediction --arm immediate_effect_only \
+  --arm oracle_clue_ceiling --output /path/to/run.json
+```
 
-`memory_graph/tests/test_full_graph_iwm.py` covers adaptive boundaries,
-materialized fixed capacity, edge rewiring, all-pair correlation coverage,
-single-cursor legality, hidden-node filtering, unread-value isolation, delayed
-two-hop selection, and abstention under ties. These are implementation tests,
-not a scientific performance result.
+If interrupted, rerun the identical command with `--resume-progress`. Keep cache
+mode `record` while gathering missing safe states; switch to `replay` only after
+the frozen evaluation state space is complete. Replay is fail-closed on any
+unseen transition, question-role decomposition or categorical response.
 
-On 2026-07-21, a real OpenRouter `openai/gpt-oss-120b` smoke over a persisted
-Video-Holmes overlay also passed the strict adapter: two retained nodes, four
-legal initial actions, four horizon-one trajectories, all six pairwise
-comparisons, zero unread evidence-value leaks, and no Top-K. The categorical
-partial order was non-unique, so the planner correctly returned `abstain`.
-This validates execution and failure semantics; it is not a navigation-quality
-claim.
+## July 2026 proxy result
+
+The first fixed puppy case establishes reachability but not IWM readiness:
+
+- the repaired evaluator-only shortest-path oracle covers 4/4 clues with four
+  reads via temporal and L1.5 correlation hops;
+- `openai/gpt-5-mini` completes a six-read categorical closed loop but covers
+  0/4 clues, repeatedly preferring semantically related pre-event washing
+  nodes over the requested post-drench state;
+- its matched no-WM direct-policy arm uniquely chooses `abstain` before any
+  read under a two-read budget; the IWM changes behavior, but has not yet shown
+  a coverage or answer-quality gain;
+- `qwen/qwen3.7-max` covers 1/4 clues in a two-read diagnostic run, but takes
+  about 332 seconds, so it is not an online implementation as invoked here;
+- no answer head was evaluated and no training was performed.
+
+Therefore L1/L1.5 is executable and contains a valid route on this case, while
+the zero-shot large-model IWM is only a data-gathering proxy. The data/runtime
+step is now implemented without a heuristic question-conditioned Top-K:
+
+- `transition_descriptor_cache.py` exports 670 grounded executed transitions
+  as a video-disjoint train/validation/test corpus. It retains real observation
+  descriptors, categorical belief deltas, embeddings and provenance, while
+  excluding question-conditioned relevance prose and hidden evaluator fields;
+- `PersistentTransitionCacheWorldModel` records action-conditioned categorical
+  predictions keyed by the complete safe visible graph, real belief, action and
+  imagined prefix. Replay fails closed on a miss and cannot perform same-case
+  GT lookup;
+- `PersistentCategoricalResponseCacheClient` additionally freezes categorical
+  model decisions across interrupted runs. It stores request hashes and strict
+  JSON outputs, not prompts, questions, clues or answers;
+- long experiments atomically checkpoint after each case/arm and can resume from
+  that journal. A hard wall-clock timeout also covers slowly chunked provider
+  responses;
+- bounded setwise comparison now batches several independent complete candidate
+  groups in one request. Every legal trajectory is still judged; grouping is a
+  transport optimization, not candidate pruning, and ties/incomparability are
+  preserved.
+
+The fixed matched protocol is `IWM / no-WM / shuffled-IWM / immediate-only /
+oracle`, with the same graph fingerprint, read budget and legal-action compiler.
+Metrics remain separate: clue coverage, read efficiency, action divergence,
+abstention, delayed success and latency. No scalar reward or aggregate boolean
+is synthesized. The present two-video run is a development smoke while the
+video-disjoint validation/test full-video graphs are being built; it is not a
+formal method result.
+
+### Two-video development diagnostic
+
+The current-code record and fail-closed replay both completed 10/10 case-arm
+runs with zero errors. Replay served all 44 categorical calls from the frozen
+response cache and every transition request was a cache hit. With two real
+reads per case, mean clue recall was:
+
+| Arm | Recall | Mean reads | Read efficiency | Abstain |
+|---|---:|---:|---:|---:|
+| IWM horizon two | 0.125 | 2.0 | 0.25 | 0.0 |
+| no-WM direct policy | 0.125 | 1.0 | 0.50 | 0.5 |
+| shuffled-IWM | 0.250 | 2.0 | 0.50 | 0.0 |
+| immediate-only | 0.125 | 2.0 | 0.25 | 0.0 |
+| evaluator-only oracle | 0.625 | 2.0 | 1.25 | 0.0 |
+
+This is a negative IWM diagnostic, not a success claim. IWM actions diverged
+from every comparison arm, so the planner genuinely depends on imagined
+transitions; however, that dependence did not improve retrieval. Failure
+inspection found predicted `support/advanced` transitions whose executed reads
+were inconclusive, plus a large categorical tie in one horizon-two tournament.
+Shuffling predictions improved one case, which directly fails the desired
+causal ordering. The two-read oracle ceiling also shows that full clue coverage
+is impossible under this diagnostic budget. The next evidential gate is the
+same five-arm protocol on frozen full-video validation/test graphs, with the
+low-budget result and a larger matched read budget reported separately.
+
+The executed-read confusion slice explains the failure more directly. For the
+intact IWM's four selected reads, predicted progress was `advanced` four times,
+but realized progress advanced once and was unchanged three times. Its selected
+observation categories were one `identity_evidence` and three `support`; the
+real evaluator observed one support and three inconclusive reads. Immediate-only
+also predicted `advanced` on all four reads but realized only one advance, and
+predicted `ready` twice while the corrected belief remained `not_ready` both
+times. These categorical false positives, rather than missing numeric score
+calibration, are the first training/data target.
+
+Compile and audit frozen L1.5 graphs without calling an LLM:
+
+```bash
+python -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker \
+  audit-correlations \
+  --selection /path/to/l15_graph_smoke_selection.json \
+  --graph-root /path/to/l15_graph_smoke_v1 \
+  --dataset /path/to/navigation_dataset.qwen_grounded_embedded.json \
+  --hidden-input /path/to/terminal_targets.hidden_key.json \
+  --report /path/to/l15_correlation_evaluation.json \
+  --details /path/to/l15_correlation_evaluation.hidden_key.json \
+  --memory-capacity 64 --max-path-hops 8
+```
+
+The shell entry point uses `/fs/gamma-projects/vlm-robot/keys.py` for the
+OpenRouter client by default, horizon one, capacity 64, read budget 8, and an
+exhaustive 4096-pair resource limit. Pairwise calls are chunked; no pair is
+silently dropped. Horizon two should be enabled only after inspecting the
+compiled trajectory count because exhaustive cross-trajectory comparison can
+still be expensive.
+
+## Validation status
+
+The regression suite covers semantic duplicate coalescing, recurrence-chain
+sparsification, temporal-pair exclusion, directional affinity legality,
+fixed-capacity materialization, hidden-node and unread-value isolation,
+world-model-dependent delayed-hop selection, intervention arms, real-read
+replanning, and resource abstention.
+
+The current eight persisted CG-Bench smoke graphs compile with 15–64 retained
+nodes, 22–133 L1.5 edges, and a maximum emitted degree of 7–17. The previously
+pathological climbing video fell from a dense near-clique to 15 retained nodes
+and 22 correlation edges. All source L1 artifacts remain checksum-identical and
+the build makes zero per-pair LLM calls. Of six consecutive clue bridges that
+fall inside the 120-second prefix, five have a direct graph connection and all
+six are reachable within eight hops; one depends on a three-hop sparse path.
+All six eligible bridges are from the train split. The four selected test
+videos contribute only out-of-horizon clues, and there are no trusted negative
+edge labels, so held-out coverage and admitted-edge precision remain
+unavailable. The diagnostic train-positive threshold is not applied to the
+graph. These are structural/evaluator smoke results, not evidence of navigation
+quality; the matched closed-loop experiment must still be rerun on the new
+graph fingerprint.

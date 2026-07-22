@@ -171,6 +171,10 @@ def build_parser() -> argparse.ArgumentParser:
     targeted.add_argument("--cases", required=True, type=Path)
     targeted.add_argument("--packet-id", required=True)
     targeted.add_argument("--consistency-duplicates", type=int, default=6)
+    targeted.add_argument(
+        "--exclude-video-id", action="append", default=[],
+        help="Quarantine a video whose media/annotation integrity failed; repeatable.",
+    )
     targeted.add_argument("--packet-output", required=True, type=Path)
     targeted.add_argument("--key-output", required=True, type=Path)
     targeted.add_argument("--manifest-output", required=True, type=Path)
@@ -422,6 +426,7 @@ def main(argv: list[str] | None = None) -> int:
             _read_json(args.cases),
             packet_id=args.packet_id,
             consistency_duplicates=args.consistency_duplicates,
+            excluded_video_ids=set(args.exclude_video_id),
         )
         _write_json(args.packet_output, packet)
         _write_json(args.key_output, key)

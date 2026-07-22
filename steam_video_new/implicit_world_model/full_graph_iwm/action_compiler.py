@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 import hashlib
 
-from memory_graph.correlation_overlay import CorrelationStatus
+from memory_graph.types import MemoryNode
 
 from .contracts import (
     ActionKind,
@@ -25,9 +25,7 @@ class GraphActionCompiler:
         belief: CursorBeliefState,
         graph: RetainedEvidenceGraph,
     ) -> tuple[LegalGraphAction, ...]:
-        visible = {
-            node.node_id: node for node in graph.nodes if _node_is_visible(node, graph)
-        }
+        visible = {node.node_id: node for node in visible_graph_nodes(graph)}
         if belief.current_node_id is not None and belief.current_node_id not in visible:
             raise ValueError("current cursor is not visible in the retained graph")
         if belief.remaining_reads == 0:
@@ -75,61 +73,46 @@ class GraphActionCompiler:
                 )
 
         for edge in graph.correlation_edges:
-            if (
-                current not in {edge.src, edge.dst}
-                or edge.status is CorrelationStatus.REJECTED
-            ):
+            if current not in {edge.src, edge.dst}:
                 continue
-            if not edge.evidence_refs or not edge.candidate_sources:
+            if not edge.evidence_refs:
                 continue
-            target = edge.dst if edge.src == current else edge.src
-            if target not in visible:
+            if edge.src == current:
+                target = edge.dst
+                affinity = edge.src_to_dst_affinity
+            else:
+                target = edge.src
+                affinity = edge.dst_to_src_affinity
+            if affinity <= 0.0:
                 continue
-            if edge.status is CorrelationStatus.VERIFIED:
-                if target not in acquired:
-                    actions.append(
-                        _action(
-                            ActionKind.FOLLOW_CORRELATION,
-                            source_id=current,
-                            target_id=target,
-                            edge_id=edge.edge_id,
-                            relation=edge.relation.value,
-                            reads_evidence=True,
-                        )
-                    )
-            elif target not in acquired:
-                actions.append(
-                    _action(
-                        ActionKind.INSPECT_CORRELATION,
-                        source_id=current,
-                        target_id=target,
-                        edge_id=edge.edge_id,
-                        relation=edge.relation.value,
-                        reads_evidence=True,
-                    )
-                )
-            elif graph.metadata.get("relation_verifier_available") is True:
-                actions.append(
-                    _action(
-                        ActionKind.VERIFY_CORRELATION,
-                        source_id=current,
-                        target_id=target,
-                        edge_id=edge.edge_id,
-                        relation=edge.relation.value,
-                        reads_evidence=True,
-                    )
-                )
-
-        # This is intentionally all retained unread nodes.  Embedding and text
-        # may become action features inside the IWM but cannot gate this set.
-        for node_id in sorted(set(visible) - acquired):
-            if node_id == current:
+            if target not in visible or target in acquired:
                 continue
             actions.append(
                 _action(
-                    ActionKind.SEMANTIC_PROBE,
+                    ActionKind.FOLLOW_CORRELATION,
                     source_id=current,
-                    target_id=node_id,
+                    target_id=target,
+                    edge_id=edge.edge_id,
+                    relation=edge.channel,
+                    reads_evidence=True,
+                )
+            )
+
+        for edge in graph.candidate_edges:
+            if current not in {edge.src, edge.dst}:
+                continue
+            target = edge.dst if edge.src == current else edge.src
+            if not edge.permits(current, target):
+                continue
+            if target not in visible or target in acquired:
+                continue
+            actions.append(
+                _action(
+                    ActionKind.FOLLOW_CORRELATION,
+                    source_id=current,
+                    target_id=target,
+                    edge_id=edge.edge_id,
+                    relation=edge.channel,
                     reads_evidence=True,
                 )
             )
@@ -209,6 +192,12 @@ def execute_graph_action(
         updated_belief=updated,
         reread=already_acquired,
     )
+
+
+def visible_graph_nodes(graph: RetainedEvidenceGraph) -> tuple[MemoryNode, ...]:
+    """Return the exact node set shared by action and model-input compilation."""
+
+    return tuple(node for node in graph.nodes if _node_is_visible(node, graph))
 
 
 def _node_is_visible(node: object, graph: RetainedEvidenceGraph) -> bool:

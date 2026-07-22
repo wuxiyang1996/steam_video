@@ -1,0 +1,46 @@
+{
+  "schema_version": "steam-cgbench-iwm-supervision-readiness/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "case_count": 256,
+  "video_count": 205,
+  "graph_video_count": 8,
+  "belief_delta_ready_transition_count": 672,
+  "grounded_observation_descriptor_ready_transition_count": 0,
+  "aligned_consecutive_bridge_group_count": 6,
+  "aligned_distinct_positive_node_pair_count": 149,
+  "pending_consecutive_bridge_group_count": 410,
+  "trusted_same_video_negative_pair_count": 0,
+  "unmatched_same_video_pairs_are_negative": false,
+  "splits": {
+    "test": {
+      "case_count": 27,
+      "graph_aligned_case_count": 5,
+      "aligned_bridge_group_count": 0,
+      "pending_bridge_group_count": 54,
+      "video_count": 18
+    },
+    "train": {
+      "case_count": 207,
+      "graph_aligned_case_count": 5,
+      "aligned_bridge_group_count": 6,
+      "pending_bridge_group_count": 304,
+      "video_count": 169
+    },
+    "validation": {
+      "case_count": 22,
+      "graph_aligned_case_count": 0,
+      "aligned_bridge_group_count": 0,
+      "pending_bridge_group_count": 52,
+      "video_count": 18
+    }
+  },
+  "heldout_aligned_bridge_group_count": 0,
+  "phase_3_training_ready": false,
+  "phase_3_blockers": [
+    "full-video frozen L1 graphs are missing for most benchmark videos",
+    "held-out aligned clue bridges are insufficient",
+    "grounded observation descriptors remain pending",
+    "trusted same-video hard negatives are unavailable"
+  ],
+  "training_performed": false
+}

@@ -19,9 +19,8 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.overlay_io import 
 
 from .action_compiler import GraphActionCompiler
 from .contracts import CursorBeliefState
-from .correlation_evaluator import GPTOSSCategoricalCorrelationEvaluator
 from .gpt_oss import GPTOSSFullGraphPreferenceModel, GPTOSSFullGraphWorldModel
-from .graph_adapter import build_retained_graph_from_legacy_overlay
+from .graph_adapter import build_l1_l15_navigation_graph
 from .model_input import build_iwm_graph_input, graph_input_to_categorical_payload
 from .planner import FullGraphIWMPlanner
 
@@ -32,9 +31,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--overlay", required=True, type=Path)
     parser.add_argument("--question", required=True)
-    parser.add_argument("--capacity", type=int, default=8)
+    parser.add_argument("--capacity", type=int, default=64)
     parser.add_argument("--graph-read-budget", type=int, default=8)
     parser.add_argument("--horizon", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--max-trajectory-pairs", type=int, default=4096)
     parser.add_argument(
         "--mode",
         choices=("compile-only", "gpt-oss-120b"),
@@ -49,12 +49,6 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("low", "medium", "high"),
         default="low",
     )
-    parser.add_argument(
-        "--gpt-correlation-proposals",
-        action="store_true",
-        help="Evaluate every retained pair categorically with GPT-OSS.",
-    )
-    parser.add_argument("--correlation-batch-size", type=int, default=32)
     parser.add_argument("--skip-schema-validation", action="store_true")
     parser.add_argument("--output", required=True, type=Path)
     return parser
@@ -62,10 +56,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.capacity < 1 or args.graph_read_budget < 0:
-        raise ValueError("capacity must be positive and graph-read budget non-negative")
-    if args.gpt_correlation_proposals and args.keys_py is None:
-        raise ValueError("--gpt-correlation-proposals requires --keys-py")
+    if args.capacity < 1 or args.graph_read_budget < 0 or args.max_trajectory_pairs < 1:
+        raise ValueError(
+            "capacity and max-trajectory-pairs must be positive; "
+            "graph-read budget must be non-negative"
+        )
     if args.mode == "gpt-oss-120b" and args.keys_py is None:
         raise ValueError("--mode gpt-oss-120b requires --keys-py")
 
@@ -84,18 +79,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.keys_py is not None
         else None
     )
-    correlation_evaluator = (
-        GPTOSSCategoricalCorrelationEvaluator(
-            client,
-            batch_size=args.correlation_batch_size,
-        )
-        if args.gpt_correlation_proposals and client is not None
-        else None
-    )
-    graph = build_retained_graph_from_legacy_overlay(
+    graph = build_l1_l15_navigation_graph(
         loaded.overlay,
         capacity=args.capacity,
-        correlation_evaluator=correlation_evaluator,
     )
     belief = CursorBeliefState(
         belief_id="belief:initial",
@@ -114,6 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             "node_count": len(graph.nodes),
             "temporal_edge_count": len(graph.temporal_edges),
             "correlation_edge_count": len(graph.correlation_edges),
+            "verified_relation_count": len(graph.verified_relations),
             "metadata": graph.metadata,
         },
         "model_input": graph_input_to_categorical_payload(graph_input),
@@ -124,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
             GPTOSSFullGraphWorldModel(client),
             GPTOSSFullGraphPreferenceModel(client),
             horizon=args.horizon,
+            max_trajectory_pairs=args.max_trajectory_pairs,
         ).plan(belief, graph)
         result["plan"] = _jsonable(decision)
         result["model_response_audits"] = list(client.response_audits)

@@ -13,7 +13,7 @@ Detailed formulations: [English](problem-formulation-en.html) ·
 
 ```text
 question-independent L1/L1.5 evidence memory
-        ↓ retrieve a bounded candidate set
+        ↓ expose the retained graph and cursor-local legal hops
 current latent belief z_t + grounded evidence read so far
         ↓
 IWM imagines each legal reasoning action
@@ -36,8 +36,8 @@ infrastructure, but not the main novelty.
 
 | Component | Responsibility | It must not do |
 |---|---|---|
-| L1/L1.5 evidence memory | Store question-independent observations, events, time spans, provenance, typed candidate relations, and embedding references | Read the future question/answer while building the graph; turn unmatched candidates into negatives |
-| Candidate retrieval | Use embedding/structure to expose a bounded set of legal reasoning hops | Select the final winner by a hand-written score or stable ordering |
+| L1/L1.5 evidence memory | Store question-independent semantic observations, temporal edges, soft navigation correlations, provenance, and embedding references | Read the future question/answer; present similarity as probability or verified fact |
+| Legal-action compiler | Expose executable root, temporal, correlation, backtrack, and terminal actions | Rank actions by a hand-written score or silently apply Top-K |
 | Latent belief state | Summarize acquired evidence, competing interpretations, missing links, contradictions, answerability, and budget | Be confused with the explicit L1.5 graph or imagined evidence |
 | Implicit world model | Predict categorical observation and belief-delta descriptors for actions; imagine one- or two-hop futures | Emit reward, utility, Q-value, probability, confidence, or evidence used directly in the answer |
 | Preference planner | Compare complete candidate trajectories ordinally and execute the first hop of a uniquely preferred trajectory | Sum model-generated scores; silently break ties by candidate order |
@@ -49,6 +49,32 @@ The default paper method **requires the shared L1/L1.5 evidence graph for
 navigation**, while its question-conditioned reasoning belief and IWM state are
 latent rather than an explicit graph posterior. GTSAM remains available through
 explicit backup/baseline modes; it is not silently enabled.
+
+### Architecture invariant: correlation is not preference
+
+L1.5 correlation and planner preference answer different questions and must not
+be conflated:
+
+```text
+L1.5 correlation: which L1 node pairs have a supported navigable connection?
+IWM prediction:   what categorical belief effect may follow a legal graph hop?
+Planner choice:   which legal hop should be executed next under those predictions?
+```
+
+L1.5 is therefore a question-independent node-to-node correlation overlay. It
+may store measured embedding similarity, directional affinity, calibration,
+and provenance because these are graph-construction features. The prohibition
+on model-produced numbers applies to invented reward, utility, Q-value,
+probability, or confidence used to choose an action; it does not prohibit
+measured graph features. Similarity or affinity still cannot be presented as a
+verified identity/state/causal fact or directly determine the winning action.
+
+The legal-action compiler reads the fixed topology and exposes only executable
+root, cursor-incident temporal/correlation, backtrack, and terminal hops. It
+does not ask the IWM or planner to discover correlations. Conversely, the IWM
+and planner may consume correlation edges as navigation context but may not
+create, verify, or reclassify those edges during action selection. Optional
+strict identity/state/causal relations remain a separately admitted layer.
 
 ### 2.1 What the L1 graph stores
 
@@ -73,37 +99,47 @@ attribute, value, polarity, time span, and evidence rather than merely say that
 something changed. Subtitle, OCR, direct audio, and visual descriptions remain
 separate modalities.
 
-L1 also stores composition structure over the same node IDs:
+The main L1 navigation structure over these nodes is the deterministic temporal
+backbone:
 
 ```text
-temporal_next, derived_from, entity_mention, state_of, located_in
+temporal_next / before / overlaps / during
 ```
 
-Native Video_Skills relations such as `same_entity`, `same_object`,
+Native composition links (`derived_from`, `entity_mention`, `state_of`,
+`located_in`) remain provenance/audit structure, not L1.5 correlation.
+Video_Skills labels such as `same_entity`, `same_object`,
 `reappears`, `before_after`, `state_change`, `supports_observation`,
 `contrasts_observation`, `causal_hint`, and `social_cue` are retained with
-provenance, but unverified semantic labels are downgraded to candidates. In
-particular, `state_change` is not automatically an accepted state transition,
-and `causal_hint` is not causality.
+provenance only in the optional strict-relation path. They do not automatically
+become navigation edges. In particular, `state_change` is not an accepted state
+transition, and `causal_hint` is not causality.
 
 ### 2.2 What the L1.5 overlay adds
 
-L1.5 does not duplicate the evidence nodes. It connects the existing L1 node
-IDs with question-independent temporal and cross-node navigation correlations:
+L1.5 does not duplicate evidence nodes or try to name every relation. It adds
+question-independent, embedding-derived **soft nonlocal navigation
+correlations** over existing L1 node IDs. An edge records:
 
 ```text
-semantic/entity recurrence
-state continuity or candidate state transition
-transition support, response, and missing-bridge candidates
-contradiction candidates
-sparse verified explains/enables witnesses
+src / dst
+endpoint cosine similarity
+src→dst and dst→src navigation affinity
+embedding model/checksum provenance
+semantic or semantic_recurrence channel
 ```
 
-Each correlation edge records `edge_id`, `src`, `dst`, relation type,
-`candidate|verified|rejected|inconclusive` status, evidence refs, candidate
-sources, mention/state alignment, verifier result, and provenance. Embedding
-similarity may propose a pair but does not prove its relation. Candidate edges
-may create inspect/verify actions; only admitted relations constrain belief.
+All non-temporal pairs are scored. Adjacent near-duplicate semantic nodes are
+coalesced during L1 consolidation; remaining near-identical embeddings form a
+time-ordered recurrence chain rather than a clique. Correlations between
+semantic equivalence classes use standardized sparsemax, not fixed Top-K.
+Directional affinity controls hop legality. Similarity and affinity are learned
+representation features, not calibrated probability, confidence, identity,
+state transition, support, or causality.
+
+Strict categorical identity/state/causal relations are a separate optional
+layer. Only independently verified relations enter it; categorical candidates
+never become generic navigation edges merely because a verifier proposed them.
 
 L1/L1.5 never stores the correct answer, hidden clue identity, question-
 conditioned belief, IWM imagined observation, predicted belief delta, planner
@@ -114,15 +150,14 @@ belong to hidden evaluation, latent belief, or the executed L2 audit trace.
 
 An action is a reasoning/evidence-acquisition hop, not a physical robot action:
 
-- semantic evidence lookup;
+- initial read of one visible retained semantic node;
 - temporal before/after expansion;
-- same-entity or state-continuity check;
-- candidate-cause/effect or missing-bridge lookup;
-- counterevidence or relation verification;
+- follow a positive-direction soft L1.5 correlation;
+- backtrack to an acquired node without rereading it;
 - stop/answer/abstain.
 
 The main method uses a **single active current-node cursor**. Ordinary move,
-follow, inspect, and verify actions always use that cursor as their source; all
+follow actions always use that cursor as their source; all
 previously acquired nodes remain in belief/frontier history but are not expanded
 simultaneously. This avoids the invalid `all frontier sources × all targets`
 action product. A recorded `BACKTRACK`/`SHIFT_FOCUS` operation can return the
@@ -133,8 +168,7 @@ or ranked by the IWM:
 
 ```text
 current-node temporal outgoing edges
-+ current-node correlation inspect/follow/verify edges
-+ semantic probes from the cursor to every visible retained node
++ current-node positive-direction soft-correlation edges
 + backtrack to acquired frontier-history nodes
 + stop / answer / abstain
 ```
@@ -143,7 +177,7 @@ At the initial step, a virtual query root provides `START_AT(node)` for every
 visible retained node. Because L1 memory has fixed capacity, this action set is
 bounded. The main arm does not apply embedding Top-K: embedding is an action
 feature/key, not a gate. Structural legality may remove hidden, out-of-horizon,
-rejected, provenance-free, non-executable, or over-budget actions; it may not
+zero-affinity, non-executable, acquired, or over-budget actions; it may not
 remove actions for low question relevance. Top-K remains an explicit retrieval
 baseline only.
 
@@ -262,14 +296,21 @@ Implemented:
 - pluggable representation-surprise L1 windowing and a materialized fixed-
   capacity consolidation path with lineage, embedding invalidation, relation
   rewiring, and retained temporal-chain rebuilding;
-- categorical retained-node L1.5 correlations with all-pair evaluation and
-  `candidate|verified|rejected|inconclusive` admission states;
+- soft Qwen-embedding L1.5 navigation correlations with all non-temporal pairs
+  scored, near-duplicate semantic equivalence classes, recurrence chains instead
+  of cliques, and class-level standardized sparsemax without fixed Top-K;
+- categorical identity/state/causal verification retained as a separate optional
+  strict-relation layer rather than the generic navigation edge definition;
 - a separate `full_graph_iwm` main path with a virtual query root, one active
-  cursor, every visible retained node as a semantic action, no Top-K pruning,
+  cursor, every visible retained node as an initial root action, cursor-local
+  temporal/correlation hops, no Top-K pruning,
   batched horizon-1/2 prediction, and explicit abstention for a non-unique
   partial order;
 - unread-value and imagined-rollout leakage guards: unread nodes expose only
   compact keys/embedding references, and imagined reads never reveal real text;
+- fixed-case CG-Bench compile gate and matched closed-loop arms for full IWM,
+  no-WM, prediction shuffle, frozen WM, immediate-only, and oracle ceiling;
+  hidden clue overlap is evaluator-only and never fed into planner belief;
 - L1/L1.5 overlay adapter, legal graph-read actions, bounded reasoning context,
   horizon-1/2 trajectory expansion, pairwise partial-order planning, real-read
   execution, belief snapshots, and L2-compatible audit traces;
@@ -282,7 +323,9 @@ Implemented:
 - optional Python factor backend and isolated GTSAM correction pilots/backups;
 - CG-Bench v2 with 256 video-disjoint multi-clue cases, 205 videos, 672 GT clue
   transitions, hidden terminal targets, and no fabricated outside-clue negatives;
-- question-independent 12-video L1/L1.5 prefix-smoke worker and frozen hidden
+- question-independent L1/L1.5 prefix-smoke worker with default
+  surprise-adaptive OpenCV smoke boundaries; the current fixed pilot runs the
+  first 8 videos from the 12-video stratified selection, with a frozen hidden
   evaluator for native and embedding Recall@K.
 
 Not yet established:
@@ -293,9 +336,27 @@ Not yet established:
 - a locked, multi-video closed-loop result showing causal dependence on the IWM;
 - production readiness.
 
-The active pipeline is grounding all 672 CG-Bench reads with Qwen-VL, validating
-embeddings/leakage/splits, then running the 12-video question-independent L1/L1.5
-smoke. Runtime artifacts remain data-only and are not committed as results.
+The latest grounding validation has 670/672 successful Qwen-VL reads and two
+failed reads. Eight question-independent CG-Bench smoke graphs and their Qwen
+embedding sidecars are present. Under the repaired L1/L1.5 builder they retain
+15–64 nodes and emit 22–133 soft correlation edges; the former dense climbing
+case is now 15 nodes/22 edges instead of a near-clique. The previous matched
+pilot used the obsolete dense graph fingerprint and comparison budget, so it is
+not evidence about the repaired method. A local repaired 8-video capacity-64
+compile gate now passes graph availability, embedding build, clue retention,
+hidden-key, and unread-value checks.
+
+The new frozen-correlation audit writes one decomposed row for every retained
+node pair, records source/retained L1 fingerprints, makes zero per-pair LLM
+calls, and confirms that all eight source L1 overlays remain checksum-identical.
+For the six consecutive clue bridges inside the 120-second prefix, direct graph
+coverage is 5/6 and at-most-eight-hop coverage is 6/6; the missing direct edge
+is replaced by a three-hop sparse path. These six cases are train-only. The
+selected test clues are outside the prefix and no trusted negative edge labels
+exist, so held-out coverage and admitted-edge precision are still unavailable;
+the positive-only diagnostic threshold is not applied. The next runtime step is
+a matched IWM pilot on the frozen graph fingerprint. Runtime artifacts remain
+data-only and are not committed as scientific results.
 
 ## 9. Directory map
 
@@ -325,14 +386,22 @@ See component documentation:
 
 ## 10. Immediate next gate
 
-Do not begin model training until the current data-only chain passes:
+The repaired-graph two-video horizon-two diagnostic has now completed the fixed
+`IWM / no-WM / shuffled-IWM / immediate-only / oracle` protocol and a strict
+cache-only replay. It applies no heuristic Top-K and reports metrics separately.
+The result is negative: IWM recall equals no-WM, while shuffled-IWM is higher;
+action trajectories do diverge, so WM dependence exists but is not useful yet.
 
-1. 672/672 grounded-read completion and schema validation;
-2. embedding shape/checksum, hidden-answer leakage, and video-disjoint split checks;
-3. 12-video frozen-graph native and embedding Recall@4/8/16/32;
-4. failure-slice inspection for empty graphs, missed temporal segments, visual
-   grounding failures, and clues outside the 120-second smoke horizon;
-5. a decision to scale L1.5 construction or first repair candidate generation.
+Do not begin model training until the remaining data-only chain is complete:
 
-Only after candidate recall is adequate should the matched-budget closed-loop
-IWM interventions be treated as meaningful.
+1. finish the question-independent full-video validation/test L1/L1.5 builds;
+2. freeze their graph fingerprints and compile the held-out gate;
+3. run the same five arms at both the two-read stress budget and a larger matched
+   budget justified by the oracle clue count;
+4. report transition prediction/realization confusion, action divergence,
+   coverage, read efficiency, abstention and latency separately;
+5. turn the observed false `support/advanced` and large-tie slices into grounded
+   training/evaluation examples, without adding a question-conditioned Top-K.
+
+Only after held-out candidate recall is adequate and shuffled-IWM is worse than
+the intact IWM should the closed-loop interventions be treated as method evidence.

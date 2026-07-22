@@ -1,0 +1,160 @@
+{
+  "schema_version": "steam-cgbench-frozen-l15-correlation-evaluation/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "graph_video_count": 2,
+  "maximum_evaluated_path_hops": 8,
+  "bridge_metrics": {
+    "eligible": 1,
+    "covered": 1,
+    "direct_covered": 1,
+    "multi_hop_only": 0,
+    "shortest_path_hop_sum": 1,
+    "soft_correlation": 1,
+    "temporal": 0,
+    "same_node": 0,
+    "missing_l1_overlap": 2,
+    "out_of_horizon": 0,
+    "coverage": 1.0,
+    "direct_coverage": 1.0,
+    "multi_hop_only_coverage": 0.0,
+    "mean_shortest_path_hops": 1.0,
+    "soft_correlation_coverage": 1.0,
+    "temporal_coverage": 0.0,
+    "same_node_coverage": 0.0
+  },
+  "bridge_metrics_by_split": {
+    "test": {
+      "eligible": 1,
+      "covered": 1,
+      "direct_covered": 1,
+      "multi_hop_only": 0,
+      "shortest_path_hop_sum": 1,
+      "soft_correlation": 1,
+      "temporal": 0,
+      "same_node": 0,
+      "missing_l1_overlap": 1,
+      "out_of_horizon": 0,
+      "coverage": 1.0,
+      "direct_coverage": 1.0,
+      "multi_hop_only_coverage": 0.0,
+      "mean_shortest_path_hops": 1.0,
+      "soft_correlation_coverage": 1.0,
+      "temporal_coverage": 0.0,
+      "same_node_coverage": 0.0
+    },
+    "validation": {
+      "eligible": 0,
+      "covered": 0,
+      "direct_covered": 0,
+      "multi_hop_only": 0,
+      "shortest_path_hop_sum": 0,
+      "soft_correlation": 0,
+      "temporal": 0,
+      "same_node": 0,
+      "missing_l1_overlap": 1,
+      "out_of_horizon": 0,
+      "coverage": null,
+      "direct_coverage": null,
+      "multi_hop_only_coverage": null,
+      "mean_shortest_path_hops": null,
+      "soft_correlation_coverage": null,
+      "temporal_coverage": null,
+      "same_node_coverage": null
+    }
+  },
+  "graph_structure": {
+    "minimum_node_count": 64,
+    "maximum_node_count": 64,
+    "minimum_edge_count": 94,
+    "maximum_edge_count": 104,
+    "maximum_degree": 9,
+    "mean_degree": 3.09375
+  },
+  "calibration": {
+    "schema_version": "steam-soft-l1.5-calibration/v0.1",
+    "status": "unavailable_no_train_positive_bridges_within_horizon",
+    "application_status": "not_applied"
+  },
+  "admitted_edge_precision": null,
+  "precision_status": "unavailable_no_trusted_negative_labels",
+  "unmatched_pairs_treated_as_negative": false,
+  "gt_used_for_graph_construction": false,
+  "gt_joined_after_graph_freeze_for_evaluation": true,
+  "top_k_applied": false,
+  "training_performed": false,
+  "compile": {
+    "schema_version": "steam-cgbench-frozen-l15-correlation-compile/v0.1",
+    "dataset_id": "cgbench-gt-navigation-pilot-v2",
+    "video_count": 2,
+    "memory_capacity": 64,
+    "admission_policy": {
+      "policy_id": "positive-standardized-sparsemax/v1",
+      "minimum_semantic_similarity": 0.0,
+      "minimum_directional_affinity": 0.0,
+      "allowed_channels": [
+        "semantic",
+        "semantic_recurrence"
+      ],
+      "calibration_source": "structural_default_no_labeled_negatives",
+      "calibration_split": null,
+      "frozen": true,
+      "question_independent": true,
+      "top_k_applied": false,
+      "similarity_is_verified_fact": false
+    },
+    "admission_policy_fingerprint": "cf24b6b590d5e8c67eb3cca01ef92c834566982c046fd6601cbc562c10a5d05f",
+    "l1_source_artifacts_unchanged": true,
+    "question_or_gt_used_for_graph_building": false,
+    "per_pair_llm_calls": 0,
+    "top_k_applied": false,
+    "samples": [
+      {
+        "video_id": "BV16A4m1F7Jc",
+        "split": "test",
+        "source_overlay_sha256": "12f87d07d7790882d0d3e3a2f298519873aa8f2f8630ce74bb38fc44563d5f03",
+        "source_l1_fingerprint": "eede71233dda58098c8ad2311c455db222bc40daac5449a2367ff5927917b9fc",
+        "retained_l1_fingerprint": "abf86eeffc7faa817cc67d3b5bffdcb226936cbc7d51c6ad3ae6ba1d344958f8",
+        "retained_node_count": 64,
+        "temporal_edge_count": 63,
+        "correlation_edge_count": 104,
+        "maximum_degree": 9,
+        "edge_density": 0.05325140809011777,
+        "pair_audit_row_count": 2016,
+        "multichannel_pair_audit_path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/BV16A4m1F7Jc/l1_l15_multichannel_pair_audit.json",
+        "multichannel_signal_counts": {
+          "semantic": 100,
+          "semantic_recurrence": 4
+        },
+        "graph_path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/BV16A4m1F7Jc/l1_l15_navigation_graph.json",
+        "graph_sha256": "3750e48659ab695cd5c27ee37e0e72851c1121761e1a9ee119f82e44b504fa82",
+        "pair_audit_path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/BV16A4m1F7Jc/l1_l15_correlation_pair_audit.json",
+        "pair_audit_sha256": "e8ddd221f72269ef43686c8f567e2c749aa24345a01d0a28267dd70baf958359",
+        "source_l1_unchanged": true
+      },
+      {
+        "video_id": "BV1zJ41187BP",
+        "split": "validation",
+        "source_overlay_sha256": "872a4b03bfad283144c130b328a807e2b15879eedb43f4a902c7f064b33ee939",
+        "source_l1_fingerprint": "748351fac0efb317264cc380b44440acc92f951e01c4717f52bbb7f66a95fe69",
+        "retained_l1_fingerprint": "a86413cb9707c2468d94f19b277e2659cd751ec77a2c259dcc2f1e5e857fc054",
+        "retained_node_count": 64,
+        "temporal_edge_count": 63,
+        "correlation_edge_count": 94,
+        "maximum_degree": 7,
+        "edge_density": 0.048131080389144903,
+        "pair_audit_row_count": 2016,
+        "multichannel_pair_audit_path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/BV1zJ41187BP/l1_l15_multichannel_pair_audit.json",
+        "multichannel_signal_counts": {
+          "semantic": 89,
+          "semantic_recurrence": 5
+        },
+        "graph_path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/BV1zJ41187BP/l1_l15_navigation_graph.json",
+        "graph_sha256": "3c912f0d94faae51ca99963f72fd86135e38b41908279a5a73d89355cdbea2d8",
+        "pair_audit_path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/BV1zJ41187BP/l1_l15_correlation_pair_audit.json",
+        "pair_audit_sha256": "4715b0f3a6b40bcf803b9a186e077730595e2e037859b7ad9467dd46e844a34d",
+        "source_l1_unchanged": true
+      }
+    ],
+    "training_performed": false
+  }
+}

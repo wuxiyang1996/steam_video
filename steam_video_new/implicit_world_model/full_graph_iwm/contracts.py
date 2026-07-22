@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, Protocol, Sequence
 
 from memory_graph.correlation_overlay import CorrelationEdge
+from memory_graph.multichannel_correlation import CandidateNavigationEdge
+from memory_graph.soft_correlation import SoftNavigationCorrelation
 from memory_graph.types import MemoryNode
 
 
@@ -15,9 +17,6 @@ class ActionKind(str, Enum):
     TEMPORAL_FORWARD = "temporal_forward"
     TEMPORAL_BACKWARD = "temporal_backward"
     FOLLOW_CORRELATION = "follow_correlation"
-    INSPECT_CORRELATION = "inspect_correlation"
-    VERIFY_CORRELATION = "verify_correlation"
-    SEMANTIC_PROBE = "semantic_probe"
     BACKTRACK = "backtrack"
     STOP = "stop"
     ANSWER = "answer"
@@ -72,6 +71,7 @@ class NodeKey:
     node_type: str
     start_s: float
     end_s: float
+    semantic_key: str
     embedding_ref: dict[str, Any] | None
     structural_tags: tuple[str, ...] = ()
 
@@ -95,8 +95,10 @@ class RetainedEvidenceGraph:
     graph_id: str
     nodes: tuple[MemoryNode, ...]
     temporal_edges: tuple[TemporalNavigationEdge, ...]
-    correlation_edges: tuple[CorrelationEdge, ...]
+    correlation_edges: tuple[SoftNavigationCorrelation, ...]
     capacity: int
+    candidate_edges: tuple[CandidateNavigationEdge, ...] = ()
+    verified_relations: tuple[CorrelationEdge, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -116,10 +118,33 @@ class RetainedEvidenceGraph:
             for edge in self.correlation_edges
         ):
             raise ValueError("retained graph contains an orphan correlation edge")
+        if any(
+            edge.src not in known or edge.dst not in known
+            for edge in self.candidate_edges
+        ):
+            raise ValueError("retained graph contains an orphan candidate edge")
+        if any(
+            edge.src not in known or edge.dst not in known
+            for edge in self.verified_relations
+        ):
+            raise ValueError("retained graph contains an orphan verified relation")
 
     @property
     def node_by_id(self) -> dict[str, MemoryNode]:
         return {node.node_id: node for node in self.nodes}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": "steam-l1-l1.5-navigation-graph/v0.1",
+            "graph_id": self.graph_id,
+            "capacity": self.capacity,
+            "nodes": [node.to_dict() for node in self.nodes],
+            "temporal_edges": [asdict(edge) for edge in self.temporal_edges],
+            "correlation_edges": [edge.to_dict() for edge in self.correlation_edges],
+            "candidate_edges": [edge.to_dict() for edge in self.candidate_edges],
+            "verified_relations": [edge.to_dict() for edge in self.verified_relations],
+            "metadata": self.metadata,
+        }
 
 
 @dataclass(frozen=True)
@@ -171,9 +196,6 @@ class LegalGraphAction:
                 ActionKind.TEMPORAL_FORWARD,
                 ActionKind.TEMPORAL_BACKWARD,
                 ActionKind.FOLLOW_CORRELATION,
-                ActionKind.INSPECT_CORRELATION,
-                ActionKind.VERIFY_CORRELATION,
-                ActionKind.SEMANTIC_PROBE,
                 ActionKind.BACKTRACK,
             }
             and self.target_id is None
@@ -198,7 +220,9 @@ class IWMGraphInput:
     current_node_id: str | None
     nodes: tuple[NodeModelView, ...]
     temporal_edges: tuple[TemporalNavigationEdge, ...]
-    correlation_edges: tuple[CorrelationEdge, ...]
+    correlation_edges: tuple[SoftNavigationCorrelation, ...]
+    candidate_edges: tuple[CandidateNavigationEdge, ...]
+    verified_relations: tuple[CorrelationEdge, ...]
     legal_actions: tuple[LegalGraphAction, ...]
     acquired_evidence: tuple[str, ...]
     missing_roles: tuple[str, ...]
@@ -210,6 +234,7 @@ class IWMGraphInput:
 class PredictedObservation:
     target_id: str | None
     outcome: EvidenceOutcome
+    descriptor: tuple[str, ...] = ()
     predicted_only: bool = True
 
 

@@ -1,0 +1,687 @@
+{
+  "schema_version": "steam-transition-review/v0.1",
+  "packet_id": "targeted-transition-review-v2",
+  "labels_source": "model_provisional",
+  "annotator": "GPT-5.6 visual-grounding audit",
+  "protocol": "Categorical review of public descriptions and sampled video frames only; no stored verifier outcome, target label, reward, probability, utility, or terminal QA answer was used.",
+  "decisions": [
+    {
+      "item_id": "transition-review:5c0502eb9708ba7b5c616148",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00030",
+        "event:atomic:video_skills_l1:00038",
+        "event:atomic:video_skills_l1:00046"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:ff5bc44153612e45e4326d0d",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:e23c7eb323c79168444979b3",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:c51f5dbb0d9cd56f16176367",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.state:a115c85b8e",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0001",
+        "memory:evidence.state:46adb1a343",
+        "memory:evidence.state:eec327078f",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:451fa33de9f8d4141932d461",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:evidence.event:b8cc6ee186",
+        "memory:evidence.event:fc4962e794"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:ece6cff10fafdf8e170d4241",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.observation:118dcec06c",
+        "memory:obs:fine:clip:TNYeYwYiAag:fine:0001",
+        "memory:evidence.observation:7ff6fb9a47",
+        "memory:obs:fine:clip:TNYeYwYiAag:fine:0002",
+        "memory:evidence.state:e1c18bb4fb"
+      ],
+      "rationale": "The public descriptions are visually grounded and the retrieval is relevant, but the evidence neither establishes nor directly refutes the proposed relation. Preserving the categorical uncertainty is the appropriate executed transition."
+    },
+    {
+      "item_id": "transition-review:9727e1e90a7873954f9d12bc",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:39fac208aea2ebd50e9b7740",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_005",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:c04d6dbac6b7c2cf32bbaddb",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:48b7d4c35b2bd8a1709ce7b2",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:b8b38c0028c08473d4213380",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00009",
+        "event:atomic:video_skills_l1:00019",
+        "event:atomic:video_skills_l1:00028"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:07d0737a3a6291d80c00d129",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00030",
+        "event:atomic:video_skills_l1:00038",
+        "event:atomic:video_skills_l1:00046"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:7de143a0542954ce8fb0c743",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:8602420e533798d02d77846e",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The public descriptions are visually grounded and the retrieval is relevant, but the evidence neither establishes nor directly refutes the proposed relation. Preserving the categorical uncertainty is the appropriate executed transition."
+    },
+    {
+      "item_id": "transition-review:886bf2a38d76710b88bd7437",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.event:627728a920",
+        "memory:evidence.event:8305f08eb9"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:a7866de75313eb4a74ecf365",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:evidence.event:a52f1497ed",
+        "memory:evidence.event:ce130f7257"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:c4b89ecc6ec46faeb050fe04",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00013",
+        "event:atomic:video_skills_l1:00021",
+        "event:atomic:video_skills_l1:00081"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:41747a4fb247f132b7c34909",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:d7590011ebda6c4d0518ae3f",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:4c1bb885ed1ba81e7dd92ec7",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:20269fc5bafcb1ff425936d3",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:f0e756d34fc8e23ffc860cc4",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:7b143dc9a547a0e43e056053",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:27492f2f6e45cbba4d70f229",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:05e3444ad36cdaea41f2dc91",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:evidence.event:9e903d4dc4",
+        "memory:evidence.event:78d4a97fd1"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:8b7b6917646b9381e40ce4ed",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:8c7388f2c40fe11074bd7ec2",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00087",
+        "event:atomic:video_skills_l1:00094",
+        "event:atomic:video_skills_l1:00101"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:c7a8a5e5a683d69b3bd19426",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:fe4b727322a4ebb348b75fe6",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003",
+        "memory:vh_seg_004",
+        "memory:vh_seg_005"
+      ],
+      "rationale": "The public descriptions are visually grounded and the retrieval is relevant, but the evidence neither establishes nor directly refutes the proposed relation. Preserving the categorical uncertainty is the appropriate executed transition."
+    },
+    {
+      "item_id": "transition-review:37b656cf93583982705e645e",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00030",
+        "event:atomic:video_skills_l1:00038",
+        "event:atomic:video_skills_l1:00046"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:c45e314d252a3a9b744068c2",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002",
+        "memory:vh_seg_003",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:89508211fbaedeb56c0c8646",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:676ccd7a10e41beeb8c9eb28",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "rejects",
+      "evidence_refs": [
+        "memory:evidence.event:8305f08eb9"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:007868f845ad6770b6065af4",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:b5698c804b39badfd5cbac50",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.observation:a79fdb8fd3",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0001",
+        "memory:evidence.observation:86a2adfc64",
+        "memory:evidence.state:0b5886ddd0",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:c6e2d4d4d1bb52844ef388ab",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:9a135cca245d6ee52cac54b1",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:8d6f640002ea1943a739e824",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:evidence.event:fc4962e794",
+        "memory:evidence.event:b8cc6ee186"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:f11fc7c284d0d2eda4efa560",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:a85c94ae8f4ddf2ea4b6823e",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:6c5836fc15025727fb6bde40",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:df1f995b4039a019bdf576ef",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "memory:evidence.event:9e903d4dc4",
+        "memory:evidence.event:78d4a97fd1"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:f6e98cb1aae8873e48a13190",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "rejects",
+      "evidence_refs": [
+        "memory:evidence.event:8305f08eb9"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:55ec1c1f475d75424b22a873",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00013",
+        "event:atomic:video_skills_l1:00021",
+        "event:atomic:video_skills_l1:00081"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:adab69ab4bd9d1a19819c5a8",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:2761dcddc2738da6e16476be",
+      "review_decision": "reject",
+      "observation_validity": "invalid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:8d90a45156d5ec77a80a8cd1",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:0a201c9e9f3a93ef6717dabd",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:evidence.event:18e64971f3",
+        "memory:evidence.event:34542f829e"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:99a110715c7e47bc29296719",
+      "review_decision": "reject",
+      "observation_validity": "valid",
+      "action_execution_validity": "invalid",
+      "belief_delta_validity": "invalid",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:evidence.event:166e1dee94",
+        "memory:evidence.event:742efe558b"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:34a3c80073ce4f7fd827409c",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "supports",
+      "evidence_refs": [
+        "memory:evidence.event:fc4962e794",
+        "memory:evidence.event:b8cc6ee186"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    },
+    {
+      "item_id": "transition-review:ed28b418f8d705f15714b52d",
+      "review_decision": "reject",
+      "observation_validity": "inconclusive",
+      "action_execution_validity": "inconclusive",
+      "belief_delta_validity": "inconclusive",
+      "relation_outcome": "inconclusive",
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:a5e74074d4d940e16cfb8f53",
+      "review_decision": "accept",
+      "observation_validity": "valid",
+      "action_execution_validity": "valid",
+      "belief_delta_validity": "valid",
+      "relation_outcome": "not_applicable",
+      "evidence_refs": [
+        "event:atomic:video_skills_l1:00030",
+        "event:atomic:video_skills_l1:00038",
+        "event:atomic:video_skills_l1:00046"
+      ],
+      "rationale": "The public video windows ground the returned observations and provide the visual continuity or temporal evidence needed for this reasoning action. No numeric score is required; the categorical evidence is sufficient for the stated update."
+    }
+  ]
+}

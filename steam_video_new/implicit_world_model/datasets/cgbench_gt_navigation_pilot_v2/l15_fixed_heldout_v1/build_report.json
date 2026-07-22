@@ -1,0 +1,63 @@
+{
+  "schema_version": "steam-cgbench-question-independent-l15-build/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "status": "completed",
+  "requested_video_count": 2,
+  "completed_video_count": 2,
+  "error_count": 0,
+  "samples": [
+    {
+      "video_id": "BV16A4m1F7Jc",
+      "status": "completed",
+      "l1_observation_count": 377,
+      "atomic_event_count": 377,
+      "relation_count": 1874,
+      "l1_windowing": {
+        "mode": "surprise-opencv-smoke",
+        "provider": "selectstream:opencv_hsv_luminance_fallback/v0.1",
+        "question_independent": true,
+        "formal_learned_representation": false
+      }
+    },
+    {
+      "video_id": "BV1zJ41187BP",
+      "status": "completed",
+      "l1_observation_count": 535,
+      "atomic_event_count": 535,
+      "relation_count": 2664,
+      "l1_windowing": {
+        "mode": "surprise-opencv-smoke",
+        "provider": "selectstream:opencv_hsv_luminance_fallback/v0.1",
+        "question_independent": true,
+        "formal_learned_representation": false
+      }
+    }
+  ],
+  "errors": [],
+  "parallel_extraction": {
+    "num_shards": 2,
+    "assignment": "ordered_round_robin_after_video_limit",
+    "shard_reports": [
+      {
+        "shard_index": 0,
+        "path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/shard_reports/build_report.shard_0_of_2.json",
+        "sha256": "c822d3027202366e49fbb822169a7c2c634eac8589791c2624bbff5a91d2acab",
+        "video_ids": [
+          "BV16A4m1F7Jc"
+        ]
+      },
+      {
+        "shard_index": 1,
+        "path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_heldout_v1/shard_reports/build_report.shard_1_of_2.json",
+        "sha256": "14fece3b07329e88058937fd282f4db09998ba205f31b8b00e311c871f5cb6bf",
+        "video_ids": [
+          "BV1zJ41187BP"
+        ]
+      }
+    ]
+  },
+  "question_or_gt_used_for_graph_building": false,
+  "model_numeric_confidence_requested": false,
+  "model_numeric_confidence_rejected": true,
+  "training_performed": false
+}
