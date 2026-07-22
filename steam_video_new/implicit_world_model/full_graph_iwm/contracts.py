@@ -158,7 +158,9 @@ class CursorBeliefState:
     accepted_relations: tuple[str, ...] = ()
     rejected_relations: tuple[str, ...] = ()
     unresolved_relations: tuple[str, ...] = ()
+    required_roles: tuple[str, ...] = ()
     missing_roles: tuple[str, ...] = ()
+    grounded_role_evidence: tuple[tuple[str, str], ...] = ()
     contradictions: tuple[str, ...] = ()
     answerability: AnswerabilityState = AnswerabilityState.NOT_READY
     remaining_reads: int = 8
@@ -174,6 +176,19 @@ class CursorBeliefState:
             raise ValueError("current cursor must point to acquired evidence")
         if not set(self.imagined_evidence).issubset(self.acquired_evidence):
             raise ValueError("imagined evidence must be a subset of acquired addresses")
+        if len(self.required_roles) != len(set(self.required_roles)):
+            raise ValueError("required roles must be unique")
+        if not set(self.missing_roles).issubset(self.required_roles or self.missing_roles):
+            raise ValueError("missing roles must belong to required roles")
+        bound_roles: set[str] = set()
+        for role, node_id in self.grounded_role_evidence:
+            if role in bound_roles:
+                raise ValueError("a grounded role may have only one evidence binding")
+            if self.required_roles and role not in self.required_roles:
+                raise ValueError("grounded role must belong to required roles")
+            if node_id not in self.acquired_evidence or node_id in self.imagined_evidence:
+                raise ValueError("grounded role must cite acquired real evidence")
+            bound_roles.add(role)
 
 
 @dataclass(frozen=True)
@@ -228,6 +243,8 @@ class IWMGraphInput:
     missing_roles: tuple[str, ...]
     contradictions: tuple[str, ...]
     answerability: AnswerabilityState
+    required_roles: tuple[str, ...] = ()
+    grounded_role_evidence: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)

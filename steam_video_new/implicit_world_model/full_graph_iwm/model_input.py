@@ -52,6 +52,8 @@ def build_iwm_graph_input(
         missing_roles=belief.missing_roles,
         contradictions=belief.contradictions,
         answerability=belief.answerability,
+        required_roles=belief.required_roles,
+        grounded_role_evidence=belief.grounded_role_evidence,
     )
 
 
@@ -108,7 +110,12 @@ def graph_input_to_categorical_payload(graph_input: IWMGraphInput) -> dict[str, 
         ],
         "belief": {
             "acquired_evidence": list(graph_input.acquired_evidence),
+            "required_roles": list(graph_input.required_roles),
             "missing_roles": list(graph_input.missing_roles),
+            "grounded_role_evidence": [
+                {"role": role, "node_id": node_id}
+                for role, node_id in graph_input.grounded_role_evidence
+            ],
             "contradictions": list(graph_input.contradictions),
             "answerability": graph_input.answerability.value,
         },

@@ -58,7 +58,8 @@ class FullGraphIWMPlanner:
             raise ValueError("max_trajectory_pairs must be positive when supplied")
         self.max_trajectory_pairs = max_trajectory_pairs
         self.setwise_preference_model = setwise_preference_model
-        self.execute_stable_ties = execute_stable_ties
+        self.stable_tie_execution_requested = execute_stable_ties
+        self.execute_stable_ties = False
 
     def plan(
         self,
@@ -122,15 +123,6 @@ class FullGraphIWMPlanner:
             if len(first_hops) == 1:
                 selected = next(iter(first_hops.values()))
                 status = "setwise_selected_unique_preferred_first_hop"
-            elif first_hops and self.execute_stable_ties:
-                ordered_preferred = [
-                    action for action in first_actions if action.action_id in first_hops
-                ]
-                selected = next(
-                    (action for action in ordered_preferred if action.reads_evidence),
-                    ordered_preferred[0],
-                )
-                status = "setwise_selected_stable_tie_break"
             else:
                 selected = next(
                     action for action in first_actions if action.kind is ActionKind.ABSTAIN

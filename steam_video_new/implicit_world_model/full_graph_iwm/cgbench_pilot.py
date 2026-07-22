@@ -511,7 +511,8 @@ def run_gpt_oss_matched_pilot(
             "hidden_clue_feedback_to_planner": False,
             "imagined_belief_used_as_real_belief": False,
             "preference_mode": "setwise_categorical" if setwise_preference else "pairwise_categorical",
-            "stable_tie_execution": execute_stable_ties,
+            "stable_tie_execution_requested": execute_stable_ties,
+            "stable_tie_execution_effective": False,
             "transition_cache": (
                 {
                     "path": str(transition_cache_path.expanduser().resolve()),

@@ -145,8 +145,10 @@ read actions per cursor on average, rather than dozens or hundreds.
   Unread nodes expose a compact semantic key, timestamp/type, and embedding
   reference. A real executor reveals the evidence value only after the hop.
 - Imagined evidence remains predicted-only and never enters persistent belief.
-- A proxy LLM predicts categorical observation descriptors/belief deltas and
-  emits only ordinal pairwise labels or setwise `unique`, `tie`, and
+- The backend binds each observation descriptor exactly to the selected
+  action target's visible semantic key. A proxy LLM predicts only the
+  categorical outcome/belief delta and emits ordinal pairwise labels or
+  setwise `unique`, `tie`, and
   `incomparable` decisions.
   Model-generated reward, utility, probability, confidence, and Q-values are
   rejected.
@@ -155,10 +157,15 @@ read actions per cursor on average, rather than dozens or hundreds.
 - All retained candidates are considered; the main planner does not use an
   embedding Top-K or a hand-written score to select a winner. Pair comparisons
   are request-batched to keep model outputs bounded without sampling pairs.
-- Production mode abstains on a non-unique order. The diagnostic proxy may use
-  a deterministic stable-tie rule, preferring a real evidence read over a
-  cursor-only backtrack; this is logged and is not presented as learned
-  preference. Imagined consequence is never used as final-answer evidence.
+- Every mode abstains on a non-unique order. The legacy
+  `--execute-stable-ties` option is retained only as an audited request flag;
+  it cannot restore construction-order execution. Imagined consequence is
+  never used as final-answer evidence.
+- A real role resolution is persisted as `(role, acquired_node_id)`. It cannot
+  cite imagined evidence. Multi-role questions cannot become answerable from
+  only one real observation, even if the categorical updater over-resolves its
+  first read; readiness requires complete role lineage and at least two real
+  observations.
 - Actions without a real read (`stop`, `answer`, `abstain`, `backtrack`) have
   deterministic `inconclusive + unchanged` dynamics and cannot hallucinate an
   observation.
@@ -234,7 +241,7 @@ For long horizon-two data-gathering runs, use all three persistence layers:
 
 ```bash
 python -m steam_video_new.implicit_world_model.full_graph_iwm.cgbench_pilot \
-  ... --rollout-horizon 2 --setwise-preference --execute-stable-ties \
+  ... --rollout-horizon 2 --setwise-preference \
   --transition-cache /path/to/transitions.json \
   --response-cache /path/to/categorical-responses.json \
   --progress-output /path/to/run.progress.json \
@@ -330,6 +337,68 @@ also predicted `advanced` on all four reads but realized only one advance, and
 predicted `ready` twice while the corrected belief remained `not_ready` both
 times. These categorical false positives, rather than missing numeric score
 calibration, are the first training/data target.
+
+Post-run inspection found three implementation-level confounds in that result:
+
+1. batched model rows could emit an observation descriptor inconsistent with
+   the row's action target;
+2. a setwise tie could be executed by stable compiler order when the diagnostic
+   flag was enabled;
+3. the real-belief updater could mark every question role resolved without
+   retaining which executed observation grounded each role.
+
+The current contract fixes all three. Descriptors are target-bound by the
+backend and invariant to transport batch/order; tied first hops abstain; and
+real belief carries auditable evidence lineage with a multi-observation
+readiness gate. Transition-cache schema `v0.3` invalidates the earlier
+action-descriptor cache. Therefore the table above remains a historical failure
+diagnostic and must not be reused as a post-fix result.
+
+A one-case post-fix safety smoke (`openai/gpt-5-mini`, puppy case, horizon one,
+two-read budget) completed with zero runtime errors. All 34 cached descriptors
+were backend-bound and the raw model response contained no descriptor field.
+The categorical tournament retained two distinct first hops, so the planner
+abstained with zero reads instead of executing compiler order. This confirms the
+integrity fixes, but it is not a navigation improvement: the remaining failure
+is now cleanly isolated to non-unique zero-shot preference. A larger matched
+evaluation should proceed only after the transition/preference model can resolve
+such cases from grounded supervision rather than an order fallback.
+
+The grounded survivor exporter in `survivor_preference_data.py` now separates
+blinded model inputs from post-planning GT labels. On the two fixed development
+videos it produced 44 strict categorical contrasts: one final survivor tie and
+43 exhaustive survivor-versus-grounded counterfactual pairs. Labels are balanced
+between left and right by construction order (22 each), so there is no fixed-side
+shortcut. Two pairs have different grounded relevance but exactly the same
+imagined outcome and belief delta. The other 42 strict contrasts show that exact
+collision is not the only issue: the IWM often over-credits an isolated role
+such as generic signage or vehicle motion without satisfying joint identity and
+temporal requirements.
+
+This isolates four current failure sources:
+
+1. action-conditioned transition descriptors can still be semantically
+   under-differentiated even though their target identity is now correct;
+2. role resolution lacks learned joint prerequisites, especially
+   identity-before-attribute and anchor-before-after-state constraints;
+3. a preference comparator cannot recover distinctions already erased by the
+   imagined transition;
+4. the bounded setwise tournament is complete-coverage but not yet proven
+   permutation/bracket invariant.
+
+The next data gate is therefore transition/preference accuracy on the frozen
+blinded packet plus a tournament permutation audit. It is not a Top-K or
+stable-tie change.
+
+GPT-5-mini was then evaluated on all 44 blinded pairs. It reached 21/44
+(47.7%). The original packet elicited 41 left preferences; after mechanically
+swapping every pair it elicited 42 right preferences. Once mapped back to the
+same semantic orientation, 43/44 predictions were consistent. This rules out a
+simple left-position explanation: the comparator follows the original IWM
+survivor regardless of side. The main error is the survivor's overstated
+transition descriptor, while the preference stage consistently propagates that
+upstream error. Training or replacing only the preference head is therefore not
+the next priority.
 
 Compile and audit frozen L1.5 graphs without calling an LLM:
 

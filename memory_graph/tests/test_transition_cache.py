@@ -155,7 +155,7 @@ def test_persistent_transition_cache_records_then_replays(tmp_path: Path) -> Non
 
     assert recorder_delegate.calls == 1
     assert recorder.entry_count == 1
-    assert recorded[0].observation.descriptor == ("grounded event",)
+    assert recorded[0].observation.descriptor == ("dog becomes wet",)
 
     replay = PersistentTransitionCacheWorldModel(
         _WorldModel(fail=True), cache_path, mode="replay"

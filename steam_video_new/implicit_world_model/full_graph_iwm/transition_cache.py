@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, is_dataclass, replace
 from enum import Enum
 import hashlib
 import json
@@ -25,7 +25,7 @@ from .contracts import (
 from .model_input import graph_input_to_categorical_payload
 
 
-CACHE_SCHEMA = "steam-action-conditioned-transition-cache/v0.2"
+CACHE_SCHEMA = "steam-action-conditioned-transition-cache/v0.3"
 ROLE_CACHE_SCHEMA = "steam-question-role-cache/v0.1"
 RESPONSE_CACHE_SCHEMA = "steam-categorical-response-cache/v0.1"
 
@@ -217,6 +217,7 @@ class PersistentTransitionCacheWorldModel(BatchedCategoricalWorldModel):
                     request = requests[index]
                     if transition.action != request.action:
                         raise ValueError("transition-cache delegate changed the legal action")
+                    transition = _bind_observation_descriptor(transition, request)
                     self._entries[keys[index]] = {
                         "request_audit": _request_audit(request),
                         "transition": _transition_to_dict(transition),
@@ -324,7 +325,11 @@ def _request_payload(request: IWMRequest) -> dict[str, Any]:
             "accepted_relations": list(request.belief.accepted_relations),
             "rejected_relations": list(request.belief.rejected_relations),
             "unresolved_relations": list(request.belief.unresolved_relations),
+            "required_roles": list(request.belief.required_roles),
             "missing_roles": list(request.belief.missing_roles),
+            "grounded_role_evidence": [
+                list(binding) for binding in request.belief.grounded_role_evidence
+            ],
             "contradictions": list(request.belief.contradictions),
             "answerability": request.belief.answerability.value,
             "remaining_reads": request.belief.remaining_reads,
@@ -374,6 +379,13 @@ def _transition_from_dict(
         not isinstance(value, str) for value in descriptor
     ):
         raise ValueError("cached observation descriptor is invalid")
+    expected_descriptor = tuple(
+        view.key.semantic_key
+        for view in request.graph_input.nodes
+        if view.key.node_id == request.action.target_id
+    )
+    if request.action.reads_evidence and tuple(descriptor) != expected_descriptor:
+        raise ValueError("cached observation descriptor is not bound to action target")
     return ImaginedTransition(
         action=request.action,
         observation=PredictedObservation(
@@ -398,6 +410,26 @@ def _transition_from_dict(
                 delta.get("relation_updates"), "relation_updates"
             ),
         ),
+    )
+
+
+def _bind_observation_descriptor(
+    transition: ImaginedTransition,
+    request: IWMRequest,
+) -> ImaginedTransition:
+    if not request.action.reads_evidence:
+        descriptor: tuple[str, ...] = ()
+    else:
+        descriptor = tuple(
+            view.key.semantic_key
+            for view in request.graph_input.nodes
+            if view.key.node_id == request.action.target_id
+        )
+        if len(descriptor) != 1:
+            raise ValueError("action target must bind to exactly one visible node key")
+    return replace(
+        transition,
+        observation=replace(transition.observation, descriptor=descriptor),
     )
 
 

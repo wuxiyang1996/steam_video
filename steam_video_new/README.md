@@ -17,7 +17,7 @@ question-independent L1/L1.5 evidence memory
 current latent belief z_t + grounded evidence read so far
         ↓
 IWM imagines each legal reasoning action
-        ├─ categorical observation descriptor
+        ├─ backend-bound target observation descriptor
         └─ categorical future belief delta
         ↓
 pairwise trajectory preference (no scalar reward)
@@ -39,7 +39,7 @@ infrastructure, but not the main novelty.
 | L1/L1.5 evidence memory | Store question-independent semantic observations, temporal edges, soft navigation correlations, provenance, and embedding references | Read the future question/answer; present similarity as probability or verified fact |
 | Legal-action compiler | Expose executable root, temporal, correlation, backtrack, and terminal actions | Rank actions by a hand-written score or silently apply Top-K |
 | Latent belief state | Summarize acquired evidence, competing interpretations, missing links, contradictions, answerability, and budget | Be confused with the explicit L1.5 graph or imagined evidence |
-| Implicit world model | Predict categorical observation and belief-delta descriptors for actions; imagine one- or two-hop futures | Emit reward, utility, Q-value, probability, confidence, or evidence used directly in the answer |
+| Implicit world model | Predict categorical outcome and belief-delta descriptors for target-bound actions; imagine one- or two-hop futures | Rewrite the selected target identity; emit reward, utility, Q-value, probability, confidence, or evidence used directly in the answer |
 | Preference planner | Compare complete candidate trajectories ordinally and execute the first hop of a uniquely preferred trajectory | Sum model-generated scores; silently break ties by candidate order |
 | Real observation update | Replace imagined consequences with an executed evidence read and update belief | Persist an imagined rollout as fact |
 | GTSAM/factor graph | Optional correction backup, diagnostic baseline, teacher, and visualization for conflicts and persistent belief consistency | Generate actions, rank candidates, replace the IWM, or become required by the main method |
@@ -184,7 +184,8 @@ baseline only.
 For a current belief `z_t` and legal action `a`, the IWM predicts:
 
 ```text
-T(z_t, a) → (predicted observation descriptor, predicted belief delta)
+address(a) → backend-bound target descriptor
+T(z_t, a, address(a)) → (predicted categorical outcome, predicted belief delta)
 Pref(trajectory_left, trajectory_right)
   ∈ {prefer_left, tie, prefer_right, incomparable}
 ```
@@ -223,6 +224,7 @@ has fixed capacity, the main method can consume the complete **retained** graph
 without Top-K truncation. Each step receives:
 
 - the question and compact categorical belief summary;
+- required evidence roles and each real role-to-node provenance binding;
 - the current cursor node's key and full acquired evidence value;
 - every retained node key plus all retained temporal/correlation edges;
 - every legal action compiled from the current cursor, plus short recent-hop history;

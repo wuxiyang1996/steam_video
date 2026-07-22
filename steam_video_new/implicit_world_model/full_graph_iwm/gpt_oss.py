@@ -101,7 +101,12 @@ class GPTOSSRealEvidenceBeliefUpdater:
         payload = {
             "question": belief.question,
             "belief_before": {
+                "required_roles": list(belief.required_roles),
                 "missing_roles": list(belief.missing_roles),
+                "grounded_role_evidence": [
+                    {"role": role, "node_id": node_id}
+                    for role, node_id in belief.grounded_role_evidence
+                ],
                 "contradictions": list(belief.contradictions),
                 "answerability": belief.answerability.value,
             },
@@ -155,6 +160,11 @@ class GPTOSSRealEvidenceBeliefUpdater:
         opened = _strings(result.get("opened_roles"), "opened_roles")
         missing = [role for role in belief.missing_roles if role not in set(resolved)]
         missing.extend(role for role in opened if role not in missing)
+        required = list(belief.required_roles or belief.missing_roles)
+        required.extend(role for role in opened if role not in required)
+        bindings = dict(belief.grounded_role_evidence)
+        for role in resolved:
+            bindings[role] = observation.node_id
         contradiction_change = ContradictionChange(
             str(result.get("contradiction_change") or "")
         )
@@ -165,15 +175,29 @@ class GPTOSSRealEvidenceBeliefUpdater:
             contradictions = tuple(
                 dict.fromkeys((*contradictions, "real_evidence_contradiction"))
             )
-        answerability = (
-            AnswerabilityState.READY
-            if not missing and not contradictions
-            else AnswerabilityState.NOT_READY
-        )
+        cited_nodes = {
+            node_id
+            for node_id in belief.acquired_evidence
+            if node_id not in set(belief.imagined_evidence)
+        }
+        minimum_distinct_evidence = min(2, len(required))
+        lineage_complete = set(required).issubset(bindings)
+        answerability = AnswerabilityState.NOT_READY
+        if (
+            not missing
+            and not contradictions
+            and lineage_complete
+            and len(cited_nodes) >= minimum_distinct_evidence
+        ):
+            answerability = AnswerabilityState.READY
         return replace(
             belief,
             belief_id=f"{belief.belief_id}:real-correction",
+            required_roles=tuple(required),
             missing_roles=tuple(missing),
+            grounded_role_evidence=tuple(
+                (role, bindings[role]) for role in required if role in bindings
+            ),
             contradictions=contradictions,
             answerability=answerability,
         )
@@ -266,9 +290,6 @@ class GPTOSSFullGraphWorldModel(BatchedCategoricalWorldModel):
             "contexts": contexts,
             "allowed_output": {
                 "outcome": [value.value for value in EvidenceOutcome],
-                "observation_descriptor": (
-                    "short categorical strings summarizing the target semantic key; no prose score"
-                ),
                 "progress": [value.value for value in ProgressChange],
                 "answerability_after": [value.value for value in AnswerabilityState],
                 "frontier_change": [value.value for value in FrontierChange],
@@ -283,7 +304,6 @@ class GPTOSSFullGraphWorldModel(BatchedCategoricalWorldModel):
                 "prediction_fields": [
                     "choice",
                     "outcome",
-                    "observation_descriptor",
                     "progress",
                     "answerability_after",
                     "frontier_change",
@@ -293,7 +313,6 @@ class GPTOSSFullGraphWorldModel(BatchedCategoricalWorldModel):
                     "relation_updates",
                 ],
                 "array_fields_even_when_empty": [
-                    "observation_descriptor",
                     "resolved_roles",
                     "opened_roles",
                     "relation_updates",
@@ -314,9 +333,9 @@ class GPTOSSFullGraphWorldModel(BatchedCategoricalWorldModel):
         for attempt in range(2):
             task = (
                 (
-                    "For every legal reasoning action, predict a categorical observation "
-                    "descriptor and categorical future-belief delta. Treat each target's "
-                    "semantic_key as a grounded address summary: use it to predict which "
+                    "For every legal reasoning action, predict a categorical outcome "
+                    "and categorical future-belief delta. Each target's semantic_key is "
+                    "already bound by the backend: use it to predict which "
                     "exact current missing_roles the read may resolve, while keeping the "
                     "observation imagined-only. Distinguish targets when their keys imply "
                     "different evidence roles. Return one JSON object with the sole key "
@@ -849,10 +868,7 @@ def _parse_world_predictions(
                 observation=PredictedObservation(
                     target_id=request.action.target_id,
                     outcome=EvidenceOutcome(str(row.get("outcome") or "inconclusive")),
-                    descriptor=_strings(
-                        row.get("observation_descriptor"),
-                        "observation_descriptor",
-                    ),
+                    descriptor=_target_descriptor(request),
                 ),
                 belief_delta=CategoricalBeliefDelta(
                     progress=ProgressChange(str(row.get("progress") or "unchanged")),
@@ -872,6 +888,22 @@ def _parse_world_predictions(
             )
         )
     return tuple(predictions)
+
+
+def _target_descriptor(request: IWMRequest) -> tuple[str, ...]:
+    """Bind an imagined observation to its action target, never to a model row."""
+
+    target_id = request.action.target_id
+    if target_id is None:
+        return ()
+    matches = tuple(
+        view.key.semantic_key
+        for view in request.graph_input.nodes
+        if view.key.node_id == target_id
+    )
+    if len(matches) != 1:
+        raise ValueError("action target must bind to exactly one visible node key")
+    return matches
 
 
 def _transition_payload(transition: ImaginedTransition) -> dict[str, Any]:

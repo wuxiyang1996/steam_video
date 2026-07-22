@@ -38,6 +38,7 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     GPTOSSCategoricalCorrelationEvaluator,
     GPTOSSFullGraphPreferenceModel,
     GPTOSSFullGraphWorldModel,
+    GPTOSSRealEvidenceBeliefUpdater,
     GPTOSSReactiveGraphPlanner,
     IWMRequest,
     ImaginedTransition,
@@ -68,6 +69,12 @@ from steam_video_new.implicit_world_model.full_graph_iwm.contracts import (
 from steam_video_new.implicit_world_model.full_graph_iwm.model_input import (
     build_iwm_graph_input,
     graph_input_to_categorical_payload,
+)
+from steam_video_new.implicit_world_model.full_graph_iwm.survivor_preference_data import (
+    build_grounded_survivor_preference_packet,
+)
+from steam_video_new.implicit_world_model.full_graph_iwm.survivor_preference_eval import (
+    evaluate_blinded_preferences,
 )
 
 
@@ -648,6 +655,246 @@ def test_gpt_oss_batch_adapter_deduplicates_shared_full_graph_context() -> None:
     assert all("graph" not in row for row in request_payload["requests"])
 
 
+def test_world_descriptors_are_target_bound_across_order_and_batch_size() -> None:
+    graph = _retained_graph()
+    belief = CursorBeliefState("belief:0", "question")
+    actions = GraphActionCompiler().compile(belief, graph)
+    graph_input = build_iwm_graph_input(belief, graph, actions)
+    requests = tuple(
+        IWMRequest(belief=belief, graph_input=graph_input, action=action)
+        for action in actions
+    )
+
+    def predict(batch_size, values):
+        predictions = GPTOSSFullGraphWorldModel(
+            _FakeCategoricalClient(), batch_size=batch_size
+        ).predict_batch(values)
+        return {
+            row.action.action_id: row.observation.descriptor for row in predictions
+        }
+
+    expected = {
+        request.action.action_id: (
+            next(
+                view.key.semantic_key
+                for view in graph_input.nodes
+                if view.key.node_id == request.action.target_id
+            ),
+        )
+        if request.action.reads_evidence
+        else ()
+        for request in requests
+    }
+    assert predict(1, requests) == expected
+    assert predict(48, tuple(reversed(requests))) == expected
+
+
+class _RealBeliefUpdateClient:
+    model = "test-real-belief-updater"
+
+    def __init__(self, responses):
+        self.responses = list(responses)
+
+    def complete_json(self, *, task, payload):
+        del task, payload
+        return self.responses.pop(0)
+
+
+def test_real_belief_requires_evidence_lineage_and_two_observations() -> None:
+    client = _RealBeliefUpdateClient(
+        [
+            {
+                "resolved_roles": ["anchor", "outcome", "temporal_relation"],
+                "opened_roles": [],
+                "contradiction_change": "unchanged",
+                "rationale": "first observation",
+            },
+            {
+                "resolved_roles": [],
+                "opened_roles": [],
+                "contradiction_change": "unchanged",
+                "rationale": "second observation",
+            },
+        ]
+    )
+    updater = GPTOSSRealEvidenceBeliefUpdater(client)
+    first = _node("l1:anchor", 0.0, "puppy is drenched")
+    belief = CursorBeliefState(
+        "belief:0",
+        "what happens after the puppy is drenched?",
+        current_node_id=first.node_id,
+        acquired_evidence=(first.node_id,),
+        required_roles=("anchor", "outcome", "temporal_relation"),
+        missing_roles=("anchor", "outcome", "temporal_relation"),
+    )
+    after_first = updater.update(belief, first)
+    assert after_first.answerability is AnswerabilityState.NOT_READY
+    assert dict(after_first.grounded_role_evidence) == {
+        "anchor": first.node_id,
+        "outcome": first.node_id,
+        "temporal_relation": first.node_id,
+    }
+
+    second = _node("l1:outcome", 1.0, "puppy shakes off water")
+    before_second = replace(
+        after_first,
+        current_node_id=second.node_id,
+        acquired_evidence=(first.node_id, second.node_id),
+    )
+    after_second = updater.update(before_second, second)
+    assert after_second.answerability is AnswerabilityState.READY
+
+
+def test_stable_tie_flag_cannot_restore_order_based_execution() -> None:
+    decision = FullGraphIWMPlanner(
+        _DelayedWorldModel(),
+        _TiePreference(),
+        horizon=1,
+        execute_stable_ties=True,
+    ).plan(CursorBeliefState("belief:0", "question"), _retained_graph())
+    assert decision.selected_action.kind is ActionKind.ABSTAIN
+    assert decision.planning_status == "abstain_non_unique_partial_order"
+
+
+def test_grounded_survivor_packet_separates_blinded_pair_and_gt_label(
+    tmp_path,
+) -> None:
+    graph_dir = tmp_path / "video:test"
+    graph_dir.mkdir()
+    graph = {
+        "nodes": [
+            {
+                "node_id": "l1:grounded",
+                "time_span": {"start_s": 1.0, "end_s": 2.0},
+                "text": "grounded event",
+                "provenance": {"producer": "test"},
+            },
+            {
+                "node_id": "l1:negative",
+                "time_span": {"start_s": 8.0, "end_s": 9.0},
+                "text": "unrelated event",
+                "provenance": {"producer": "test"},
+            },
+        ]
+    }
+    (graph_dir / "l1_l15_navigation_graph.json").write_text(json.dumps(graph))
+
+    def trajectory(trajectory_id, action_id, target_id):
+        return {
+            "trajectory_id": trajectory_id,
+            "transitions": [
+                {
+                    "action": {
+                        "action_id": action_id,
+                        "target_id": target_id,
+                        "reads_evidence": True,
+                    },
+                    "observation": {
+                        "target_id": target_id,
+                        "outcome": "support",
+                        "descriptor": ["same predicted descriptor"],
+                    },
+                    "belief_delta": {
+                        "progress": "advanced",
+                        "answerability_after": "not_ready",
+                        "resolved_roles": ["event"],
+                    },
+                }
+            ],
+        }
+
+    left = trajectory("trajectory:left", "action:left", "l1:grounded")
+    right = trajectory("trajectory:right", "action:right", "l1:negative")
+    runs = [
+        {
+            "case_id": "case:test",
+            "arm": "world_model_guided",
+            "steps": [
+                {
+                    "belief_before": {
+                        "required_roles": ["event"],
+                        "missing_roles": ["event"],
+                        "answerability": "not_ready",
+                    },
+                    "decision": {
+                        "undominated_trajectory_ids": [
+                            "trajectory:left",
+                            "trajectory:right",
+                        ],
+                        "trajectories": [left, right],
+                    },
+                }
+            ],
+        }
+    ]
+    public, hidden = build_grounded_survivor_preference_packet(
+        runs=runs,
+        dataset={
+            "cases": [
+                {
+                    "case_id": "case:test",
+                    "planner_input": {"question": "what happened?"},
+                }
+            ]
+        },
+        hidden_key={
+            "cases": [
+                {
+                    "case_id": "case:test",
+                    "video_id": "video:test",
+                    "answer_text": "must stay hidden",
+                    "clue_intervals": [{"start_s": 1.25, "end_s": 1.75}],
+                }
+            ]
+        },
+        graph_root=tmp_path,
+    )
+
+    assert public["record_count"] == 1
+    assert public["records"][0]["label"] is None
+    serialized_public = json.dumps(public)
+    assert "must stay hidden" not in serialized_public
+    assert "l1:grounded" not in serialized_public
+    assert "start_s" not in serialized_public
+    assert hidden["records"][0]["label"] == "prefer_left"
+    assert hidden["records"][0]["outcome_belief_delta_collision"] is True
+
+    class _PreferenceClient:
+        model = "test-preference-proxy"
+
+        def complete_json(self, *, task, payload):
+            del task
+            return {
+                "decisions": {
+                    alias: {
+                        "label": "prefer_left",
+                        "rationale": "left better grounds the missing event",
+                    }
+                    for alias in payload["independent_pairs"]
+                }
+            }
+
+    evaluation = evaluate_blinded_preferences(
+        packet=public,
+        hidden_key=hidden,
+        client=_PreferenceClient(),
+    )
+    assert evaluation["accuracy"] == 1.0
+    assert evaluation["confusion_matrix"] == {
+        "prefer_left": {"prefer_left": 1}
+    }
+    swapped = evaluate_blinded_preferences(
+        packet=public,
+        hidden_key=hidden,
+        client=_PreferenceClient(),
+        swap_sides=True,
+    )
+    assert swapped["accuracy"] == 0.0
+    assert swapped["confusion_matrix"] == {
+        "prefer_right": {"prefer_left": 1}
+    }
+
+
 class _OneBadWorldResponseClient(_FakeCategoricalClient):
     def complete_json(self, *, task, payload):
         if not self.calls:
@@ -950,6 +1197,18 @@ def test_shuffle_and_frozen_interventions_preserve_legal_action_identity() -> No
     assert [row.action for row in shuffled] == list(actions)
     assert [row.observation.target_id for row in shuffled] == [
         action.target_id for action in actions
+    ]
+    assert [row.observation.descriptor for row in shuffled] == [
+        (
+            next(
+                view.key.semantic_key
+                for view in graph_input.nodes
+                if view.key.node_id == action.target_id
+            ),
+        )
+        if action.reads_evidence
+        else ()
+        for action in actions
     ]
 
     frozen_model = FrozenWorldModel(_StepSensitiveWorldModel())

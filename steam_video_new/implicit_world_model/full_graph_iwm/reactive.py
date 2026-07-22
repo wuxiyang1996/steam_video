@@ -49,7 +49,8 @@ class GPTOSSReactiveGraphPlanner:
             raise ValueError("preference_batch_size must be positive")
         self.preference_batch_size = preference_batch_size
         self.setwise = setwise
-        self.execute_stable_ties = execute_stable_ties
+        self.stable_tie_execution_requested = execute_stable_ties
+        self.execute_stable_ties = False
 
     def plan(
         self,
@@ -289,26 +290,10 @@ class GPTOSSReactiveGraphPlanner:
             selected = by_alias[preferred[0]]
             planning_status = "reactive_setwise_selected_unique_action"
         elif status == "tie":
-            if self.execute_stable_ties:
-                preferred_actions = [
-                    action
-                    for action in actions
-                    if aliases[action.action_id] in set(preferred)
-                ]
-                selected = next(
-                    (
-                        action
-                        for action in preferred_actions
-                        if action.reads_evidence
-                    ),
-                    preferred_actions[0],
-                )
-                planning_status = "reactive_setwise_selected_stable_tie_break"
-            else:
-                selected = next(
-                    action for action in actions if action.kind is ActionKind.ABSTAIN
-                )
-                planning_status = "reactive_setwise_abstain_tied_actions"
+            selected = next(
+                action for action in actions if action.kind is ActionKind.ABSTAIN
+            )
+            planning_status = "reactive_setwise_abstain_tied_actions"
         elif status == "incomparable":
             selected = next(action for action in actions if action.kind is ActionKind.ABSTAIN)
             planning_status = "reactive_setwise_abstain_incomparable"

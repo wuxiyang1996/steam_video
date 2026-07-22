@@ -31,6 +31,7 @@ class NullWorldModel(BatchedCategoricalWorldModel):
                 observation=PredictedObservation(
                     target_id=request.action.target_id,
                     outcome=EvidenceOutcome.INCONCLUSIVE,
+                    descriptor=_bound_descriptor(request),
                 ),
                 belief_delta=CategoricalBeliefDelta(
                     progress=ProgressChange.UNCHANGED,
@@ -59,7 +60,10 @@ class ShuffledWorldModel(BatchedCategoricalWorldModel):
             self.batch_audits.append(
                 {"request_count": len(requests), "permutation": "identity_singleton"}
             )
-            return predictions
+            return tuple(
+                _retarget(prediction, request)
+                for prediction, request in zip(predictions, requests)
+            )
         donors = predictions[1:] + predictions[:1]
         shuffled = tuple(
             ImaginedTransition(
@@ -67,6 +71,7 @@ class ShuffledWorldModel(BatchedCategoricalWorldModel):
                 observation=replace(
                     donor.observation,
                     target_id=request.action.target_id,
+                    descriptor=_bound_descriptor(request),
                 ),
                 belief_delta=donor.belief_delta,
             )
@@ -129,6 +134,7 @@ def _retarget(cached: ImaginedTransition, request: IWMRequest) -> ImaginedTransi
         observation=replace(
             cached.observation,
             target_id=request.action.target_id,
+            descriptor=_bound_descriptor(request),
         ),
         belief_delta=cached.belief_delta,
     )
@@ -146,3 +152,16 @@ def _descriptor(transition: ImaginedTransition) -> tuple[object, ...]:
         delta.opened_roles,
         delta.relation_updates,
     )
+
+
+def _bound_descriptor(request: IWMRequest) -> tuple[str, ...]:
+    if not request.action.reads_evidence:
+        return ()
+    descriptor = tuple(
+        view.key.semantic_key
+        for view in request.graph_input.nodes
+        if view.key.node_id == request.action.target_id
+    )
+    if len(descriptor) != 1:
+        raise ValueError("action target must bind to exactly one visible node key")
+    return descriptor

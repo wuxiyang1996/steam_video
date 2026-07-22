@@ -127,6 +127,7 @@ def run_real_read_closed_loop(
     belief = CursorBeliefState(
         belief_id=f"belief:{case_id}:{arm}:initial",
         question=question,
+        required_roles=tuple(initial_missing_roles),
         missing_roles=tuple(initial_missing_roles),
         remaining_reads=read_budget,
     )
@@ -463,7 +464,12 @@ def _belief_audit(belief: CursorBeliefState) -> dict[str, Any]:
         "current_node_id": belief.current_node_id,
         "acquired_evidence": list(belief.acquired_evidence),
         "imagined_evidence": list(belief.imagined_evidence),
+        "required_roles": list(belief.required_roles),
         "missing_roles": list(belief.missing_roles),
+        "grounded_role_evidence": [
+            {"role": role, "node_id": node_id}
+            for role, node_id in belief.grounded_role_evidence
+        ],
         "contradictions": list(belief.contradictions),
         "answerability": belief.answerability.value,
         "remaining_reads": belief.remaining_reads,
