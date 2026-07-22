@@ -216,6 +216,44 @@ from the remaining partial-order set; this is not fixed-K beam pruning.
 backtracking, another comparison, or abstention—not an implicit first-item
 fallback.
 
+### Multi-trajectory reasoning state
+
+The main IWM/planner contract maintains a pool of competing reasoning
+trajectories rather than committing the complete belief to one cursor path:
+
+```text
+shared grounded evidence + read budget
+        ├─ trajectory A: hypothesis, cursor, frontier, missing roles
+        ├─ trajectory B: hypothesis, cursor, frontier, missing roles
+        └─ trajectory C: hypothesis, cursor, frontier, contradictions
+                              ↓
+IWM jointly compares every legal hypothesis-conditioned expansion
+                              ↓
+categorical partial preference over expansions
+                              ↓
+planner executes one shared real evidence action
+                              ↓
+observation is broadcast to every active trajectory; update and replan
+```
+
+Trajectories are preserved when tied or incomparable. They are removed only by
+grounded contradiction, explicit abandonment, budget invalidity, or exact
+structural consolidation with an equivalent trajectory. There is no score-based
+beam or fixed-K trajectory pool. If several preferred expansions correspond to
+the same executable graph action, that action may be executed once; preferred
+expansions with different first actions cause abstention.
+
+The IWM directly receives the trajectory pool plus temporal, semantic,
+correlation and current-belief context and returns categorical preference. An
+imagined transition descriptor remains an auxiliary supervision/audit target,
+not the only information available to the preference decision. The planner is
+responsible only for legality, shared execution, lifecycle bookkeeping and
+replanning.
+
+The belief backend is interchangeable. A latent updater is the default method;
+GTSAM/factor graph may maintain competing hypotheses and persistent corrections
+behind the same interface, but it does not rank expansions or choose actions.
+
 ## 5. Bounded input contract
 
 The IWM/planner never receives the whole video, raw embedding matrix, hidden

@@ -139,6 +139,41 @@ no candidate `inspect/verify` action in the main navigation path. After the
 first real read, the eight current smoke graphs expose about four to five real
 read actions per cursor on average, rather than dozens or hundreds.
 
+## Multi-trajectory IWM and planner
+
+`multi_trajectory.py` adds the forward-compatible main interface while keeping
+the earlier single-cursor planner as an ablation. A `TrajectoryPool` stores
+multiple competing hypotheses. Every active trajectory has its own cursor,
+frontier, missing roles, contradictions and action history, while all active
+trajectories share acquired real evidence and the remaining read budget.
+
+For every active trajectory, the structural compiler emits all legal temporal,
+correlation, backtrack and terminal expansions. No heuristic Top-K or beam is
+applied. `GPTOSSMultiTrajectoryIWM` receives the complete pool and all
+hypothesis-conditioned candidate contexts, including source/target semantic
+keys, temporal span/relation, correlation channel and current belief. It
+directly returns `unique`, `tie`, or `incomparable` preference plus predicted
+lifecycle suggestions. Lifecycle suggestions are audit-only until a real
+observation arrives.
+
+The planner executes exactly one real action only when all preferred expansions
+share that action. The observation is then broadcast to every active
+trajectory. A pluggable categorical evidence assessor may mark each trajectory
+supported, contradicted, inconclusive or completed; a belief updater may be
+latent or factor-graph-backed. Exact duplicate hypotheses are structurally
+merged, while tied or incomparable non-equivalent hypotheses remain active.
+Pool size is never controlled by a numeric score or fixed K.
+
+```text
+TrajectoryPool + L1/L1.5 graph
+  -> all legal hypothesis-conditioned expansions
+  -> direct categorical IWM preference
+  -> one shared real read
+  -> broadcast correction across active trajectories
+  -> exact consolidation / preserve alternatives
+  -> replan
+```
+
 ## Leakage and model-output contracts
 
 - The complete retained graph is visible, but unread evidence values are not.
@@ -178,12 +213,58 @@ graph_adapter.py   persisted overlay -> retained semantic L1 + soft L1.5
 action_compiler.py cursor-local legal hops and real evidence execution
 model_input.py     leakage-safe full retained-graph model view
 planner.py         horizon-1/2 IWM rollout and ordinal partial-order selection
+multi_trajectory.py direct multi-hypothesis IWM, shared execution and pool lifecycle
 gpt_oss.py         categorical GPT-OSS IWM and batched preference adapters
 caption_candidates.py question-independent grounded categorical hop builder
 reactive.py        matched no-world-model direct-policy baseline
 interventions.py   shuffled/frozen world-model controls
 closed_loop.py     execute/read/correct/replan loop and evaluator-only metrics
 cgbench_pilot.py   fixed-case compile gate and matched-budget experiment
+```
+
+The direct multi-trajectory implementation currently provides:
+
+- deterministic initialization from all supplied hypotheses or answer
+  interpretations, without selecting a subset;
+- dynamic branching from a parent trajectory after grounded evidence, retaining
+  every supplied new interpretation and its parent lineage;
+- one complete legal expansion set per active trajectory;
+- direct GPT-compatible categorical preference over the joint expansion set;
+- one shared read when preferred expansions agree on the same action;
+- batched real-observation assessment across every active hypothesis;
+- independent trajectory support/counterevidence/inconclusive/completed states;
+- exact structural consolidation with merged records retained for audit;
+- a closed-loop trace that preserves the full pool at every decision.
+
+A July 2026 GPT-5-mini schema smoke used two competing door-opening
+hypotheses and six joint expansions. The first response used an invalid
+`incomparable + preferred aliases` combination, the strict repair call converted
+it to a valid tie, and both hypotheses selected the same real read. One executed
+observation was broadcast once; the real assessor marked the orange-person
+hypothesis `supported` and the alternative `contradicted`, with identical shared
+evidence and read budget in both trajectory records. No Top-K was applied.
+
+Hypothesis generation is deliberately outside this layer: callers may supply
+all answer choices, externally enumerated interpretations, or hypotheses from a
+separate categorical proposer. The pool does not silently reduce that input.
+GTSAM can implement the same real-belief update boundary, but is not required by
+the direct IWM or planner.
+
+Minimal direct-IWM usage:
+
+```python
+pool = initialize_trajectory_pool(
+    initial_belief,
+    hypotheses=("identity hypothesis A", "identity hypothesis B"),
+)
+planner = MultiTrajectoryIWMPlanner(GPTOSSMultiTrajectoryIWM(client))
+trace = run_multi_trajectory_closed_loop(
+    pool,
+    graph,
+    planner,
+    belief_updater=real_belief_backend,  # latent or optional factor graph adapter
+    assessor=GPTOSSRealTrajectoryEvidenceAssessor(client),
+)
 ```
 
 Supporting L1 code lives in `memory_graph/`:
