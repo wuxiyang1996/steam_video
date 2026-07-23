@@ -9,6 +9,7 @@ import re
 import runpy
 import signal
 import threading
+import time
 from contextlib import contextmanager
 from typing import Any
 from urllib import error, request
@@ -53,6 +54,8 @@ class OpenAICompatibleCategoricalClient:
         timeout_s: int = 180,
         max_tokens: int = 1600,
         reasoning_effort: str = "low",
+        max_transport_attempts: int = 6,
+        retry_backoff_s: float = 5.0,
     ) -> None:
         if not api_base:
             raise ValueError("api_base is required for GPT-OSS reasoning")
@@ -64,8 +67,12 @@ class OpenAICompatibleCategoricalClient:
             raise ValueError("max_tokens must be positive")
         if reasoning_effort not in {"low", "medium", "high"}:
             raise ValueError("reasoning_effort must be low, medium, or high")
+        if max_transport_attempts < 1 or retry_backoff_s < 0:
+            raise ValueError("transport retry settings are invalid")
         self.max_tokens = max_tokens
         self.reasoning_effort = reasoning_effort
+        self.max_transport_attempts = max_transport_attempts
+        self.retry_backoff_s = retry_backoff_s
         self.last_response_audit: dict[str, Any] = {}
         self.response_audits: list[dict[str, Any]] = []
 
@@ -160,7 +167,9 @@ class OpenAICompatibleCategoricalClient:
         )
         response_payload: dict[str, Any] | None = None
         last_transport_error: Exception | None = None
-        for transport_attempt in range(2):
+        transport_attempt_count = 0
+        for transport_attempt in range(self.max_transport_attempts):
+            transport_attempt_count = transport_attempt + 1
             try:
                 with _hard_wall_clock_deadline(self.timeout_s):
                     with request.urlopen(api_request, timeout=self.timeout_s) as response:
@@ -169,12 +178,42 @@ class OpenAICompatibleCategoricalClient:
                     raise json.JSONDecodeError("response root is not an object", "", 0)
                 response_payload = candidate
                 break
-            except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            except (
+                error.URLError,
+                ConnectionResetError,
+                TimeoutError,
+                json.JSONDecodeError,
+            ) as exc:
                 last_transport_error = exc
-                if transport_attempt == 1:
+                retryable = not isinstance(exc, error.HTTPError) or exc.code in {
+                    408,
+                    409,
+                    425,
+                    429,
+                    500,
+                    502,
+                    503,
+                    504,
+                }
+                if (
+                    not retryable
+                    or transport_attempt + 1 == self.max_transport_attempts
+                ):
                     raise RuntimeError(
-                        f"GPT-OSS categorical request failed after retry: {exc}"
+                        "GPT-OSS categorical request failed after "
+                        f"{transport_attempt_count} transport attempt(s): {exc}"
                     ) from exc
+                delay_s = min(
+                    60.0,
+                    self.retry_backoff_s * (2**transport_attempt),
+                )
+                if isinstance(exc, error.HTTPError):
+                    retry_after = (exc.headers or {}).get("Retry-After")
+                    try:
+                        delay_s = min(60.0, max(delay_s, float(retry_after)))
+                    except (TypeError, ValueError):
+                        pass
+                time.sleep(delay_s)
         assert response_payload is not None, last_transport_error
         try:
             choice = response_payload["choices"][0]
@@ -187,6 +226,7 @@ class OpenAICompatibleCategoricalClient:
             "prompt_tokens": usage.get("prompt_tokens"),
             "completion_tokens": usage.get("completion_tokens"),
             "total_tokens": usage.get("total_tokens"),
+            "transport_attempt_count": transport_attempt_count,
         }
         self.response_audits.append(dict(self.last_response_audit))
         try:

@@ -43,6 +43,7 @@ from .multi_trajectory import (
     TrajectoryStatus,
     initialize_trajectory_pool,
     run_multi_trajectory_closed_loop,
+    shared_action_key,
 )
 from .multi_trajectory_rollout import (
     GPTOSSCategoricalMultiTrajectoryModel,
@@ -282,6 +283,12 @@ def run_multi_trajectory_case(
             }
         )
     real_reads = len(realized_rows)
+    first_read_gain = bool(
+        realized_rows and realized_rows[0]["newly_covered_clue_indices"]
+    )
+    later_read_gain = any(
+        row["newly_covered_clue_indices"] for row in realized_rows[1:]
+    )
     clue_count = len(evaluator.clues)
     covered = len(evaluator.covered_indices)
     correct_trajectory = next(
@@ -303,6 +310,7 @@ def run_multi_trajectory_case(
     )
     statuses = [row.status.value for row in trace.final_pool.trajectories]
     steps = [_jsonable(row) for row in trace.steps]
+    empirical_audit = _multi_trajectory_empirical_audit(trace, realized_rows)
     return {
         "schema_version": "steam-multi-trajectory-closed-loop-run/v0.1",
         "case_id": case_id,
@@ -315,6 +323,7 @@ def run_multi_trajectory_case(
         "termination": trace.termination,
         "terminal_answer": _jsonable(answer),
         "final_trajectory_statuses": statuses,
+        "empirical_audit": empirical_audit,
         "metrics": {
             "answer_correct": (
                 answer.selected_choice == evaluator_answer
@@ -331,6 +340,15 @@ def run_multi_trajectory_case(
             "delayed_reasoning_success": evaluator.complete
             and clue_count > 1
             and real_reads > 1,
+            "delayed_recovery_success": (
+                real_reads > 1 and not first_read_gain and later_read_gain
+            ),
+            "delayed_completion_after_unproductive_first": (
+                evaluator.complete
+                and real_reads > 1
+                and not first_read_gain
+                and later_read_gain
+            ),
             "correct_hypothesis_survived": correct_survived,
             "false_correct_hypothesis_elimination": (
                 correct_trajectory is not None and not correct_survived
@@ -347,10 +365,216 @@ def run_multi_trajectory_case(
                 == "rollout_abstain_complete_comparison_budget_exceeded"
                 for row in trace.steps
             ),
+            "joint_chain_outcome_retention_rate": empirical_audit[
+                "joint_chain_coverage"
+            ]["outcome_retention_rate"],
+            "post_read_belief_divergence_rate": empirical_audit[
+                "post_read_belief_divergence"
+            ]["divergence_rate"],
+            "transition_outcome_calibration_accuracy": empirical_audit[
+                "transition_calibration"
+            ]["observation_outcome_exact_accuracy"],
+            "transition_progress_calibration_accuracy": empirical_audit[
+                "transition_calibration"
+            ]["progress_exact_accuracy"],
         },
         "hidden_evaluator_feedback_to_planner": False,
         "top_k_applied": False,
         "training_performed": False,
+    }
+
+
+def _multi_trajectory_empirical_audit(
+    trace: Any,
+    realized_rows: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    """Audit coverage, correction divergence, and hidden-label calibration."""
+
+    coverage_rows: list[dict[str, Any]] = []
+    divergence_rows: list[dict[str, Any]] = []
+    calibration_rows: list[dict[str, str]] = []
+    realized_by_observation = {
+        str(row["observation_id"]): row for row in realized_rows
+    }
+    for step_index, step in enumerate(trace.steps):
+        paths = tuple(step.decision.imagined_paths)
+        preference_audit = step.decision.preference_audit or {}
+        expected_outcomes = int(
+            preference_audit.get(
+                "hypothesis_conditioned_outcome_count",
+                sum(len(path.conditioned_outcomes) for path in paths),
+            )
+        )
+        retained_outcomes = sum(len(path.conditioned_outcomes) for path in paths)
+        expandable_ids = {
+            row.trajectory_id for row in step.pool_before.expandable
+        }
+        per_chain = [
+            {
+                "path_id": path.path_id,
+                "conditioned_outcome_count": len(path.conditioned_outcomes),
+                "covers_every_current_hypothesis": {
+                    row.trajectory_id for row in path.conditioned_outcomes
+                }
+                == expandable_ids,
+            }
+            for path in paths
+        ]
+        coverage_rows.append(
+            {
+                "step_index": step_index,
+                "joint_chain_count": len(paths),
+                "expected_conditioned_outcome_count": expected_outcomes,
+                "retained_conditioned_outcome_count": retained_outcomes,
+                "lossless_joint_grouping": retained_outcomes == expected_outcomes,
+                "every_chain_covers_every_current_hypothesis": all(
+                    row["covers_every_current_hypothesis"] for row in per_chain
+                ),
+                "per_chain": per_chain,
+            }
+        )
+        if step.observation_id is None:
+            continue
+        signatures: dict[tuple[Any, ...], list[str]] = defaultdict(list)
+        for trajectory in step.pool_after.trajectories:
+            belief = trajectory.belief
+            signature = (
+                belief.missing_roles,
+                belief.grounded_role_evidence,
+                belief.contradictions,
+                belief.answerability.value,
+            )
+            signatures[signature].append(trajectory.hypothesis)
+        divergence_rows.append(
+            {
+                "step_index": step_index,
+                "observation_id": step.observation_id,
+                "hypothesis_count": len(step.pool_after.trajectories),
+                "unique_belief_signature_count": len(signatures),
+                "belief_diverged": len(signatures) > 1,
+                "belief_groups": [
+                    {
+                        "hypotheses": hypotheses,
+                        "missing_roles": list(signature[0]),
+                        "grounded_role_evidence": [
+                            list(row) for row in signature[1]
+                        ],
+                        "contradictions": list(signature[2]),
+                        "answerability": signature[3],
+                    }
+                    for signature, hypotheses in signatures.items()
+                ],
+            }
+        )
+        realized = realized_by_observation[step.observation_id]
+        selected_key = shared_action_key(step.decision.selected_action)
+        for path in paths:
+            if shared_action_key(path.first_action) != selected_key:
+                continue
+            for outcome in path.conditioned_outcomes:
+                prediction = outcome.transitions[0]
+                calibration_rows.append(
+                    {
+                        "predicted_observation_outcome": (
+                            prediction.observation.outcome.value
+                        ),
+                        "realized_observation_outcome": str(
+                            realized["observation_outcome"]
+                        ),
+                        "predicted_progress": (
+                            prediction.belief_delta.progress.value
+                        ),
+                        "realized_progress": str(
+                            realized["belief_delta"]["progress"]
+                        ),
+                        "predicted_answerability": (
+                            prediction.belief_delta.answerability_after.value
+                        ),
+                        "realized_answerability": str(
+                            realized["belief_delta"]["answerability_after"]
+                        ),
+                    }
+                )
+    retained = sum(
+        row["retained_conditioned_outcome_count"] for row in coverage_rows
+    )
+    expected = sum(
+        row["expected_conditioned_outcome_count"] for row in coverage_rows
+    )
+    return {
+        "joint_chain_coverage": {
+            "steps": coverage_rows,
+            "all_steps_lossless": all(
+                row["lossless_joint_grouping"] for row in coverage_rows
+            ),
+            "outcome_retention_rate": retained / expected if expected else None,
+            "all_initial_chains_cover_every_hypothesis": (
+                coverage_rows[0][
+                    "every_chain_covers_every_current_hypothesis"
+                ]
+                if coverage_rows
+                else None
+            ),
+        },
+        "post_read_belief_divergence": {
+            "steps": divergence_rows,
+            "divergence_rate": (
+                sum(row["belief_diverged"] for row in divergence_rows)
+                / len(divergence_rows)
+                if divergence_rows
+                else None
+            ),
+        },
+        "transition_calibration": {
+            "reference": "hidden_clue_overlap_evaluator_only",
+            "rows": calibration_rows,
+            "observation_outcome_exact_accuracy": _categorical_accuracy(
+                calibration_rows,
+                "predicted_observation_outcome",
+                "realized_observation_outcome",
+            ),
+            "progress_exact_accuracy": _categorical_accuracy(
+                calibration_rows,
+                "predicted_progress",
+                "realized_progress",
+            ),
+            "answerability_exact_accuracy": _categorical_accuracy(
+                calibration_rows,
+                "predicted_answerability",
+                "realized_answerability",
+            ),
+            "observation_outcome_confusion": _categorical_confusion(
+                calibration_rows,
+                "predicted_observation_outcome",
+                "realized_observation_outcome",
+            ),
+        },
+    }
+
+
+def _categorical_accuracy(
+    rows: Sequence[dict[str, str]],
+    predicted_key: str,
+    realized_key: str,
+) -> float | None:
+    if not rows:
+        return None
+    return sum(
+        row[predicted_key] == row[realized_key] for row in rows
+    ) / len(rows)
+
+
+def _categorical_confusion(
+    rows: Sequence[dict[str, str]],
+    predicted_key: str,
+    realized_key: str,
+) -> dict[str, dict[str, int]]:
+    confusion: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for row in rows:
+        confusion[row[realized_key]][row[predicted_key]] += 1
+    return {
+        realized: dict(sorted(predicted.items()))
+        for realized, predicted in sorted(confusion.items())
     }
 
 
@@ -366,7 +590,7 @@ def run_multi_trajectory_matched_pilot(
     case_limit: int = 8,
     case_ids: Iterable[str] = (),
     arms: Iterable[str] = MULTI_ARMS,
-    transition_batch_size: int = 32,
+    transition_batch_size: int = 1,
     comparison_batch_size: int = 24,
     max_complete_pairs: int | None = 4096,
     include_caption_candidates: bool = True,
@@ -619,7 +843,10 @@ def _planner_for_arm(
     max_complete_pairs: int | None,
 ) -> Any:
     if arm == "no_world_model":
-        return ReactiveMultiTrajectoryPlanner(model)
+        return ReactiveMultiTrajectoryPlanner(
+            model,
+            setwise_preference_model=model,
+        )
     world_model: Any = model
     horizon = 2
     if arm == "shuffled_world_model_prediction":
@@ -633,6 +860,7 @@ def _planner_for_arm(
         model,
         horizon=horizon,
         max_complete_pairs=max_complete_pairs,
+        setwise_preference_model=model,
     )
 
 
@@ -654,6 +882,13 @@ def _aggregate(runs: Sequence[dict[str, Any]], arms: Iterable[str]) -> dict[str,
             "delayed_success_rate": _mean(
                 row.get("delayed_reasoning_success") for row in metrics
             ),
+            "delayed_recovery_rate": _mean(
+                row.get("delayed_recovery_success") for row in metrics
+            ),
+            "delayed_completion_after_unproductive_first_rate": _mean(
+                row.get("delayed_completion_after_unproductive_first")
+                for row in metrics
+            ),
             "correct_hypothesis_survival_rate": _mean(
                 row.get("correct_hypothesis_survived") for row in metrics
             ),
@@ -662,6 +897,18 @@ def _aggregate(runs: Sequence[dict[str, Any]], arms: Iterable[str]) -> dict[str,
             ),
             "complete_comparison_budget_failure_rate": _mean(
                 row.get("complete_comparison_budget_failure") for row in metrics
+            ),
+            "mean_joint_chain_outcome_retention": _mean(
+                row.get("joint_chain_outcome_retention_rate") for row in metrics
+            ),
+            "post_read_belief_divergence_rate": _mean(
+                row.get("post_read_belief_divergence_rate") for row in metrics
+            ),
+            "transition_outcome_calibration_accuracy": _mean(
+                row.get("transition_outcome_calibration_accuracy") for row in metrics
+            ),
+            "transition_progress_calibration_accuracy": _mean(
+                row.get("transition_progress_calibration_accuracy") for row in metrics
             ),
         }
     return result
@@ -740,6 +987,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--selection", required=True, type=Path)
     parser.add_argument("--graph-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument(
+        "--compiled-gate",
+        type=Path,
+        help="Reuse a previously frozen compile-gate artifact instead of recompiling.",
+    )
     parser.add_argument("--keys-py", type=Path)
     parser.add_argument(
         "--mode", choices=("compile-gate", "run"), default="compile-gate"
@@ -752,7 +1004,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--case-limit", type=int, default=8)
     parser.add_argument("--case-id", action="append", default=[])
     parser.add_argument("--arm", action="append", choices=MULTI_ARMS)
-    parser.add_argument("--transition-batch-size", type=int, default=32)
+    parser.add_argument(
+        "--transition-batch-size",
+        type=int,
+        default=1,
+        help="Number of compact shared-action groups per model request.",
+    )
     parser.add_argument("--comparison-batch-size", type=int, default=24)
     parser.add_argument("--max-complete-pairs", type=int, default=4096)
     parser.add_argument("--question-role-cache", type=Path)
@@ -777,17 +1034,34 @@ def main(argv: list[str] | None = None) -> int:
     dataset = _read_json(args.dataset)
     hidden = _read_json(args.hidden_key)
     selection = _read_json(args.selection)
-    gate = compile_cgbench_gate(
-        dataset=dataset,
-        hidden_key=hidden,
-        selection=selection,
-        graph_root=args.graph_root,
-        capacity=args.capacity,
-        read_budget=args.graph_read_budget,
-        video_limit=args.video_limit,
-        cases_per_video=args.cases_per_video,
-        include_caption_candidates=not args.disable_caption_candidates,
+    gate = (
+        _read_json(args.compiled_gate)
+        if args.compiled_gate is not None
+        else compile_cgbench_gate(
+            dataset=dataset,
+            hidden_key=hidden,
+            selection=selection,
+            graph_root=args.graph_root,
+            capacity=args.capacity,
+            read_budget=args.graph_read_budget,
+            video_limit=args.video_limit,
+            cases_per_video=args.cases_per_video,
+            include_caption_candidates=not args.disable_caption_candidates,
+        )
     )
+    if args.compiled_gate is not None:
+        if gate.get("dataset_id") != dataset.get("dataset_id"):
+            raise ValueError("compiled gate dataset does not match --dataset")
+        if int(gate.get("capacity", -1)) != args.capacity:
+            raise ValueError("compiled gate capacity does not match --capacity")
+        if int(gate.get("read_budget", -1)) != args.graph_read_budget:
+            raise ValueError(
+                "compiled gate read budget does not match --graph-read-budget"
+            )
+        if Path(str(gate.get("graph_root") or "")).resolve() != (
+            args.graph_root.expanduser().resolve()
+        ):
+            raise ValueError("compiled gate graph root does not match --graph-root")
     if args.mode == "compile-gate":
         _write_json(args.output, gate)
         return 0 if gate["gate_passed"] else 2

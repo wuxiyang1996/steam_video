@@ -438,11 +438,30 @@ Not yet established:
 - full-video L1.5 candidate coverage;
 - a strong and statistically stable horizon-two advantage over immediate-only;
 - calibrated IWM observation/belief transitions and robust entry localization;
-- a real model-backed smoke of the now-connected entry-localized,
-  hypothesis-conditioned persistent multi-trajectory runner;
 - a frozen-cohort five-arm validation of persistent multi-trajectory planning;
 - terminal answer accuracy on the locked cohort;
 - production readiness.
+
+A real `qwen/qwen3.6-flash` multi-trajectory smoke now closes two full
+`IWM -> setwise planner -> real read -> hypothesis-conditioned correction ->
+replan` steps. Joint-chain construction retained all 369 generated conditioned
+outcomes, and both reads split the six answer hypotheses into two distinct
+belief groups. The five matched arms also complete without runtime errors:
+no-WM diverges at the first read, while shuffled-IWM and immediate-only diverge
+from the intact IWM at the second read. This establishes mechanism dependence,
+not navigation quality. Every model-backed arm has zero clue recall and zero
+answer accuracy on this case, while the two-read oracle covers two of three
+clues. Selected-action transition outcome and progress calibration for the
+intact IWM are both zero on the hidden clue-overlap evaluator. The frozen
+34-case run is therefore the active empirical gate, not a formality.
+
+Transition transport is now losslessly grouped by exact shared action sequence:
+the L1/L1.5 address descriptor is sent once, while every hypothesis retains an
+independent belief/prefix-conditioned categorical outcome. This leaves the
+horizon-two, two-read and five-arm protocol unchanged. OpenRouter Qwen is stable
+with one shared-action group per request; two groups exceeded its structured
+output envelope. The IWM prompt also now treats “no acquired evidence yet” as
+the pre-read state rather than predicting an `empty` observation by default.
 
 The latest grounding validation has 670/672 successful Qwen-VL reads and two
 failed reads. Eight question-independent CG-Bench smoke graphs and their Qwen

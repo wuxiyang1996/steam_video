@@ -6,7 +6,10 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     RetainedEvidenceGraph,
     TemporalNavigationEdge,
 )
-from steam_video_new.implicit_world_model.full_graph_iwm.closed_loop import ClueInterval
+from steam_video_new.implicit_world_model.full_graph_iwm.closed_loop import (
+    ClueInterval,
+    action_divergence,
+)
 from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory import (
     MultiTrajectoryIWMDecision,
     MultiTrajectoryIWMPlanner,
@@ -37,6 +40,40 @@ def _node(node_id: str, start: float, text: str) -> MemoryNode:
         text=text,
         metadata={"predicate": text, "layer": "L1"},
     )
+
+
+def test_action_divergence_reads_multi_trajectory_step_schema() -> None:
+    reference = {
+        "arm": "world_model_guided",
+        "steps": [
+            {
+                "observation_id": "l1:first",
+                "decision": {"selected_action": {"action_id": "read:first"}},
+            },
+            {
+                "observation_id": "l1:second",
+                "decision": {"selected_action": {"action_id": "read:second"}},
+            },
+        ],
+    }
+    candidate = {
+        "arm": "immediate_effect_only",
+        "steps": [
+            {
+                "observation_id": "l1:first",
+                "decision": {"selected_action": {"action_id": "read:first"}},
+            },
+            {
+                "observation_id": "l1:first",
+                "decision": {"selected_action": {"action_id": "read:first"}},
+            },
+        ],
+    }
+
+    audit = action_divergence(reference, candidate)
+
+    assert audit["action_diverged"] is True
+    assert audit["first_divergence_step"] == 1
 
 
 def _graph() -> RetainedEvidenceGraph:

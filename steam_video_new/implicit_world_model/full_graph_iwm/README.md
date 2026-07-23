@@ -826,6 +826,33 @@ still be expensive.
 
 ## Validation status
 
+The model-backed transition transport now losslessly factors requests by exact
+action sequence. One shared legal action and address-level L1/L1.5 descriptor
+is sent once, while every answer hypothesis keeps its own belief, imagined
+prefix and categorical outcome row. The planner restores the original request
+order and audits both the conditioned-outcome count and shared-action-group
+count. This changes neither horizon, legal actions, hypotheses nor the matched
+read budget, and applies no Top-K. On OpenRouter `qwen/qwen3.6-flash`, two
+shared-action groups in one response exceeded the provider's stable structured
+output envelope; one group per request is therefore the measured safe default.
+The prompt also explicitly distinguishes “no real evidence acquired yet” from
+an imagined read returning `empty`: an unread target's semantic key is an
+address-level clue for predicting the result of the read, not acquired
+evidence and not evidence of emptiness.
+
+The first real `qwen/qwen3.6-flash` persistent multi-trajectory smoke now
+completes two horizon-two planning/read/correction cycles. It retains all
+369 generated hypothesis-conditioned outcomes across 77 joint chains and
+produces two distinct corrected belief groups after each real read. A cached
+five-arm replay confirms action dependence: no-WM diverges at step zero, and
+shuffled-IWM plus immediate-only diverge from the intact IWM at step one.
+However, all model-backed arms miss every hidden clue and abstain; the oracle
+covers two of three clues with the same two-read budget. Thus the mechanism is
+wired correctly but the zero-shot transition model is badly miscalibrated. The
+resumable frozen 34-case runner records each case independently and aggregates
+transition confusion, answer accuracy, delayed success, belief divergence, and
+action divergence without applying Top-K.
+
 The regression suite covers semantic duplicate coalescing, recurrence-chain
 sparsification, temporal-pair exclusion, directional affinity legality,
 fixed-capacity materialization, hidden-node and unread-value isolation,

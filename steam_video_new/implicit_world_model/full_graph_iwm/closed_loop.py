@@ -341,6 +341,13 @@ def _finalize_run(
     covered = len(evaluator.covered_indices)
     clue_count = len(evaluator.clues)
     delayed = evaluator.complete and clue_count > 1 and reads > 1
+    read_steps = [step for step in steps if step.get("real_observation") is not None]
+    first_read_gain = bool(
+        read_steps and read_steps[0].get("newly_covered_clue_indices")
+    )
+    later_read_gain = any(
+        step.get("newly_covered_clue_indices") for step in read_steps[1:]
+    )
     return {
         "schema_version": "steam-full-graph-iwm-closed-loop-run/v0.1",
         "case_id": case_id,
@@ -357,6 +364,12 @@ def _finalize_run(
             "read_efficiency": covered / reads if reads else None,
             "abstained": termination == ActionKind.ABSTAIN.value,
             "delayed_reasoning_success": delayed,
+            "delayed_recovery_success": (
+                reads > 1 and not first_read_gain and later_read_gain
+            ),
+            "delayed_completion_after_unproductive_first": (
+                delayed and not first_read_gain and later_read_gain
+            ),
             "latency_s": elapsed_s,
             "answer_accuracy": None,
             "answer_accuracy_status": "not_evaluated_without_terminal_answer_head",
@@ -460,11 +473,19 @@ def _shortest_hops(
 
 
 def _action_sequence(run: dict[str, Any]) -> list[str]:
-    return [
-        str(step["selected_action"]["action_id"])
-        for step in run.get("steps") or []
-        if step.get("real_observation") is not None
-    ]
+    result: list[str] = []
+    for step in run.get("steps") or []:
+        if (
+            step.get("real_observation") is None
+            and step.get("observation_id") is None
+        ):
+            continue
+        selected = step.get("selected_action")
+        if selected is None:
+            selected = (step.get("decision") or {}).get("selected_action")
+        if isinstance(selected, dict) and selected.get("action_id"):
+            result.append(str(selected["action_id"]))
+    return result
 
 
 def _belief_audit(belief: CursorBeliefState) -> dict[str, Any]:

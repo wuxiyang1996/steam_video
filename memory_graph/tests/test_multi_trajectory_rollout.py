@@ -10,6 +10,7 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     GPTOSSCategoricalMultiTrajectoryModel,
     HypothesisPathPreference,
     ImaginedTransition,
+    LegalGraphAction,
     MultiTrajectoryRolloutPlanner,
     PredictedObservation,
     PreferenceLabel,
@@ -20,6 +21,9 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     audit_permutation_invariance,
     execute_shared_trajectory_action,
     initialize_trajectory_pool,
+)
+from steam_video_new.implicit_world_model.full_graph_iwm.planner import (
+    project_imagined_belief,
 )
 
 
@@ -63,6 +67,38 @@ def _pool():
         ),
         ("the entrant opened it", "another person opened it"),
     )
+
+
+def test_imagined_reread_preserves_real_grounding() -> None:
+    belief = CursorBeliefState(
+        belief_id="belief:grounded",
+        question="What happened?",
+        current_node_id="l1:first",
+        acquired_evidence=("l1:first",),
+        required_roles=("event",),
+        grounded_role_evidence=(("event", "l1:first"),),
+        remaining_reads=1,
+    )
+    action = LegalGraphAction(
+        action_id="read:first-again",
+        kind=ActionKind.START_AT,
+        target_id="l1:first",
+        reads_evidence=True,
+    )
+    projected = project_imagined_belief(
+        belief,
+        ImaginedTransition(
+            action,
+            PredictedObservation("l1:first", EvidenceOutcome.SUPPORT),
+            CategoricalBeliefDelta(
+                progress=ProgressChange.UNCHANGED,
+                answerability_after=AnswerabilityState.NOT_READY,
+            ),
+        ),
+    )
+
+    assert projected.grounded_role_evidence == (("event", "l1:first"),)
+    assert projected.imagined_evidence == ()
 
 
 class _CategoricalWorldModel:
@@ -221,7 +257,7 @@ class _SchemaClient:
     def complete_json(self, *, task, payload):
         del task
         self.payloads.append(payload)
-        if "requests" in payload:
+        if "shared_action_groups" in payload:
             return {
                 "predictions": {
                     alias: {
@@ -230,12 +266,13 @@ class _SchemaClient:
                         "answerability_after": "not_ready",
                         "frontier_change": "opened",
                         "contradiction_change": "unchanged",
-                        "resolved_roles": [],
-                        "opened_roles": [],
-                        "relation_updates": [],
+                        "resolved_roles": "none",
+                        "opened_roles": "none",
+                        "relation_updates": "event_frequency_counting",
                         "rationale": "grounded target may advance the hypothesis",
                     }
-                    for alias in payload["requests"]
+                    for group in payload["shared_action_groups"].values()
+                    for alias in group["conditioned_requests"]
                 }
             }
         return {
@@ -270,13 +307,116 @@ def test_gpt_adapter_batches_without_pruning_and_covers_every_pair() -> None:
         if row["operation"] == "categorical_path_preference"
     ]
     assert transition_audits[-1]["item_count"] == 8
-    assert transition_audits[-1]["batch_count"] == 3
+    assert transition_audits[-1]["shared_action_group_count"] == 4
+    assert transition_audits[-1]["batch_count"] == 2
     assert comparison_audits[-1]["item_count"] == 6
     assert comparison_audits[-1]["batch_count"] == 1
-    transition_payloads = [row for row in client.payloads if "requests" in row]
+    transition_payloads = [
+        row for row in client.payloads if "shared_action_groups" in row
+    ]
     assert {
         request["hypothesis"]
         for payload in transition_payloads
-        for request in payload["requests"].values()
+        for group in payload["shared_action_groups"].values()
+        for request in group["conditioned_requests"].values()
     } == {"the entrant opened it", "another person opened it"}
+    assert all(
+        len(group["conditioned_requests"]) == 2
+        for payload in transition_payloads
+        for group in payload["shared_action_groups"].values()
+    )
     assert all(row["top_k_applied"] is False for row in model.transport_audits)
+
+
+class _OrderedSequenceSchemaClient(_SchemaClient):
+    def complete_json(self, *, task, payload):
+        del task
+        self.payloads.append(payload)
+        if "shared_action_groups" in payload:
+            return {
+                "predictions": [
+                    {
+                        "action": alias,
+                        "outcome": "support",
+                        "progress": "advanced",
+                        "answerability_after": "not_ready",
+                        "frontier_change": "opened",
+                        "contradiction_change": "unchanged",
+                        "resolved_roles": [],
+                        "opened_roles": [],
+                        "relation_updates": [],
+                        "rationale": "ordered complete transition",
+                    }
+                    for group in payload["shared_action_groups"].values()
+                    for alias in group["conditioned_requests"]
+                ]
+            }
+        return {
+            "comparisons": [
+                {
+                    "comparison": alias,
+                    "label": "tie",
+                    "rationale": "ordered complete comparison",
+                }
+                for alias in payload["comparisons"]
+            ]
+        }
+
+
+def test_gpt_adapter_strictly_normalizes_complete_ordered_sequences() -> None:
+    model = GPTOSSCategoricalMultiTrajectoryModel(
+        _OrderedSequenceSchemaClient(),
+        transition_batch_size=3,
+        comparison_batch_size=4,
+    )
+
+    decision = MultiTrajectoryRolloutPlanner(model, model, horizon=1).plan(
+        _pool(), _graph()
+    )
+
+    assert decision.selected_action.kind is ActionKind.ABSTAIN
+    transition_audit, comparison_audit = model.transport_audits
+    assert transition_audit["ordered_sequence_normalization_count"] == 2
+    assert comparison_audit["ordered_sequence_normalization_count"] == 2
+    assert transition_audit["complete_coverage"] is True
+    assert comparison_audit["complete_coverage"] is True
+
+
+class _SetwiseSchemaClient(_SchemaClient):
+    def complete_json(self, *, task, payload):
+        if "candidate_chains" in payload:
+            self.payloads.append(payload)
+            preferred = next(iter(payload["candidate_chains"]))
+            return {
+                "status": "unique",
+                "preferred": [preferred],
+                "rationale": "one complete chain is preferred",
+            }
+        return super().complete_json(task=task, payload=payload)
+
+
+def test_setwise_frontier_covers_all_joint_chains_without_pair_calls() -> None:
+    client = _SetwiseSchemaClient()
+    model = GPTOSSCategoricalMultiTrajectoryModel(client)
+
+    decision = MultiTrajectoryRolloutPlanner(
+        model,
+        model,
+        horizon=1,
+        setwise_preference_model=model,
+    ).plan(_pool(), _graph())
+
+    assert decision.preference_audit["preference_mode"] == "setwise_full_frontier"
+    assert decision.preference_audit["comparison_count"] == 1
+    assert decision.preference_audit["complete_coverage"] is True
+    setwise_audit = next(
+        row
+        for row in model.transport_audits
+        if row["operation"] == "categorical_setwise_frontier"
+    )
+    assert setwise_audit["item_count"] == len(decision.imagined_paths)
+    assert setwise_audit["top_k_applied"] is False
+    assert not any(
+        row["operation"] == "categorical_path_preference"
+        for row in model.transport_audits
+    )

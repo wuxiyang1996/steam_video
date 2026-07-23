@@ -317,8 +317,12 @@ def project_imagined_belief(
         if belief.current_node_id is not None:
             history = (*history, belief.current_node_id)
         if action.reads_evidence:
+            was_acquired_real = (
+                action.target_id in acquired and action.target_id not in imagined
+            )
             acquired = tuple(dict.fromkeys((*acquired, action.target_id)))
-            imagined = tuple(dict.fromkeys((*imagined, action.target_id)))
+            if not was_acquired_real:
+                imagined = tuple(dict.fromkeys((*imagined, action.target_id)))
             remaining = max(0, remaining - 1)
     missing = [
         role
