@@ -27,6 +27,15 @@ def build_iwm_graph_input(
 
     acquired = set(belief.acquired_evidence)
     imagined = set(belief.imagined_evidence)
+    local_node_ids = {
+        node_id
+        for action in legal_actions
+        for node_id in (action.source_id, action.target_id)
+        if node_id is not None
+    }
+    local_node_ids.update(acquired)
+    if belief.current_node_id is not None:
+        local_node_ids.add(belief.current_node_id)
     views = tuple(
         NodeModelView(
             key=_node_key(node),
@@ -38,15 +47,36 @@ def build_iwm_graph_input(
             ),
         )
         for node in visible_graph_nodes(graph)
+        if node.node_id in local_node_ids
+    )
+    temporal_edges = tuple(
+        edge
+        for edge in graph.temporal_edges
+        if edge.src in local_node_ids and edge.dst in local_node_ids
+    )
+    correlation_edges = tuple(
+        edge
+        for edge in graph.correlation_edges
+        if edge.src in local_node_ids and edge.dst in local_node_ids
+    )
+    candidate_edges = tuple(
+        edge
+        for edge in graph.candidate_edges
+        if edge.src in local_node_ids and edge.dst in local_node_ids
+    )
+    verified_relations = tuple(
+        edge
+        for edge in graph.verified_relations
+        if edge.src in local_node_ids and edge.dst in local_node_ids
     )
     return IWMGraphInput(
         question=belief.question,
         current_node_id=belief.current_node_id,
         nodes=views,
-        temporal_edges=graph.temporal_edges,
-        correlation_edges=graph.correlation_edges,
-        candidate_edges=graph.candidate_edges,
-        verified_relations=graph.verified_relations,
+        temporal_edges=temporal_edges,
+        correlation_edges=correlation_edges,
+        candidate_edges=candidate_edges,
+        verified_relations=verified_relations,
         legal_actions=legal_actions,
         acquired_evidence=belief.acquired_evidence,
         missing_roles=belief.missing_roles,
@@ -120,7 +150,8 @@ def graph_input_to_categorical_payload(graph_input: IWMGraphInput) -> dict[str, 
             "answerability": graph_input.answerability.value,
         },
         "contract": {
-            "all_retained_nodes_present": True,
+            "view_scope": "legal_local_closure",
+            "all_retained_nodes_present": False,
             "top_k_applied": False,
             "unread_evidence_values_hidden": True,
             "model_output": "categorical_transition_and_pairwise_preference_only",
@@ -162,6 +193,12 @@ def _node_key(node: MemoryNode) -> NodeKey:
         embedding_ref=embedding,
         structural_tags=tags,
     )
+
+
+def node_key_for_localization(node: MemoryNode) -> NodeKey:
+    """Expose the same grounded address used by IWM without evidence values."""
+
+    return _node_key(node)
 
 
 def _semantic_key(node: MemoryNode) -> str:

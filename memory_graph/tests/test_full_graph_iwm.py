@@ -70,6 +70,12 @@ from steam_video_new.implicit_world_model.full_graph_iwm.model_input import (
     build_iwm_graph_input,
     graph_input_to_categorical_payload,
 )
+from steam_video_new.implicit_world_model.full_graph_iwm.localization import (
+    GPTOSSEntryLocalizer,
+)
+from steam_video_new.implicit_world_model.full_graph_iwm.local_choice_data import (
+    build_grounded_local_choice_packet,
+)
 from steam_video_new.implicit_world_model.full_graph_iwm.survivor_preference_data import (
     build_grounded_survivor_preference_packet,
 )
@@ -414,7 +420,11 @@ def _retained_graph(*, include_hidden: bool = False) -> RetainedEvidenceGraph:
 def test_action_compiler_uses_one_cursor_and_all_visible_nodes() -> None:
     graph = _retained_graph(include_hidden=True)
     compiler = GraphActionCompiler()
-    initial = CursorBeliefState("belief:0", "question")
+    initial = CursorBeliefState(
+        "belief:0",
+        "question",
+        localized_entry_node_ids=("l1:bridge", "l1:answer"),
+    )
     initial_actions = compiler.compile(initial, graph)
     starts = {
         action.target_id
@@ -460,7 +470,57 @@ def test_action_compiler_uses_one_cursor_and_all_visible_nodes() -> None:
         action.kind is not ActionKind.FOLLOW_CORRELATION for action in from_answer
     )
 
-    model_input = build_iwm_graph_input(execution.updated_belief, graph, actions)
+
+class _EntryLocalizationClient:
+    model = "test-entry-localizer"
+
+    def complete_json(self, *, task, payload):
+        del task
+        assert all(
+            set(row) == {"semantic_key", "structural_tags"}
+            for row in payload["candidate_addresses"].values()
+        )
+        return {
+            "status": "located",
+            "preferred": ["anchor_a"],
+            "rationale": "the grounded address matches the requested role",
+        }
+
+
+def test_entry_localization_then_local_graph_closure_without_top_k() -> None:
+    graph = _retained_graph()
+    anchors = GPTOSSEntryLocalizer(_EntryLocalizationClient()).localize(
+        question="find the bridge",
+        missing_roles=("bridge",),
+        graph=graph,
+    )
+    assert anchors == ("l1:bridge",)
+    belief = CursorBeliefState(
+        "belief:localized",
+        "find the bridge",
+        localized_entry_node_ids=anchors,
+    )
+    actions = GraphActionCompiler().compile(belief, graph)
+    assert {
+        action.target_id for action in actions if action.kind is ActionKind.START_AT
+    } == {"l1:bridge"}
+    initial_input = build_iwm_graph_input(belief, graph, actions)
+    assert {view.key.node_id for view in initial_input.nodes} == {"l1:bridge"}
+    assert initial_input.temporal_edges == ()
+    assert initial_input.correlation_edges == ()
+
+    start = next(action for action in actions if action.kind is ActionKind.START_AT)
+    after = execute_graph_action(start, belief, graph).updated_belief
+    local_actions = GraphActionCompiler().compile(after, graph)
+    local_input = build_iwm_graph_input(after, graph, local_actions)
+    assert {view.key.node_id for view in local_input.nodes} == {
+        "l1:bridge",
+        "l1:answer",
+    }
+    assert len(local_input.temporal_edges) == 1
+    assert len(local_input.correlation_edges) == 1
+
+    model_input = build_iwm_graph_input(after, graph, local_actions)
     assert {view.key.node_id for view in model_input.nodes} == {
         "l1:bridge",
         "l1:answer",
@@ -559,7 +619,14 @@ def test_planner_selects_delayed_first_hop_from_world_model_predictions() -> Non
         _AnswerabilityPreference(),
         horizon=2,
     )
-    decision = planner.plan(CursorBeliefState("belief:0", "question"), graph)
+    decision = planner.plan(
+        CursorBeliefState(
+            "belief:0",
+            "question",
+            localized_entry_node_ids=("l1:bridge", "l1:answer"),
+        ),
+        graph,
+    )
 
     assert decision.selected_action.kind is ActionKind.START_AT
     assert decision.selected_action.target_id == "l1:bridge"
@@ -576,6 +643,54 @@ def test_planner_selects_delayed_first_hop_from_world_model_predictions() -> Non
     )
     assert target_view.acquired is True
     assert target_view.evidence_value is None
+
+
+class _BridgeFirstSetwise:
+    def select(self, trajectories, belief):
+        del belief
+        bridge = [
+            row.trajectory_id
+            for row in trajectories
+            if row.first_action.target_id == "l1:bridge"
+        ]
+        if bridge:
+            return (bridge[0],)
+        ready = [
+            row.trajectory_id
+            for row in trajectories
+            if row.transitions[-1].belief_delta.answerability_after
+            is AnswerabilityState.READY
+        ]
+        return tuple(ready[:1])
+
+
+def test_horizon_two_setwise_prunes_before_cartesian_expansion() -> None:
+    graph = _retained_graph()
+    world_model = _DelayedWorldModel()
+    decision = FullGraphIWMPlanner(
+        world_model,
+        _AnswerabilityPreference(),
+        horizon=2,
+        setwise_preference_model=_BridgeFirstSetwise(),
+    ).plan(
+        CursorBeliefState(
+            "belief:0",
+            "question",
+            localized_entry_node_ids=("l1:bridge", "l1:answer"),
+        ),
+        graph,
+    )
+
+    assert decision.selected_action.target_id == "l1:bridge"
+    assert len(world_model.batches) == 2
+    assert {request.parent_action_ids[0] for request in world_model.batches[1]} == {
+        next(
+            action.action.action_id
+            for action in world_model.batches[0]
+            if action.action.target_id == "l1:bridge"
+        )
+    }
+    assert decision.top_k_applied is False
 
 
 class _TiePreference:
@@ -638,7 +753,11 @@ class _FakeCategoricalClient:
 
 def test_gpt_oss_batch_adapter_deduplicates_shared_full_graph_context() -> None:
     graph = _retained_graph()
-    belief = CursorBeliefState("belief:0", "question")
+    belief = CursorBeliefState(
+        "belief:0",
+        "question",
+        localized_entry_node_ids=("l1:bridge", "l1:answer"),
+    )
     actions = GraphActionCompiler().compile(belief, graph)
     graph_input = build_iwm_graph_input(belief, graph, actions)
     client = _FakeCategoricalClient()
@@ -669,9 +788,7 @@ def test_world_descriptors_are_target_bound_across_order_and_batch_size() -> Non
         predictions = GPTOSSFullGraphWorldModel(
             _FakeCategoricalClient(), batch_size=batch_size
         ).predict_batch(values)
-        return {
-            row.action.action_id: row.observation.descriptor for row in predictions
-        }
+        return {row.action.action_id: row.observation.descriptor for row in predictions}
 
     expected = {
         request.action.action_id: (
@@ -880,9 +997,7 @@ def test_grounded_survivor_packet_separates_blinded_pair_and_gt_label(
         client=_PreferenceClient(),
     )
     assert evaluation["accuracy"] == 1.0
-    assert evaluation["confusion_matrix"] == {
-        "prefer_left": {"prefer_left": 1}
-    }
+    assert evaluation["confusion_matrix"] == {"prefer_left": {"prefer_left": 1}}
     swapped = evaluate_blinded_preferences(
         packet=public,
         hidden_key=hidden,
@@ -890,9 +1005,7 @@ def test_grounded_survivor_packet_separates_blinded_pair_and_gt_label(
         swap_sides=True,
     )
     assert swapped["accuracy"] == 0.0
-    assert swapped["confusion_matrix"] == {
-        "prefer_right": {"prefer_left": 1}
-    }
+    assert swapped["confusion_matrix"] == {"prefer_right": {"prefer_left": 1}}
 
 
 class _OneBadWorldResponseClient(_FakeCategoricalClient):
@@ -920,7 +1033,11 @@ class _OneBadWorldResponseClient(_FakeCategoricalClient):
 
 def test_gpt_oss_world_model_drops_out_of_allowlist_singleton_role() -> None:
     graph = _retained_graph()
-    belief = CursorBeliefState("belief:0", "question")
+    belief = CursorBeliefState(
+        "belief:0",
+        "question",
+        localized_entry_node_ids=("l1:bridge", "l1:answer"),
+    )
     actions = GraphActionCompiler().compile(belief, graph)
     graph_input = build_iwm_graph_input(belief, graph, actions)
     client = _OneBadWorldResponseClient()
@@ -1112,6 +1229,7 @@ def test_real_closed_loop_never_feeds_hidden_clue_label_back_to_planner() -> Non
         planner=_FirstUnreadPlanner(),
         read_budget=1,
         arm="test",
+        initial_entry_node_ids=("l1:bridge",),
     )
 
     assert run["metrics"]["clue_coverage_complete"] is True
@@ -1126,8 +1244,7 @@ def test_real_closed_loop_never_feeds_hidden_clue_label_back_to_planner() -> Non
 
 def test_oracle_uses_intermediate_navigation_hops_to_reach_later_clue() -> None:
     nodes = tuple(
-        _node(f"l1:{index}", float(index), f"evidence {index}")
-        for index in range(3)
+        _node(f"l1:{index}", float(index), f"evidence {index}") for index in range(3)
     )
     graph = RetainedEvidenceGraph(
         graph_id="retained:oracle-path",
@@ -1150,9 +1267,11 @@ def test_oracle_uses_intermediate_navigation_hops_to_reach_later_clue() -> None:
 
     assert run["termination"] == "oracle_coverage_complete"
     assert run["metrics"]["clue_recall"] == 1.0
-    assert [
-        step["selected_action"]["target_id"] for step in run["steps"]
-    ] == ["l1:0", "l1:1", "l1:2"]
+    assert [step["selected_action"]["target_id"] for step in run["steps"]] == [
+        "l1:0",
+        "l1:1",
+        "l1:2",
+    ]
 
 
 class _StepSensitiveWorldModel:
@@ -1233,12 +1352,147 @@ def test_planner_resource_abstains_without_top_k_or_partial_pair_sampling() -> N
         _TiePreference(),
         horizon=1,
         max_trajectory_pairs=2,
-    ).plan(CursorBeliefState("belief:0", "question"), _retained_graph())
+    ).plan(
+        CursorBeliefState(
+            "belief:0",
+            "question",
+            localized_entry_node_ids=("l1:bridge", "l1:answer"),
+        ),
+        _retained_graph(),
+    )
 
     assert decision.selected_action.kind is ActionKind.ABSTAIN
     assert decision.planning_status == "abstain_exhaustive_comparison_budget_exceeded"
     assert decision.preferences == ()
+    assert len(decision.initial_trajectories) == decision.legal_action_count
     assert decision.top_k_applied is False
+
+
+def test_local_choice_packet_keeps_gt_labels_hidden_and_nonclues_unlabeled(
+    tmp_path,
+) -> None:
+    video_dir = tmp_path / "video:test"
+    video_dir.mkdir()
+    (video_dir / "l1_l15_navigation_graph.json").write_text(
+        json.dumps(
+            {
+                "nodes": [
+                    {
+                        "node_id": f"l1:{index}",
+                        "time_span": {
+                            "start_s": float(index),
+                            "end_s": float(index + 1),
+                        },
+                        "text": f"evidence {index}",
+                        "provenance": {"producer": "test"},
+                    }
+                    for index in range(3)
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    dataset = {
+        "cases": [
+            {
+                "case_id": "case:test",
+                "split": "train",
+                "planner_input": {"question": "which event matters?"},
+            }
+        ]
+    }
+    hidden = {
+        "cases": [
+            {
+                "case_id": "case:test",
+                "video_id": "video:test",
+                "clue_intervals": [{"start_s": 1.1, "end_s": 1.9}],
+            }
+        ]
+    }
+    run = {
+        "arm": "world_model_guided",
+        "case_id": "case:test",
+        "entry_localization": {"selected_node_ids": ["l1:0", "l1:1", "l1:2"]},
+        "steps": [
+            {
+                "belief_before": {
+                    "belief_id": "belief:case:test:world_model_guided:initial",
+                    "answerability": "not_ready",
+                    "required_roles": ["event"],
+                    "missing_roles": ["event"],
+                },
+                "selected_action": {
+                    "kind": "start_at",
+                    "target_id": "l1:0",
+                },
+                "realized_label_evaluator_only": {
+                    "observation_outcome": "inconclusive",
+                    "belief_delta": {
+                        "progress": "unchanged",
+                        "answerability_after": "not_ready",
+                        "frontier_change": "unchanged",
+                        "contradiction_change": "unchanged",
+                        "resolved_roles": [],
+                        "opened_roles": [],
+                        "relation_updates": [],
+                        "predicted_only": False,
+                    },
+                },
+            }
+        ],
+    }
+    transition_cache = {
+        "entries": {
+            str(index): {
+                "request_audit": {
+                    "belief_id": ("belief:case:test:world_model_guided:initial"),
+                    "action_kind": "start_at",
+                    "target_id": f"l1:{index}",
+                    "parent_action_ids": [],
+                },
+                "transition": {
+                    "observation": {
+                        "outcome": "support",
+                        "descriptor": [f"address {index}"],
+                    },
+                    "belief_delta": {
+                        "progress": "advanced",
+                        "answerability_after": "not_ready",
+                        "frontier_change": "opened",
+                        "contradiction_change": "unchanged",
+                        "resolved_roles": ["event"],
+                        "opened_roles": [],
+                        "relation_updates": [],
+                        "predicted_only": True,
+                    },
+                },
+            }
+            for index in range(3)
+        }
+    }
+
+    public, labels = build_grounded_local_choice_packet(
+        runs=[run],
+        dataset=dataset,
+        hidden_key=hidden,
+        graph_root=tmp_path,
+        transition_cache=transition_cache,
+    )
+
+    assert public["local_choice_records"][0]["pairwise_labels"] is None
+    assert public["outside_clue_negative_labels_created"] is False
+    assert public["numeric_reward_present"] is False
+    assert labels["outside_clue_grounding"] == "not_established_never_negative"
+    assert labels["analysis"]["pairwise_label_counts"] == {
+        "incomparable": 1,
+        "prefer_left": 1,
+        "prefer_right": 1,
+    }
+    assert labels["analysis"]["transition_prediction_navigation_mismatch_count"] == 1
+    endpoints = labels["local_choice_records"][0]["candidate_grounding"]
+    assert endpoints["candidate_a"]["grounded_relevance"] == "not_established"
+    assert endpoints["candidate_b"]["grounded_relevance"] == "relevant"
 
 
 class _ReactivePreferenceClient:
@@ -1275,7 +1529,11 @@ class _ReactivePreferenceClient:
 def test_no_world_model_arm_is_a_reactive_direct_policy_not_null_iwm() -> None:
     client = _ReactivePreferenceClient()
     decision = GPTOSSReactiveGraphPlanner(client, preference_batch_size=2).plan(
-        CursorBeliefState("belief:0", "question"),
+        CursorBeliefState(
+            "belief:0",
+            "question",
+            localized_entry_node_ids=("l1:bridge", "l1:answer"),
+        ),
         _retained_graph(),
     )
 
@@ -1380,3 +1638,17 @@ def test_cgbench_gate_uses_public_selection_then_hidden_retention_only(
     assert gate["dataset_boundary"] == "public_artifact_contains_no_hidden_fields"
     assert gate["checks"]["all_graphs_have_embedding_correlation_build"] is True
     assert gate["gpt_service_called"] is False
+
+    filtered_gate = compile_cgbench_gate(
+        dataset=dataset,
+        hidden_key=hidden,
+        selection=selection,
+        graph_root=tmp_path,
+        capacity=2,
+        read_budget=2,
+        video_limit=1,
+        allowed_case_ids=("case:test",),
+    )
+    assert filtered_gate["gate_passed"] is True
+    assert filtered_gate["fixed_cohort_case_filter_applied"] is True
+    assert filtered_gate["allowed_case_count"] == 1

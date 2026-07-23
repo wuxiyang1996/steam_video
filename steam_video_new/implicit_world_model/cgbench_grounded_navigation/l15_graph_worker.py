@@ -346,14 +346,15 @@ def _extract_command(args: argparse.Namespace) -> int:
         sys.path.insert(0, video_skills_root)
     from atomic_skills.skill_model_client import SkillModelClient
 
-    client = _CategoricalGroundingClient(
-        SkillModelClient.from_local(
+    def client_factory() -> _CategoricalGroundingClient:
+        return _CategoricalGroundingClient(SkillModelClient.from_local(
             model=args.model,
             base_url=args.api_base,
             max_tokens=1400,
             timeout_s=180,
-        )
-    )
+        ))
+
+    client = client_factory()
     extractor = QwenVideoL1Extractor(
         client=client,
         config=VideoL1Config(
@@ -362,6 +363,8 @@ def _extract_command(args: argparse.Namespace) -> int:
             frames_per_coarse_window=args.coarse_frames,
             frames_per_fine_window=args.fine_frames,
             minimum_confidence=0.5,
+            localization_mode=args.localization_mode,
+            request_concurrency=args.request_concurrency,
         ),
         window_provider=(
             SelectStreamWindowProvider(
@@ -377,6 +380,7 @@ def _extract_command(args: argparse.Namespace) -> int:
             if args.windowing == "surprise-opencv-smoke"
             else None
         ),
+        client_factory=client_factory,
     )
     completed: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
@@ -394,6 +398,22 @@ def _extract_command(args: argparse.Namespace) -> int:
             if (
                 metadata.get("question_independent_contract") is True
                 and (metadata.get("l1_windowing") or {}).get("mode") == args.windowing
+                and (metadata.get("l1_windowing") or {}).get("localization_mode")
+                == args.localization_mode
+                and (metadata.get("l1_windowing") or {}).get("server_backend")
+                == args.server_backend
+                and (metadata.get("l1_windowing") or {}).get(
+                    "server_backend_version"
+                )
+                == args.server_backend_version
+                and (metadata.get("l1_windowing") or {}).get(
+                    "model_thinking_mode"
+                )
+                == args.model_thinking_mode
+                and (metadata.get("l1_windowing") or {}).get(
+                    "request_concurrency"
+                )
+                == args.request_concurrency
                 and abs(
                     float(metadata.get("observation_end_s") or -1.0)
                     - observation_horizon_s
@@ -413,6 +433,20 @@ def _extract_command(args: argparse.Namespace) -> int:
             if (
                 not isinstance(l1_payload, dict)
                 or (l1_payload.get("windowing") or {}).get("mode") != args.windowing
+                or (l1_payload.get("windowing") or {}).get("localization_mode")
+                != args.localization_mode
+                or (l1_payload.get("windowing") or {}).get("server_backend")
+                != args.server_backend
+                or (l1_payload.get("windowing") or {}).get(
+                    "server_backend_version"
+                )
+                != args.server_backend_version
+                or (l1_payload.get("windowing") or {}).get(
+                    "model_thinking_mode"
+                )
+                != args.model_thinking_mode
+                or (l1_payload.get("windowing") or {}).get("request_concurrency")
+                != args.request_concurrency
                 or abs(float(l1_payload.get("duration_s") or -1.0) - observation_horizon_s)
                 > 1e-3
             ):
@@ -432,6 +466,22 @@ def _extract_command(args: argparse.Namespace) -> int:
                     ),
                     "question_independent": True,
                     "formal_learned_representation": False,
+                    "localization_mode": args.localization_mode,
+                    "server_backend": args.server_backend,
+                    "server_backend_version": args.server_backend_version,
+                    "model_thinking_mode": args.model_thinking_mode,
+                    "request_concurrency": args.request_concurrency,
+                    "surprise_config": (
+                        {
+                            "sample_period_s": args.surprise_sample_period_s,
+                            "min_window_s": args.surprise_min_window_s,
+                            "max_window_s": args.surprise_max_window_s,
+                            "calibration_history": args.surprise_calibration_history,
+                            "high_surprise_quantile": args.surprise_quantile,
+                        }
+                        if args.windowing == "surprise-opencv-smoke"
+                        else None
+                    ),
                 }
                 _write_json(l1_path, l1_payload)
             assert isinstance(l1_payload, dict)
@@ -1212,11 +1262,27 @@ def _build_parser() -> argparse.ArgumentParser:
     extract.add_argument("--output-root", required=True, type=Path)
     extract.add_argument("--report", required=True, type=Path)
     extract.add_argument("--model", default="Qwen/Qwen3.5-9B")
+    extract.add_argument(
+        "--server-backend",
+        choices=("transformers", "vllm"),
+        default="transformers",
+        help="Inference server provenance and artifact resume-contract field.",
+    )
+    extract.add_argument("--server-backend-version", default="unreported")
+    extract.add_argument(
+        "--model-thinking-mode", choices=("disabled",), default="disabled"
+    )
+    extract.add_argument("--request-concurrency", type=int, default=1)
     extract.add_argument("--api-base", required=True)
     extract.add_argument("--coarse-window-s", type=float, default=8.0)
     extract.add_argument("--coarse-stride-s", type=float, default=6.0)
     extract.add_argument("--coarse-frames", type=int, default=8)
     extract.add_argument("--fine-frames", type=int, default=12)
+    extract.add_argument(
+        "--localization-mode",
+        choices=("coarse_to_fine", "grounded_single_pass"),
+        default="coarse_to_fine",
+    )
     extract.add_argument(
         "--windowing",
         choices=("surprise-opencv-smoke", "fixed-window-baseline"),

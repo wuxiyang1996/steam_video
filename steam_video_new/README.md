@@ -50,6 +50,13 @@ navigation**, while its question-conditioned reasoning belief and IWM state are
 latent rather than an explicit graph posterior. GTSAM remains available through
 explicit backup/baseline modes; it is not silently enabled.
 
+Learned navigation must not be replaced by accumulated routing rules. Structural
+code may enforce only executability, leakage isolation, graph direction,
+already-read state, and budget. Question relevance, expected belief change, and
+trajectory preference remain learned categorical decisions. In particular,
+role count, keyword overlap, cosine value, edge density, timestamp proximity,
+compiler order, and fixed-K membership are not action utilities.
+
 ### Architecture invariant: correlation is not preference
 
 L1.5 correlation and planner preference answer different questions and must not
@@ -174,11 +181,12 @@ current-node temporal outgoing edges
 ```
 
 At the initial step, a virtual query root provides `START_AT(node)` for every
-visible retained node. Because L1 memory has fixed capacity, this action set is
-bounded. The main arm does not apply embedding Top-K: embedding is an action
-feature/key, not a gate. Structural legality may remove hidden, out-of-horizon,
-zero-affinity, non-executable, acquired, or over-budget actions; it may not
-remove actions for low question relevance. Top-K remains an explicit retrieval
+node in a frozen categorical entry frontier. The entry localizer examines all
+visible retained semantic addresses once, without unread evidence values,
+numeric scores, or Top-K; it repairs or fails when the frontier exceeds its
+declared bound. After entry, the compiler exposes only cursor-incident
+temporal/correlation hops. Embedding remains an address/edge feature rather
+than a direct action-ranking rule. Top-K remains an explicit retrieval
 baseline only.
 
 For a current belief `z_t` and legal action `a`, the IWM predicts:
@@ -272,17 +280,24 @@ optional executed-read-only GTSAM adapter lives in
 ## 5. Bounded input contract
 
 The IWM/planner never receives the whole video, raw embedding matrix, hidden
-evaluator key, or unconsolidated history. Because SelectStream-style L1 memory
-has fixed capacity, the main method can consume the complete **retained** graph
-without Top-K truncation. Each step receives:
+evaluator key, unconsolidated history, or the complete retained graph at every
+step. Entry localization consumes all safe semantic addresses once. Each
+reasoning step then receives:
 
 - the question and compact categorical belief summary;
 - required evidence roles and each real role-to-node provenance binding;
 - the current cursor node's key and full acquired evidence value;
-- every retained node key plus all retained temporal/correlation edges;
+- only acquired/current/legal-endpoint node keys and their induced
+  temporal/correlation edges;
 - every legal action compiled from the current cursor, plus short recent-hop history;
 - remaining categorical budget/status;
 - at most one- or two-hop trajectory descriptors.
+
+For supervision, the system records every initial anchor prediction before
+setwise selection. A separate exporter forms complete local-anchor comparisons
+and executed transition corrections. Dataset GT is applied after planning and
+kept in a hidden label file; lack of clue overlap remains `not_established`,
+not a semantic negative. No scalar reward is synthesized.
 
 `Qwen/Qwen3-VL-Embedding-2B` embeddings are stored as sidecars and referenced by
 row/checksum. Unread targets expose compact keys/addresses rather than full
@@ -356,8 +371,8 @@ Implemented:
   of cliques, and class-level standardized sparsemax without fixed Top-K;
 - categorical identity/state/causal verification retained as a separate optional
   strict-relation layer rather than the generic navigation edge definition;
-- a separate `full_graph_iwm` main path with a virtual query root, one active
-  cursor, every visible retained node as an initial root action, cursor-local
+- a separate `full_graph_iwm` main path with categorical entry localization, a
+  virtual query root, one active cursor, frozen entry anchors, cursor-local
   temporal/correlation hops, no Top-K pruning,
   batched horizon-1/2 prediction, and explicit abstention for a non-unique
   partial order;
@@ -381,7 +396,24 @@ Implemented:
 - question-independent L1/L1.5 prefix-smoke worker with default
   surprise-adaptive OpenCV smoke boundaries; the current fixed pilot runs the
   first 8 videos from the 12-video stratified selection, with a frozen hidden
-  evaluator for native and embedding Recall@K.
+  evaluator for native and embedding Recall@K;
+- a fixed held-out cohort protocol covering the complete 49-case validation/test
+  population on 36 videos, plus a post-freeze gate that separates raw-L1 clue
+  loss, bounded-consolidation clue loss, and missing L1.5 paths. Structural
+  two-hop candidates remain distinct from executed delayed-success labels;
+- a grounded single-pass L1 mode that folds coarse detection and frame-evidence
+  localization into one VLM request per surprise window. A real 120-second
+  smoke reduced requests from roughly 115 to 9 while rejecting outputs without
+  sampled-frame provenance. The aggressive window configuration subsequently
+  missed one full-video clue, so formal runs use a denser balanced configuration
+  and retain full-video clue retention as the promotion gate.
+- an explicit Transformers/vLLM serving ablation for Qwen3.5-9B. Backend
+  provenance is part of the L1 resume contract, and vLLM is promoted only after
+  a matched full-video speed, node-quality, clue-retention, and L1.5-path check;
+  serving changes do not alter the L1/L1.5 method or provide supervision.
+- bounded within-video request concurrency with isolated clients and ordered
+  result collection, allowing vLLM continuous batching without changing the
+  frozen surprise windows, sampled evidence, prompts, parsers, or node order.
 
 Not yet established:
 
@@ -410,7 +442,10 @@ is replaced by a three-hop sparse path. These six cases are train-only. The
 selected test clues are outside the prefix and no trusted negative edge labels
 exist, so held-out coverage and admitted-edge precision are still unavailable;
 the positive-only diagnostic threshold is not applied. The next runtime step is
-a matched IWM pilot on the frozen graph fingerprint. Runtime artifacts remain
+the 36-video full-length extraction launched by
+`cgbench_grounded_navigation/submit_l15_fixed_cohort.sh`. It freezes the
+question-independent graph before hidden clue evaluation and requires 30–50
+fully retained cases before any matched IWM run. Runtime artifacts remain
 data-only and are not committed as scientific results.
 
 ## 9. Directory map

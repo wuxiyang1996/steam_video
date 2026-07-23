@@ -36,6 +36,7 @@ from .gpt_oss import (
 )
 from .graph_adapter import build_l1_l15_navigation_graph
 from .interventions import FrozenWorldModel, ShuffledWorldModel
+from .localization import GPTOSSEntryLocalizer
 from .model_input import build_iwm_graph_input, graph_input_to_categorical_payload
 from .planner import FullGraphIWMPlanner
 from .reactive import GPTOSSReactiveGraphPlanner
@@ -78,6 +79,7 @@ def compile_cgbench_gate(
     video_limit: int = 8,
     cases_per_video: int = 1,
     include_caption_candidates: bool = True,
+    allowed_case_ids: Iterable[str] = (),
 ) -> dict[str, Any]:
     """Compile frozen graphs before any IWM service call.
 
@@ -95,10 +97,20 @@ def compile_cgbench_gate(
     else:
         dataset_boundary = "public_artifact_contains_no_hidden_fields"
     hidden_by_case = {str(row["case_id"]): row for row in hidden_key.get("cases") or []}
+    allowed = set(str(case_id) for case_id in allowed_case_ids)
     cases_by_video: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for case in public_cases:
         cases_by_video[str(case["video_id"])].append(case)
-    requested = list(selection.get("videos") or [])[:video_limit]
+    allowed_video_ids = {
+        str(row["video_id"])
+        for row in public_cases
+        if not allowed or str(row["case_id"]) in allowed
+    }
+    requested = [
+        row
+        for row in selection.get("videos") or []
+        if str(row["video_id"]) in allowed_video_ids
+    ][:video_limit]
     graph_root = graph_root.expanduser().resolve()
     graph_rows: list[dict[str, Any]] = []
     case_rows: list[dict[str, Any]] = []
@@ -157,9 +169,14 @@ def compile_cgbench_gate(
                 )
         graph_rows.append(graph_row)
 
-        selected_cases = sorted(
+        video_cases = sorted(
             cases_by_video.get(video_id, []), key=lambda row: str(row["case_id"])
-        )[:cases_per_video]
+        )
+        selected_cases = (
+            [row for row in video_cases if str(row["case_id"]) in allowed]
+            if allowed
+            else video_cases[:cases_per_video]
+        )
         for case in selected_cases:
             case_id = str(case["case_id"])
             row: dict[str, Any] = {
@@ -191,9 +208,11 @@ def compile_cgbench_gate(
                 row["status"] = "graph_unavailable"
                 case_rows.append(row)
                 continue
+            audit_entry_ids = tuple(node.node_id for node in graph.nodes[:1])
             belief = CursorBeliefState(
                 belief_id=f"belief:{case_id}:gate",
                 question=str(case["planner_input"]["question"]),
+                localized_entry_node_ids=audit_entry_ids,
                 remaining_reads=read_budget,
             )
             actions = GraphActionCompiler().compile(belief, graph)
@@ -217,6 +236,8 @@ def compile_cgbench_gate(
                     "status": "compiled",
                     "legal_action_count": len(actions),
                     "visible_node_count": len(visible_node_ids),
+                    "structural_audit_entry_count": len(audit_entry_ids),
+                    "global_start_at_all_nodes_disabled": True,
                     "all_visible_nodes_have_start_action": (
                         start_targets == visible_node_ids
                     ),
@@ -278,6 +299,8 @@ def compile_cgbench_gate(
         "read_budget": read_budget,
         "requested_video_count": len(requested),
         "selected_case_count": len(case_rows),
+        "fixed_cohort_case_filter_applied": bool(allowed),
+        "allowed_case_count": len(allowed) if allowed else None,
         "runnable_case_ids": [
             row["case_id"] for row in case_rows if row.get("runnable") is True
         ],
@@ -306,6 +329,7 @@ def run_gpt_oss_matched_pilot(
     read_budget: int,
     case_limit: int = 8,
     max_trajectory_pairs: int = 4096,
+    max_imagined_transition_requests: int = 512,
     rollout_horizon: int = 1,
     arms: Iterable[str] = ARM_ORDER,
     setwise_preference: bool = False,
@@ -381,6 +405,7 @@ def run_gpt_oss_matched_pilot(
 
     checkpoint()
     belief_initializer: Any = GPTOSSQuestionBeliefInitializer(client)
+    entry_localizer = GPTOSSEntryLocalizer(client)
     if question_role_cache_path is not None:
         belief_initializer = PersistentQuestionRoleCache(
             belief_initializer,
@@ -413,9 +438,27 @@ def run_gpt_oss_matched_pilot(
         clues = _clues(hidden)
         question = str(public["planner_input"]["question"])
         initial_missing_roles: tuple[str, ...] = ()
+        initial_entry_node_ids: tuple[str, ...] = ()
+        entry_localization_evaluator_only: dict[str, Any] | None = None
         if any(arm != "oracle_clue_ceiling" for arm in requested_arms):
             try:
                 initial_missing_roles = belief_initializer.initialize(question)
+                initial_entry_node_ids = entry_localizer.localize(
+                    question=question,
+                    missing_roles=initial_missing_roles,
+                    graph=graph,
+                )
+                localized_clues = _covered_clue_indices_by_node_ids(
+                    graph, clues, set(initial_entry_node_ids)
+                )
+                entry_localization_evaluator_only = {
+                    "covered_clue_count": len(localized_clues),
+                    "clue_count": len(clues),
+                    "clue_recall": (
+                        len(localized_clues) / len(clues) if clues else None
+                    ),
+                    "fed_back_to_localizer_or_planner": False,
+                }
             except Exception as exc:
                 errors.append(
                     {
@@ -447,6 +490,9 @@ def run_gpt_oss_matched_pilot(
                         client,
                         rollout_horizon=rollout_horizon,
                         max_trajectory_pairs=max_trajectory_pairs,
+                        max_imagined_transition_requests=(
+                            max_imagined_transition_requests
+                        ),
                         setwise_preference=setwise_preference,
                         execute_stable_ties=execute_stable_ties,
                         transition_cache_path=transition_cache_path,
@@ -465,9 +511,14 @@ def run_gpt_oss_matched_pilot(
                         read_budget=read_budget,
                         arm=arm,
                         initial_missing_roles=initial_missing_roles,
+                        initial_entry_node_ids=initial_entry_node_ids,
                         belief_updater=GPTOSSRealEvidenceBeliefUpdater(client),
                     )
                     run["method_audit"] = _planner_method_audit(planner)
+                    run["entry_localization"] = entry_localizer.audits[-1]
+                    run["entry_localization_evaluator_only"] = (
+                        entry_localization_evaluator_only
+                    )
                 if run["graph_fingerprint"] != expected_fingerprint:
                     raise ValueError("matched arm mutated the retained graph")
                 runs.append(run)
@@ -527,6 +578,9 @@ def run_gpt_oss_matched_pilot(
             "world_model_max_contexts_per_batch": (
                 world_model_max_contexts_per_batch
             ),
+            "max_imagined_transition_requests": (
+                max_imagined_transition_requests
+            ),
             "question_role_cache": (
                 str(question_role_cache_path.expanduser().resolve())
                 if question_role_cache_path is not None
@@ -548,6 +602,7 @@ def run_gpt_oss_matched_pilot(
         "metrics_by_arm": _aggregate_metrics(runs, requested_arms),
         "action_divergence": divergences,
         "model_response_audits": client.response_audits[response_audit_start:],
+        "entry_localization_audits": entry_localizer.audits,
         "metric_contract": (
             "coverage, read efficiency, action divergence, abstention, delayed "
             "success, and latency are separate; no lexicographic aggregate gate"
@@ -613,6 +668,7 @@ def _planner_for_arm(
     *,
     rollout_horizon: int,
     max_trajectory_pairs: int,
+    max_imagined_transition_requests: int = 512,
     setwise_preference: bool = False,
     execute_stable_ties: bool = False,
     transition_cache_path: Path | None = None,
@@ -660,6 +716,7 @@ def _planner_for_arm(
         preference,
         horizon=horizon,
         max_trajectory_pairs=max_trajectory_pairs,
+        max_imagined_transition_requests=max_imagined_transition_requests,
         setwise_preference_model=(
             GPTOSSFullGraphSetwisePreferenceModel(client)
             if setwise_preference
@@ -676,6 +733,24 @@ def _aggregate_metrics(
     for arm in arms:
         selected = [run for run in runs if run["arm"] == arm]
         metrics = [run["metrics"] for run in selected]
+        frontier_rows = [
+            row
+            for run in selected
+            if (row := _first_hop_frontier_audit(run)) is not None
+        ]
+        planning_statuses = [
+            str(step.get("decision", {}).get("planning_status") or "")
+            for run in selected
+            for step in run.get("steps") or []
+        ]
+        legal_action_counts = [
+            [
+                int(step.get("decision", {}).get("legal_action_count"))
+                for step in run.get("steps") or []
+                if step.get("decision", {}).get("legal_action_count") is not None
+            ]
+            for run in selected
+        ]
         result[arm] = {
             "case_count": len(selected),
             "clue_coverage_complete_rate": _mean_bool(
@@ -689,9 +764,61 @@ def _aggregate_metrics(
                 row["delayed_reasoning_success"] for row in metrics
             ),
             "mean_latency_s": _mean(row["latency_s"] for row in metrics),
+            "mean_entry_localization_clue_recall": _mean(
+                (run.get("entry_localization_evaluator_only") or {}).get(
+                    "clue_recall"
+                )
+                for run in selected
+            ),
+            "mean_entry_anchor_count": _mean(
+                (run.get("entry_localization") or {}).get("selected_anchor_count")
+                for run in selected
+            ),
+            "mean_initial_legal_action_count": _mean(
+                counts[0] if counts else None for counts in legal_action_counts
+            ),
+            "mean_max_local_legal_action_count": _mean(
+                max(counts) if counts else None for counts in legal_action_counts
+            ),
+            "mean_initial_first_hop_count": _mean(
+                row["initial_count"] for row in frontier_rows
+            ),
+            "mean_final_first_hop_frontier_count": _mean(
+                row["final_count"] for row in frontier_rows
+            ),
+            "mean_first_hop_frontier_retention_rate": _mean(
+                row["retention_rate"] for row in frontier_rows
+            ),
+            "rollout_budget_abstain_rate": (
+                sum(
+                    status
+                    == "abstain_first_hop_frontier_rollout_budget_exceeded"
+                    for status in planning_statuses
+                )
+                / len(planning_statuses)
+                if planning_statuses
+                else None
+            ),
             "answer_accuracy": None,
         }
     return result
+
+
+def _first_hop_frontier_audit(run: dict[str, Any]) -> dict[str, float] | None:
+    preference = (run.get("method_audit") or {}).get("setwise_preference") or {}
+    decisions = preference.get("decisions") or []
+    if not decisions:
+        return None
+    rounds = decisions[0].get("rounds") or []
+    if not rounds:
+        return None
+    initial = int(rounds[0]["input_count"])
+    final = int(rounds[-1]["survivor_count"])
+    return {
+        "initial_count": float(initial),
+        "final_count": float(final),
+        "retention_rate": final / initial if initial else 0.0,
+    }
 
 
 def _covered_clue_indices(
@@ -702,6 +829,23 @@ def _covered_clue_indices(
         for index, clue in enumerate(clues)
         if any(
             node.time_span.start_s < clue.end_s and clue.start_s < node.time_span.end_s
+            for node in graph.nodes
+        )
+    }
+
+
+def _covered_clue_indices_by_node_ids(
+    graph: RetainedEvidenceGraph,
+    clues: tuple[ClueInterval, ...],
+    node_ids: set[str],
+) -> set[int]:
+    return {
+        index
+        for index, clue in enumerate(clues)
+        if any(
+            node.node_id in node_ids
+            and node.time_span.start_s < clue.end_s
+            and clue.start_s < node.time_span.end_s
             for node in graph.nodes
         )
     }
@@ -795,6 +939,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--case-limit", type=int, default=8)
     parser.add_argument("--case-id", action="append", default=[])
     parser.add_argument("--max-trajectory-pairs", type=int, default=4096)
+    parser.add_argument(
+        "--max-imagined-transition-requests", type=int, default=512
+    )
     parser.add_argument("--rollout-horizon", type=int, choices=(1, 2), default=1)
     parser.add_argument(
         "--mode", choices=("compile-gate", "gpt-oss-120b"), default="compile-gate"
@@ -812,6 +959,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--transition-cache", type=Path)
     parser.add_argument("--response-cache", type=Path)
     parser.add_argument("--question-role-cache", type=Path)
+    parser.add_argument(
+        "--fixed-cohort-gate",
+        type=Path,
+        help=(
+            "Passed fixed-cohort gate whose locked case IDs define the only "
+            "cases eligible for the matched run."
+        ),
+    )
     parser.add_argument(
         "--transition-cache-mode", choices=("record", "replay"), default="record"
     )
@@ -833,6 +988,25 @@ def main(argv: list[str] | None = None) -> int:
     dataset = _read_json(args.dataset)
     hidden = _read_json(args.hidden_key)
     selection = _read_json(args.selection)
+    allowed_case_ids: tuple[str, ...] = ()
+    if args.fixed_cohort_gate is not None:
+        fixed_gate = _read_json(args.fixed_cohort_gate)
+        if fixed_gate.get("gate_passed") is not True:
+            raise ValueError("--fixed-cohort-gate must be a passed gate")
+        fixed_capacity = fixed_gate.get("compile_capacity")
+        if fixed_capacity is not None and int(fixed_capacity) != args.capacity:
+            raise ValueError("fixed-cohort gate capacity does not match --capacity")
+        locked_case_ids = {str(value) for value in fixed_gate["locked_case_ids"]}
+        if args.case_id:
+            unknown = set(args.case_id) - locked_case_ids
+            if unknown:
+                raise ValueError(
+                    "requested cases are not locked by fixed cohort gate: "
+                    f"{sorted(unknown)}"
+                )
+            allowed_case_ids = tuple(args.case_id)
+        else:
+            allowed_case_ids = tuple(sorted(locked_case_ids))
     gate = compile_cgbench_gate(
         dataset=dataset,
         hidden_key=hidden,
@@ -843,6 +1017,7 @@ def main(argv: list[str] | None = None) -> int:
         video_limit=args.video_limit,
         cases_per_video=args.cases_per_video,
         include_caption_candidates=not args.disable_caption_candidates,
+        allowed_case_ids=allowed_case_ids,
     )
     if args.mode == "compile-gate":
         _write_json(args.output, gate)
@@ -880,6 +1055,7 @@ def main(argv: list[str] | None = None) -> int:
         read_budget=args.graph_read_budget,
         case_limit=args.case_limit,
         max_trajectory_pairs=args.max_trajectory_pairs,
+        max_imagined_transition_requests=args.max_imagined_transition_requests,
         rollout_horizon=args.rollout_horizon,
         arms=args.arm or ARM_ORDER,
         setwise_preference=args.setwise_preference,

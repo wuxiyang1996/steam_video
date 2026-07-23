@@ -90,8 +90,10 @@ intervals 生成公开候选。GT temporal overlap 只写入 hidden evaluator ke
 保持 `unlabeled`，从不变成 semantic negative。
 
 候选按视频规范化保存，多个 QA case 共享一个 candidate set。完整 candidate artifact 仅供
-external retrieval；每步 planner 仍通过 embedding/structure 选取 bounded top-K，不能把整份
-字幕或 graph 塞进 prompt。`closed_loop_protocol.json` 固定比较：
+构建冻结图。正式路径先对全部安全 semantic addresses 做一次 categorical entry
+localization；它不读取未执行 evidence value，不输出数值分数，也不做 Top-K。之后每步 planner
+只接收当前 cursor 的 temporal/L1.5 local closure，不能把整份字幕或 graph 反复塞进 prompt。
+`closed_loop_protocol.json` 固定比较：
 
 - world-model-guided；
 - no-world-model；
@@ -127,6 +129,133 @@ python -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_g
 DEPENDENCY_JOB_ID=<grounding-validation-job> \
   steam_video_new/implicit_world_model/cgbench_grounded_navigation/submit_l15_graph_smoke.sh
 ```
+
+## Fixed 49-case held-out L1/L1.5 cohort
+
+正式 IWM 实验前先运行 `fixed_l15_cohort.py`。默认 cohort 是 CG-Bench 中完整的
+validation+test population：49 cases、36 个 video-disjoint videos。它不是按 question、answer
+或 clue 挑选的；graph worker 收到的 selection 只包含 video path、split 和完整视频时长。
+
+流程严格分为两侧：
+
+1. graph side 只读取 raw video，冻结完整 L1、embedding sidecar、temporal backbone 和
+   question-independent L1.5 correlation；
+2. evaluator side 在 checksum 冻结后才读取 hidden clue intervals，并把失败分成
+   `raw_l1_missing_clue`、`bounded_consolidation_dropped_clue` 和 `l15_path_missing`。
+
+只有所有 clue 都有 retained L1 overlap、且相邻 clue 在冻结图中连通的 case 才进入 locked
+case set。目标是锁定 30–50 cases；不足 30 条时 gate fail-closed，不会启动 IWM 调用。
+
+`structural_delayed_candidate=true` 只表示两个相邻 clue sets 的最短路径至少为两跳。它不能
+证明“第一步无收益、第二步成功”；真正的 delayed success 必须在 matched-budget executed
+rollout 中观察到，不能从 GT interval 或图距离直接制造标签。
+
+当前长视频诊断显示 `capacity=64` 会因 consolidation 丢 clue；两条完整视频 smoke 在
+`capacity=192` 时才都恢复完整 temporal retention。但 49-case 正式 cohort 在 192 下仅锁定
+29 条，低于 30 条门槛。冻结 L1 上的 192/256/384/512 sweep 不重新调用 VLM，也不覆盖原图；
+结果分别锁定 29/34/39/46 条，平均 retained nodes 为 186.0/234.9/310.8/353.3，平均
+navigation edges 为 564.5/724.4/969.6/1102.7。正式协议选择**最低合格容量 256**，而不是
+为了追求更多 case 使用 384/512。三条 `raw_l1_missing_clue` case 与另外 12 条 capacity-256
+consolidation failures 被明确排除，不进入 IWM 指标。
+
+`fixed_l15_cohort.py sweep` 从冻结 overlay 内存重编译每档容量，输出 clue-retention、delayed
+candidate 数和 storage/read-cost proxy；`promote-sweep` 把选中档提升为正式 gate。
+`full_graph_iwm.cgbench_pilot --fixed-cohort-gate ...` 只接受该 gate 的 locked case IDs，并校验
+容量一致。graph storage capacity 与 planner 每步 action interface 始终分开；禁止使用
+question-aware Top-K 掩盖 memory loss。
+
+2026-07-22 的 capacity-256 delayed-case 局部导航诊断中，entry localizer 从 256 个地址返回
+3 个 anchors，初始 legal actions 从旧路径的 258 降为 5，真实读取后的 local actions 为 9。
+localizer 覆盖 1/2 hidden clues，但 IWM 把 105 秒的普通枪击错误预测为可解决
+`agent/action/victim`，没有选择已进入 anchors 的 1263 秒导弹 clue；真实读取结果为
+inconclusive。该结果把问题定位为 action-conditioned transition calibration，而非继续压缩
+图或增加 heuristic Top-K。正式数据应记录 local anchors 上 predicted/realized belief delta
+的差异，并保持 evaluator-only clue 命中不反馈给 planner。
+
+`full_graph_iwm/local_choice_data.py` 已实现该记录协议：保留全部 entry-anchor 首跳预测，生成
+完整 categorical pair comparisons，并把 GT-derived labels 隔离在 hidden key。一个 anchor
+命中 clue、另一个没有命中时，GT 只监督本数据集 navigation preference；未命中端仍标记
+`not_established`，不会成为 identity、causal 或一般 semantic negative。executed correction
+同样明确限定为 clue-coverage navigation delta，不冒充完整 observation truth。
+
+当前 packet 来自 test split，只用于诊断：3 个 anchors 形成 3 个 pairs，其中 2 个 strict
+preferences、1 个 incomparable，并包含 1 个 predicted-versus-grounded navigation mismatch。
+其 `training_ready=false`、`training_performed=false`。正式 post-training 前必须从冻结的
+train videos 生成独立 packet，并保持 validation/test video-disjoint。
+
+完整 cohort 使用 `grounded_single_pass` L1：每个 surprise window 只调用一次 VLM，同时返回
+event、sampled-frame endpoints/evidence、participants 和 visible states；任何没有合法 frame
+provenance 的 event 都被拒绝。旧 `coarse_to_fine` 两遍模式保留为消融。正式默认采用 balanced
+窗口：0.75 秒 representation sampling、4–20 秒自适应窗口和 0.85 surprise quantile；稳定内容
+扩窗，变化内容缩窗，所有窗口仍覆盖完整时间轴。
+
+真实 120 秒 benchmark 中，旧流程需要 30 次 coarse scan，并产生 85 个需要第二次调用的
+fine candidates；优化版仅做 9 次调用，在 6 分 25 秒内生成 25 个 frame-grounded L1 nodes，
+调用量约减少 92%。但该 aggressive 8–32 秒设置在第一条完整视频上遗漏了一个 GT clue，
+因此只保留为速度上界，不用于正式 cohort。Balanced 配置在同一 623 秒视频产生 86 个窗口，
+仍远少于旧流程约 185 coarse + 391 fine calls；扩大运行前必须重新通过完整视频 clue-retention
+gate，不能只凭速度替换。
+
+### Qwen3.5-9B serving backend
+
+`run_l15_graph_smoke_job.sh` 现在显式支持 `SERVER_BACKEND=transformers|vllm`。
+两者使用相同的 OpenAI-compatible multimodal request、prompt、sampling temperature、
+窗口和 parser；backend 名称写入 L1 artifact，并参与 resume contract，禁止把两个 backend
+的节点混入同一 graph。当前 balanced full-video validation 仍是 Transformers 基线；切换
+vLLM 前必须在同一完整视频上比较 wall time、accepted/rejected L1 nodes、三条 clue retention
+和 L1.5 path gate。
+
+仓库原有 `vllm 0.8.5.post1` 早于 Qwen3.5 支持，不能用于该比较。新环境保持隔离：
+
+```bash
+cd /fs/gamma-projects/vlm-robot/steam_video
+steam_video_new/implicit_world_model/cgbench_grounded_navigation/setup_qwen35_vllm_env.sh
+
+SERVER_BACKEND=vllm \
+GRAPH_ROOT="$PWD/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_vllm_validation_v1" \
+RUN_STAGE=all VIDEO_LIMIT=1 MEMORY_CAPACITY=192 \
+  steam_video_new/implicit_world_model/cgbench_grounded_navigation/run_l15_graph_smoke_job.sh
+```
+
+vLLM 在这里是吞吐/serving 优化，不改变 L1/L1.5 定义，也不是新增 supervision。只有上述
+matched-video gate 不退化，正式 36-video cohort 才设置 `SERVER_BACKEND=vllm`。
+集群节点不提供系统级 `nvcc`，因此启动脚本默认设置
+`VLLM_USE_FLASHINFER_SAMPLER=0`，只让 sampling 回退到 vLLM native implementation；
+FlashAttention、Qwen GDN kernel 和 multimodal serving 仍保持启用。
+vLLM 还必须使用 `--default-chat-template-kwargs '{"enable_thinking":false}'`，与
+Transformers baseline 的 `--reasoning off` 对齐。未设置时 Qwen3.5 会把 token budget 用于
+thinking，导致 HTTP 200 但没有可解析的 `events`；这种运行必须作为协议失败，而非有效加速。
+
+`L1_REQUEST_CONCURRENCY` 控制同一视频内独立 surprise windows 的并发请求数。每个 worker
+使用独立 client，HTTP metadata 不共享；结果按原始 window index 回收，因此 node/rejection
+顺序保持确定。并发只改变 serving schedule，不改变 windows、sampled frames、prompt 或 parser。
+正式脚本现已预设为 8；禁止通过减少
+frames、扩大窗口或 heuristic Top-K 冒充 serving 加速。
+
+2026-07-22 的 matched full-video 结果已将正式配置冻结为 vLLM concurrency=8、thinking
+disabled：相同 623 秒视频和 88 个 windows，Transformers 用时 46:22，生成 170 nodes / 23
+rejections；vLLM c8 用时 8:20，生成 173 nodes / 19 rejections。两者都保留 3/3 GT clues，
+并覆盖 2/2 L1.5 clue bridges（1 direct、1 multi-hop）。约 5.6× wall-time improvement 来自
+serving/batching，不来自窗口、帧、prompt、parser 或 gate 放宽。早期未关闭 thinking 的 c8
+虽然 88 次 HTTP 均为 200，却产生 0 nodes；该 artifact 明确视为 protocol failure。
+
+生成冻结 selection/protocol，并以一视频一 checkpoint、最多 16 个并发 GPU 的方式提交：
+
+```bash
+cd /fs/gamma-projects/vlm-robot/steam_video
+NUM_SHARDS=36 MAX_PARALLEL=16 GPU_TYPE=rtxa6000 MEMORY_CAPACITY=192 \
+QOS=gamma-huge-long CPUS_PER_TASK=8 MEMORY_PER_TASK=64G \
+SERVER_BACKEND=vllm L1_REQUEST_CONCURRENCY=8 \
+  steam_video_new/implicit_world_model/cgbench_grounded_navigation/submit_l15_fixed_cohort.sh
+```
+
+最终产物位于 `l15_fixed_cohort_v1/`：
+
+- `build_report.json`：36 个 graph 的完整性与 shard 合并报告；
+- `coverage_report.json`：冻结后 embedding/native coverage；
+- `l15_correlation_evaluation.json`：相邻 clue bridge 的 evaluator-only 汇总；
+- `fixed_cohort_gate.json`：不含 clue intervals 的 locked case IDs 与失败统计；
+- `fixed_cohort_gate.hidden_key.json`：clue-to-node 对齐细节，仅供 evaluator。
 
 ## 已实现的 grounded-read 闭环
 

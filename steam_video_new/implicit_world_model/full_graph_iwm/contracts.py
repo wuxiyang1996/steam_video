@@ -152,6 +152,7 @@ class CursorBeliefState:
     belief_id: str
     question: str
     current_node_id: str | None = None
+    localized_entry_node_ids: tuple[str, ...] = ()
     acquired_evidence: tuple[str, ...] = ()
     imagined_evidence: tuple[str, ...] = ()
     cursor_history: tuple[str, ...] = ()
@@ -169,6 +170,10 @@ class CursorBeliefState:
     def __post_init__(self) -> None:
         if self.remaining_reads < 0:
             raise ValueError("remaining_reads must be non-negative")
+        if len(self.localized_entry_node_ids) != len(
+            set(self.localized_entry_node_ids)
+        ):
+            raise ValueError("localized entry node IDs must be unique")
         if (
             self.current_node_id is not None
             and self.current_node_id not in self.acquired_evidence
@@ -342,6 +347,7 @@ class FullGraphPlanDecision:
     preferences: tuple[TrajectoryPreference, ...]
     undominated_trajectory_ids: tuple[str, ...]
     legal_action_count: int
+    initial_trajectories: tuple[TrajectoryPrediction, ...] = ()
     top_k_applied: bool = False
 
     def __post_init__(self) -> None:

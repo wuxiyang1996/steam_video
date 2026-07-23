@@ -49,6 +49,8 @@ from .gpt_oss import (
     GPTOSSRealEvidenceBeliefUpdater,
 )
 from .gtsam_backup import GTSAMMultiTrajectoryBeliefUpdater
+from .localization import GPTOSSEntryLocalizer
+from .local_choice_data import build_grounded_local_choice_packet
 from .model_input import build_iwm_graph_input
 from .multi_trajectory import (
     DirectMultiTrajectoryIWM,
@@ -125,6 +127,7 @@ __all__ = [
     "GPTOSSFullGraphPreferenceModel",
     "GPTOSSFullGraphSetwisePreferenceModel",
     "GPTOSSFullGraphWorldModel",
+    "GPTOSSEntryLocalizer",
     "GPTOSSQuestionBeliefInitializer",
     "GPTOSSRealEvidenceBeliefUpdater",
     "GTSAMMultiTrajectoryBeliefUpdater",
@@ -168,6 +171,7 @@ __all__ = [
     "audit_permutation_invariance",
     "augment_graph_with_caption_candidates",
     "build_iwm_graph_input",
+    "build_grounded_local_choice_packet",
     "build_l1_l15_navigation_graph",
     "build_retained_graph_from_legacy_overlay",
     "branch_trajectory_pool",

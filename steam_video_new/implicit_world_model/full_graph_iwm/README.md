@@ -125,8 +125,12 @@ fingerprints the resulting graph.
 ## Legal actions
 
 The action compiler is structural and deterministic; the IWM does not invent
-actions. At the virtual root it exposes `START_AT(node)` for every visible
-retained node. At a real cursor it exposes only:
+actions. A separate categorical entry localizer inspects every visible
+retained node's safe semantic address once and establishes a small set of
+initial cursors. It emits no score or ranking, applies no Top-K, and must repair
+or fail if its declared maximum frontier is exceeded. At the virtual root the
+compiler exposes `START_AT(node)` only for these frozen anchors. At a real
+cursor it exposes only:
 
 - temporal forward/backward hops incident to the cursor;
 - positive-direction L1.5 correlation hops incident to the cursor;
@@ -134,10 +138,10 @@ retained node. At a real cursor it exposes only:
 - backtracking to already acquired nodes;
 - stop, answer (when ready), and abstain.
 
-There is no flat `current node x every unread node` semantic-probe product and
-no candidate `inspect/verify` action in the main navigation path. After the
-first real read, the eight current smoke graphs expose about four to five real
-read actions per cursor on average, rather than dozens or hundreds.
+There is no global all-node root action set, flat `current node x every unread
+node` semantic-probe product, or candidate `inspect/verify` action in the main
+navigation path. After the first real read, reasoning remains on the current
+node's close temporal/L1.5 neighborhood.
 
 ## Multi-trajectory IWM and planner
 
@@ -176,9 +180,10 @@ TrajectoryPool + L1/L1.5 graph
 
 ## Leakage and model-output contracts
 
-- The complete retained graph is visible, but unread evidence values are not.
-  Unread nodes expose a compact semantic key, timestamp/type, and embedding
-  reference. A real executor reveals the evidence value only after the hop.
+- Entry localization sees all compact semantic addresses once, but not unread
+  evidence values. Each IWM step sees only the legal local closure: acquired
+  nodes, current cursor, legal action endpoints, and induced edges. A real
+  executor reveals an evidence value only after the hop.
 - Imagined evidence remains predicted-only and never enters persistent belief.
 - The backend binds each observation descriptor exactly to the selected
   action target's visible semantic key. A proxy LLM predicts only the
@@ -189,8 +194,9 @@ TrajectoryPool + L1/L1.5 graph
   rejected.
 - The preference model receives anonymous predicted consequences rather than
   action/node/timestamp IDs, preventing lexical or construction-order shortcuts.
-- All retained candidates are considered; the main planner does not use an
-  embedding Top-K or a hand-written score to select a winner. Pair comparisons
+- All retained addresses are considered by the categorical localizer; all
+  legal local actions are considered by the IWM/planner. Neither stage uses an
+  embedding Top-K or hand-written score to select a winner. Pair comparisons
   are request-batched to keep model outputs bounded without sampling pairs.
 - Every mode abstains on a non-unique order. The legacy
   `--execute-stable-ties` option is retained only as an audited request flag;
@@ -211,7 +217,9 @@ TrajectoryPool + L1/L1.5 graph
 contracts.py       graph/action/transition/preference contracts
 graph_adapter.py   persisted overlay -> retained semantic L1 + soft L1.5
 action_compiler.py cursor-local legal hops and real evidence execution
-model_input.py     leakage-safe full retained-graph model view
+localization.py    scoreless categorical global-address entry localization
+local_choice_data.py blinded entry-anchor predictions + separate grounded labels
+model_input.py     leakage-safe legal-local-closure IWM view
 planner.py         horizon-1/2 IWM rollout and ordinal partial-order selection
 multi_trajectory.py direct multi-hypothesis IWM, shared execution and pool lifecycle
 gpt_oss.py         categorical GPT-OSS IWM and batched preference adapters
@@ -481,6 +489,92 @@ abstention, delayed success and latency. No scalar reward or aggregate boolean
 is synthesized. The present two-video run is a development smoke while the
 video-disjoint validation/test full-video graphs are being built; it is not a
 formal method result.
+
+For capacity-256 full graphs, horizon-two planning must not materialize the
+complete first-hop × second-hop Cartesian product before preference. The current
+planner therefore uses a two-stage learned frontier: the IWM predicts every
+legal first hop, categorical setwise preference identifies the non-dominated
+first-hop frontier, and only that frontier is expanded for the second imagined
+step. This is not heuristic Top-K: every first hop is judged, no fixed number of
+survivors is imposed, ties remain ties, and an unresolved frontier that exceeds
+the explicit rollout budget causes fail-closed abstention. The planner then
+executes only the preferred first real action, corrects belief from real
+evidence, and replans. Transport batches only split the same complete candidate
+set; they do not remove actions.
+
+The formal runner accepts `--fixed-cohort-gate`; only locked case IDs at the
+gate's selected capacity can enter an experiment. A first capacity-256 transport
+attempt with 48 actions/request failed strict JSON coverage and was retained as
+a protocol-failure artifact. The corrected pilot uses 12 actions/request and at
+most two graph contexts/request; this changes serving granularity only.
+
+### Capacity-256 delayed-case proxy diagnostic (2026-07-22)
+
+The first complete five-arm run uses the lowest passing cohort capacity (256),
+one locked structural-delayed case, horizon two, a matched two-read budget and
+`qwen/qwen3.6-flash` as a categorical proxy IWM. The transport validation used
+24 actions/request; every recorded transition batch had complete action
+coverage. The explicit imagined-transition budget is 512 and never removes a
+candidate: an oversized non-dominated frontier must abstain.
+
+The intact IWM reduced 258 initial first hops to 82 (31.8% retained), while the
+shuffled-IWM retained all 258. Thus IWM predictions measurably affect the
+planner frontier, but the intact frontier is still too ambiguous to expand
+within budget. IWM, no-WM, shuffled-IWM and immediate-only all abstained before
+a real read; the evaluator-only oracle read 2 nodes and covered 1/2 clues. This
+is a clean negative method result, not a transport or graph-gate failure. It
+localizes the next data target to categorical preference among the surviving
+first-hop ties/incomparables; heuristic Top-K or order-based tie breaking must
+not be added.
+
+### Local-neighborhood repair diagnostic (2026-07-22)
+
+The repaired path separates one-time global address localization from
+multi-hop reasoning. On the same delayed case, the localizer examined all 256
+safe addresses and returned three frozen anchors. The initial legal action set
+therefore fell from 258 to five (three reads plus stop/abstain); after one real
+read the cursor exposed nine local actions. Per-step IWM input contained only
+the legal local closure. No action was discarded by a heuristic Top-K.
+
+This repair made the WM intervention causal and inspectable: intact IWM chose a
+real read, while no-WM abstained and shuffled-IWM stopped. It did not yet
+improve clue recall. The localizer covered 1/2 hidden clues, including the
+1263-second missile node, but the IWM predicted that an unrelated 105-second
+firearm node would resolve `agent/action/victim` and selected it. The executed
+read was inconclusive. Horizon two and immediate-only made the same first-hop
+choice, so there is no delayed-planning advantage yet.
+
+This is a transition-calibration failure, not a graph-density or transport
+failure. The next supervision target is grounded executed comparisons between
+the remaining local anchors, with predicted-versus-realized role changes kept
+explicit. We must not hide the error using clue-aware routing, numeric reward,
+manual role-count ranking, Top-K, or deterministic tie breaking.
+
+`local_choice_data.py` implements that boundary without adding a routing
+heuristic. Future planner traces retain every initial anchor prediction in
+`FullGraphPlanDecision.initial_trajectories`; older traces can be reconstructed
+from their frozen transition cache. The exporter writes two separate tasks:
+
+1. blinded categorical comparisons among every localized anchor;
+2. executed predicted-versus-grounded navigation-delta corrections.
+
+GT clue overlap is applied only after planning and stored in a separate hidden
+key. A clue-overlapping anchor may be strictly preferred to a non-overlapping
+anchor for the dataset navigation task, but the latter remains
+`not_established`, never a standalone semantic negative. The correction target
+is explicitly scoped to clue-coverage navigation progress; it is not an
+identity, causal, or general observation-truth label.
+
+The current one-case packet has three anchors, three complete pair comparisons
+(two strict and one incomparable), and one executed transition mismatch. It is
+a test-split diagnostic with `training_ready=false`; it must not be used for
+post-training. A train-split multi-video packet is required before any SFT,
+DPO/OPD, or RL experiment.
+
+The same run is reproducibly replayable from the categorical response and
+action-conditioned transition caches. GPT-OSS-120B remains a compatible data
+gathering backend, but its measured OpenRouter latency was about one minute per
+12-action transition batch, so it is not the default rapid proxy loop.
 
 ### Two-video development diagnostic
 

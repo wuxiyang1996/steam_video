@@ -10,7 +10,11 @@ from collections import deque
 from time import monotonic
 from typing import Any, Protocol, Sequence
 
-from .action_compiler import GraphActionCompiler, execute_graph_action
+from .action_compiler import (
+    GraphActionCompiler,
+    execute_graph_action,
+    visible_graph_nodes,
+)
 from .contracts import (
     ActionKind,
     AnswerabilityState,
@@ -112,6 +116,7 @@ def run_real_read_closed_loop(
     arm: str,
     max_decisions: int | None = None,
     initial_missing_roles: Sequence[str] = (),
+    initial_entry_node_ids: Sequence[str] = (),
     belief_updater: RealBeliefUpdater | None = None,
 ) -> dict[str, Any]:
     """Plan, execute one real read, expose it, and replan.
@@ -127,6 +132,7 @@ def run_real_read_closed_loop(
     belief = CursorBeliefState(
         belief_id=f"belief:{case_id}:{arm}:initial",
         question=question,
+        localized_entry_node_ids=tuple(initial_entry_node_ids),
         required_roles=tuple(initial_missing_roles),
         missing_roles=tuple(initial_missing_roles),
         remaining_reads=read_budget,
@@ -218,6 +224,9 @@ def run_oracle_clue_ceiling(
     belief = CursorBeliefState(
         belief_id=f"belief:{case_id}:oracle:initial",
         question=question,
+        localized_entry_node_ids=tuple(
+            node.node_id for node in visible_graph_nodes(graph)
+        ),
         remaining_reads=read_budget,
     )
     steps: list[dict[str, Any]] = []

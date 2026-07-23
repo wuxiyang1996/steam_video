@@ -18,7 +18,7 @@ from .contracts import (
 
 
 class GraphActionCompiler:
-    """Compile every executable action without question-conditioned pruning."""
+    """Compile frozen entry anchors or the cursor's direct graph neighborhood."""
 
     def compile(
         self,
@@ -35,7 +35,10 @@ class GraphActionCompiler:
         acquired = set(belief.acquired_evidence)
         current = belief.current_node_id
         if current is None:
-            for node_id in sorted(visible):
+            unknown = set(belief.localized_entry_node_ids) - set(visible)
+            if unknown:
+                raise ValueError("localized entry anchor is not visible in the graph")
+            for node_id in belief.localized_entry_node_ids:
                 actions.append(
                     _action(
                         ActionKind.START_AT,

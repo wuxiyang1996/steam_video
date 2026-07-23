@@ -45,6 +45,7 @@ class FullGraphIWMPlanner:
         horizon: int = 2,
         action_compiler: GraphActionCompiler | None = None,
         max_trajectory_pairs: int | None = None,
+        max_imagined_transition_requests: int = 4096,
         setwise_preference_model: SetwisePreferenceModel | None = None,
         execute_stable_ties: bool = False,
     ) -> None:
@@ -56,7 +57,10 @@ class FullGraphIWMPlanner:
         self.action_compiler = action_compiler or GraphActionCompiler()
         if max_trajectory_pairs is not None and max_trajectory_pairs < 1:
             raise ValueError("max_trajectory_pairs must be positive when supplied")
+        if max_imagined_transition_requests < 1:
+            raise ValueError("max_imagined_transition_requests must be positive")
         self.max_trajectory_pairs = max_trajectory_pairs
+        self.max_imagined_transition_requests = max_imagined_transition_requests
         self.setwise_preference_model = setwise_preference_model
         self.stable_tie_execution_requested = execute_stable_ties
         self.execute_stable_ties = False
@@ -73,16 +77,78 @@ class FullGraphIWMPlanner:
             for action in first_actions
         )
         first_predictions = self._predict_checked(first_requests)
+        initial_trajectories = tuple(
+            _trajectory((prediction,)) for prediction in first_predictions
+        )
+
+        expansion_predictions = first_predictions
+        first_frontier_ids: tuple[str, ...] = ()
+        if self.horizon == 2 and self.setwise_preference_model is not None:
+            first_trajectories = initial_trajectories
+            first_frontier_ids = self.setwise_preference_model.select(
+                first_trajectories, belief
+            )
+            known_first_ids = {
+                trajectory.trajectory_id for trajectory in first_trajectories
+            }
+            if (
+                not set(first_frontier_ids) <= known_first_ids
+                or len(first_frontier_ids) != len(set(first_frontier_ids))
+            ):
+                raise ValueError("setwise first-hop frontier contains invalid IDs")
+            preferred = set(first_frontier_ids)
+            expansion_predictions = tuple(
+                prediction
+                for prediction, trajectory in zip(
+                    first_predictions, first_trajectories
+                )
+                if trajectory.trajectory_id in preferred
+            )
+            if not expansion_predictions:
+                selected = next(
+                    action for action in first_actions if action.kind is ActionKind.ABSTAIN
+                )
+                return FullGraphPlanDecision(
+                    selected_action=selected,
+                    planning_status="setwise_abstain_empty_first_hop_frontier",
+                    trajectories=first_trajectories,
+                    preferences=(),
+                    undominated_trajectory_ids=first_frontier_ids,
+                    legal_action_count=len(first_actions),
+                    initial_trajectories=initial_trajectories,
+                    top_k_applied=False,
+                )
 
         trajectories: list[TrajectoryPrediction] = []
         second_requests: list[IWMRequest] = []
         second_parents: list[ImaginedTransition] = []
-        for first in first_predictions:
+        for first in expansion_predictions:
             if self.horizon == 1 or _is_terminal(first.action):
                 trajectories.append(_trajectory((first,)))
                 continue
             imagined_belief = _project_imagined_belief(belief, first)
             second_actions = self.action_compiler.compile(imagined_belief, graph)
+            if (
+                len(first_requests) + len(second_requests) + len(second_actions)
+                > self.max_imagined_transition_requests
+            ):
+                selected = next(
+                    action for action in first_actions if action.kind is ActionKind.ABSTAIN
+                )
+                return FullGraphPlanDecision(
+                    selected_action=selected,
+                    planning_status=(
+                        "abstain_first_hop_frontier_rollout_budget_exceeded"
+                    ),
+                    trajectories=tuple(
+                        _trajectory((prediction,)) for prediction in first_predictions
+                    ),
+                    preferences=(),
+                    undominated_trajectory_ids=first_frontier_ids,
+                    legal_action_count=len(first_actions),
+                    initial_trajectories=initial_trajectories,
+                    top_k_applied=False,
+                )
             second_input = build_iwm_graph_input(
                 imagined_belief,
                 graph,
@@ -141,6 +207,7 @@ class FullGraphIWMPlanner:
                 preferences=(),
                 undominated_trajectory_ids=preferred,
                 legal_action_count=len(first_actions),
+                initial_trajectories=initial_trajectories,
                 top_k_applied=False,
             )
 
@@ -161,6 +228,7 @@ class FullGraphIWMPlanner:
                     trajectory.trajectory_id for trajectory in trajectories
                 ),
                 legal_action_count=len(first_actions),
+                initial_trajectories=initial_trajectories,
                 top_k_applied=False,
             )
         pairs = tuple(
@@ -213,6 +281,7 @@ class FullGraphIWMPlanner:
             preferences=preferences,
             undominated_trajectory_ids=undominated,
             legal_action_count=len(first_actions),
+            initial_trajectories=initial_trajectories,
             top_k_applied=False,
         )
 

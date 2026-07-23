@@ -3,16 +3,32 @@ set -euo pipefail
 
 REPO_ROOT="${REPO_ROOT:-/fs/gamma-projects/vlm-robot/steam_video}"
 VENV_ROOT="${VENV_ROOT:-/fs/gamma-projects/vlm-robot/Video_Skills/.venv-qwen35-serve}"
+VLLM_ROOT="${VLLM_ROOT:-/fs/gamma-projects/vlm-robot/Video_Skills/.venv-qwen35-vllm}"
 HF_CACHE_ROOT="${HF_CACHE_ROOT:-/fs/gamma-projects/vlm-robot/hf_cache}"
 DATASET_ROOT="${DATASET_ROOT:-/fs/gamma-projects/vlm-robot/datasets/CG-Bench}"
 ARTIFACT_ROOT="${ARTIFACT_ROOT:-${REPO_ROOT}/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2}"
 GRAPH_ROOT="${GRAPH_ROOT:-${ARTIFACT_ROOT}/l15_graph_smoke_v1}"
 SELECTION="${SELECTION:-${ARTIFACT_ROOT}/l15_graph_smoke_selection.json}"
 MODEL="${MODEL:-Qwen/Qwen3.5-9B}"
+SERVER_BACKEND="${SERVER_BACKEND:-transformers}"
+VLLM_MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-32768}"
+VLLM_GPU_MEMORY_UTILIZATION="${VLLM_GPU_MEMORY_UTILIZATION:-0.90}"
+VLLM_MAX_IMAGES_PER_PROMPT="${VLLM_MAX_IMAGES_PER_PROMPT:-16}"
+VLLM_USE_FLASHINFER_SAMPLER="${VLLM_USE_FLASHINFER_SAMPLER:-0}"
 VIDEO_LIMIT="${VIDEO_LIMIT:-8}"
 MEMORY_CAPACITY="${MEMORY_CAPACITY:-64}"
+L1_LOCALIZATION_MODE="${L1_LOCALIZATION_MODE:-coarse_to_fine}"
+L1_REQUEST_CONCURRENCY="${L1_REQUEST_CONCURRENCY:-1}"
+SURPRISE_SAMPLE_PERIOD_S="${SURPRISE_SAMPLE_PERIOD_S:-0.5}"
+SURPRISE_MIN_WINDOW_S="${SURPRISE_MIN_WINDOW_S:-2.0}"
+SURPRISE_MAX_WINDOW_S="${SURPRISE_MAX_WINDOW_S:-12.0}"
+SURPRISE_CALIBRATION_HISTORY="${SURPRISE_CALIBRATION_HISTORY:-8}"
+SURPRISE_QUANTILE="${SURPRISE_QUANTILE:-0.8}"
 RUN_STAGE="${RUN_STAGE:-all}"
 NUM_SHARDS="${NUM_SHARDS:-1}"
+COHORT_PROTOCOL="${COHORT_PROTOCOL:-}"
+COHORT_GATE_OUTPUT="${COHORT_GATE_OUTPUT:-}"
+COHORT_GATE_DETAILS="${COHORT_GATE_DETAILS:-}"
 SHARD_INDEX="${SHARD_INDEX:-${SLURM_ARRAY_TASK_ID:-}}"
 TASK_OFFSET="${SLURM_ARRAY_TASK_ID:-0}"
 PORT="${PORT:-$((20000 + ((${SLURM_JOB_ID:-0} % 1000) * 16) + TASK_OFFSET))}"
@@ -44,9 +60,35 @@ if [[ "${RUN_STAGE}" == "all" || "${RUN_STAGE}" == "extract" ]]; then
     REPORT_PATH="${GRAPH_ROOT}/shard_reports/build_report.shard_${SHARD_INDEX}_of_${NUM_SHARDS}.json"
   fi
   SERVER_LOG="${GRAPH_ROOT}/qwen_l15_server${SERVER_SUFFIX}.log"
-  "${VENV_ROOT}/bin/transformers" serve "${MODEL}" --host 127.0.0.1 --port "${PORT}" \
-    --device cuda:0 --dtype bfloat16 --reasoning off --attn-implementation sdpa \
-    >"${SERVER_LOG}" 2>&1 &
+  case "${SERVER_BACKEND}" in
+    transformers)
+      SERVER_BACKEND_VERSION="$("${VENV_ROOT}/bin/python" -c 'import importlib.metadata as m; print(m.version("transformers"))')"
+      "${VENV_ROOT}/bin/transformers" serve "${MODEL}" --host 127.0.0.1 --port "${PORT}" \
+        --device cuda:0 --dtype bfloat16 --reasoning off --attn-implementation sdpa \
+        >"${SERVER_LOG}" 2>&1 &
+      ;;
+    vllm)
+      if [[ ! -x "${VLLM_ROOT}/bin/vllm" ]]; then
+        echo "Missing ${VLLM_ROOT}/bin/vllm; run setup_qwen35_vllm_env.sh first" >&2
+        exit 2
+      fi
+      SERVER_BACKEND_VERSION="$("${VLLM_ROOT}/bin/python" -c 'import importlib.metadata as m; print(m.version("vllm"))')"
+      SETUPTOOLS_USE_DISTUTILS=local \
+      VLLM_USE_FLASHINFER_SAMPLER="${VLLM_USE_FLASHINFER_SAMPLER}" \
+      "${VLLM_ROOT}/bin/vllm" serve "${MODEL}" --host 127.0.0.1 --port "${PORT}" \
+        --dtype bfloat16 \
+        --max-model-len "${VLLM_MAX_MODEL_LEN}" \
+        --gpu-memory-utilization "${VLLM_GPU_MEMORY_UTILIZATION}" \
+        --limit-mm-per-prompt "{\"image\":${VLLM_MAX_IMAGES_PER_PROMPT}}" \
+        --default-chat-template-kwargs '{"enable_thinking":false}' \
+        --generation-config vllm \
+        >"${SERVER_LOG}" 2>&1 &
+      ;;
+    *)
+      echo "SERVER_BACKEND must be one of: transformers, vllm" >&2
+      exit 2
+      ;;
+  esac
   SERVER_PID=$!
   cleanup() {
     kill "${SERVER_PID}" 2>/dev/null || true
@@ -73,6 +115,16 @@ if [[ "${RUN_STAGE}" == "all" || "${RUN_STAGE}" == "extract" ]]; then
     --video-limit "${VIDEO_LIMIT}" \
     "${SHARD_ARGS[@]}" \
     --model "${MODEL}" \
+    --server-backend "${SERVER_BACKEND}" \
+    --server-backend-version "${SERVER_BACKEND_VERSION}" \
+    --model-thinking-mode disabled \
+    --request-concurrency "${L1_REQUEST_CONCURRENCY}" \
+    --localization-mode "${L1_LOCALIZATION_MODE}" \
+    --surprise-sample-period-s "${SURPRISE_SAMPLE_PERIOD_S}" \
+    --surprise-min-window-s "${SURPRISE_MIN_WINDOW_S}" \
+    --surprise-max-window-s "${SURPRISE_MAX_WINDOW_S}" \
+    --surprise-calibration-history "${SURPRISE_CALIBRATION_HISTORY}" \
+    --surprise-quantile "${SURPRISE_QUANTILE}" \
     --api-base "http://127.0.0.1:${PORT}/v1/chat/completions"
 
   cleanup
@@ -111,4 +163,20 @@ if [[ "${RUN_STAGE}" == "all" || "${RUN_STAGE}" == "finalize" ]]; then
     --memory-capacity "${MEMORY_CAPACITY}" \
     --max-path-hops 8 \
     --video-limit "${VIDEO_LIMIT}"
+
+  if [[ -n "${COHORT_PROTOCOL}" ]]; then
+    if [[ -z "${COHORT_GATE_OUTPUT}" || -z "${COHORT_GATE_DETAILS}" ]]; then
+      echo "COHORT_GATE_OUTPUT and COHORT_GATE_DETAILS are required with COHORT_PROTOCOL" >&2
+      exit 2
+    fi
+    "${VENV_ROOT}/bin/python" -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.fixed_l15_cohort gate \
+      --dataset "${ARTIFACT_ROOT}/navigation_dataset.gt_only.json" \
+      --hidden-key "${ARTIFACT_ROOT}/terminal_targets.hidden_key.json" \
+      --selection "${SELECTION}" \
+      --protocol "${COHORT_PROTOCOL}" \
+      --graph-root "${GRAPH_ROOT}" \
+      --output "${COHORT_GATE_OUTPUT}" \
+      --details-output "${COHORT_GATE_DETAILS}" \
+      --maximum-path-hops 8
+  fi
 fi
