@@ -826,6 +826,24 @@ still be expensive.
 
 ## Validation status
 
+### Code-complete versus empirically validated
+
+The scoped V1 implementation is code-complete: persistent competing
+hypotheses, complete legal-action expansion, horizon-one/two categorical IWM
+rollouts, multi-trajectory preference, one-hop execution, real-evidence
+correction, stale-rollout invalidation, replanning, five matched intervention
+arms, isolated GTSAM backup, persistent caches and resumable frozen-cohort
+evaluation are all implemented and covered by end-to-end model-backed smoke
+tests. No remaining interface placeholder prevents the intended
+`IWM -> Planner -> real read -> corrected belief -> IWM -> Planner` loop from
+running.
+
+The scientific claim is not complete. The remaining work is to measure and
+improve transition calibration, preference identifiability, delayed-planning
+advantage, clue recall and answer accuracy on the locked cohort. In this
+document, **code-complete** must not be interpreted as trained, baseline-beating
+or production-ready.
+
 The model-backed transition transport now losslessly factors requests by exact
 action sequence. One shared legal action and address-level L1/L1.5 descriptor
 is sent once, while every answer hypothesis keeps its own belief, imagined
@@ -839,6 +857,15 @@ The prompt also explicitly distinguishes “no real evidence acquired yet” fro
 an imagined read returning `empty`: an unread target's semantic key is an
 address-level clue for predicting the result of the read, not acquired
 evidence and not evidence of emptiness.
+
+A post-fix grouped smoke retained 246/246 hypothesis-conditioned transition
+outcomes, consolidated them into 41 complete joint chains and left a preferred
+frontier of two chains with different first hops. The categorical preference
+model returned a tie, and the planner therefore abstained. This is the intended
+fail-closed behavior: it verifies that the planner consumes the IWM frontier
+without silently adding Top-K or candidate-order tie breaking, while showing
+that the remaining two-way preference must be resolved through better grounded
+model supervision or a better model rather than another planner rule.
 
 The first real `qwen/qwen3.6-flash` persistent multi-trajectory smoke now
 completes two horizon-two planning/read/correction cycles. It retains all

@@ -431,6 +431,29 @@ Planner executes one first hop, applies the real observation to the persistent
 trajectory pool, discards stale imagined continuations and replans. Imagined
 belief is never copied into persistent belief.
 
+### Engineering completion status
+
+The scoped V1 IWM/planner implementation is **code-complete**. It includes:
+
+- question-independent L1/L1.5 evidence graphs and legal graph actions;
+- persistent competing answer-hypothesis trajectories;
+- categorical, action-conditioned horizon-one/two imagined transitions;
+- complete-coverage setwise/pairwise trajectory preference without numeric
+  rewards, heuristic Top-K, candidate-order tie breaking or imagined-to-real
+  belief leakage;
+- execution of one shared real evidence read, hypothesis-conditioned belief
+  correction, stale-rollout invalidation and replanning;
+- matched intact/no-WM/shuffled/immediate/oracle arms;
+- optional isolated GTSAM belief-correction backup that never ranks actions;
+- persistent response caches, fail-closed schemas, coverage/calibration audits
+  and a resumable case-isolated frozen-cohort runner.
+
+Real model-backed smoke tests have exercised these interfaces end to end. This
+means the remaining gate is empirical model quality, not an unimplemented
+planner or belief-update path. “Code-complete” does not mean that the learned
+IWM is trained, calibrated, statistically better than the matched baselines or
+production-ready.
+
 Not yet established:
 
 - a trained learned IWM;
@@ -462,6 +485,12 @@ horizon-two, two-read and five-arm protocol unchanged. OpenRouter Qwen is stable
 with one shared-action group per request; two groups exceeded its structured
 output envelope. The IWM prompt also now treats “no acquired evidence yet” as
 the pre-read state rather than predicting an `empty` observation by default.
+A post-fix model-backed smoke retained all 246 hypothesis-conditioned outcomes,
+formed 41 complete joint chains and reduced the preferred frontier to two
+different first hops. The model returned a tie, so the planner correctly
+abstained instead of introducing an ungrounded tie-break. This further verifies
+the code path while isolating first-hop preference identifiability as an
+empirical model limitation.
 
 The latest grounding validation has 670/672 successful Qwen-VL reads and two
 failed reads. Eight question-independent CG-Bench smoke graphs and their Qwen
