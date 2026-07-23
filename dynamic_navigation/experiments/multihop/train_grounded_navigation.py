@@ -61,6 +61,8 @@ class TrajectoryDataset(Dataset):
                 example.paragraphs[position]
                 for position in example.support_order[:hop]
             ],
+            "paragraph_texts": example.paragraphs,
+            "support_order": example.support_order,
             "paragraphs": self.paragraph_embeddings[example_index],
             "visited": visited,
             "target": example.support_order[hop],
@@ -75,6 +77,8 @@ def collate(batch):
         "hop": torch.tensor([item["hop"] for item in batch], dtype=torch.long),
         "question": [item["question"] for item in batch],
         "evidence": [item["evidence"] for item in batch],
+        "paragraph_texts": [item["paragraph_texts"] for item in batch],
+        "support_order": [item["support_order"] for item in batch],
         "paragraphs": torch.stack([item["paragraphs"] for item in batch]),
         "visited": torch.stack([item["visited"] for item in batch]),
         "target": torch.tensor(
@@ -85,9 +89,15 @@ def collate(batch):
 
 def prompts_for_batch(batch, intervention: str | None = None):
     evidence = [list(items) for items in batch["evidence"]]
+    questions = list(batch["question"])
     conditioned = [index for index, items in enumerate(evidence) if items]
     if intervention == "question_only":
         evidence = [[] for _ in evidence]
+    elif intervention == "evidence_only":
+        questions = [
+            "Continue to the next supporting fact in this reasoning chain."
+            for _ in questions
+        ]
     elif intervention == "shuffle_evidence" and len(conditioned) > 1:
         last_items = [evidence[index][-1] for index in conditioned]
         last_items = last_items[-1:] + last_items[:-1]
@@ -95,23 +105,22 @@ def prompts_for_batch(batch, intervention: str | None = None):
             evidence[index][-1] = replacement
     elif intervention == "wrong_evidence":
         for index in conditioned:
-            example_paragraphs = batch["paragraphs"][index]
-            visited = batch["visited"][index]
             target = int(batch["target"][index])
-            valid = [
+            support = set(batch["support_order"][index])
+            distractors = [
                 position
-                for position in range(example_paragraphs.size(0))
-                if not bool(visited[position]) and position != target
+                for position in range(len(batch["paragraph_texts"][index]))
+                if position not in support and position != target
             ]
-            if valid:
-                # Embedding text is unavailable in this tensor-only batch. Use
-                # another example's valid evidence as an in-distribution wrong
-                # observation, preserving natural language form.
-                donor = conditioned[(conditioned.index(index) + 1) % len(conditioned)]
-                evidence[index][-1] = batch["evidence"][donor][-1]
+            if distractors:
+                # Same-question, natural-language distractor: a stricter
+                # in-distribution intervention than unrelated batch evidence.
+                evidence[index][-1] = batch["paragraph_texts"][index][
+                    distractors[0]
+                ]
     return [
         format_query(question, history)
-        for question, history in zip(batch["question"], evidence)
+        for question, history in zip(questions, evidence)
     ]
 
 
@@ -493,6 +502,9 @@ def main():
         question_only = evaluate_teacher(
             model, val_loader, device, "question_only"
         )
+        evidence_only = evaluate_teacher(
+            model, val_loader, device, "evidence_only"
+        )
         shuffled = evaluate_teacher(
             model, val_loader, device, "shuffle_evidence"
         )
@@ -513,12 +525,15 @@ def main():
             "free_running": free,
             "interventions": {
                 "question_only": question_only,
+                "evidence_only": evidence_only,
                 "shuffle_evidence": shuffled,
                 "wrong_evidence": wrong,
             },
             "causal_drops": {
                 "remove_evidence": conditioned
                 - question_only["conditioned_hop_recall_at_1"],
+                "remove_question": conditioned
+                - evidence_only["conditioned_hop_recall_at_1"],
                 "shuffle_evidence": conditioned
                 - shuffled["conditioned_hop_recall_at_1"],
                 "wrong_evidence": conditioned

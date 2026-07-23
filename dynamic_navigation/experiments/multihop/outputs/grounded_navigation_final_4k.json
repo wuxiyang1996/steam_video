@@ -1,0 +1,196 @@
+{
+  "config": {
+    "n_train": 4096,
+    "n_val": 512,
+    "min_hops": 3,
+    "epochs": 3,
+    "qwen_batch_size": 8,
+    "bert_batch_size": 16,
+    "encode_batch_size": 128,
+    "seed": 0,
+    "cache": "outputs/grounded_embeddings_4k.pt",
+    "out": "outputs/grounded_navigation_final_4k.json"
+  },
+  "data": {
+    "train_examples": 4096,
+    "train_trajectories": 13164,
+    "val_examples": 512,
+    "val_trajectories": 1728
+  },
+  "direct_qwen": {
+    "hop_recall_at_1": 0.20949074074074073,
+    "path_exact_match": 0.01953125,
+    "by_hop": {
+      "1": 0.447265625,
+      "2": 0.12109375,
+      "3": 0.1171875,
+      "4": 0.057291666666666664
+    }
+  },
+  "models": {
+    "qwen_lora": {
+      "teacher_forced": {
+        "hop_recall_at_1": 0.7488425925925926,
+        "conditioned_hop_recall_at_1": 0.727796052631579,
+        "path_exact_match": 0.40234375,
+        "by_hop": {
+          "1": 0.798828125,
+          "2": 0.732421875,
+          "3": 0.689453125,
+          "4": 0.8177083333333334
+        }
+      },
+      "free_running": {
+        "hop_recall_at_1": 0.6290509259259259,
+        "path_exact_match": 0.39453125,
+        "by_hop": {
+          "1": 0.80078125,
+          "2": 0.615234375,
+          "3": 0.541015625,
+          "4": 0.4427083333333333
+        }
+      },
+      "interventions": {
+        "question_only": {
+          "hop_recall_at_1": 0.3420138888888889,
+          "conditioned_hop_recall_at_1": 0.14884868421052633,
+          "path_exact_match": 0.009765625,
+          "by_hop": {
+            "1": 0.80078125,
+            "2": 0.244140625,
+            "3": 0.076171875,
+            "4": 0.08854166666666667
+          }
+        },
+        "evidence_only": {
+          "hop_recall_at_1": 0.31886574074074076,
+          "conditioned_hop_recall_at_1": 0.42023026315789475,
+          "path_exact_match": 0.0078125,
+          "by_hop": {
+            "1": 0.078125,
+            "2": 0.44921875,
+            "3": 0.384765625,
+            "4": 0.4375
+          }
+        },
+        "shuffle_evidence": {
+          "hop_recall_at_1": 0.4988425925925926,
+          "conditioned_hop_recall_at_1": 0.37335526315789475,
+          "path_exact_match": 0.052734375,
+          "by_hop": {
+            "1": 0.796875,
+            "2": 0.267578125,
+            "3": 0.392578125,
+            "4": 0.6041666666666666
+          }
+        },
+        "wrong_evidence": {
+          "hop_recall_at_1": 0.41261574074074076,
+          "conditioned_hop_recall_at_1": 0.25082236842105265,
+          "path_exact_match": 0.015625,
+          "by_hop": {
+            "1": 0.796875,
+            "2": 0.20703125,
+            "3": 0.2578125,
+            "4": 0.3489583333333333
+          }
+        }
+      },
+      "causal_drops": {
+        "remove_evidence": 0.5789473684210527,
+        "remove_question": 0.30756578947368424,
+        "shuffle_evidence": 0.35444078947368424,
+        "wrong_evidence": 0.4769736842105263
+      }
+    },
+    "bert_base": {
+      "teacher_forced": {
+        "hop_recall_at_1": 0.36516203703703703,
+        "conditioned_hop_recall_at_1": 0.36101973684210525,
+        "path_exact_match": 0.064453125,
+        "by_hop": {
+          "1": 0.375,
+          "2": 0.341796875,
+          "3": 0.357421875,
+          "4": 0.421875
+        }
+      },
+      "free_running": {
+        "hop_recall_at_1": 0.25983796296296297,
+        "path_exact_match": 0.064453125,
+        "by_hop": {
+          "1": 0.375,
+          "2": 0.234375,
+          "3": 0.20703125,
+          "4": 0.16145833333333334
+        }
+      },
+      "interventions": {
+        "question_only": {
+          "hop_recall_at_1": 0.21875,
+          "conditioned_hop_recall_at_1": 0.15296052631578946,
+          "path_exact_match": 0.0078125,
+          "by_hop": {
+            "1": 0.375,
+            "2": 0.216796875,
+            "3": 0.09375,
+            "4": 0.140625
+          }
+        },
+        "evidence_only": {
+          "hop_recall_at_1": 0.2586805555555556,
+          "conditioned_hop_recall_at_1": 0.33963815789473684,
+          "path_exact_match": 0.00390625,
+          "by_hop": {
+            "1": 0.06640625,
+            "2": 0.3125,
+            "3": 0.345703125,
+            "4": 0.3958333333333333
+          }
+        },
+        "shuffle_evidence": {
+          "hop_recall_at_1": 0.2633101851851852,
+          "conditioned_hop_recall_at_1": 0.21628289473684212,
+          "path_exact_match": 0.015625,
+          "by_hop": {
+            "1": 0.375,
+            "2": 0.1640625,
+            "3": 0.263671875,
+            "4": 0.22916666666666666
+          }
+        },
+        "wrong_evidence": {
+          "hop_recall_at_1": 0.2332175925925926,
+          "conditioned_hop_recall_at_1": 0.17351973684210525,
+          "path_exact_match": 0.015625,
+          "by_hop": {
+            "1": 0.375,
+            "2": 0.166015625,
+            "3": 0.177734375,
+            "4": 0.18229166666666666
+          }
+        }
+      },
+      "causal_drops": {
+        "remove_evidence": 0.2080592105263158,
+        "remove_question": 0.021381578947368418,
+        "shuffle_evidence": 0.14473684210526314,
+        "wrong_evidence": 0.1875
+      }
+    }
+  },
+  "go_nogo": {
+    "qwen_lora": {
+      "beats_direct": true,
+      "shuffle_drop_ge_5pts": true,
+      "wrong_drop_ge_5pts": true,
+      "verdict": "GO"
+    },
+    "bert_base": {
+      "beats_direct": true,
+      "shuffle_drop_ge_5pts": true,
+      "wrong_drop_ge_5pts": true,
+      "verdict": "GO"
+    }
+  }
+}
