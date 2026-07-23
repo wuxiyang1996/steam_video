@@ -107,6 +107,7 @@ def test_cgbench_case_uses_public_choices_and_joins_hidden_labels_after_run() ->
         answer_selector=GPTOSSMultiTrajectoryAnswerSelector(client),
         read_budget=2,
         arm="world_model_guided",
+        initial_entry_node_ids=("l1:first", "l1:second"),
         evaluator_answer="attacked by a cat",
     )
 

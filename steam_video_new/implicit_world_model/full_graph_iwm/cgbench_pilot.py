@@ -17,7 +17,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.overlay_io import 
     load_overlay_artifact,
 )
 
-from .action_compiler import GraphActionCompiler
+from .action_compiler import GraphActionCompiler, visible_graph_nodes
 from .caption_candidates import augment_graph_with_caption_candidates
 from .closed_loop import (
     ClueInterval,
@@ -26,7 +26,12 @@ from .closed_loop import (
     run_oracle_clue_ceiling,
     run_real_read_closed_loop,
 )
-from .contracts import CursorBeliefState, RetainedEvidenceGraph
+from .contracts import (
+    ActionKind,
+    CursorBeliefState,
+    FullGraphPlanDecision,
+    RetainedEvidenceGraph,
+)
 from .gpt_oss import (
     GPTOSSFullGraphPreferenceModel,
     GPTOSSQuestionBeliefInitializer,
@@ -66,6 +71,29 @@ ARM_ORDER = (
     "immediate_effect_only",
     "oracle_clue_ceiling",
 )
+
+
+class _FailClosedAbstainPlanner:
+    """Represent entry-localization contract failure without dropping a case."""
+
+    def plan(
+        self,
+        belief: CursorBeliefState,
+        graph: RetainedEvidenceGraph,
+    ) -> FullGraphPlanDecision:
+        actions = GraphActionCompiler().compile(belief, graph)
+        selected = next(
+            action for action in actions if action.kind is ActionKind.ABSTAIN
+        )
+        return FullGraphPlanDecision(
+            selected_action=selected,
+            planning_status="entry_localization_failed_fail_closed",
+            trajectories=(),
+            preferences=(),
+            undominated_trajectory_ids=(),
+            legal_action_count=len(actions),
+            top_k_applied=False,
+        )
 
 
 def compile_cgbench_gate(
@@ -370,6 +398,7 @@ def run_gpt_oss_matched_pilot(
         )
     runs: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
+    method_failures: list[dict[str, str]] = []
     if resume_progress:
         if progress_path is None or not progress_path.is_file():
             raise FileNotFoundError("--resume-progress requires an existing progress file")
@@ -379,6 +408,8 @@ def run_gpt_oss_matched_pilot(
         if prior.get("requested_arms") != list(requested_arms):
             raise ValueError("progress arm selection does not match this run")
         runs = list(prior.get("runs") or [])
+        errors = list(prior.get("errors") or [])
+        method_failures = list(prior.get("method_failures") or [])
     response_audit_start = len(client.response_audits)
 
     def checkpoint(*, complete: bool = False) -> None:
@@ -393,8 +424,10 @@ def run_gpt_oss_matched_pilot(
                 "requested_arms": list(requested_arms),
                 "completed_run_count": len(runs),
                 "error_count": len(errors),
+                "method_failure_count": len(method_failures),
                 "runs": runs,
                 "errors": errors,
+                "method_failures": method_failures,
                 "metrics_by_arm": _aggregate_metrics(runs, requested_arms),
                 "model_response_count": (
                     len(client.response_audits) - response_audit_start
@@ -440,6 +473,7 @@ def run_gpt_oss_matched_pilot(
         initial_missing_roles: tuple[str, ...] = ()
         initial_entry_node_ids: tuple[str, ...] = ()
         entry_localization_evaluator_only: dict[str, Any] | None = None
+        entry_localization_failure: str | None = None
         if any(arm != "oracle_clue_ceiling" for arm in requested_arms):
             try:
                 initial_missing_roles = belief_initializer.initialize(question)
@@ -460,15 +494,26 @@ def run_gpt_oss_matched_pilot(
                     "fed_back_to_localizer_or_planner": False,
                 }
             except Exception as exc:
-                errors.append(
+                entry_localization_failure = f"{type(exc).__name__}: {exc}"
+                method_failures.append(
                     {
                         "case_id": case_id,
-                        "arm": "belief_initializer",
-                        "error": f"{type(exc).__name__}: {exc}",
+                        "stage": "entry_localization",
+                        "failure": entry_localization_failure,
                     }
                 )
-                checkpoint()
-                continue
+                entry_localizer.audits.append(
+                    {
+                        "candidate_address_count": len(visible_graph_nodes(graph)),
+                        "selected_anchor_count": 0,
+                        "selected_node_ids": [],
+                        "status": "failed_contract",
+                        "top_k_applied": False,
+                        "numeric_score_used": False,
+                        "failure": entry_localization_failure,
+                        "fail_closed": True,
+                    }
+                )
         for arm in requested_arms:
             if any(
                 row.get("case_id") == case_id and row.get("arm") == arm
@@ -484,6 +529,26 @@ def run_gpt_oss_matched_pilot(
                         clue_intervals=clues,
                         read_budget=read_budget,
                     )
+                elif entry_localization_failure is not None:
+                    run = run_real_read_closed_loop(
+                        case_id=case_id,
+                        question=question,
+                        graph=graph,
+                        clue_intervals=clues,
+                        planner=_FailClosedAbstainPlanner(),
+                        read_budget=read_budget,
+                        arm=arm,
+                        initial_missing_roles=initial_missing_roles,
+                        initial_entry_node_ids=(),
+                    )
+                    run["method_audit"] = {
+                        "planner_type": "FailClosedEntryLocalizationBoundary",
+                        "entry_localization_failed": True,
+                        "failure": entry_localization_failure,
+                        "top_k_applied": False,
+                    }
+                    run["entry_localization"] = entry_localizer.audits[-1]
+                    run["entry_localization_evaluator_only"] = None
                 else:
                     planner = _planner_for_arm(
                         arm,
@@ -521,16 +586,42 @@ def run_gpt_oss_matched_pilot(
                     )
                 if run["graph_fingerprint"] != expected_fingerprint:
                     raise ValueError("matched arm mutated the retained graph")
+                run["split"] = public.get("split")
                 runs.append(run)
                 checkpoint()
             except Exception as exc:
+                failure = f"{type(exc).__name__}: {exc}"
                 errors.append(
                     {
                         "case_id": case_id,
                         "arm": arm,
-                        "error": f"{type(exc).__name__}: {exc}",
+                        "error": failure,
                     }
                 )
+                if arm != "oracle_clue_ceiling":
+                    run = run_real_read_closed_loop(
+                        case_id=case_id,
+                        question=question,
+                        graph=graph,
+                        clue_intervals=clues,
+                        planner=_FailClosedAbstainPlanner(),
+                        read_budget=read_budget,
+                        arm=arm,
+                        initial_missing_roles=initial_missing_roles,
+                        initial_entry_node_ids=(),
+                    )
+                    run["method_audit"] = {
+                        "planner_type": "FailClosedRuntimeBoundary",
+                        "arm_runtime_failed": True,
+                        "failure": failure,
+                        "top_k_applied": False,
+                    }
+                    run["entry_localization"] = entry_localizer.audits[-1]
+                    run["entry_localization_evaluator_only"] = (
+                        entry_localization_evaluator_only
+                    )
+                    run["split"] = public.get("split")
+                    runs.append(run)
                 checkpoint()
     divergences = []
     by_case: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
@@ -599,7 +690,25 @@ def run_gpt_oss_matched_pilot(
         },
         "runs": runs,
         "errors": errors,
+        "method_failures": method_failures,
         "metrics_by_arm": _aggregate_metrics(runs, requested_arms),
+        "metrics_by_split_and_arm": {
+            split: _aggregate_metrics(
+                [run for run in runs if run.get("split") == split],
+                requested_arms,
+            )
+            for split in sorted(
+                {
+                    str(run["split"])
+                    for run in runs
+                    if run.get("split") is not None
+                }
+            )
+        },
+        "paired_arm_effects": _paired_arm_effects(runs),
+        "transition_outcome_confusion_by_arm": (
+            _transition_outcome_confusion(runs, requested_arms)
+        ),
         "action_divergence": divergences,
         "model_response_audits": client.response_audits[response_audit_start:],
         "entry_localization_audits": entry_localizer.audits,
@@ -751,6 +860,23 @@ def _aggregate_metrics(
             ]
             for run in selected
         ]
+        localization_recalls = [
+            (
+                0.0
+                if (run.get("method_audit") or {}).get(
+                    "entry_localization_failed"
+                )
+                else (run.get("entry_localization_evaluator_only") or {}).get(
+                    "clue_recall"
+                )
+            )
+            for run in selected
+        ]
+        localized_clue_available = [
+            run
+            for run, recall in zip(selected, localization_recalls)
+            if recall is not None and float(recall) > 0.0
+        ]
         result[arm] = {
             "case_count": len(selected),
             "clue_coverage_complete_rate": _mean_bool(
@@ -765,13 +891,37 @@ def _aggregate_metrics(
             ),
             "mean_latency_s": _mean(row["latency_s"] for row in metrics),
             "mean_entry_localization_clue_recall": _mean(
-                (run.get("entry_localization_evaluator_only") or {}).get(
-                    "clue_recall"
+                localization_recalls
+            ),
+            "entry_localization_any_clue_rate": (
+                _mean_bool(
+                    float(recall) > 0.0
+                    for recall in localization_recalls
+                    if recall is not None
                 )
-                for run in selected
+            ),
+            "first_read_clue_hit_rate_when_localized_clue_available": (
+                _mean_bool(
+                    _first_real_read_hits_clue(run)
+                    for run in localized_clue_available
+                )
             ),
             "mean_entry_anchor_count": _mean(
                 (run.get("entry_localization") or {}).get("selected_anchor_count")
+                for run in selected
+            ),
+            "entry_localization_failure_rate": _mean_bool(
+                bool(
+                    (run.get("method_audit") or {}).get(
+                        "entry_localization_failed"
+                    )
+                )
+                for run in selected
+            ),
+            "arm_runtime_failure_rate": _mean_bool(
+                bool(
+                    (run.get("method_audit") or {}).get("arm_runtime_failed")
+                )
                 for run in selected
             ),
             "mean_initial_legal_action_count": _mean(
@@ -802,6 +952,141 @@ def _aggregate_metrics(
             "answer_accuracy": None,
         }
     return result
+
+
+def _first_real_read_hits_clue(run: dict[str, Any]) -> bool:
+    for step in run.get("steps") or []:
+        label = step.get("realized_label_evaluator_only")
+        if isinstance(label, dict):
+            return bool(label.get("newly_covered_clue_indices"))
+    return False
+
+
+def _paired_arm_effects(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    by_case: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for run in runs:
+        by_case[str(run["case_id"])][str(run["arm"])] = run
+    reference_arm = "world_model_guided"
+    result: dict[str, Any] = {}
+    for candidate_arm in (
+        "no_world_model",
+        "shuffled_world_model_prediction",
+        "immediate_effect_only",
+        "oracle_clue_ceiling",
+    ):
+        pairs = [
+            (case_runs[reference_arm], case_runs[candidate_arm])
+            for case_runs in by_case.values()
+            if reference_arm in case_runs and candidate_arm in case_runs
+        ]
+        deltas = [
+            float(reference["metrics"]["clue_recall"])
+            - float(candidate["metrics"]["clue_recall"])
+            for reference, candidate in pairs
+        ]
+        result[candidate_arm] = {
+            "paired_case_count": len(pairs),
+            "mean_clue_recall_delta_reference_minus_candidate": _mean(
+                deltas
+            ),
+            "reference_better_clue_recall_count": sum(
+                delta > 0.0 for delta in deltas
+            ),
+            "equal_clue_recall_count": sum(delta == 0.0 for delta in deltas),
+            "reference_worse_clue_recall_count": sum(
+                delta < 0.0 for delta in deltas
+            ),
+            "reference_only_delayed_success_count": sum(
+                bool(reference["metrics"]["delayed_reasoning_success"])
+                and not bool(candidate["metrics"]["delayed_reasoning_success"])
+                for reference, candidate in pairs
+            ),
+            "candidate_only_delayed_success_count": sum(
+                bool(candidate["metrics"]["delayed_reasoning_success"])
+                and not bool(reference["metrics"]["delayed_reasoning_success"])
+                for reference, candidate in pairs
+            ),
+            "action_divergence_rate": _mean_bool(
+                action_divergence(reference, candidate)["action_diverged"]
+                for reference, candidate in pairs
+            ),
+        }
+    return result
+
+
+def _transition_outcome_confusion(
+    runs: list[dict[str, Any]], arms: Iterable[str]
+) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for arm in arms:
+        matrix: dict[str, dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        outcome_matches: list[bool] = []
+        delta_matches: list[bool] = []
+        for run in runs:
+            if run.get("arm") != arm:
+                continue
+            for step in run.get("steps") or []:
+                realized = step.get("realized_label_evaluator_only")
+                if not isinstance(realized, dict):
+                    continue
+                predicted = _selected_initial_transition(step)
+                if predicted is None:
+                    continue
+                predicted_outcome = str(
+                    (predicted.get("observation") or {}).get("outcome")
+                    or "missing"
+                )
+                realized_outcome = str(
+                    realized.get("observation_outcome") or "missing"
+                )
+                matrix[realized_outcome][predicted_outcome] += 1
+                outcome_matches.append(predicted_outcome == realized_outcome)
+                predicted_delta = {
+                    key: value
+                    for key, value in (
+                        predicted.get("belief_delta") or {}
+                    ).items()
+                    if key != "predicted_only"
+                }
+                realized_delta = {
+                    key: value
+                    for key, value in (
+                        realized.get("belief_delta") or {}
+                    ).items()
+                    if key != "predicted_only"
+                }
+                delta_matches.append(predicted_delta == realized_delta)
+        result[arm] = {
+            "evaluated_transition_count": sum(
+                sum(row.values()) for row in matrix.values()
+            ),
+            "outcome_confusion_realized_to_predicted": {
+                realized: dict(sorted(predicted.items()))
+                for realized, predicted in sorted(matrix.items())
+            },
+            "exact_outcome_match_rate": _mean_bool(outcome_matches),
+            "exact_belief_delta_match_rate": _mean_bool(delta_matches),
+        }
+    return result
+
+
+def _selected_initial_transition(
+    step: dict[str, Any],
+) -> dict[str, Any] | None:
+    selected_id = str((step.get("selected_action") or {}).get("action_id") or "")
+    if not selected_id:
+        return None
+    decision = step.get("decision") or {}
+    for trajectory in decision.get("initial_trajectories") or []:
+        transitions = trajectory.get("transitions") or []
+        if not transitions:
+            continue
+        transition = transitions[0]
+        if str((transition.get("action") or {}).get("action_id") or "") == selected_id:
+            return transition
+    return None
 
 
 def _first_hop_frontier_audit(run: dict[str, Any]) -> dict[str, float] | None:

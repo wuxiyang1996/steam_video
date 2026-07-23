@@ -10,6 +10,7 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     CursorBeliefState,
     EvidenceEffect,
     GPTOSSMultiTrajectoryIWM,
+    GPTOSSRealEvidenceBeliefUpdater,
     GPTOSSRealTrajectoryEvidenceAssessor,
     GraphActionCompiler,
     MultiTrajectoryIWMDecision,
@@ -65,6 +66,7 @@ def _pool() -> TrajectoryPool:
         CursorBeliefState(
             belief_id="belief:root",
             question="Who opened the door after entering?",
+            localized_entry_node_ids=("l1:first", "l1:second"),
             required_roles=("identity", "after_event"),
             missing_roles=("identity", "after_event"),
             remaining_reads=2,
@@ -212,6 +214,97 @@ def test_action_aware_backup_receives_only_executed_real_observation() -> None:
     assert all(row[2] == ("l1:first",) for row in updater.calls)
     assert all(
         row[3:] == ("l1:first", "l1:first", "graph:test") for row in updater.calls
+    )
+
+
+class _HypothesisAwareUpdater:
+    def __init__(self):
+        self.hypotheses = []
+
+    def update_for_trajectory(
+        self,
+        trajectory_id,
+        hypothesis,
+        previous_belief,
+        structurally_updated_belief,
+        action,
+        observation,
+        graph,
+    ):
+        del (
+            trajectory_id,
+            previous_belief,
+            action,
+            observation,
+            graph,
+        )
+        self.hypotheses.append(hypothesis)
+        return replace(
+            structurally_updated_belief,
+            contradictions=(f"hypothesis:{hypothesis}",),
+        )
+
+
+def test_real_belief_correction_is_conditioned_on_each_hypothesis() -> None:
+    pool = _pool()
+    decision = MultiTrajectoryIWMPlanner(_SharedFirstIWM()).plan(pool, _graph())
+    updater = _HypothesisAwareUpdater()
+
+    execution = execute_shared_trajectory_action(
+        pool,
+        decision,
+        _graph(),
+        belief_updater=updater,
+    )
+
+    assert updater.hypotheses == [row.hypothesis for row in pool.trajectories]
+    assert {
+        row.belief.contradictions for row in execution.pool.trajectories
+    } == {
+        ("hypothesis:the entrant opened the door",),
+        ("hypothesis:another person opened the door",),
+    }
+
+
+class _HypothesisConditionedCorrectionClient:
+    model = "hypothesis-conditioned-correction-test"
+
+    def __init__(self):
+        self.payloads = []
+
+    def complete_json(self, *, task, payload):
+        del task
+        self.payloads.append(payload)
+        resolves_identity = payload["trajectory_hypothesis"].startswith(
+            "the entrant"
+        )
+        return {
+            "resolved_roles": ["identity"] if resolves_identity else [],
+            "opened_roles": [],
+            "contradiction_change": "unchanged",
+            "rationale": "the real observation is assessed under this hypothesis",
+        }
+
+
+def test_gpt_real_updater_receives_hypothesis_and_diverges_beliefs() -> None:
+    pool = _pool()
+    decision = MultiTrajectoryIWMPlanner(_SharedFirstIWM()).plan(pool, _graph())
+    client = _HypothesisConditionedCorrectionClient()
+
+    execution = execute_shared_trajectory_action(
+        pool,
+        decision,
+        _graph(),
+        belief_updater=GPTOSSRealEvidenceBeliefUpdater(client),
+    )
+
+    assert [row["trajectory_hypothesis"] for row in client.payloads] == [
+        row.hypothesis for row in pool.trajectories
+    ]
+    assert execution.pool.trajectories[0].belief.missing_roles == ("after_event",)
+    assert execution.pool.trajectories[1].belief.missing_roles == (
+        "identity",
+        "after_event",
     )
 
 

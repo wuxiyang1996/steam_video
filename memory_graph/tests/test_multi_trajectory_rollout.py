@@ -56,6 +56,7 @@ def _pool():
         CursorBeliefState(
             belief_id="belief:rollout",
             question="Who opened the door after entering?",
+            localized_entry_node_ids=("l1:first", "l1:second"),
             required_roles=("identity", "after_event"),
             missing_roles=("identity", "after_event"),
             remaining_reads=2,
@@ -110,8 +111,10 @@ class _DelayedPreference:
         self.last_include = include_imagined_transitions
 
         def desirable(path):
-            return path.first_action.target_id == "l1:first" and any(
-                row.action.target_id == "l1:second" for row in path.continuations
+            return (
+                path.first_action.target_id == "l1:first"
+                and len(path.transitions) == 2
+                and path.transitions[1].action.target_id == "l1:second"
             )
 
         rows = []
@@ -145,16 +148,19 @@ def test_horizon_two_selects_shared_delayed_first_hop_with_complete_coverage() -
 
     assert decision.selected_action.target_id == "l1:first"
     assert decision.planning_horizon == 2
-    assert len(decision.imagined_paths) == 4
-    assert len(preference.last_pairs) == 6
+    assert len(decision.imagined_paths) == 9
+    assert len(preference.last_pairs) == 36
+    assert all(
+        len(path.conditioned_outcomes) == 2 for path in decision.imagined_paths
+    )
     selected_tree = next(
         row
         for row in decision.imagined_paths
         if row.first_action.target_id == "l1:first"
+        and len(row.transitions) == 2
+        and row.transitions[1].action.target_id == "l1:second"
     )
-    assert any(
-        row.action.target_id == "l1:second" for row in selected_tree.continuations
-    )
+    assert selected_tree.transitions[1].action.target_id == "l1:second"
     assert decision.preference_audit["complete_coverage"] is True
     assert decision.preference_audit["top_k_applied"] is False
     assert preference.last_include is True
@@ -263,8 +269,14 @@ def test_gpt_adapter_batches_without_pruning_and_covers_every_pair() -> None:
         for row in model.transport_audits
         if row["operation"] == "categorical_path_preference"
     ]
-    assert transition_audits[-1]["item_count"] == 4
-    assert transition_audits[-1]["batch_count"] == 2
+    assert transition_audits[-1]["item_count"] == 8
+    assert transition_audits[-1]["batch_count"] == 3
     assert comparison_audits[-1]["item_count"] == 6
     assert comparison_audits[-1]["batch_count"] == 1
+    transition_payloads = [row for row in client.payloads if "requests" in row]
+    assert {
+        request["hypothesis"]
+        for payload in transition_payloads
+        for request in payload["requests"].values()
+    } == {"the entrant opened it", "another person opened it"}
     assert all(row["top_k_applied"] is False for row in model.transport_audits)

@@ -17,9 +17,11 @@ from .contracts import (
     FrontierChange,
     IWMRequest,
     ImaginedTransition,
+    LegalGraphAction,
     PreferenceLabel,
     PredictedObservation,
     ProgressChange,
+    RetainedEvidenceGraph,
     TrajectoryPair,
     TrajectoryPrediction,
     TrajectoryPreference,
@@ -98,8 +100,37 @@ class GPTOSSRealEvidenceBeliefUpdater:
         belief: CursorBeliefState,
         observation: MemoryNode,
     ) -> CursorBeliefState:
+        return self._update(belief, observation, hypothesis=None)
+
+    def update_for_trajectory(
+        self,
+        trajectory_id: str,
+        hypothesis: str,
+        previous_belief: CursorBeliefState,
+        structurally_updated_belief: CursorBeliefState,
+        action: LegalGraphAction,
+        observation: MemoryNode,
+        graph: RetainedEvidenceGraph,
+    ) -> CursorBeliefState:
+        """Correct one persistent trajectory using its explicit hypothesis."""
+
+        del trajectory_id, previous_belief, action, graph
+        return self._update(
+            structurally_updated_belief,
+            observation,
+            hypothesis=hypothesis,
+        )
+
+    def _update(
+        self,
+        belief: CursorBeliefState,
+        observation: MemoryNode,
+        *,
+        hypothesis: str | None,
+    ) -> CursorBeliefState:
         payload = {
             "question": belief.question,
+            "trajectory_hypothesis": hypothesis,
             "belief_before": {
                 "required_roles": list(belief.required_roles),
                 "missing_roles": list(belief.missing_roles),
@@ -134,6 +165,9 @@ class GPTOSSRealEvidenceBeliefUpdater:
             },
             "required_contract": {
                 "observation_is_real_not_imagined": True,
+                "correction_is_conditioned_on_trajectory_hypothesis": (
+                    hypothesis is not None
+                ),
                 "no_hidden_clue_or_answer_label": True,
                 "answerability_is_computed_by_belief_backend": True,
                 "no_numeric_reward_score_probability_confidence_or_utility": True,

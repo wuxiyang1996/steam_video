@@ -225,6 +225,19 @@ class ActionAwareRealBeliefUpdater(Protocol):
     ) -> CursorBeliefState: ...
 
 
+class HypothesisAwareRealBeliefUpdater(Protocol):
+    def update_for_trajectory(
+        self,
+        trajectory_id: str,
+        hypothesis: str,
+        previous_belief: CursorBeliefState,
+        structurally_updated_belief: CursorBeliefState,
+        action: LegalGraphAction,
+        observation: MemoryNode,
+        graph: RetainedEvidenceGraph,
+    ) -> CursorBeliefState: ...
+
+
 class TrajectoryEvidenceAssessor(Protocol):
     def assess_batch(
         self,
@@ -733,8 +746,21 @@ def execute_shared_trajectory_action(
             dict.fromkeys((*shared_observations, observation.node_id))
         )
         if belief_updater is not None:
+            hypothesis_aware = getattr(
+                belief_updater, "update_for_trajectory", None
+            )
             action_aware = getattr(belief_updater, "update_after_action", None)
-            if callable(action_aware):
+            if callable(hypothesis_aware):
+                belief = hypothesis_aware(
+                    trajectory.trajectory_id,
+                    trajectory.hypothesis,
+                    trajectory.belief,
+                    belief,
+                    action,
+                    observation,
+                    graph,
+                )
+            elif callable(action_aware):
                 belief = action_aware(
                     trajectory.trajectory_id,
                     trajectory.belief,

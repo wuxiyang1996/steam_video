@@ -19,6 +19,7 @@ from steam_video_new.implicit_world_model.l15_graph_navigator.overlay_io import 
     load_overlay_artifact,
 )
 
+from .action_compiler import GraphActionCompiler
 from .cgbench_pilot import (
     _build_graph_with_optional_caption_candidates,
     _clues,
@@ -30,11 +31,14 @@ from .closed_loop import (
     graph_fingerprint,
     run_oracle_clue_ceiling,
 )
-from .contracts import CursorBeliefState, RetainedEvidenceGraph
+from .contracts import ActionKind, CursorBeliefState, RetainedEvidenceGraph
 from .gpt_oss import GPTOSSQuestionBeliefInitializer, GPTOSSRealEvidenceBeliefUpdater
 from .gtsam_backup import GTSAMMultiTrajectoryBeliefUpdater
+from .localization import GPTOSSEntryLocalizer
 from .multi_trajectory import (
     GPTOSSRealTrajectoryEvidenceAssessor,
+    MultiTrajectoryPlanDecision,
+    TrajectoryExpansion,
     TrajectoryPool,
     TrajectoryStatus,
     initialize_trajectory_pool,
@@ -184,6 +188,35 @@ class GPTOSSMultiTrajectoryAnswerSelector:
         raise RuntimeError("unreachable terminal answer repair state")
 
 
+class _FailClosedMultiTrajectoryPlanner:
+    """Terminate without model calls when an upstream method contract fails."""
+
+    def plan(
+        self,
+        pool: TrajectoryPool,
+        graph: RetainedEvidenceGraph,
+    ) -> MultiTrajectoryPlanDecision:
+        trajectory = pool.expandable[0]
+        action = next(
+            row
+            for row in GraphActionCompiler().compile(trajectory.belief, graph)
+            if row.kind is ActionKind.ABSTAIN
+        )
+        expansion = TrajectoryExpansion(
+            expansion_id=f"fail-closed:{trajectory.trajectory_id}",
+            trajectory_id=trajectory.trajectory_id,
+            action=action,
+        )
+        return MultiTrajectoryPlanDecision(
+            selected_action=action,
+            planning_status="abstain_entry_localization_failure",
+            expansions=(expansion,),
+            preferred_expansion_ids=(),
+            lifecycle_predictions=(),
+            legal_expansion_count=1,
+        )
+
+
 def run_multi_trajectory_case(
     *,
     case_id: str,
@@ -196,6 +229,7 @@ def run_multi_trajectory_case(
     read_budget: int,
     arm: str,
     initial_missing_roles: Sequence[str] = (),
+    initial_entry_node_ids: Sequence[str] = (),
     belief_updater: Any | None = None,
     assessor: Any | None = None,
     evaluator_answer: str | None = None,
@@ -208,6 +242,7 @@ def run_multi_trajectory_case(
     belief = CursorBeliefState(
         belief_id=f"belief:{case_id}:{arm}:initial",
         question=question,
+        localized_entry_node_ids=tuple(initial_entry_node_ids),
         required_roles=tuple(initial_missing_roles),
         missing_roles=tuple(initial_missing_roles),
         remaining_reads=read_budget,
@@ -358,6 +393,7 @@ def run_multi_trajectory_matched_pilot(
         raise ValueError("some requested cases are not runnable under the frozen gate")
 
     initializer: Any = GPTOSSQuestionBeliefInitializer(client)
+    entry_localizer = GPTOSSEntryLocalizer(client)
     if question_role_cache_path is not None:
         initializer = PersistentQuestionRoleCache(
             initializer,
@@ -366,6 +402,7 @@ def run_multi_trajectory_matched_pilot(
         )
     runs: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
+    method_failures: list[dict[str, str]] = []
     for case_id in selected:
         public = public_by_case[case_id]
         hidden = hidden_by_case[case_id]
@@ -395,7 +432,37 @@ def run_multi_trajectory_matched_pilot(
         )
         if not choices:
             raise ValueError(f"public choices are missing for {case_id}")
-        roles = initializer.initialize(question)
+        roles: tuple[str, ...] = ()
+        entry_node_ids: tuple[str, ...] = ()
+        entry_failure: str | None = None
+        try:
+            roles = initializer.initialize(question)
+            entry_node_ids = entry_localizer.localize(
+                question=question,
+                missing_roles=roles,
+                graph=graph,
+            )
+        except Exception as exc:
+            entry_failure = f"{type(exc).__name__}: {exc}"
+            method_failures.append(
+                {
+                    "case_id": case_id,
+                    "stage": "entry_localization",
+                    "failure": entry_failure,
+                }
+            )
+            entry_localizer.audits.append(
+                {
+                    "candidate_address_count": len(graph.nodes),
+                    "selected_anchor_count": 0,
+                    "selected_node_ids": [],
+                    "status": "failed_contract",
+                    "top_k_applied": False,
+                    "numeric_score_used": False,
+                    "failure": entry_failure,
+                    "fail_closed": True,
+                }
+            )
         clues = _clues(hidden)
         for arm in requested_arms:
             try:
@@ -416,10 +483,14 @@ def run_multi_trajectory_matched_pilot(
                         transition_batch_size=transition_batch_size,
                         comparison_batch_size=comparison_batch_size,
                     )
-                    planner = _planner_for_arm(
-                        arm,
-                        model,
-                        max_complete_pairs=max_complete_pairs,
+                    planner = (
+                        _FailClosedMultiTrajectoryPlanner()
+                        if entry_failure is not None
+                        else _planner_for_arm(
+                            arm,
+                            model,
+                            max_complete_pairs=max_complete_pairs,
+                        )
                     )
                     updater: Any
                     if belief_backend == "latent":
@@ -444,6 +515,7 @@ def run_multi_trajectory_matched_pilot(
                         read_budget=read_budget,
                         arm=arm,
                         initial_missing_roles=roles,
+                        initial_entry_node_ids=entry_node_ids,
                         belief_updater=updater,
                         assessor=GPTOSSRealTrajectoryEvidenceAssessor(client),
                         evaluator_answer=str(hidden.get("answer_text") or ""),
@@ -460,18 +532,44 @@ def run_multi_trajectory_matched_pilot(
                         "top_k_applied": False,
                         "belief_backend": belief_backend,
                         "gtsam_audit": list(getattr(updater, "audit_records", ())),
+                        "entry_localization": entry_localizer.audits[-1],
+                        "entry_localization_failure": entry_failure,
                     }
                 if run["graph_fingerprint"] != expected_fingerprint:
                     raise ValueError("matched arm mutated the retained graph")
                 runs.append(run)
             except Exception as exc:
+                failure = f"{type(exc).__name__}: {exc}"
                 errors.append(
                     {
                         "case_id": case_id,
                         "arm": arm,
-                        "error": f"{type(exc).__name__}: {exc}",
+                        "error": failure,
                     }
                 )
+                if arm != "oracle_clue_ceiling":
+                    fallback = run_multi_trajectory_case(
+                        case_id=case_id,
+                        question=question,
+                        choices=choices,
+                        graph=graph,
+                        clue_intervals=clues,
+                        planner=_FailClosedMultiTrajectoryPlanner(),
+                        answer_selector=GPTOSSMultiTrajectoryAnswerSelector(client),
+                        read_budget=read_budget,
+                        arm=arm,
+                        initial_missing_roles=roles,
+                        initial_entry_node_ids=entry_node_ids,
+                        evaluator_answer=str(hidden.get("answer_text") or ""),
+                    )
+                    fallback["method_audit"] = {
+                        "planner_type": "FailClosedMultiTrajectoryPlanner",
+                        "arm_runtime_failed": True,
+                        "failure": failure,
+                        "entry_localization": entry_localizer.audits[-1],
+                        "top_k_applied": False,
+                    }
+                    runs.append(fallback)
 
     divergences: list[dict[str, Any]] = []
     by_case: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
@@ -503,9 +601,11 @@ def run_multi_trajectory_matched_pilot(
             "budget_overflow_policy": "explicit_abstain_not_candidate_pruning",
             "belief_backend": belief_backend,
             "gtsam_is_optional_and_never_ranks_actions": True,
+            "same_entry_localization_across_model_backed_arms": True,
         },
         "runs": runs,
         "errors": errors,
+        "method_failures": method_failures,
         "metrics_by_arm": _aggregate(runs, requested_arms),
         "action_divergence": divergences,
         "training_performed": False,

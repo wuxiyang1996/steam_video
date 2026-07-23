@@ -230,7 +230,85 @@ closed_loop.py     execute/read/correct/replan loop and evaluator-only metrics
 cgbench_pilot.py   fixed-case compile gate and matched-budget experiment
 ```
 
-The direct multi-trajectory implementation currently provides:
+## Canonical V1 responsibility boundary
+
+The V1 method assigns persistent state and imagined dynamics to different
+owners:
+
+```text
+Planner-owned persistent trajectory pool
+  -> generate every legal short reasoning chain from every active trajectory
+  -> IWM predicts the outcome of each proposed chain
+  -> Planner compares predicted chain outcomes
+  -> execute one uniquely preferred first hop
+  -> broadcast the real observation to affected trajectories
+  -> correct/support/reject/merge/branch persistent trajectories
+  -> discard the old imagined chains and replan
+```
+
+The **Planner**, not the IWM, owns competing reasoning trajectories. A
+persistent trajectory contains its hypothesis, grounded belief, acquired real
+evidence, executed action history, parent lineage and lifecycle status. The
+Planner may retain multiple unresolved trajectories even when only one real
+read is executed in a step.
+
+The **IWM** receives a proposed horizon-one/two reasoning chain together with
+its current grounded trajectory context. It predicts that chain's future
+observation and belief outcome. V1 represents this outcome with categorical
+descriptors; it emits no reward, probability, confidence or utility. The IWM
+does not delete trajectories, persist imagined evidence, execute graph actions
+or choose a final answer.
+
+The **preference model** maps predicted complete-chain outcomes to
+`prefer_left`, `prefer_right`, `tie` or `incomparable`. The deterministic
+Planner aggregates that partial order, executes only a unique shared first hop,
+and otherwise abstains. Preference is therefore a Planner input, not a
+replacement for IWM dynamics prediction.
+
+Imagined and persistent state must never be merged by averaging or by copying
+an imagined result into real belief:
+
+```text
+persistent belief + predicted chain outcome -> temporary imagined belief
+real read + persistent belief              -> corrected persistent belief
+```
+
+After a real read, every stale imagined continuation is discarded. New chains
+are generated from the corrected persistent trajectory pool.
+
+### V1 implementation status and remaining gap (2026-07-23)
+
+The repository now connects both sides of this design:
+
+- `multi_trajectory.py` owns a persistent hypothesis pool, shared real reads,
+  lifecycle updates, exact-equivalence merging and closed-loop replanning;
+- `multi_trajectory_rollout.py` predicts and compares complete horizon-one/two
+  reasoning chains;
+- the multi-trajectory CG-Bench runner initializes one trajectory from each
+  public answer choice and supports latent or optional GTSAM real correction;
+- the runner calls the scoreless entry localizer once per case and injects the
+  same `localized_entry_node_ids` into every matched model-backed arm. A
+  localization contract error produces an explicit fail-closed abstention;
+- real belief correction receives the trajectory hypothesis, so the same
+  executed observation may produce different persistent corrections for
+  competing interpretations;
+- the IWM predicts every legal chain separately under every persistent
+  trajectory. Identical legal action sequences are then represented as one
+  joint Planner candidate containing all hypothesis-conditioned outcomes. This
+  removes duplicate execution candidates without dropping a hypothesis,
+  outcome or action and without applying Top-K;
+- the focused multi-trajectory suite reports 23 passed tests. The combined
+  focused IWM, multi-trajectory and GTSAM-backup suite reports 53 passed and 1
+  dependency-gated skip.
+
+The frozen 34-case result below validates the earlier single-persistent-belief
+closed loop. It does **not** validate persistent multi-trajectory reasoning.
+The remaining promotion gap is empirical: run a real model-backed
+multi-trajectory smoke, inspect chain/outcome coverage and correction traces,
+then repeat the five matched arms on the frozen cohort. Transition calibration,
+answer accuracy and a stable delayed-planning advantage remain unestablished.
+
+The direct multi-trajectory scaffolding provides:
 
 - deterministic initialization from all supplied hypotheses or answer
   interpretations, without selecting a subset;
@@ -282,29 +360,32 @@ next executed evidence read as the decision unit. Route-specific actions that
 read the same L1 target are one shared action, while their temporal/correlation
 provenance remains in the audit trace.
 
-For every shared first action, the IWM predicts a categorical observation and
-belief delta. At horizon two it projects an imagined-only belief, compiles all
-legal second hops, and predicts all of their categorical effects. These
-second-hop outcomes form a complete first-action tree:
+For every trajectory-specific legal first action, the IWM predicts a
+categorical observation and belief delta. At horizon two it projects a
+temporary imagined belief, compiles every legal second hop and predicts the
+complete chain outcome. The Planner groups only identical legal action
+sequences, retaining one hypothesis-conditioned outcome for every persistent
+trajectory that can produce that chain:
 
 ```text
-all competing hypotheses + current real beliefs
-  -> every unique legal shared first action
-  -> categorical first transition
-  -> every legal second action under imagined belief
-  -> categorical second transitions
-  -> one complete action tree per possible next real read
-  -> exhaustive categorical pairwise partial order over first-action trees
+every competing trajectory + its current real belief
+  -> every legal first action
+  -> one categorical first transition per trajectory/action
+  -> every legal second action under that imagined trajectory belief
+  -> one categorical outcome per complete trajectory/chain
+  -> group identical action sequences into joint candidates without pruning
+  -> exhaustive categorical pairwise partial order over joint chains
   -> execute one first action only when the preferred execution key is unique
   -> broadcast real evidence, correct every trajectory, and replan
 ```
 
-This representation avoids the hypothesis-by-path comparison explosion without
-discarding a hypothesis or second hop. It is not Top-K: every legal first and
-second action remains visible, and every first-action tree participates in the
-pairwise partial order. Transport batching only splits complete prediction or
-comparison sets across requests. If a configured complete-pair budget is too
-small, the planner explicitly abstains with
+This representation avoids comparing duplicate action sequences while
+preserving their distinct hypothesis-conditioned predicted consequences. It is
+not Top-K: every legal first and second action remains visible, every
+hypothesis-conditioned outcome remains attached to its joint chain, and every
+joint chain participates in the pairwise partial order. Transport batching only
+splits complete prediction or comparison sets across requests. If a configured
+complete-pair budget is too small, the planner explicitly abstains with
 `rollout_abstain_complete_comparison_budget_exceeded`; it never runs a partial
 tournament.
 
@@ -570,6 +651,54 @@ The current one-case packet has three anchors, three complete pair comparisons
 a test-split diagnostic with `training_ready=false`; it must not be used for
 post-training. A train-split multi-video packet is required before any SFT,
 DPO/OPD, or RL experiment.
+
+### Frozen 34-case zero-shot verification (2026-07-22)
+
+The first complete validation/test verification of the earlier
+single-persistent-belief planner uses 34 locked cases from 27 videos, capacity
+256, two real reads, horizon two, and
+`qwen/qwen3.6-flash` as an untrained proxy IWM. It contains all 170 case-arm
+slots and compares intact IWM, no-WM, shuffled predictions, immediate-only and
+the evaluator-only oracle under the same graph fingerprints and read budget.
+
+| Arm | Mean clue recall | Complete coverage | Mean reads | Abstain | Delayed success |
+|---|---:|---:|---:|---:|---:|
+| IWM horizon two | 0.201 | 0.118 | 0.912 | 0.618 | 0.088 |
+| no-WM | 0.000 | 0.000 | 0.029 | 1.000 | 0.000 |
+| shuffled-IWM | 0.098 | 0.059 | 0.941 | 0.471 | 0.059 |
+| immediate-only | 0.137 | 0.088 | 0.676 | 0.765 | 0.059 |
+| oracle ceiling | 0.730 | 0.471 | 1.853 | 0.000 | 0.324 |
+
+The paired intact-minus-control clue-recall deltas are +0.201 versus no-WM,
++0.103 versus shuffled and +0.064 versus immediate-only. Intact is better/worse
+on 7/3 cases versus shuffled and 3/0 versus immediate-only; the remaining cases
+tie. Action divergence is 64.7% versus shuffled and 14.7% versus
+immediate-only. This establishes a **provisional navigation effect** and real
+dependence on IWM outputs, but the small number of non-tied improvements does
+not establish a strong delayed-planning advantage.
+
+The bottlenecks are now measured directly:
+
+- entry localization exposes at least one clue in 55.9% of cases and has mean
+  clue recall 0.432 after counting contract failures as zero;
+- conditional on a clue being present among anchors, intact IWM's first real
+  read hits one in 47.4% of cases;
+- only 1/31 executed intact transitions has an exact categorical outcome match
+  (3.2%), and exact belief-delta match is 0/31;
+- two cases fail the localization contract and fail closed; two individual
+  arms return invalid setwise schemas and are conservatively scored as
+  abstentions rather than removed from the denominator.
+
+Validation and test independently retain an intact mean clue recall of 0.200
+and 0.202, respectively. No hidden clue or answer field enters model requests,
+no scalar reward is created, no Top-K is applied, and `training_performed`
+remains false.
+
+The correct conclusion is therefore: the single-belief IWM + Planner has passed
+full-cohort integration, causal-dependence and provisional navigation-effect
+verification, but has **not** passed transition calibration, robust
+localization, strong horizon-two advantage, answer accuracy, persistent
+multi-trajectory validation or production gates.
 
 The same run is reproducibly replayable from the categorical response and
 action-conditioned transition caches. GPT-OSS-120B remains a compatible data

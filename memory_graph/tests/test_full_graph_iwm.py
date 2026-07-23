@@ -57,6 +57,8 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     compile_l1_l15_navigation_graph,
 )
 from steam_video_new.implicit_world_model.full_graph_iwm.cgbench_pilot import (
+    _FailClosedAbstainPlanner,
+    _aggregate_metrics,
     compile_cgbench_gate,
 )
 from steam_video_new.implicit_world_model.full_graph_iwm.contracts import (
@@ -1240,6 +1242,37 @@ def test_real_closed_loop_never_feeds_hidden_clue_label_back_to_planner() -> Non
     assert run["final_visible_belief"]["missing_roles"] == []
     assert run["hidden_evaluator_feedback_to_planner"] is False
     assert graph_fingerprint(graph) == before == run["graph_fingerprint"]
+
+
+def test_entry_localization_failure_is_a_scored_fail_closed_abstention() -> None:
+    run = run_real_read_closed_loop(
+        case_id="case:localization-failure",
+        question="question",
+        graph=_retained_graph(),
+        clue_intervals=(ClueInterval(0.0, 0.5),),
+        planner=_FailClosedAbstainPlanner(),
+        read_budget=1,
+        arm="world_model_guided",
+        initial_entry_node_ids=(),
+    )
+    run["method_audit"] = {
+        "entry_localization_failed": True,
+        "arm_runtime_failed": True,
+        "top_k_applied": False,
+    }
+    run["entry_localization"] = {
+        "selected_anchor_count": 0,
+        "status": "failed_contract",
+    }
+
+    assert run["termination"] == "abstain"
+    assert run["metrics"]["real_read_count"] == 0
+    assert run["metrics"]["clue_recall"] == 0.0
+    metrics = _aggregate_metrics([run], ("world_model_guided",))
+    assert (
+        metrics["world_model_guided"]["entry_localization_failure_rate"] == 1.0
+    )
+    assert metrics["world_model_guided"]["arm_runtime_failure_rate"] == 1.0
 
 
 def test_oracle_uses_intermediate_navigation_hops_to_reach_later_clue() -> None:

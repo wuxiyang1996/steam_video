@@ -183,6 +183,34 @@ preferences、1 个 incomparable，并包含 1 个 predicted-versus-grounded nav
 其 `training_ready=false`、`training_performed=false`。正式 post-training 前必须从冻结的
 train videos 生成独立 packet，并保持 validation/test video-disjoint。
 
+### 34-case zero-shot IWM + Planner 验证
+
+冻结 capacity-256 cohort 上已完成 34 cases / 27 videos / 170 case-arm slots 的 zero-shot
+matched evaluation；没有训练。统一使用两次真实读取、horizon two、相同 graph fingerprint 和
+`qwen/qwen3.6-flash` proxy：
+
+| Arm | Mean clue recall | Complete coverage | Delayed success |
+|---|---:|---:|---:|
+| intact IWM | 0.201 | 0.118 | 0.088 |
+| no-WM | 0.000 | 0.000 | 0.000 |
+| shuffled-IWM | 0.098 | 0.059 | 0.059 |
+| immediate-only | 0.137 | 0.088 | 0.059 |
+| oracle | 0.730 | 0.471 | 0.324 |
+
+paired clue-recall delta 为：相对 no-WM +0.201、相对 shuffled +0.103、相对 immediate-only
++0.064。intact 对 immediate-only 只有 3 cases 更好、0 更差、31 相同；因此已有 provisional
+navigation effect，但尚不能宣称强 delayed advantage。
+
+失败切片同样保留在正式分母中：2/34 cases 的 entry localization 违反 categorical contract，
+2 个单独 arms 的 setwise schema 无效；它们全部 fail-closed abstain，不做 Top-K、alias
+guessing 或规则修复。localizer 至少包含一个 clue 的比例为 55.9%；在这些 cases 中 intact
+first read 命中 clue 的比例为 47.4%。intact executed transitions 的 exact outcome match 为
+1/31，exact belief-delta match 为 0/31，说明 transition calibration 仍是主要缺口。
+
+validation/test 的 intact clue recall 分别为 0.200/0.202。完整结果明确保持
+`training_performed=false`、hidden clue feedback=false、numeric reward=false、
+Top-K=false。
+
 完整 cohort 使用 `grounded_single_pass` L1：每个 surprise window 只调用一次 VLM，同时返回
 event、sampled-frame endpoints/evidence、participants 和 visible states；任何没有合法 frame
 provenance 的 event 都被拒绝。旧 `coarse_to_fine` 两遍模式保留为消融。正式默认采用 balanced

@@ -414,13 +414,34 @@ Implemented:
 - bounded within-video request concurrency with isolated clients and ordered
   result collection, allowing vLLM continuous batching without changing the
   frozen surprise windows, sampled evidence, prompts, parsers, or node order.
+- a complete 34-case/27-video, 170-slot zero-shot matched evaluation. Intact
+  horizon-two IWM reaches 0.201 clue recall versus 0.137 immediate-only, 0.098
+  shuffled-IWM and 0.000 no-WM. The paired gains are provisional: only 3 cases
+  improve over immediate-only, transition outcome exact match is 1/31, and
+  exact belief-delta match is 0/31. All localization/schema failures remain in
+  the denominator as fail-closed abstentions. This result validates the earlier
+  single-persistent-belief loop, not the newer persistent multi-trajectory
+  planner.
+
+The canonical V1 responsibility boundary is now explicit: the Planner owns and
+tracks persistent competing reasoning trajectories; the IWM predicts the
+future observation/belief outcome of each proposed short reasoning chain; a
+categorical preference model compares complete predicted outcomes; and the
+Planner executes one first hop, applies the real observation to the persistent
+trajectory pool, discards stale imagined continuations and replans. Imagined
+belief is never copied into persistent belief.
 
 Not yet established:
 
 - a trained learned IWM;
 - production-quality identity/state/dependency relation precision;
 - full-video L1.5 candidate coverage;
-- a locked, multi-video closed-loop result showing causal dependence on the IWM;
+- a strong and statistically stable horizon-two advantage over immediate-only;
+- calibrated IWM observation/belief transitions and robust entry localization;
+- a real model-backed smoke of the now-connected entry-localized,
+  hypothesis-conditioned persistent multi-trajectory runner;
+- a frozen-cohort five-arm validation of persistent multi-trajectory planning;
+- terminal answer accuracy on the locked cohort;
 - production readiness.
 
 The latest grounding validation has 670/672 successful Qwen-VL reads and two

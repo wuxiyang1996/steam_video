@@ -1,9 +1,9 @@
 """Complete-coverage categorical rollout planning for competing hypotheses.
 
 The module deliberately separates imagined transitions from the persistent
-``TrajectoryPool``.  Every legal action is predicted, every horizon-one/two
-path participates in the categorical partial order, and only the first action
-of a uniquely preferred first-hop set may be executed.
+``TrajectoryPool``. Every legal hypothesis-conditioned chain is predicted,
+every horizon-one/two chain participates in the categorical partial order, and
+only the first action of a uniquely preferred first-hop set may be executed.
 """
 
 from __future__ import annotations
@@ -57,25 +57,51 @@ class HypothesisExpansionRequest:
 
 @dataclass(frozen=True)
 class ImaginedHypothesisPath:
-    """A complete short imagined path rooted in one persistent trajectory."""
+    """A complete short chain with every matching hypothesis-conditioned outcome."""
 
     path_id: str
     trajectory_id: str
     hypothesis: str
     transitions: tuple[ImaginedTransition, ...]
     continuations: tuple[ImaginedTransition, ...] = ()
+    conditioned_outcomes: tuple["HypothesisConditionedOutcome", ...] = ()
 
     def __post_init__(self) -> None:
         if not self.path_id or not self.trajectory_id or not self.hypothesis.strip():
             raise ValueError("imagined path identity must be non-empty")
         if not self.transitions or len(self.transitions) > 2:
             raise ValueError("imagined path must contain one or two root transitions")
-        if self.continuations and len(self.transitions) != 1:
-            raise ValueError("an action tree stores continuations beside one first hop")
+        if self.continuations:
+            raise ValueError(
+                "canonical per-chain rollout stores continuations as distinct paths"
+            )
+        if self.conditioned_outcomes:
+            trajectory_ids = [
+                row.trajectory_id for row in self.conditioned_outcomes
+            ]
+            if len(trajectory_ids) != len(set(trajectory_ids)):
+                raise ValueError(
+                    "a joint chain may contain one outcome per trajectory"
+                )
+            if any(
+                tuple(value.action.action_id for value in row.transitions)
+                != tuple(value.action.action_id for value in self.transitions)
+                for row in self.conditioned_outcomes
+            ):
+                raise ValueError(
+                    "joint-chain outcomes must share one legal action sequence"
+                )
 
     @property
     def first_action(self) -> LegalGraphAction:
         return self.transitions[0].action
+
+
+@dataclass(frozen=True)
+class HypothesisConditionedOutcome:
+    trajectory_id: str
+    hypothesis: str
+    transitions: tuple[ImaginedTransition, ...]
 
 
 @dataclass(frozen=True)
@@ -156,45 +182,31 @@ class MultiTrajectoryRolloutPlanner:
         ] = {}
         for request, prediction in zip(requests, first_predictions):
             if self.horizon == 1 or prediction.action.kind in TERMINAL_ACTIONS:
+                paths.append(_path(request, (prediction,)))
                 continue
-            contexts = request.trajectory_contexts or (
-                (request.trajectory_id, request.hypothesis, request.belief),
+            imagined_belief = project_imagined_belief(
+                request.belief,
+                prediction,
             )
-            projected_contexts = tuple(
-                (trajectory_id, hypothesis, project_imagined_belief(belief, prediction))
-                for trajectory_id, hypothesis, belief in contexts
-            )
-            for child in _compile_context_requests(
-                projected_contexts,
+            for child in _compile_trajectory_requests(
+                request.trajectory_id,
+                request.hypothesis,
+                imagined_belief,
                 graph,
                 self.action_compiler,
                 imagined_history=(prediction,),
             ):
                 second_requests.append(child)
                 parent_by_request[child.request_id] = (request, prediction)
-        continuations: dict[str, list[ImaginedTransition]] = {}
         if second_requests:
             second_predictions = self._predict_checked(tuple(second_requests), graph)
             for request, prediction in zip(second_requests, second_predictions):
                 root, first = parent_by_request[request.request_id]
-                continuations.setdefault(root.request_id, []).append(prediction)
-        first_by_request = {
-            request.request_id: prediction
-            for request, prediction in zip(requests, first_predictions)
-        }
-        for request in requests:
-            first = first_by_request[request.request_id]
-            paths.append(
-                _path(
-                    request,
-                    (first,),
-                    continuations=tuple(continuations.get(request.request_id, ())),
-                )
-            )
+                paths.append(_path(root, (first, prediction)))
         if not paths:
             raise RuntimeError("world model produced no imagined paths")
 
-        ordered_paths = tuple(sorted(paths, key=lambda row: row.path_id))
+        ordered_paths = _joint_reasoning_chains(paths)
         expansions = tuple(
             TrajectoryExpansion(
                 expansion_id=request.request_id,
@@ -267,6 +279,8 @@ class MultiTrajectoryRolloutPlanner:
             "first_expansion_count": len(requests),
             "second_expansion_count": len(second_requests),
             "imagined_path_count": len(ordered_paths),
+            "hypothesis_conditioned_outcome_count": len(paths),
+            "path_representation": "one_hypothesis_conditioned_reasoning_chain",
             "exhaustive_pair_count": len(pairs),
             "comparison_count": len(preferences),
             "complete_coverage": len(preferences) == len(pairs),
@@ -322,15 +336,10 @@ class ReactiveMultiTrajectoryPlanner:
         self, pool: TrajectoryPool, graph: RetainedEvidenceGraph
     ) -> MultiTrajectoryPlanDecision:
         requests = compile_hypothesis_requests(pool, graph, self.action_compiler)
-        paths = tuple(
-            sorted(
-                (
-                    _path(request, (_neutral_transition(request),))
-                    for request in requests
-                ),
-                key=lambda row: row.path_id,
-            )
+        raw_paths = tuple(
+            _path(request, (_neutral_transition(request),)) for request in requests
         )
+        paths = _joint_reasoning_chains(raw_paths)
         pairs = tuple(_pair(left, right) for left, right in combinations(paths, 2))
         preferences = tuple(
             self.preference_model.compare_batch(
@@ -363,7 +372,8 @@ class ReactiveMultiTrajectoryPlanner:
         self.last_complete_coverage_audit = {
             "horizon": 0,
             "first_expansion_count": len(requests),
-            "imagined_path_count": 0,
+            "imagined_path_count": len(paths),
+            "hypothesis_conditioned_outcome_count": len(raw_paths),
             "exhaustive_pair_count": len(pairs),
             "comparison_count": len(preferences),
             "complete_coverage": len(preferences) == len(pairs),
@@ -664,51 +674,47 @@ def compile_hypothesis_requests(
     compiler: GraphActionCompiler | None = None,
 ) -> tuple[HypothesisExpansionRequest, ...]:
     compiler = compiler or GraphActionCompiler()
-    requests = [
-        _request(
-            trajectory_id=trajectory.trajectory_id,
-            hypothesis=trajectory.hypothesis,
-            belief=trajectory.belief,
-            action=action,
+    return tuple(
+        sorted(
+            (
+                _request(
+                    trajectory_id=trajectory.trajectory_id,
+                    hypothesis=trajectory.hypothesis,
+                    belief=trajectory.belief,
+                    action=action,
+                )
+                for trajectory in pool.expandable
+                for action in compiler.compile(trajectory.belief, graph)
+            ),
+            key=lambda row: row.request_id,
         )
-        for trajectory in pool.expandable
-        for action in compiler.compile(trajectory.belief, graph)
-    ]
-    contexts = tuple(
-        (row.trajectory_id, row.hypothesis, row.belief) for row in pool.expandable
     )
-    grouped: dict[tuple[str, ...], HypothesisExpansionRequest] = {}
-    for request in sorted(requests, key=lambda row: row.request_id):
-        key = shared_action_key(request.action)
-        if key not in grouped:
-            grouped[key] = replace(
-                request,
-                hypothesis="competing trajectory pool",
-                trajectory_contexts=contexts,
-            )
-    return tuple(sorted(grouped.values(), key=lambda row: row.request_id))
 
 
-def _compile_context_requests(
-    contexts: tuple[tuple[str, str, CursorBeliefState], ...],
+def _compile_trajectory_requests(
+    trajectory_id: str,
+    hypothesis: str,
+    belief: CursorBeliefState,
     graph: RetainedEvidenceGraph,
     compiler: GraphActionCompiler,
     *,
     imagined_history: tuple[ImaginedTransition, ...],
 ) -> tuple[HypothesisExpansionRequest, ...]:
-    grouped: dict[tuple[str, ...], HypothesisExpansionRequest] = {}
-    for trajectory_id, hypothesis, belief in contexts:
-        for action in compiler.compile(belief, graph):
-            request = _request(
+    return tuple(
+        sorted(
+            (
+                _request(
                 trajectory_id=trajectory_id,
-                hypothesis="competing trajectory pool",
+                hypothesis=hypothesis,
                 belief=belief,
                 action=action,
                 imagined_history=imagined_history,
-                trajectory_contexts=contexts,
-            )
-            grouped.setdefault(shared_action_key(action), request)
-    return tuple(sorted(grouped.values(), key=lambda row: row.request_id))
+                )
+                for action in compiler.compile(belief, graph)
+            ),
+            key=lambda row: row.request_id,
+        )
+    )
 
 
 def audit_permutation_invariance(
@@ -780,6 +786,41 @@ def _path(
     )
 
 
+def _joint_reasoning_chains(
+    paths: Sequence[ImaginedHypothesisPath],
+) -> tuple[ImaginedHypothesisPath, ...]:
+    """Group identical legal action sequences without dropping any hypothesis."""
+
+    grouped: dict[tuple[str, ...], list[ImaginedHypothesisPath]] = {}
+    for path in paths:
+        key = tuple(row.action.action_id for row in path.transitions)
+        grouped.setdefault(key, []).append(path)
+    result: list[ImaginedHypothesisPath] = []
+    for action_ids, members in grouped.items():
+        ordered_members = tuple(sorted(members, key=lambda row: row.trajectory_id))
+        representative = ordered_members[0]
+        digest = hashlib.sha256(
+            "\x1e".join(action_ids).encode("utf-8")
+        ).hexdigest()[:20]
+        result.append(
+            ImaginedHypothesisPath(
+                path_id=f"joint-reasoning-chain:{digest}",
+                trajectory_id="trajectory-pool",
+                hypothesis="competing trajectory pool",
+                transitions=representative.transitions,
+                conditioned_outcomes=tuple(
+                    HypothesisConditionedOutcome(
+                        trajectory_id=member.trajectory_id,
+                        hypothesis=member.hypothesis,
+                        transitions=member.transitions,
+                    )
+                    for member in ordered_members
+                ),
+            )
+        )
+    return tuple(sorted(result, key=lambda row: row.path_id))
+
+
 def _pair(
     left: ImaginedHypothesisPath, right: ImaginedHypothesisPath
 ) -> HypothesisPathPair:
@@ -830,28 +871,6 @@ def _transition_request_payload(
     return {
         "question": request.belief.question,
         "hypothesis": request.hypothesis,
-        "competing_trajectories": [
-            {
-                "hypothesis": hypothesis,
-                "current_node_semantic_key": (
-                    (
-                        str(
-                            graph.node_by_id[belief.current_node_id].metadata.get(
-                                "predicate"
-                            )
-                            or graph.node_by_id[belief.current_node_id].text
-                            or belief.current_node_id
-                        ),
-                    )
-                    if belief.current_node_id is not None
-                    else ()
-                ),
-                "missing_roles": list(belief.missing_roles),
-                "contradictions": list(belief.contradictions),
-                "answerability": belief.answerability.value,
-            }
-            for _, hypothesis, belief in request.trajectory_contexts
-        ],
         "belief": {
             "missing_roles": list(request.belief.missing_roles),
             "contradictions": list(request.belief.contradictions),
@@ -904,8 +923,6 @@ def _parse_transition(
         raise ValueError("categorical transition row schema is invalid")
     resolved = _strings(row.get("resolved_roles"), "resolved_roles")
     allowed_missing_roles = set(request.belief.missing_roles)
-    for _, _, belief in request.trajectory_contexts:
-        allowed_missing_roles.update(belief.missing_roles)
     if not set(resolved).issubset(allowed_missing_roles):
         raise ValueError("imagined transition resolved an unknown role")
     opened = _strings(row.get("opened_roles"), "opened_roles")
@@ -943,7 +960,6 @@ def _path_payload(
     include_imagined_transitions: bool,
 ) -> dict[str, Any]:
     result = {
-        "hypothesis": path.hypothesis,
         "actions": [
             {
                 "kind": row.action.kind.value,
@@ -954,11 +970,19 @@ def _path_payload(
         ],
     }
     if include_imagined_transitions:
-        result["imagined_transitions"] = [
-            _transition_descriptor(row, graph) for row in path.transitions
+        result["hypothesis_conditioned_outcomes"] = [
+            {
+                "hypothesis": outcome.hypothesis,
+                "imagined_transitions": [
+                    _transition_descriptor(row, graph)
+                    for row in outcome.transitions
+                ],
+            }
+            for outcome in path.conditioned_outcomes
         ]
-        result["all_legal_second_hop_transitions"] = [
-            _transition_descriptor(row, graph) for row in path.continuations
+    else:
+        result["competing_hypotheses"] = [
+            outcome.hypothesis for outcome in path.conditioned_outcomes
         ]
     return result
 
