@@ -48,6 +48,52 @@ def _complete(path: Path) -> bool:
     )
 
 
+def _select_case_ids(
+    gate: dict[str, Any],
+    requested_case_ids: list[str],
+    case_limit: int | None,
+) -> list[str]:
+    runnable = list(gate.get("runnable_case_ids") or ())
+    if requested_case_ids:
+        if len(requested_case_ids) != len(set(requested_case_ids)):
+            raise ValueError("--case-id values must be unique")
+        unknown = set(requested_case_ids) - set(runnable)
+        if unknown:
+            raise ValueError(
+                "requested cases are not runnable under the frozen gate: "
+                + ", ".join(sorted(unknown))
+            )
+        requested = set(requested_case_ids)
+        selected = [case_id for case_id in runnable if case_id in requested]
+    else:
+        selected = runnable
+    if case_limit is not None:
+        selected = selected[:case_limit]
+    if not selected:
+        raise ValueError("no runnable cases selected")
+    return selected
+
+
+def _validate_caption_candidate_mode(
+    gate: dict[str, Any],
+    *,
+    disabled: bool,
+) -> None:
+    modes = {
+        bool(row.get("caption_candidate_overlay_loaded"))
+        for row in gate.get("graphs") or ()
+        if row.get("graph_available")
+    }
+    if len(modes) > 1:
+        raise ValueError("frozen gate mixes caption-candidate graph modes")
+    if modes and (not disabled) != next(iter(modes)):
+        expected = "enabled" if next(iter(modes)) else "disabled"
+        raise ValueError(
+            "caption-candidate runtime mode does not match frozen gate; "
+            f"expected {expected}"
+        )
+
+
 def _run_case(args: argparse.Namespace, case_id: str) -> dict[str, Any]:
     slug = _slug(case_id)
     case_dir = args.output_dir / "cases"
@@ -107,6 +153,8 @@ def _run_case(args: argparse.Namespace, case_id: str) -> dict[str, Any]:
         "--reasoning-effort",
         args.reasoning_effort,
     ]
+    if args.disable_caption_candidates:
+        command.append("--disable-caption-candidates")
     completed = subprocess.run(
         command,
         cwd=args.repo_root,
@@ -202,6 +250,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--reasoning-effort", choices=("low", "medium", "high"), default="low"
     )
+    parser.add_argument(
+        "--disable-caption-candidates",
+        action="store_true",
+        help=(
+            "Do not load optional caption-candidate overlays. Required when the "
+            "frozen compile gate was built without them."
+        ),
+    )
+    parser.add_argument(
+        "--case-id",
+        action="append",
+        default=[],
+        help=(
+            "Run one explicitly frozen case ID; repeat for multiple cases. "
+            "Order remains the frozen gate order."
+        ),
+    )
     parser.add_argument("--case-limit", type=int)
     parser.add_argument("--force", action="store_true")
     return parser
@@ -214,16 +279,17 @@ def main(argv: list[str] | None = None) -> int:
     gate = _read(args.compiled_gate)
     if not gate.get("gate_passed"):
         raise ValueError("compiled gate did not pass")
-    case_ids = list(gate.get("runnable_case_ids") or ())
-    if args.case_limit is not None:
-        case_ids = case_ids[: args.case_limit]
+    _validate_caption_candidate_mode(
+        gate,
+        disabled=args.disable_caption_candidates,
+    )
+    case_ids = _select_case_ids(gate, args.case_id, args.case_limit)
     statuses: list[dict[str, Any]] = []
     executor = ThreadPoolExecutor(max_workers=args.workers)
     futures: dict[Any, str] = {}
     try:
         futures = {
-            executor.submit(_run_case, args, case_id): case_id
-            for case_id in case_ids
+            executor.submit(_run_case, args, case_id): case_id for case_id in case_ids
         }
         for future in as_completed(futures):
             status = future.result()

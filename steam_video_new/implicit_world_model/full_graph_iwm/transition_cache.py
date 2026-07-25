@@ -51,10 +51,14 @@ class PersistentCategoricalResponseCacheClient:
         cached = self._entries.get(key)
         if cached is None:
             if self.mode == "replay":
-                raise RuntimeError(f"frozen categorical response cache miss: {key[:12]}")
+                raise RuntimeError(
+                    f"frozen categorical response cache miss: {key[:12]}"
+                )
             response = self.delegate.complete_json(task=task, payload=payload)
             if _contains_number(response):
-                raise ValueError("categorical response cache refuses numeric model output")
+                raise ValueError(
+                    "categorical response cache refuses numeric model output"
+                )
             cached = {"request_sha256": request_sha, "response": response}
             self._entries[key] = cached
             self._persist()
@@ -72,7 +76,9 @@ class PersistentCategoricalResponseCacheClient:
     def _load(self) -> dict[str, dict[str, Any]]:
         if not self.path.exists():
             if self.mode == "replay":
-                raise FileNotFoundError(f"categorical response cache is missing: {self.path}")
+                raise FileNotFoundError(
+                    f"categorical response cache is missing: {self.path}"
+                )
             return {}
         payload = json.loads(self.path.read_text(encoding="utf-8"))
         if payload.get("schema_version") != RESPONSE_CACHE_SCHEMA:
@@ -196,12 +202,16 @@ class PersistentTransitionCacheWorldModel(BatchedCategoricalWorldModel):
         self,
         requests: Sequence[IWMRequest],
     ) -> Sequence[ImaginedTransition]:
-        keys = tuple(_request_key(request, self.delegate_model_name) for request in requests)
+        keys = tuple(
+            _request_key(request, self.delegate_model_name) for request in requests
+        )
         missing_indices = [
             index for index, key in enumerate(keys) if key not in self._entries
         ]
         if missing_indices and self.mode == "replay":
-            missing_preview = ", ".join(keys[index][:12] for index in missing_indices[:4])
+            missing_preview = ", ".join(
+                keys[index][:12] for index in missing_indices[:4]
+            )
             raise RuntimeError(
                 "frozen transition cache miss; gather before evaluation: "
                 f"{missing_preview}"
@@ -216,7 +226,9 @@ class PersistentTransitionCacheWorldModel(BatchedCategoricalWorldModel):
                 for index, transition in zip(batch_indices, predicted):
                     request = requests[index]
                     if transition.action != request.action:
-                        raise ValueError("transition-cache delegate changed the legal action")
+                        raise ValueError(
+                            "transition-cache delegate changed the legal action"
+                        )
                     transition = _bind_observation_descriptor(transition, request)
                     self._entries[keys[index]] = {
                         "request_audit": _request_audit(request),
@@ -338,7 +350,9 @@ def _request_payload(request: IWMRequest) -> dict[str, Any]:
         "graph_input": graph_input_to_categorical_payload(request.graph_input),
         "action": _jsonable(request.action),
         "parent_action_ids": list(request.parent_action_ids),
-        "imagined_history": [_transition_to_dict(row) for row in request.imagined_history],
+        "imagined_history": [
+            _transition_to_dict(row) for row in request.imagined_history
+        ],
     }
 
 
@@ -363,6 +377,7 @@ def _transition_to_dict(transition: ImaginedTransition) -> dict[str, Any]:
             "relation_updates": list(transition.belief_delta.relation_updates),
             "predicted_only": True,
         },
+        "structured_patch": transition.structured_patch,
     }
 
 
@@ -398,9 +413,7 @@ def _transition_from_dict(
             answerability_after=AnswerabilityState(
                 str(delta.get("answerability_after") or "")
             ),
-            frontier_change=FrontierChange(
-                str(delta.get("frontier_change") or "")
-            ),
+            frontier_change=FrontierChange(str(delta.get("frontier_change") or "")),
             contradiction_change=ContradictionChange(
                 str(delta.get("contradiction_change") or "")
             ),
@@ -410,7 +423,16 @@ def _transition_from_dict(
                 delta.get("relation_updates"), "relation_updates"
             ),
         ),
+        structured_patch=_structured_patch(payload.get("structured_patch")),
     )
+
+
+def _structured_patch(value: Any) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("cached structured patch must be an object")
+    return value
 
 
 def _bind_observation_descriptor(
@@ -453,7 +475,11 @@ def _jsonable(value: Any) -> Any:
 
 def _checksum(value: Any) -> str:
     encoded = json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
     )
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 

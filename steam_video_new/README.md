@@ -6,6 +6,11 @@ store video facts. It is whether an implicit world model (IWM) can predict how a
 candidate reasoning hop will change future belief, and whether a planner can use
 that prediction to choose better multi-hop evidence trajectories.
 
+**Primary testbed: CG-Bench.** All active supervision, frozen L1/L1.5 cohorts,
+matched IWM/planner arms, and held-out gates use CG-Bench multi-clue cases with
+human `clue_intervals`. Video-Holmes is historical engineering only and is not
+the current evaluation protocol.
+
 Detailed formulations: [English](problem-formulation-en.html) ·
 [中文](problem-formulation-zh.html)
 
@@ -307,13 +312,51 @@ supervision.
 
 ## 6. Supervision and post-training
 
-The cleanest current supervision source is CG-Bench:
+The primary and only active supervision/evaluation source is CG-Bench:
 
 - human `clue_intervals` supervise whether a real read acquires a new required clue;
 - partial/complete clue coverage supplies categorical belief progress;
 - the terminal answer is kept in a hidden evaluator key;
 - complete-clue versus leave-one-clue-out trajectories supply ordinal preference;
 - unmatched L1.5 candidates remain **unlabeled**, never automatic negatives.
+
+### Scoped GT-interval transition data is allowed now
+
+The grounded CG-Bench executed-transition corpus is valid training data for the
+scoped data-pipeline and descriptor-learning objective:
+
+```text
+question + pre-read checkpoint + GT interval read action
+  -> grounded observation descriptor
+  -> categorical clue-coverage belief delta
+```
+
+The current corpus contains 670 available records with a video-disjoint
+train/validation/test split (516/74/80); two reads remain unavailable. It may
+be used now for loader/schema smoke tests, small overfit tests, descriptor
+distillation, or split-safe offline evaluation. The full-video L1/L1.5 freeze
+and five-arm navigation gates do **not** block those scoped uses.
+
+This corpus alone is **not sufficient to verify or train the runtime categorical
+IWM**:
+
+- every available record is a positive GT clue read, so
+  `evidence_progress=advances_required_clue_coverage` for all 670 and
+  `answerability_after=unknown` for all 670;
+- the action input contains a timestamp interval but not the frozen L1/L1.5
+  target semantic key consumed by the runtime IWM;
+- its clue-coverage target schema does not directly match the full-graph IWM
+  `outcome/progress/answerability/frontier/contradiction` contract.
+
+Consequently, a training run on this corpus can verify plumbing or intentional
+small-set overfitting, but must not be reported as categorical-IWM validation.
+Runtime-aligned verification first requires full-video **train** graphs,
+post-freeze GT-to-node alignment, the same semantic action descriptors used at
+inference, categorical no-progress/control examples, and a corpus adapter plus
+held-out evaluator. GT interval actions still do not test candidate discovery
+in the real L1.5 graph. The corpus must not be used as a same-case runtime
+lookup, expose hidden answers or clue identities, or be interpreted as
+identity, state-transition, causal, or outside-clue negative supervision.
 
 Executed sibling branches from the same immutable checkpoint provide additional
 observation and belief-delta targets. Identity, state-transition, causal, and
@@ -551,7 +594,9 @@ cache-only replay. It applies no heuristic Top-K and reports metrics separately.
 The result is negative: IWM recall equals no-WM, while shuffled-IWM is higher;
 action trajectories do diverge, so WM dependence exists but is not useful yet.
 
-Do not begin model training until the remaining data-only chain is complete:
+The following gates block full L1.5 closed-loop training, preference/GRPO
+training, and navigation method claims; they do not block the scoped
+data-pipeline/overfit smoke uses authorized in §6:
 
 1. finish the question-independent full-video validation/test L1/L1.5 builds;
 2. freeze their graph fingerprints and compile the held-out gate;

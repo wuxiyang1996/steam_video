@@ -28,6 +28,9 @@ from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_rollou
     ReactiveMultiTrajectoryPlanner,
     ShuffledHypothesisWorldModel,
 )
+from steam_video_new.implicit_world_model.full_graph_iwm.localization import (
+    GPTOSSEntryLocalizer,
+)
 
 
 def _node(node_id: str, start: float, text: str) -> MemoryNode:
@@ -202,6 +205,28 @@ def test_terminal_answer_selector_cannot_guess_without_real_evidence() -> None:
     assert decision.status == "abstain"
     assert decision.selected_choice is None
     assert client.payload is None
+
+
+def test_inconclusive_entry_localization_preserves_multiple_paths() -> None:
+    class _InconclusiveEntryClient:
+        model = "inconclusive-entry-test"
+
+        def complete_json(self, *, task, payload):
+            del task
+            aliases = list(payload["candidate_addresses"])
+            return {
+                "status": "inconclusive",
+                "preferred": aliases,
+                "rationale": "both grounded entries remain plausible",
+            }
+
+    selected = GPTOSSEntryLocalizer(_InconclusiveEntryClient()).localize(
+        question="what happened?",
+        missing_roles=("event",),
+        graph=_graph(),
+    )
+
+    assert selected == ("l1:first", "l1:second")
 
 
 def test_five_matched_arms_have_distinct_world_model_interventions() -> None:

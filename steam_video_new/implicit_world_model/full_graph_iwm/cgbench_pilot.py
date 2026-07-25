@@ -229,6 +229,7 @@ def compile_cgbench_gate(
             row.update(
                 {
                     "clue_count_evaluator_only": len(clues),
+                    "all_clues_within_observation_horizon": within_horizon,
                     "all_clues_within_graph_horizon": within_horizon,
                 }
             )
@@ -259,6 +260,11 @@ def compile_cgbench_gate(
                 if action.kind.value == "start_at"
             }
             covered = _covered_clue_indices(graph, clues)
+            oracle_covered = _maximum_clue_coverage_at_two_hop_budget(
+                graph,
+                clues,
+                min(read_budget, 2),
+            )
             row.update(
                 {
                     "status": "compiled",
@@ -274,6 +280,13 @@ def compile_cgbench_gate(
                     "forbidden_planner_keys": leaked_keys,
                     "retained_clue_count_evaluator_only": len(covered),
                     "retained_clue_recall_evaluator_only": (len(covered) / len(clues)),
+                    "oracle_clue_count_at_planning_horizon_evaluator_only": oracle_covered,
+                    "oracle_clue_recall_at_planning_horizon_evaluator_only": (
+                        oracle_covered / len(clues)
+                    ),
+                    "oracle_clue_complete_at_planning_horizon_evaluator_only": (
+                        oracle_covered == len(clues)
+                    ),
                     "graph_fingerprint": graph_fingerprint(graph),
                 }
             )
@@ -284,6 +297,10 @@ def compile_cgbench_gate(
                 and unread_leaks == 0
                 and start_targets == visible_node_ids
                 and graph_row.get("question_independent") is True
+            )
+            row["scientifically_runnable"] = bool(
+                row["runnable"]
+                and row["oracle_clue_complete_at_planning_horizon_evaluator_only"]
             )
             case_rows.append(row)
 
@@ -316,6 +333,9 @@ def compile_cgbench_gate(
             for row in case_rows
             if row.get("all_clues_within_graph_horizon") is True
         ),
+        "scientifically_runnable_case_exists": any(
+            row.get("scientifically_runnable") is True for row in case_rows
+        ),
     }
     gate_passed = all(checks.values())
     return {
@@ -332,12 +352,17 @@ def compile_cgbench_gate(
         "runnable_case_ids": [
             row["case_id"] for row in case_rows if row.get("runnable") is True
         ],
+        "scientifically_runnable_case_ids": [
+            row["case_id"]
+            for row in case_rows
+            if row.get("scientifically_runnable") is True
+        ],
         "dataset_boundary": dataset_boundary,
         "checks": checks,
         "gate_passed": gate_passed,
         "gate_contract": (
-            "structural and clue-retention preflight only; navigation metrics are "
-            "reported separately and are never collapsed into this boolean"
+            "structural, clue-retention, and exact oracle-at-read-budget preflight; "
+            "navigation metrics remain separate and are never collapsed into this boolean"
         ),
         "graphs": graph_rows,
         "cases": case_rows,
@@ -401,7 +426,9 @@ def run_gpt_oss_matched_pilot(
     method_failures: list[dict[str, str]] = []
     if resume_progress:
         if progress_path is None or not progress_path.is_file():
-            raise FileNotFoundError("--resume-progress requires an existing progress file")
+            raise FileNotFoundError(
+                "--resume-progress requires an existing progress file"
+            )
         prior = _read_json(progress_path)
         if prior.get("selected_case_ids") != selected_case_ids:
             raise ValueError("progress case selection does not match this run")
@@ -516,8 +543,7 @@ def run_gpt_oss_matched_pilot(
                 )
         for arm in requested_arms:
             if any(
-                row.get("case_id") == case_id and row.get("arm") == arm
-                for row in runs
+                row.get("case_id") == case_id and row.get("arm") == arm for row in runs
             ):
                 continue
             try:
@@ -652,7 +678,9 @@ def run_gpt_oss_matched_pilot(
             "top_k_applied": False,
             "hidden_clue_feedback_to_planner": False,
             "imagined_belief_used_as_real_belief": False,
-            "preference_mode": "setwise_categorical" if setwise_preference else "pairwise_categorical",
+            "preference_mode": "setwise_categorical"
+            if setwise_preference
+            else "pairwise_categorical",
             "stable_tie_execution_requested": execute_stable_ties,
             "stable_tie_execution_effective": False,
             "transition_cache": (
@@ -666,12 +694,8 @@ def run_gpt_oss_matched_pilot(
             ),
             "caption_candidate_overlay_enabled": include_caption_candidates,
             "world_model_transport_batch_size": world_model_batch_size,
-            "world_model_max_contexts_per_batch": (
-                world_model_max_contexts_per_batch
-            ),
-            "max_imagined_transition_requests": (
-                max_imagined_transition_requests
-            ),
+            "world_model_max_contexts_per_batch": (world_model_max_contexts_per_batch),
+            "max_imagined_transition_requests": (max_imagined_transition_requests),
             "question_role_cache": (
                 str(question_role_cache_path.expanduser().resolve())
                 if question_role_cache_path is not None
@@ -698,11 +722,7 @@ def run_gpt_oss_matched_pilot(
                 requested_arms,
             )
             for split in sorted(
-                {
-                    str(run["split"])
-                    for run in runs
-                    if run.get("split") is not None
-                }
+                {str(run["split"]) for run in runs if run.get("split") is not None}
             )
         },
         "paired_arm_effects": _paired_arm_effects(runs),
@@ -743,9 +763,7 @@ def _planner_method_audit(
             rows = list(cache_audits)
             row["cache_batches"] = len(rows)
             row["cache_hits"] = sum(int(value.get("hit_count", 0)) for value in rows)
-            row["cache_misses"] = sum(
-                int(value.get("miss_count", 0)) for value in rows
-            )
+            row["cache_misses"] = sum(int(value.get("miss_count", 0)) for value in rows)
         batch_audits = getattr(world_model, "batch_audits", None)
         if batch_audits is not None:
             rows = list(batch_audits)
@@ -863,9 +881,7 @@ def _aggregate_metrics(
         localization_recalls = [
             (
                 0.0
-                if (run.get("method_audit") or {}).get(
-                    "entry_localization_failed"
-                )
+                if (run.get("method_audit") or {}).get("entry_localization_failed")
                 else (run.get("entry_localization_evaluator_only") or {}).get(
                     "clue_recall"
                 )
@@ -890,9 +906,7 @@ def _aggregate_metrics(
                 row["delayed_reasoning_success"] for row in metrics
             ),
             "mean_latency_s": _mean(row["latency_s"] for row in metrics),
-            "mean_entry_localization_clue_recall": _mean(
-                localization_recalls
-            ),
+            "mean_entry_localization_clue_recall": _mean(localization_recalls),
             "entry_localization_any_clue_rate": (
                 _mean_bool(
                     float(recall) > 0.0
@@ -902,8 +916,7 @@ def _aggregate_metrics(
             ),
             "first_read_clue_hit_rate_when_localized_clue_available": (
                 _mean_bool(
-                    _first_real_read_hits_clue(run)
-                    for run in localized_clue_available
+                    _first_real_read_hits_clue(run) for run in localized_clue_available
                 )
             ),
             "mean_entry_anchor_count": _mean(
@@ -911,17 +924,11 @@ def _aggregate_metrics(
                 for run in selected
             ),
             "entry_localization_failure_rate": _mean_bool(
-                bool(
-                    (run.get("method_audit") or {}).get(
-                        "entry_localization_failed"
-                    )
-                )
+                bool((run.get("method_audit") or {}).get("entry_localization_failed"))
                 for run in selected
             ),
             "arm_runtime_failure_rate": _mean_bool(
-                bool(
-                    (run.get("method_audit") or {}).get("arm_runtime_failed")
-                )
+                bool((run.get("method_audit") or {}).get("arm_runtime_failed"))
                 for run in selected
             ),
             "mean_initial_legal_action_count": _mean(
@@ -941,8 +948,7 @@ def _aggregate_metrics(
             ),
             "rollout_budget_abstain_rate": (
                 sum(
-                    status
-                    == "abstain_first_hop_frontier_rollout_budget_exceeded"
+                    status == "abstain_first_hop_frontier_rollout_budget_exceeded"
                     for status in planning_statuses
                 )
                 / len(planning_statuses)
@@ -986,16 +992,10 @@ def _paired_arm_effects(runs: list[dict[str, Any]]) -> dict[str, Any]:
         ]
         result[candidate_arm] = {
             "paired_case_count": len(pairs),
-            "mean_clue_recall_delta_reference_minus_candidate": _mean(
-                deltas
-            ),
-            "reference_better_clue_recall_count": sum(
-                delta > 0.0 for delta in deltas
-            ),
+            "mean_clue_recall_delta_reference_minus_candidate": _mean(deltas),
+            "reference_better_clue_recall_count": sum(delta > 0.0 for delta in deltas),
             "equal_clue_recall_count": sum(delta == 0.0 for delta in deltas),
-            "reference_worse_clue_recall_count": sum(
-                delta < 0.0 for delta in deltas
-            ),
+            "reference_worse_clue_recall_count": sum(delta < 0.0 for delta in deltas),
             "reference_only_delayed_success_count": sum(
                 bool(reference["metrics"]["delayed_reasoning_success"])
                 and not bool(candidate["metrics"]["delayed_reasoning_success"])
@@ -1019,9 +1019,7 @@ def _transition_outcome_confusion(
 ) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for arm in arms:
-        matrix: dict[str, dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
-        )
+        matrix: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
         outcome_matches: list[bool] = []
         delta_matches: list[bool] = []
         for run in runs:
@@ -1035,26 +1033,19 @@ def _transition_outcome_confusion(
                 if predicted is None:
                     continue
                 predicted_outcome = str(
-                    (predicted.get("observation") or {}).get("outcome")
-                    or "missing"
+                    (predicted.get("observation") or {}).get("outcome") or "missing"
                 )
-                realized_outcome = str(
-                    realized.get("observation_outcome") or "missing"
-                )
+                realized_outcome = str(realized.get("observation_outcome") or "missing")
                 matrix[realized_outcome][predicted_outcome] += 1
                 outcome_matches.append(predicted_outcome == realized_outcome)
                 predicted_delta = {
                     key: value
-                    for key, value in (
-                        predicted.get("belief_delta") or {}
-                    ).items()
+                    for key, value in (predicted.get("belief_delta") or {}).items()
                     if key != "predicted_only"
                 }
                 realized_delta = {
                     key: value
-                    for key, value in (
-                        realized.get("belief_delta") or {}
-                    ).items()
+                    for key, value in (realized.get("belief_delta") or {}).items()
                     if key != "predicted_only"
                 }
                 delta_matches.append(predicted_delta == realized_delta)
@@ -1134,6 +1125,53 @@ def _covered_clue_indices_by_node_ids(
             for node in graph.nodes
         )
     }
+
+
+def _maximum_clue_coverage_at_two_hop_budget(
+    graph: RetainedEvidenceGraph,
+    clues: tuple[ClueInterval, ...],
+    planning_horizon: int,
+) -> int:
+    """Compute the exact ceiling under the implemented one/two-hop topology."""
+
+    if planning_horizon not in {1, 2}:
+        raise ValueError("planning horizon must be one or two")
+    masks: dict[str, int] = {}
+    for node in graph.nodes:
+        mask = 0
+        for index, clue in enumerate(clues):
+            if (
+                node.time_span.start_s < clue.end_s
+                and clue.start_s < node.time_span.end_s
+            ):
+                mask |= 1 << index
+        if mask:
+            masks[node.node_id] = mask
+    best = max((mask.bit_count() for mask in masks.values()), default=0)
+    if planning_horizon == 1:
+        return best
+
+    adjacency: dict[str, set[str]] = {node.node_id: set() for node in graph.nodes}
+    for edge in graph.temporal_edges:
+        adjacency[edge.src].add(edge.dst)
+        adjacency[edge.dst].add(edge.src)
+    for edge in graph.correlation_edges:
+        if edge.evidence_refs and edge.src_to_dst_affinity > 0.0:
+            adjacency[edge.src].add(edge.dst)
+        if edge.evidence_refs and edge.dst_to_src_affinity > 0.0:
+            adjacency[edge.dst].add(edge.src)
+    for edge in graph.candidate_edges:
+        if edge.permits(edge.src, edge.dst):
+            adjacency[edge.src].add(edge.dst)
+        if edge.permits(edge.dst, edge.src):
+            adjacency[edge.dst].add(edge.src)
+    for source_id, source_mask in masks.items():
+        for target_id in adjacency[source_id]:
+            best = max(
+                best,
+                (source_mask | masks.get(target_id, 0)).bit_count(),
+            )
+    return best
 
 
 def _build_graph_with_optional_caption_candidates(
@@ -1224,9 +1262,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--case-limit", type=int, default=8)
     parser.add_argument("--case-id", action="append", default=[])
     parser.add_argument("--max-trajectory-pairs", type=int, default=4096)
-    parser.add_argument(
-        "--max-imagined-transition-requests", type=int, default=512
-    )
+    parser.add_argument("--max-imagined-transition-requests", type=int, default=512)
     parser.add_argument("--rollout-horizon", type=int, choices=(1, 2), default=1)
     parser.add_argument(
         "--mode", choices=("compile-gate", "gpt-oss-120b"), default="compile-gate"
@@ -1256,9 +1292,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--transition-cache-mode", choices=("record", "replay"), default="record"
     )
     parser.add_argument("--world-model-batch-size", type=int, default=48)
-    parser.add_argument(
-        "--world-model-max-contexts-per-batch", type=int, default=8
-    )
+    parser.add_argument("--world-model-max-contexts-per-batch", type=int, default=8)
     parser.add_argument(
         "--arm",
         action="append",
@@ -1350,9 +1384,7 @@ def main(argv: list[str] | None = None) -> int:
         transition_cache_mode=args.transition_cache_mode,
         include_caption_candidates=not args.disable_caption_candidates,
         world_model_batch_size=args.world_model_batch_size,
-        world_model_max_contexts_per_batch=(
-            args.world_model_max_contexts_per_batch
-        ),
+        world_model_max_contexts_per_batch=(args.world_model_max_contexts_per_batch),
         question_role_cache_path=question_role_cache,
         response_cache_path=args.response_cache,
         progress_path=(

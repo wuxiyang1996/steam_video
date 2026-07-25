@@ -24,6 +24,7 @@ def build_cgbench_navigation_dataset(
     max_cases: int | None = None,
     split_salt: str = "cgbench-grounded-navigation-v1",
     duration_probe: Callable[[Path], float | None] | None = None,
+    source_integrity_exclusions: Iterable[dict[str, Any]] = (),
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Create GT-clue transitions and ordinal coverage comparisons.
 
@@ -48,7 +49,9 @@ def build_cgbench_navigation_dataset(
     cases: list[dict[str, Any]] = []
     hidden_cases: list[dict[str, Any]] = []
     quarantined: list[dict[str, Any]] = []
+    excluded_source_rows: list[dict[str, Any]] = []
     skipped: dict[str, int] = {}
+    exclusions = _source_exclusion_map(source_integrity_exclusions)
 
     def skip(reason: str) -> None:
         skipped[reason] = skipped.get(reason, 0) + 1
@@ -58,6 +61,18 @@ def build_cgbench_navigation_dataset(
         qid = str(row.get("qid") or "").strip()
         if not video_id or not qid:
             skip("missing_video_or_qid")
+            continue
+        exclusion = exclusions.get((video_id, qid))
+        if exclusion is not None:
+            skip("source_integrity_exclusion")
+            excluded_source_rows.append(
+                {
+                    "video_id": video_id,
+                    "qid": qid,
+                    "reason": exclusion,
+                    "source_record_sha256": _checksum(row),
+                }
+            )
             continue
         intervals = _normalize_intervals(row.get("clue_intervals") or [])
         if len(intervals) < min_clues:
@@ -92,7 +107,9 @@ def build_cgbench_navigation_dataset(
         ]
         candidates = sorted(
             clue_actions,
-            key=lambda action: _digest(f"{case_id}\0candidate-order\0{action['action_id']}"),
+            key=lambda action: _digest(
+                f"{case_id}\0candidate-order\0{action['action_id']}"
+            ),
         )
         transitions = []
         acquired: list[str] = []
@@ -105,7 +122,9 @@ def build_cgbench_navigation_dataset(
             }
             transitions.append(
                 _transition(
-                    case_id, checkpoint, clue,
+                    case_id,
+                    checkpoint,
+                    clue,
                     evidence_progress="advances_required_clue_coverage",
                     coverage_after=coverage_after,
                 )
@@ -119,7 +138,8 @@ def build_cgbench_navigation_dataset(
         incomplete = {
             "trajectory_id": f"{case_id}:trajectory:{_digest(case_id + ':incomplete')[:12]}",
             "action_ids": [
-                action["action_id"] for index, action in enumerate(clue_actions)
+                action["action_id"]
+                for index, action in enumerate(clue_actions)
                 if index != omitted
             ],
         }
@@ -138,7 +158,19 @@ def build_cgbench_navigation_dataset(
         cases.append(
             {
                 "case_id": case_id,
-                "source": {"dataset": "CG-Bench", "qid": qid},
+                "source": {
+                    "dataset": "CG-Bench",
+                    "qid": qid,
+                    "public_source_sha256": _checksum(
+                        {
+                            "video_uid": video_id,
+                            "qid": qid,
+                            "question": row.get("question"),
+                            "choices": row.get("choices"),
+                            "clue_intervals": row.get("clue_intervals"),
+                        }
+                    ),
+                },
                 "video_id": video_id,
                 "video_ref": f"cg_videos/{video_path.name}",
                 "video_duration_s": duration_s,
@@ -163,6 +195,7 @@ def build_cgbench_navigation_dataset(
                     {"start_s": start, "end_s": end} for start, end in intervals
                 ],
                 "clue_action_ids": [action["action_id"] for action in clue_actions],
+                "source_record_sha256": _checksum(row),
             }
         )
         if max_cases is not None and len(cases) >= max_cases:
@@ -180,7 +213,10 @@ def build_cgbench_navigation_dataset(
                 "unlabeled; excluded from supervision and never treated as negative"
             ),
             "does_not_imply": [
-                "identity", "state_transition", "causality", "answer_sufficiency"
+                "identity",
+                "state_transition",
+                "causality",
+                "answer_sufficiency",
             ],
         },
         "cases": cases,
@@ -198,7 +234,9 @@ def build_cgbench_navigation_dataset(
     }
     errors = validate_cgbench_navigation_dataset(dataset, hidden)
     if errors:
-        raise ValueError("invalid CG-Bench navigation dataset: " + "; ".join(errors[:8]))
+        raise ValueError(
+            "invalid CG-Bench navigation dataset: " + "; ".join(errors[:8])
+        )
     split_counts: dict[str, int] = {}
     for case in cases:
         split_counts[case["split"]] = split_counts.get(case["split"], 0) + 1
@@ -217,6 +255,8 @@ def build_cgbench_navigation_dataset(
         "skipped": dict(sorted(skipped.items())),
         "quarantined_video_count": len({row["video_id"] for row in quarantined}),
         "quarantined": _deduplicate_rows(quarantined),
+        "source_integrity_exclusion_count": len(excluded_source_rows),
+        "source_integrity_exclusions": _deduplicate_rows(excluded_source_rows),
         "answer_leakage_detected": False,
         "numeric_reward_present": False,
         "observation_descriptors": "pending_qwen_vl_grounded_reads",
@@ -231,13 +271,37 @@ def build_cgbench_navigation_dataset(
     return dataset, hidden, report
 
 
+def _source_exclusion_map(
+    rows: Iterable[dict[str, Any]],
+) -> dict[tuple[str, str], str]:
+    result: dict[tuple[str, str], str] = {}
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise ValueError(f"source exclusion {index} must be an object")
+        video_id = str(row.get("video_uid") or row.get("video_id") or "").strip()
+        qid = str(row.get("qid") or "").strip()
+        reason = str(row.get("reason") or "").strip()
+        if not video_id or not qid or not reason:
+            raise ValueError(
+                "source exclusions require video_uid/video_id, qid, and reason"
+            )
+        key = (video_id, qid)
+        if key in result:
+            raise ValueError("source exclusions must have unique video/qid bindings")
+        result[key] = reason
+    return result
+
+
 def validate_cgbench_navigation_dataset(
     dataset: dict[str, Any], hidden: dict[str, Any] | None = None
 ) -> list[str]:
     errors: list[str] = []
     if dataset.get("schema_version") != SCHEMA_VERSION:
         errors.append("unsupported schema_version")
-    if dataset.get("training_ready") is not False or dataset.get("training_performed") is not False:
+    if (
+        dataset.get("training_ready") is not False
+        or dataset.get("training_performed") is not False
+    ):
         errors.append("unverified dataset must not be training-ready or trained")
     case_ids: set[str] = set()
     split_by_video: dict[str, str] = {}
@@ -254,8 +318,12 @@ def validate_cgbench_navigation_dataset(
             errors.append(f"video split leakage for {video_id}")
         split_by_video[video_id] = split
         planner = case.get("planner_input") or {}
-        if _contains_key(planner, {"answer", "answer_key", "right_answer", "clue_intervals"}):
-            errors.append(f"cases.{index} leaks terminal or clue labels into planner_input")
+        if _contains_key(
+            planner, {"answer", "answer_key", "right_answer", "clue_intervals"}
+        ):
+            errors.append(
+                f"cases.{index} leaks terminal or clue labels into planner_input"
+            )
         actions = {
             str(action.get("action_id")): action
             for action in planner.get("candidate_actions") or []
@@ -264,10 +332,18 @@ def validate_cgbench_navigation_dataset(
             interval = action.get("interval") or {}
             start = interval.get("start_s")
             end = interval.get("end_s")
-            if not action_id or not isinstance(start, (int, float)) or not isinstance(end, (int, float)) or start < 0 or end <= start:
+            if (
+                not action_id
+                or not isinstance(start, (int, float))
+                or not isinstance(end, (int, float))
+                or start < 0
+                or end <= start
+            ):
                 errors.append(f"cases.{index} has invalid candidate interval")
             elif end > float(case.get("video_duration_s") or 0) + 0.5:
-                errors.append(f"cases.{index} candidate interval exceeds video duration")
+                errors.append(
+                    f"cases.{index} candidate interval exceeds video duration"
+                )
         comparison = case.get("trajectory_preference") or {}
         if comparison.get("label") not in PREFERENCE_LABELS:
             errors.append(f"cases.{index} has invalid ordinal preference")
@@ -283,8 +359,12 @@ def validate_cgbench_navigation_dataset(
             if progress == "advances_required_clue_coverage":
                 positive.append(transition)
             else:
-                errors.append(f"cases.{index} has unknown categorical evidence progress")
-            descriptor = (transition.get("target") or {}).get("observation_descriptor") or {}
+                errors.append(
+                    f"cases.{index} has unknown categorical evidence progress"
+                )
+            descriptor = (transition.get("target") or {}).get(
+                "observation_descriptor"
+            ) or {}
             embedding = descriptor.get("embedding_ref") or {}
             if embedding.get("model") != EMBEDDING_MODEL:
                 errors.append(f"cases.{index} has an invalid embedding model")
@@ -300,7 +380,9 @@ def validate_cgbench_navigation_dataset(
                 if not isinstance(embedding.get("row_index"), int):
                     errors.append(f"cases.{index} has no embedding row index")
                 if not embedding.get("storage_uri") or not embedding.get("checksum"):
-                    errors.append(f"cases.{index} has an incomplete embedding reference")
+                    errors.append(
+                        f"cases.{index} has an incomplete embedding reference"
+                    )
             else:
                 errors.append(f"cases.{index} has an invalid embedding status")
             if grounding_status == "grounded":
@@ -316,10 +398,17 @@ def validate_cgbench_navigation_dataset(
         preferred_side = "left" if comparison.get("label") == "prefer_left" else "right"
         preferred_ids = left_ids if preferred_side == "left" else right_ids
         if preferred_ids != positive_ids:
-            errors.append(f"cases.{index} preference does not select the clue-grounded path")
+            errors.append(
+                f"cases.{index} preference does not select the clue-grounded path"
+            )
         nonpreferred_ids = right_ids if preferred_side == "left" else left_ids
-        if not nonpreferred_ids < positive_ids or len(positive_ids - nonpreferred_ids) != 1:
-            errors.append(f"cases.{index} comparison must be complete versus leave-one-out")
+        if (
+            not nonpreferred_ids < positive_ids
+            or len(positive_ids - nonpreferred_ids) != 1
+        ):
+            errors.append(
+                f"cases.{index} comparison must be complete versus leave-one-out"
+            )
     if _contains_key(dataset, {"answer", "answer_key", "right_answer"}):
         errors.append("terminal answer leaked into public dataset")
     if _contains_key(dataset, {"reward", "score", "probability", "utility"}):
@@ -434,7 +523,10 @@ def _matched_negative_intervals(
         gap_start, gap_end = viable[digest % len(viable)]
         room_ms = max(0, int(round((gap_end - gap_start - width) * 1000)))
         offset_ms = digest % (room_ms + 1) if room_ms else 0
-        negative = (round(gap_start + offset_ms / 1000, 3), round(gap_start + offset_ms / 1000 + width, 3))
+        negative = (
+            round(gap_start + offset_ms / 1000, 3),
+            round(gap_start + offset_ms / 1000 + width, 3),
+        )
         selected.append(negative)
     return selected
 
@@ -489,7 +581,10 @@ def _video_split(video_id: str, salt: str) -> str:
 
 def _contains_key(value: Any, forbidden: set[str]) -> bool:
     if isinstance(value, dict):
-        return any(str(key).casefold() in forbidden or _contains_key(child, forbidden) for key, child in value.items())
+        return any(
+            str(key).casefold() in forbidden or _contains_key(child, forbidden)
+            for key, child in value.items()
+        )
     if isinstance(value, list):
         return any(_contains_key(child, forbidden) for child in value)
     return False
@@ -505,12 +600,16 @@ def _digest(value: str) -> str:
 
 
 def _checksum(value: dict[str, Any]) -> str:
-    return _digest(json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")))
+    return _digest(
+        json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    )
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -523,16 +622,34 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--report", required=True, type=Path)
     parser.add_argument("--min-clues", type=int, default=2)
     parser.add_argument("--max-cases", type=int)
+    parser.add_argument(
+        "--source-integrity-exclusions",
+        type=Path,
+        help="Audited JSON object with an exclusions list of exact video/qid rows.",
+    )
     args = parser.parse_args(argv)
     rows = json.loads(args.input.read_text(encoding="utf-8"))
     if not isinstance(rows, list):
         raise ValueError("CG-Bench input must be a JSON list")
+    exclusions: list[dict[str, Any]] = []
+    if args.source_integrity_exclusions is not None:
+        exclusion_artifact = json.loads(
+            args.source_integrity_exclusions.read_text(encoding="utf-8")
+        )
+        if not isinstance(exclusion_artifact, dict) or not isinstance(
+            exclusion_artifact.get("exclusions"), list
+        ):
+            raise ValueError(
+                "source integrity exclusion artifact must contain an exclusions list"
+            )
+        exclusions = exclusion_artifact["exclusions"]
     dataset, hidden, report = build_cgbench_navigation_dataset(
         rows,
         video_root=args.video_root,
         dataset_id=args.dataset_id,
         min_clues=args.min_clues,
         max_cases=args.max_cases,
+        source_integrity_exclusions=exclusions,
     )
     _write_json(args.output, dataset)
     _write_json(args.hidden_output, hidden)

@@ -33,8 +33,12 @@ CG-Bench ground truth 可以可靠监督：
 6. Qwen3-VL embedding placeholder，等待真实读取后写入。
 
 正确答案、answer key 和 clue action identity 保存在 `*.hidden_key.json`，不能进入 planner
-input。当前阶段只收集与检查数据，不训练，因此产物保持 `training_ready=false` 和
-`training_performed=false`。
+input。仓库当前尚未执行训练，因此产物保持 `training_performed=false`。全协议的
+`training_ready=false` 只表示完整 L1.5 closed-loop / preference-training 门禁未通过；
+grounded GT-interval corpus 已允许用于 scoped data-pipeline/overfit smoke 与 descriptor
+distillation，不受该全协议 flag 阻塞。由于其 action 缺少 runtime semantic node key、
+categorical targets 缺少类别多样性且 schema 不同，该 corpus 不能单独称为 runtime
+categorical-IWM 验证。
 
 CG-Bench clue intervals 是正例定位而不是穷尽标注。区间位于 GT clue 之外，只表示它
 没有覆盖该条人工 annotation，不能推出它在语义上无关。因此 v0.2 不再构造或训练

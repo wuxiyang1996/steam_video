@@ -21,10 +21,22 @@
 - `terminal_targets.hidden_key.json`：terminal answer、answer key 与 clue identity，不得提供给
   planner；
 - `build_report.json`：构建、切分、泄漏与状态报告；
+- `source_integrity_exclusions.json`：仅记录已人工确认的原始 source-row 缺陷，以 exact
+  `video_uid + qid` 隔离；禁止用模型猜测正确答案；
 - `gt_ablation.unexecuted.json`：五组无训练评测干预；
 - `gt_ablation.hidden_key.json`：离线评分 key。
 
 hidden key 文件受仓库的 `*.hidden_key.json` 规则保护，本地存在但不提交。
+
+原始 CG-Bench 当前已确认存在少量 source-row 内部不一致，例如 GUI 尺寸问题被配上食品
+选项，或问题引用了未提供/不存在的编号 statement。新构建支持
+`--source-integrity-exclusions`，并分别记录 public-source 与完整 hidden-source checksum。
+已有污染 artifact 不得直接用于训练；新的科学 cohort 必须显式应用该 exclusion artifact。
+
+此外，`all_clues_within_graph_horizon` 的旧名称只表示 clues 位于视频 observation horizon
+内，并不保证 Planner 能在两跳内到达。新 gate 额外计算真实 temporal/correlation adjacency
+下的 `oracle_clue_complete_at_planning_horizon_evaluator_only`；正式 horizon-2 pilot 只使用
+该字段为真的 cases。
 
 ## 五组干预
 
@@ -42,13 +54,42 @@ navigation benchmark。真实 closed-loop 实验应由 L1.5 memory 提供候选 
 
 ## 状态
 
-当前 observation descriptor 尚待 Qwen-VL 对这 672 个真实 interval 完整读取，embedding 字段
-已预留给 `Qwen/Qwen3-VL-Embedding-2B`。按项目约束，本阶段停在数据构建与检查：
-`formal_eligible=false`、`training_ready=false`、`training_performed=false`。
+672 个真实 interval 中已有 670 个 Qwen-VL grounded observation descriptor，2 个保留为
+unavailable。全协议状态仍为 `formal_eligible=false`、`training_ready=false`、
+`training_performed=false`；这里的 `training_ready=false` 指完整 L1.5 closed-loop /
+preference-training 协议尚未过门禁，不否定下述 scoped transition SFT。
 
-下一门禁仅包括 grounded-read 完整性、schema、GT coverage、hidden-answer leakage 和
-video-disjoint split 检查。GPT-5.6/人工视觉检查可以作为抽样诊断，但不会改变 CG-Bench
-标签，也不会阻塞后续实验。
+### Scoped GT-interval transition 数据使用规则
+
+`iwm_supervision_phase2/grounded_action_transition_corpus.json` 可立即用于 data loader /
+schema smoke、刻意的小样本 overfit、descriptor distillation 与 split-safe 离线数据检查：
+
+```text
+question + pre-read checkpoint + GT interval action
+  -> grounded observation descriptor
+  -> categorical clue-coverage belief delta
+```
+
+- 可用记录：670（train / validation / test = 516 / 74 / 80，video-disjoint）；
+- 允许消费者：`iwm_training`、`offline_iwm_evaluation`；
+- 禁止消费者：L1 writer、L1.5 graph builder、same-case runtime lookup、hidden evaluator；
+- 不得把 GT interval 候选设置表述为真实 L1.5 navigation；
+- 不得生成或暗示 identity、state-transition、causal、outside-clue negative 标签；
+- validation/test 仅用于评估，不参与训练。
+
+但该 corpus **不能单独验证或训练 runtime categorical IWM**：
+
+- 670 条记录全部为正 GT clue read，`evidence_progress` 全部为
+  `advances_required_clue_coverage`，`answerability_after` 全部为 `unknown`；
+- action input 只有 timestamp interval，没有 runtime IWM 使用的冻结 L1/L1.5 target
+  semantic key；
+- clue-coverage target schema 与 full-graph IWM 的
+  `outcome/progress/answerability/frontier/contradiction` contract 不一致。
+
+因此，全视频 L1/L1.5 freeze 与五臂门禁不阻塞 scoped 数据管线/overfit smoke；但要验证
+categorical IWM，必须先补充 full-video **train** graphs、graph freeze 后的 GT-to-node
+alignment、与 inference 一致的 semantic action descriptor、categorical no-progress/control
+样本，以及 corpus adapter 和 held-out evaluator。
 
 ## 真实候选空间准备
 
@@ -79,8 +120,10 @@ observation descriptor；已有 8-video smoke 只对齐出 6 个 train bridge gr
 
 更新：Qwen-VL grounding 后，672 条 executed transitions 中 670 条已有真实 observation
 descriptor，2 条保留为 unavailable。`iwm_supervision_phase2/grounded_action_transition_corpus.json`
-将它们导出为 video-disjoint 的 train 516 / validation 74 / test 80 条记录。该文件只用于未来
-IWM post-training 或 split-safe 离线评估；禁止作为同 case runtime lookup，当前仍未训练模型。
+将它们导出为 video-disjoint 的 train 516 / validation 74 / test 80 条记录。该文件现已允许
+用于上述 scoped 数据管线/overfit smoke、descriptor distillation 或 split-safe 离线评估；
+禁止作为同 case runtime lookup，也不得把该 smoke 称为 runtime categorical-IWM 验证。
+当前仍未执行模型训练。
 
 运行时另有两个不同边界的 cache：transition cache 只缓存基于安全可见输入的 action-conditioned
 categorical prediction；response cache 只保存请求哈希和 categorical JSON，不保存 prompt/question/

@@ -2,8 +2,14 @@
 
 This repository develops an evidence-grounded memory graph for long-video
 understanding and bounded graph navigation. The active implementation lives in
-`memory_graph/`; `dynamic_navigation/`, `legacy/`, and parts of
-`steam_video_new/` contain separate experiments or earlier work.
+`memory_graph/`; the IWM-guided navigation research path lives in
+`steam_video_new/`. `dynamic_navigation/`, `legacy/`, and older Video-Holmes
+artifacts are historical or engineering-only.
+
+**Primary testbed: CG-Bench.** Supervision, frozen cohorts, matched IWM/planner
+arms, and held-out gates use CG-Bench multi-clue cases with human
+`clue_intervals`. Video-Holmes remains only as a historical graph-construction
+and edge-audit smoke; it is not the active evaluation protocol.
 
 The implemented graph is deliberately not presented as a fully validated
 causal graph. It is a two-layer temporal-state memory graph with a sparse,
@@ -57,41 +63,35 @@ Navigation questions are encoded with the same model and receive equivalent
 query references and manifests. This contract is intended to support a future
 persistent vector index and learned navigation without regenerating the graph.
 
-## Current validated engineering smoke
+## Current CG-Bench status
 
-The latest structured-state Video-Holmes smoke completed 55/55 clip schemas
-and 55/55 graph-composition targets with zero final integrity errors. Its
-provisional strict overlay contains:
+CG-Bench is the locked navigation and IWM testbed:
 
-| Item | Count |
-| --- | ---: |
-| L1 observations | 295 |
-| L1 structural relations | 59 |
-| Atomic events | 30 |
-| Events with grounded participants | 30 |
-| Events with visible states | 25 |
-| Grounded state assertions | 67 |
-| Event relations | 140 |
-| Qwen event embedding references | 30 |
-| Strict state transitions | 1 |
+| Item | Value |
+| --- | --- |
+| Pilot protocol | `cgbench-gt-navigation-pilot-v2` |
+| Case pool | 256 video-disjoint multi-clue cases / 205 videos |
+| GT clue transitions | 672 (670/672 successful Qwen-VL grounding reads) |
+| Formal labels | human `clue_intervals`, question/choices, hidden terminal answer |
+| Not auto-labeled | identity, state transition, causality, outside-clue negatives |
 
-The admitted provisional transition is the same tracked man's expression
-changing from `serious` to `focused`.
+Active evaluation path:
 
-Under the same two-read budget on an unchanged six-case provisional gold set,
-the Qwen embedding navigation ablation produced:
+- question-independent L1/L1.5 graphs from CG-Bench videos;
+- legal cursor-local temporal/correlation hops (no Top-K action ranking);
+- matched closed-loop arms: intact IWM / no-WM / shuffled-IWM / immediate-only / oracle;
+- hidden clue overlap for evaluator-only scoring.
 
-| Strategy | Answer accuracy | Mean evidence recall |
-| --- | ---: | ---: |
-| Semantic only | 66.7% | 0.833 |
-| Event only | 66.7% | 0.833 |
-| Native L1 candidate | 66.7% | 0.833 |
-| Verified dependency | **83.3%** | **0.917** |
+A prior 34-case/27-video zero-shot matched run is provisional engineering
+evidence for the older single-belief loop (intact IWM clue recall 0.201 vs
+immediate-only 0.137). It does **not** establish the newer multi-trajectory
+planner. The repaired-graph diagnostic is currently negative for method claim
+(IWM ≈ no-WM; shuffled can look better), so the active gate remains full-video
+held-out L1/L1.5 freeze plus five-arm re-evaluation.
 
-This is positive engineering evidence that a verified state dependency can
-improve navigation. It is not a formal benchmark result: the audit decisions
-are GPT-5.6 visual provisional labels, and the result currently covers one
-video, six questions, and one admitted transition.
+Historical Video-Holmes structured-state smokes and six-case dependency
+ablations are preserved under `memory_graph/outputs/` and
+`l15_graph_navigator/baselines/`; they are not the current benchmark.
 
 ## Quick start
 
@@ -156,12 +156,16 @@ matched-budget ablation plus destructive controls, use:
 python -m steam_video_new.implicit_world_model.l15_graph_navigator.workflow --help
 ```
 
-Formal evaluation and training export require content-locked human case and
-preference annotations. GPT-5.6 outputs remain explicitly `ai_provisional` and
-cannot pass those gates without an opt-in intended only for engineering runs.
-The current provisional coverage/result, including negative lookahead and
-posterior-correction gates, is preserved in
-[`video_holmes_engineering_status_v3.json`](steam_video_new/implicit_world_model/l15_graph_navigator/baselines/video_holmes_engineering_status_v3.json).
+Formal CG-Bench evaluation and training export require frozen
+question-independent graphs, hidden clue/answer keys, and content-locked
+preference annotations. GPT / model-provisional outputs cannot pass those gates
+without an explicit engineering-only opt-in. Historical Video-Holmes provisional
+status remains in
+[`video_holmes_engineering_status_v3.json`](steam_video_new/implicit_world_model/l15_graph_navigator/baselines/video_holmes_engineering_status_v3.json);
+current CG-Bench builders and cohorts live under
+[`steam_video_new/implicit_world_model/cgbench_grounded_navigation/`](steam_video_new/implicit_world_model/cgbench_grounded_navigation/README.md)
+and
+[`datasets/cgbench_gt_navigation_pilot_v2/`](steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/README.md).
 
 Run the regression suite:
 
@@ -174,22 +178,45 @@ The embedding path requires `sentence-transformers`, `torch`,
 
 ## Trust boundary and next gates
 
-Without an independent human audit, deterministic graph construction still
-runs, but video-only probabilistic identity, state, dependency, and causal
-claims must not be reported as trusted. The next required evidence milestones
-are:
+CG-Bench clue coverage can supervise reads and ordinal trajectory preference, but
+it does not certify identity, state-transition, or causal edges. Deterministic
+graph construction may still run; stronger relation claims remain untrusted
+without an independent audit.
 
-1. independently review the identity-relation packet and reach at least 90%
-   strict precision for admitted identity and state-transition edges;
-2. freeze 30--50 navigation questions across multiple videos;
-3. test state-change paraphrases and hard negatives where no verified
-   transition exists;
-4. report accepted-track, grounded-delta, and usable-dependency coverage;
-5. build a persistent embedding index and expand to learned or multi-hop
-   navigation only after those gates pass.
+The grounded GT-interval transition corpus (670 available records; video-disjoint
+train/validation/test = 516/74/80) is authorized now for loader/schema smoke,
+intentional small-set overfitting, descriptor distillation, and split-safe
+offline data checks. Those uses do not require completion of the full-video
+L1/L1.5 or five-arm navigation gates.
+
+It is not, by itself, sufficient training or validation for the runtime
+categorical IWM: all 670 records are positive clue advances, answerability is
+always `unknown`, timestamp-only actions omit the runtime L1/L1.5 semantic
+target key, and the target schema differs from the full-graph categorical IWM
+contract. Runtime-aligned categorical verification requires full-video train
+graphs, post-freeze node alignment, categorical controls, and an adapter plus
+held-out evaluator. The corpus may not be presented as closed-loop navigation
+training, used as same-case runtime lookup, or promoted into identity,
+state-transition, causal, or outside-clue negative labels.
+
+The active CG-Bench milestones below gate full L1.5 closed-loop training,
+preference/GRPO training, and method claims—not scoped data-pipeline smoke:
+
+1. finish question-independent full-video validation/test L1/L1.5 builds;
+2. freeze graph fingerprints and compile the held-out gate
+   (target 30--50 fully retained cases before matched IWM runs);
+3. rerun the five matched arms at the two-read stress budget and a larger
+   budget justified by oracle clue count;
+4. require shuffled-IWM to underperform intact IWM, with separate reports for
+   transition confusion, action divergence, coverage, abstention, and latency;
+5. only then treat closed-loop gains as method evidence or begin full
+   navigation-policy training. Do not invent outside-clue negatives or
+   question-conditioned Top-K.
 
 ## Documentation
 
+- [World-model-guided navigation research (CG-Bench)](steam_video_new/README.md)
+- [CG-Bench grounded navigation builder](steam_video_new/implicit_world_model/cgbench_grounded_navigation/README.md)
 - [Memory graph design and implementation](memory_graph/README.md)
 - [L1 reliability contract](memory_graph/L1_RELIABILITY.md)
 - [Independent L1 audit protocol](memory_graph/INDEPENDENT_L1_AUDIT_PROTOCOL.md)

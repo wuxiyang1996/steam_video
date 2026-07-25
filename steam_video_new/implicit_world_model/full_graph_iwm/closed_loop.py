@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass, replace
 from enum import Enum
 import hashlib
 import json
@@ -39,7 +39,9 @@ class GraphPlanner(Protocol):
 
 
 class RealBeliefUpdater(Protocol):
-    def update(self, belief: CursorBeliefState, observation: Any) -> CursorBeliefState: ...
+    def update(
+        self, belief: CursorBeliefState, observation: Any
+    ) -> CursorBeliefState: ...
 
 
 @dataclass(frozen=True)
@@ -217,8 +219,9 @@ def run_oracle_clue_ceiling(
     graph: RetainedEvidenceGraph,
     clue_intervals: Sequence[ClueInterval],
     read_budget: int,
+    initial_entry_node_ids: Sequence[str] | None = None,
 ) -> dict[str, Any]:
-    """Evaluator-only upper bound; hidden clue locations select the read."""
+    """Evaluator-only upper bound over the same legal entry frontier."""
 
     evaluator = HiddenClueCoverageEvaluator(clue_intervals)
     belief = CursorBeliefState(
@@ -229,6 +232,11 @@ def run_oracle_clue_ceiling(
         ),
         remaining_reads=read_budget,
     )
+    if initial_entry_node_ids is not None:
+        belief = replace(
+            belief,
+            localized_entry_node_ids=tuple(initial_entry_node_ids),
+        )
     steps: list[dict[str, Any]] = []
     started = monotonic()
     termination = "oracle_no_covering_action"
@@ -238,7 +246,12 @@ def run_oracle_clue_ceiling(
     decision_limit = max(4, read_budget * 3 + 2)
     for _ in range(decision_limit):
         actions = GraphActionCompiler().compile(belief, graph)
-        action = _oracle_action(actions, graph, evaluator)
+        action = _oracle_action(
+            actions,
+            graph,
+            evaluator,
+            remaining_reads=belief.remaining_reads,
+        )
         if action is None:
             break
         before = belief
@@ -383,6 +396,8 @@ def _oracle_action(
     actions: Sequence[LegalGraphAction],
     graph: RetainedEvidenceGraph,
     evaluator: HiddenClueCoverageEvaluator,
+    *,
+    remaining_reads: int,
 ) -> LegalGraphAction | None:
     uncovered = [
         clue
@@ -395,36 +410,67 @@ def _oracle_action(
         ActionKind.TEMPORAL_FORWARD: 2,
         ActionKind.TEMPORAL_BACKWARD: 3,
     }
-    covering_nodes = {
-        node.node_id
-        for node in graph.nodes
-        if any(
-            _overlaps(
+    uncovered_masks: dict[str, int] = {}
+    for node in graph.nodes:
+        mask = 0
+        for index, clue in enumerate(uncovered):
+            if _overlaps(
                 (node.time_span.start_s, node.time_span.end_s),
                 (clue.start_s, clue.end_s),
-            )
-            for clue in uncovered
-        )
-    }
-    if not covering_nodes:
+            ):
+                mask |= 1 << index
+        uncovered_masks[node.node_id] = mask
+    if not any(uncovered_masks.values()):
         return None
     adjacency = _navigation_adjacency(graph)
-    candidates: list[tuple[int, bool, int, str, LegalGraphAction]] = []
+    candidates: list[tuple[int, int, int, str, LegalGraphAction]] = []
     for action in actions:
-        if action.kind in TERMINAL_KINDS or action.target_id is None:
+        if (
+            action.kind in TERMINAL_KINDS
+            or action.target_id is None
+            or not action.reads_evidence
+        ):
             continue
-        distance = _shortest_hops(action.target_id, covering_nodes, adjacency)
-        if distance is not None:
-            candidates.append(
-                (
-                    distance,
-                    not action.reads_evidence,
-                    priority.get(action.kind, 99),
-                    action.action_id,
-                    action,
-                )
+        immediate_mask = uncovered_masks.get(action.target_id, 0)
+        planned_mask = _best_oracle_path_mask(
+            action.target_id,
+            max(1, remaining_reads),
+            adjacency,
+            uncovered_masks,
+        )
+        candidates.append(
+            (
+                -planned_mask.bit_count(),
+                -immediate_mask.bit_count(),
+                priority.get(action.kind, 99),
+                action.action_id,
+                action,
             )
-    return min(candidates, default=None, key=lambda item: item[:-1])[-1] if candidates else None
+        )
+    best = min(candidates, default=None, key=lambda item: item[:-1])
+    if best is None or -best[0] == 0:
+        return None
+    return best[-1]
+
+
+def _best_oracle_path_mask(
+    start: str,
+    read_steps: int,
+    adjacency: dict[str, set[str]],
+    clue_masks: dict[str, int],
+) -> int:
+    """Return the maximum clue union on an executable path from ``start``."""
+
+    states = {(start, clue_masks.get(start, 0))}
+    for _ in range(max(0, read_steps - 1)):
+        expanded = set(states)
+        for node_id, mask in states:
+            expanded.update(
+                (neighbor, mask | clue_masks.get(neighbor, 0))
+                for neighbor in adjacency.get(node_id, ())
+            )
+        states = expanded
+    return max((mask for _, mask in states), key=int.bit_count, default=0)
 
 
 def _navigation_adjacency(graph: RetainedEvidenceGraph) -> dict[str, set[str]]:
@@ -475,10 +521,7 @@ def _shortest_hops(
 def _action_sequence(run: dict[str, Any]) -> list[str]:
     result: list[str] = []
     for step in run.get("steps") or []:
-        if (
-            step.get("real_observation") is None
-            and step.get("observation_id") is None
-        ):
+        if step.get("real_observation") is None and step.get("observation_id") is None:
             continue
         selected = step.get("selected_action")
         if selected is None:

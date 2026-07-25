@@ -77,10 +77,18 @@ class GPTOSSQuestionBeliefInitializer:
             )
             try:
                 if set(result) != {"missing_roles", "rationale"}:
-                    raise ValueError("belief initializer output fields do not match schema")
+                    raise ValueError(
+                        "belief initializer output fields do not match schema"
+                    )
                 roles = _strings(result.get("missing_roles"), "missing_roles")
-                if not roles or len(roles) != len(set(roles)) or any(not role.strip() for role in roles):
-                    raise ValueError("belief initializer requires unique non-empty roles")
+                if (
+                    not roles
+                    or len(roles) != len(set(roles))
+                    or any(not role.strip() for role in roles)
+                ):
+                    raise ValueError(
+                        "belief initializer requires unique non-empty roles"
+                    )
                 return roles
             except ValueError:
                 if attempt == 1:
@@ -160,8 +168,13 @@ class GPTOSSRealEvidenceBeliefUpdater:
                     "contradiction_change",
                     "rationale",
                 ],
-                "resolved_roles": "exact strings copied from missing_roles",
-                "opened_roles": "categorical evidence roles, empty unless newly exposed",
+                "resolved_roles": (
+                    "JSON list of exact strings copied from missing_roles"
+                ),
+                "opened_roles": (
+                    "JSON list of categorical role-name strings, empty unless newly "
+                    "exposed; never a role-to-value object"
+                ),
             },
             "required_contract": {
                 "observation_is_real_not_imagined": True,
@@ -173,25 +186,46 @@ class GPTOSSRealEvidenceBeliefUpdater:
                 "no_numeric_reward_score_probability_confidence_or_utility": True,
             },
         }
-        result = self.client.complete_json(
-            task=(
-                "Update the persistent categorical belief using only the executed real "
-                "observation. Resolve a role only when the observation directly grounds it."
-            ),
-            payload=payload,
-        )
         expected = {
             "resolved_roles",
             "opened_roles",
             "contradiction_change",
             "rationale",
         }
-        if set(result) != expected:
-            raise ValueError("real belief update fields do not match schema")
-        resolved = _strings(result.get("resolved_roles"), "resolved_roles")
-        if not set(resolved).issubset(belief.missing_roles):
-            raise ValueError("real belief update resolved unknown roles")
-        opened = _strings(result.get("opened_roles"), "opened_roles")
+        for attempt in range(2):
+            result = self.client.complete_json(
+                task=(
+                    "Update the persistent categorical belief using only the executed "
+                    "real observation. Resolve a role only when the observation "
+                    "directly grounds it."
+                    if attempt == 0
+                    else (
+                        "Repair the real-evidence belief update to the exact schema. "
+                        "resolved_roles and opened_roles must each be JSON lists of "
+                        "role-name strings, never objects or role-to-value maps. Every "
+                        "resolved role must be copied verbatim from "
+                        "belief_before.missing_roles. Emit no numeric values."
+                    )
+                ),
+                payload=payload,
+            )
+            try:
+                if not isinstance(result, dict) or set(result) != expected:
+                    raise ValueError("real belief update fields do not match schema")
+                _reject_numeric_output(result)
+                resolved = _strings(result.get("resolved_roles"), "resolved_roles")
+                if not set(resolved).issubset(belief.missing_roles):
+                    raise ValueError("real belief update resolved unknown roles")
+                opened = _strings(result.get("opened_roles"), "opened_roles")
+                contradiction_change = ContradictionChange(
+                    str(result.get("contradiction_change") or "")
+                )
+                break
+            except (TypeError, ValueError):
+                if attempt == 1:
+                    raise
+        else:
+            raise RuntimeError("unreachable real belief update repair state")
         missing = [role for role in belief.missing_roles if role not in set(resolved)]
         missing.extend(role for role in opened if role not in missing)
         required = list(belief.required_roles or belief.missing_roles)
@@ -199,9 +233,6 @@ class GPTOSSRealEvidenceBeliefUpdater:
         bindings = dict(belief.grounded_role_evidence)
         for role in resolved:
             bindings[role] = observation.node_id
-        contradiction_change = ContradictionChange(
-            str(result.get("contradiction_change") or "")
-        )
         contradictions = belief.contradictions
         if contradiction_change is ContradictionChange.RESOLVED:
             contradictions = ()
@@ -611,10 +642,14 @@ class GPTOSSFullGraphSetwisePreferenceModel:
                 if set(result) != {"decisions"} or not isinstance(
                     result.get("decisions"), dict
                 ):
-                    raise ValueError("grouped setwise output fields do not match schema")
+                    raise ValueError(
+                        "grouped setwise output fields do not match schema"
+                    )
                 decision_payload = result["decisions"]
                 if set(decision_payload) != set(group_aliases):
-                    raise ValueError("grouped setwise decisions do not cover every group")
+                    raise ValueError(
+                        "grouped setwise decisions do not cover every group"
+                    )
                 parsed: list[tuple[str, ...]] = []
                 for group_alias, aliases in zip(group_aliases, trajectory_aliases):
                     row = decision_payload[group_alias]
@@ -623,18 +658,28 @@ class GPTOSSFullGraphSetwisePreferenceModel:
                         "preferred",
                         "rationale",
                     }:
-                        raise ValueError("grouped setwise decision fields do not match schema")
+                        raise ValueError(
+                            "grouped setwise decision fields do not match schema"
+                        )
                     status = str(row.get("status") or "")
                     preferred = _strings(row.get("preferred"), "preferred")
                     known = set(aliases.values())
-                    if not set(preferred) <= known or len(preferred) != len(set(preferred)):
+                    if not set(preferred) <= known or len(preferred) != len(
+                        set(preferred)
+                    ):
                         raise ValueError("grouped setwise decision has unknown aliases")
                     if status == "unique" and len(preferred) != 1:
-                        raise ValueError("unique grouped preference requires one trajectory")
+                        raise ValueError(
+                            "unique grouped preference requires one trajectory"
+                        )
                     if status == "tie" and len(preferred) < 2:
-                        raise ValueError("tie grouped preference requires multiple trajectories")
+                        raise ValueError(
+                            "tie grouped preference requires multiple trajectories"
+                        )
                     if status == "incomparable" and preferred:
-                        raise ValueError("incomparable grouped preference must be empty")
+                        raise ValueError(
+                            "incomparable grouped preference must be empty"
+                        )
                     if status not in {"unique", "tie", "incomparable"}:
                         raise ValueError("unknown grouped setwise status")
                     by_alias = {
@@ -705,16 +750,24 @@ class GPTOSSFullGraphSetwisePreferenceModel:
             )
             try:
                 if set(result) != {"status", "preferred", "rationale"}:
-                    raise ValueError("setwise preference output fields do not match schema")
+                    raise ValueError(
+                        "setwise preference output fields do not match schema"
+                    )
                 status = str(result.get("status") or "")
                 preferred = _strings(result.get("preferred"), "preferred")
                 known = set(aliases.values())
                 if not set(preferred) <= known or len(preferred) != len(set(preferred)):
-                    raise ValueError("setwise preference contains unknown/duplicate aliases")
+                    raise ValueError(
+                        "setwise preference contains unknown/duplicate aliases"
+                    )
                 if status == "unique" and len(preferred) != 1:
-                    raise ValueError("unique setwise preference requires one trajectory")
+                    raise ValueError(
+                        "unique setwise preference requires one trajectory"
+                    )
                 if status == "tie" and len(preferred) < 2:
-                    raise ValueError("tie setwise preference requires multiple trajectories")
+                    raise ValueError(
+                        "tie setwise preference requires multiple trajectories"
+                    )
                 if status == "incomparable" and preferred:
                     raise ValueError("incomparable setwise preference must be empty")
                 if status not in {"unique", "tie", "incomparable"}:
@@ -869,9 +922,7 @@ def _parse_world_predictions(
         raw_resolved = _strings(row.get("resolved_roles"), "resolved_roles")
         allowed_roles = set(request.belief.missing_roles)
         resolved = tuple(role for role in raw_resolved if role in allowed_roles)
-        raw_relation_updates = _strings(
-            row.get("relation_updates"), "relation_updates"
-        )
+        raw_relation_updates = _strings(row.get("relation_updates"), "relation_updates")
         known_edges = (
             {edge.edge_id for edge in request.graph_input.correlation_edges}
             | {edge.edge_id for edge in request.graph_input.candidate_edges}
@@ -957,6 +1008,7 @@ def _transition_payload(transition: ImaginedTransition) -> dict[str, Any]:
             "opened_roles": list(transition.belief_delta.opened_roles),
             "relation_updates": list(transition.belief_delta.relation_updates),
         },
+        "structured_belief_event_patch": transition.structured_patch,
         "predicted_only": True,
     }
 
@@ -987,6 +1039,7 @@ def _anonymous_preference_transition_payload(
                 ["present"] if transition.belief_delta.relation_updates else []
             ),
         },
+        "structured_belief_event_patch": transition.structured_patch,
         "predicted_only": True,
     }
 

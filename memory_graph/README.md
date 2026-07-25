@@ -434,10 +434,14 @@ The first Phase 1/2 implementation now includes:
 - `cli.py`: builds an atomic-event overlay from one canonical example;
 - `tests/test_memory_graph.py`: covers adapter selection, interval relations, relation scoring, and the embedding contract.
 
-#### Latest structured-state smoke assessment (2026-07-20)
+#### Historical structured-state Video-Holmes smoke (2026-07-20)
 
-The new structured-state Video-Holmes smoke supersedes the earlier negative
-navigation diagnosis above, while retaining that run as historical evidence.
+**Note:** CG-Bench is now the primary navigation/IWM testbed. The Video-Holmes
+structured-state smoke below is retained as historical graph-construction
+evidence only; it is not the active evaluation protocol.
+
+This structured-state Video-Holmes smoke supersedes the earlier negative
+navigation diagnosis above, while remaining historical relative to CG-Bench.
 The resumable Video_Skills flow completed 55/55 clip schemas and 55/55 graph
 composition targets with zero final schema or integrity errors. The resulting
 canonical graph contains 177 structured state nodes and exactly 177 `state_of`

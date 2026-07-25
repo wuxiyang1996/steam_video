@@ -109,6 +109,35 @@ def test_quarantines_clues_outside_real_video_duration(tmp_path: Path) -> None:
     assert report["quarantined"][0]["reason"] == "clue_window_exceeds_video_duration"
 
 
+def test_audited_source_integrity_exclusion_is_exact_and_checksummed(
+    tmp_path: Path,
+) -> None:
+    for video_id in ("bad-video", "good-video"):
+        (tmp_path / f"{video_id}.mp4").write_bytes(b"container")
+    dataset, hidden, report = build_cgbench_navigation_dataset(
+        [
+            _row("bad-video", 7, [[10, 14], [40, 46]]),
+            _row("good-video", 8, [[10, 14], [40, 46]]),
+        ],
+        video_root=tmp_path,
+        dataset_id="cgbench:source-integrity",
+        duration_probe=lambda _: 100.0,
+        source_integrity_exclusions=(
+            {
+                "video_uid": "bad-video",
+                "qid": "7",
+                "reason": "audited source binding defect",
+            },
+        ),
+    )
+
+    assert [row["video_id"] for row in dataset["cases"]] == ["good-video"]
+    assert report["source_integrity_exclusion_count"] == 1
+    assert report["skipped"]["source_integrity_exclusion"] == 1
+    assert len(dataset["cases"][0]["source"]["public_source_sha256"]) == 64
+    assert len(hidden["cases"][0]["source_record_sha256"]) == 64
+
+
 class _FakeVLM:
     model = "Qwen/Qwen3.5-9B"
 
@@ -455,12 +484,15 @@ def test_frozen_correlation_evaluation_uses_gt_only_after_graph_build(
         "diagnostic_only_not_applied_to_graph"
     )
     assert "GT clue intervals" in details["warning"]
-    assert _shortest_path_hops(
-        {"a"},
-        {"c"},
-        {"a": {"b"}, "b": {"a", "c"}, "c": {"b"}},
-        max_hops=2,
-    ) == 2
+    assert (
+        _shortest_path_hops(
+            {"a"},
+            {"c"},
+            {"a": {"b"}, "b": {"a", "c"}, "c": {"b"}},
+            max_hops=2,
+        )
+        == 2
+    )
 
 
 def test_question_independent_l15_selection_and_frozen_coverage(tmp_path: Path) -> None:

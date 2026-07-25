@@ -393,9 +393,7 @@ def _multi_trajectory_empirical_audit(
     coverage_rows: list[dict[str, Any]] = []
     divergence_rows: list[dict[str, Any]] = []
     calibration_rows: list[dict[str, str]] = []
-    realized_by_observation = {
-        str(row["observation_id"]): row for row in realized_rows
-    }
+    realized_by_observation = {str(row["observation_id"]): row for row in realized_rows}
     for step_index, step in enumerate(trace.steps):
         paths = tuple(step.decision.imagined_paths)
         preference_audit = step.decision.preference_audit or {}
@@ -406,9 +404,7 @@ def _multi_trajectory_empirical_audit(
             )
         )
         retained_outcomes = sum(len(path.conditioned_outcomes) for path in paths)
-        expandable_ids = {
-            row.trajectory_id for row in step.pool_before.expandable
-        }
+        expandable_ids = {row.trajectory_id for row in step.pool_before.expandable}
         per_chain = [
             {
                 "path_id": path.path_id,
@@ -456,9 +452,7 @@ def _multi_trajectory_empirical_audit(
                     {
                         "hypotheses": hypotheses,
                         "missing_roles": list(signature[0]),
-                        "grounded_role_evidence": [
-                            list(row) for row in signature[1]
-                        ],
+                        "grounded_role_evidence": [list(row) for row in signature[1]],
                         "contradictions": list(signature[2]),
                         "answerability": signature[3],
                     }
@@ -481,12 +475,8 @@ def _multi_trajectory_empirical_audit(
                         "realized_observation_outcome": str(
                             realized["observation_outcome"]
                         ),
-                        "predicted_progress": (
-                            prediction.belief_delta.progress.value
-                        ),
-                        "realized_progress": str(
-                            realized["belief_delta"]["progress"]
-                        ),
+                        "predicted_progress": (prediction.belief_delta.progress.value),
+                        "realized_progress": str(realized["belief_delta"]["progress"]),
                         "predicted_answerability": (
                             prediction.belief_delta.answerability_after.value
                         ),
@@ -495,12 +485,8 @@ def _multi_trajectory_empirical_audit(
                         ),
                     }
                 )
-    retained = sum(
-        row["retained_conditioned_outcome_count"] for row in coverage_rows
-    )
-    expected = sum(
-        row["expected_conditioned_outcome_count"] for row in coverage_rows
-    )
+    retained = sum(row["retained_conditioned_outcome_count"] for row in coverage_rows)
+    expected = sum(row["expected_conditioned_outcome_count"] for row in coverage_rows)
     return {
         "joint_chain_coverage": {
             "steps": coverage_rows,
@@ -509,9 +495,7 @@ def _multi_trajectory_empirical_audit(
             ),
             "outcome_retention_rate": retained / expected if expected else None,
             "all_initial_chains_cover_every_hypothesis": (
-                coverage_rows[0][
-                    "every_chain_covers_every_current_hypothesis"
-                ]
+                coverage_rows[0]["every_chain_covers_every_current_hypothesis"]
                 if coverage_rows
                 else None
             ),
@@ -559,9 +543,7 @@ def _categorical_accuracy(
 ) -> float | None:
     if not rows:
         return None
-    return sum(
-        row[predicted_key] == row[realized_key] for row in rows
-    ) / len(rows)
+    return sum(row[predicted_key] == row[realized_key] for row in rows) / len(rows)
 
 
 def _categorical_confusion(
@@ -697,7 +679,9 @@ def run_multi_trajectory_matched_pilot(
                         graph=graph,
                         clue_intervals=clues,
                         read_budget=read_budget,
+                        initial_entry_node_ids=entry_node_ids,
                     )
+                    run["oracle_scope"] = "matched_model_localized_entry_frontier"
                     run["metrics"]["answer_correct"] = None
                     run["metrics"]["correct_hypothesis_survived"] = None
                     run["metrics"]["false_correct_hypothesis_elimination"] = None
@@ -846,6 +830,7 @@ def _planner_for_arm(
         return ReactiveMultiTrajectoryPlanner(
             model,
             setwise_preference_model=model,
+            evidence_scheduler=model,
         )
     world_model: Any = model
     horizon = 2
@@ -861,6 +846,7 @@ def _planner_for_arm(
         horizon=horizon,
         max_complete_pairs=max_complete_pairs,
         setwise_preference_model=model,
+        evidence_scheduler=model,
     )
 
 
@@ -1047,6 +1033,7 @@ def main(argv: list[str] | None = None) -> int:
             video_limit=args.video_limit,
             cases_per_video=args.cases_per_video,
             include_caption_candidates=not args.disable_caption_candidates,
+            allowed_case_ids=args.case_id,
         )
     )
     if args.compiled_gate is not None:

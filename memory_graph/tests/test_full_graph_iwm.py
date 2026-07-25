@@ -43,6 +43,7 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     IWMRequest,
     ImaginedTransition,
     PreferenceLabel,
+    PersistentTransitionCacheWorldModel,
     RetainedEvidenceGraph,
     TemporalNavigationEdge,
     TrajectoryPrediction,
@@ -864,6 +865,40 @@ def test_real_belief_requires_evidence_lineage_and_two_observations() -> None:
     assert after_second.answerability is AnswerabilityState.READY
 
 
+def test_real_belief_repairs_role_binding_object_without_coercion() -> None:
+    client = _RealBeliefUpdateClient(
+        [
+            {
+                "resolved_roles": ["anchor"],
+                "opened_roles": {"anchor": "puppy"},
+                "contradiction_change": "unchanged",
+                "rationale": "invalid role binding map",
+            },
+            {
+                "resolved_roles": ["anchor"],
+                "opened_roles": [],
+                "contradiction_change": "unchanged",
+                "rationale": "strict categorical repair",
+            },
+        ]
+    )
+    updater = GPTOSSRealEvidenceBeliefUpdater(client)
+    observation = _node("l1:anchor", 0.0, "puppy is drenched")
+    belief = CursorBeliefState(
+        "belief:repair",
+        "what happens next?",
+        current_node_id=observation.node_id,
+        acquired_evidence=(observation.node_id,),
+        required_roles=("anchor", "outcome"),
+        missing_roles=("anchor", "outcome"),
+    )
+
+    corrected = updater.update(belief, observation)
+
+    assert corrected.missing_roles == ("outcome",)
+    assert corrected.required_roles == ("anchor", "outcome")
+
+
 def test_stable_tie_flag_cannot_restore_order_based_execution() -> None:
     decision = FullGraphIWMPlanner(
         _DelayedWorldModel(),
@@ -1269,9 +1304,7 @@ def test_entry_localization_failure_is_a_scored_fail_closed_abstention() -> None
     assert run["metrics"]["real_read_count"] == 0
     assert run["metrics"]["clue_recall"] == 0.0
     metrics = _aggregate_metrics([run], ("world_model_guided",))
-    assert (
-        metrics["world_model_guided"]["entry_localization_failure_rate"] == 1.0
-    )
+    assert metrics["world_model_guided"]["entry_localization_failure_rate"] == 1.0
     assert metrics["world_model_guided"]["arm_runtime_failure_rate"] == 1.0
 
 
@@ -1305,6 +1338,34 @@ def test_oracle_uses_intermediate_navigation_hops_to_reach_later_clue() -> None:
         "l1:1",
         "l1:2",
     ]
+
+
+def test_oracle_respects_the_matched_localized_entry_frontier() -> None:
+    nodes = tuple(
+        _node(f"l1:{index}", float(index), f"evidence {index}") for index in range(3)
+    )
+    graph = RetainedEvidenceGraph(
+        graph_id="retained:localized-oracle",
+        nodes=nodes,
+        temporal_edges=(
+            TemporalNavigationEdge("time:0:1", "l1:0", "l1:1", "temporal_next"),
+            TemporalNavigationEdge("time:1:2", "l1:1", "l1:2", "temporal_next"),
+        ),
+        correlation_edges=(),
+        capacity=3,
+    )
+
+    run = run_oracle_clue_ceiling(
+        case_id="case:localized-oracle",
+        question="where is the first event?",
+        graph=graph,
+        clue_intervals=(ClueInterval(0.1, 0.9),),
+        read_budget=1,
+        initial_entry_node_ids=("l1:2",),
+    )
+
+    assert run["metrics"]["clue_recall"] == 0.0
+    assert run["metrics"]["real_read_count"] == 0
 
 
 class _StepSensitiveWorldModel:
@@ -1377,6 +1438,71 @@ def test_shuffle_and_frozen_interventions_preserve_legal_action_identity() -> No
         row.observation.outcome for row in first
     ]
     assert frozen_model.cache_audits[-1]["reused_prediction_count"] == len(actions)
+
+
+class _StructuredPatchWorldModel:
+    model_name = "structured-patch-cache-test"
+
+    def predict_batch(self, requests):
+        return tuple(
+            ImaginedTransition(
+                action=request.action,
+                observation=PredictedObservation(
+                    target_id=request.action.target_id,
+                    outcome=EvidenceOutcome.INCONCLUSIVE,
+                ),
+                belief_delta=CategoricalBeliefDelta(
+                    progress=ProgressChange.UNCHANGED,
+                    answerability_after=AnswerabilityState.NOT_READY,
+                ),
+                structured_patch={
+                    "observation_patch": {
+                        "event_or_state": "predicted bridge event",
+                    },
+                    "belief_patch": {
+                        "opened_dependencies": ["inspect later state"],
+                    },
+                    "predicted_only": True,
+                },
+            )
+            for request in requests
+        )
+
+
+def test_transition_cache_round_trips_structured_patch(tmp_path) -> None:
+    graph = _retained_graph()
+    belief = CursorBeliefState(
+        "belief:structured-cache",
+        "question",
+        localized_entry_node_ids=("l1:bridge",),
+    )
+    actions = GraphActionCompiler().compile(belief, graph)
+    graph_input = build_iwm_graph_input(belief, graph, actions)
+    requests = tuple(
+        IWMRequest(belief=belief, graph_input=graph_input, action=action)
+        for action in actions
+    )
+    path = tmp_path / "structured-transition-cache.json"
+
+    recorded = tuple(
+        PersistentTransitionCacheWorldModel(
+            _StructuredPatchWorldModel(),
+            path,
+            mode="record",
+        ).predict_batch(requests)
+    )
+    replayed = tuple(
+        PersistentTransitionCacheWorldModel(
+            _StructuredPatchWorldModel(),
+            path,
+            mode="replay",
+        ).predict_batch(requests)
+    )
+
+    assert [row.structured_patch for row in replayed] == [
+        row.structured_patch for row in recorded
+    ]
+    assert all(row.structured_patch["predicted_only"] is True for row in replayed)
 
 
 def test_planner_resource_abstains_without_top_k_or_partial_pair_sampling() -> None:
@@ -1665,9 +1791,14 @@ def test_cgbench_gate_uses_public_selection_then_hidden_retention_only(
 
     assert gate["gate_passed"] is True
     assert gate["runnable_case_ids"] == ["case:test"]
+    assert gate["scientifically_runnable_case_ids"] == ["case:test"]
     assert gate["cases"][0]["forbidden_planner_keys"] == []
     assert gate["cases"][0]["unread_evidence_value_leak_count"] == 0
     assert gate["cases"][0]["retained_clue_recall_evaluator_only"] == 1.0
+    assert (
+        gate["cases"][0]["oracle_clue_complete_at_planning_horizon_evaluator_only"]
+        is True
+    )
     assert gate["dataset_boundary"] == "public_artifact_contains_no_hidden_fields"
     assert gate["checks"]["all_graphs_have_embedding_correlation_build"] is True
     assert gate["gpt_service_called"] is False
@@ -1685,3 +1816,38 @@ def test_cgbench_gate_uses_public_selection_then_hidden_retention_only(
     assert filtered_gate["gate_passed"] is True
     assert filtered_gate["fixed_cohort_case_filter_applied"] is True
     assert filtered_gate["allowed_case_count"] == 1
+
+
+def test_two_hop_scientific_ceiling_requires_an_executable_graph_path() -> None:
+    from steam_video_new.implicit_world_model.full_graph_iwm.cgbench_pilot import (
+        _maximum_clue_coverage_at_two_hop_budget,
+    )
+    from steam_video_new.implicit_world_model.full_graph_iwm.closed_loop import (
+        ClueInterval,
+    )
+
+    first = _node("l1:ceiling-first", 0.0, "first clue")
+    bridge = _node("l1:ceiling-bridge", 1.0, "bridge")
+    last = _node("l1:ceiling-last", 2.0, "last clue")
+    graph = RetainedEvidenceGraph(
+        graph_id="graph:two-hop-ceiling",
+        nodes=(first, bridge, last),
+        temporal_edges=(
+            TemporalNavigationEdge(
+                "edge:first-bridge", first.node_id, bridge.node_id, "temporal_next"
+            ),
+            TemporalNavigationEdge(
+                "edge:bridge-last", bridge.node_id, last.node_id, "temporal_next"
+            ),
+        ),
+        correlation_edges=(),
+        capacity=3,
+    )
+
+    covered = _maximum_clue_coverage_at_two_hop_budget(
+        graph,
+        (ClueInterval(0.1, 0.9), ClueInterval(2.1, 2.9)),
+        2,
+    )
+
+    assert covered == 1

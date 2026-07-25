@@ -18,7 +18,7 @@ Three conclusion scopes must remain separate:
 
 - **provisional expert-text**: useful only for testing extraction, graph, and verifier wiring; it cannot pass the L1 gate;
 - **trusted video-only**: requires a passing independent L1 audit before any candidate-causal relation is generated;
-- **benchmark scope**: Video-Holmes independent edge labels measure candidate-causal precision, while VRBench measures temporal/multi-hop transfer and does not provide complete typed causal-edge gold.
+- **benchmark scope**: **CG-Bench is the primary navigation/IWM testbed** (clue coverage, ordinal preference, matched closed-loop arms). Historical Video-Holmes independent edge labels may still measure candidate-causal precision; VRBench measures temporal/multi-hop transfer and does not provide complete typed causal-edge gold. Video-Holmes is not the active evaluation protocol.
 
 The updated runner writes `causal_temporal_overlay.json`, records L1 status and verifier rejections, and refuses to reuse the old segment-level API retry path. A 10-video expert-text development rerun and the 47-video locked rerun require new API calls; a trusted acceptance decision additionally requires independent human edge labels.
 

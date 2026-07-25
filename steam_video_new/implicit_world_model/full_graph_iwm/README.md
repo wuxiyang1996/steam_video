@@ -136,7 +136,12 @@ cursor it exposes only:
 - positive-direction L1.5 correlation hops incident to the cursor;
 - permitted-direction categorical candidate hops incident to the cursor;
 - backtracking to already acquired nodes;
-- stop, answer (when ready), and abstain.
+- typed terminal controls, handled separately from evidence acquisition.
+
+When unread navigation actions exist, `stop`/`abstain` do not compete inside
+the IWM rollout. `answer` becomes active only from a corrected real belief that
+is already `ready`; `abstain` remains a fail-closed controller outcome. This is
+an action-lifecycle invariant, not a ranking heuristic.
 
 There is no global all-node root action set, flat `current node x every unread
 node` semantic-probe product, or candidate `inspect/verify` action in the main
@@ -160,8 +165,11 @@ directly returns `unique`, `tie`, or `incomparable` preference plus predicted
 lifecycle suggestions. Lifecycle suggestions are audit-only until a real
 observation arrives.
 
-The planner executes exactly one real action only when all preferred expansions
-share that action. The observation is then broadcast to every active
+The planner preserves the complete preferred trajectory frontier. If it contains
+several first hops, a separate categorical evidence scheduler selects the one
+real observation predicted to best discriminate the surviving hypotheses or
+unlock their next grounded step. Scheduling one read does not delete any
+trajectory. The observation is then broadcast to every active
 trajectory. A pluggable categorical evidence assessor may mark each trajectory
 supported, contradicted, inconclusive or completed; a belief updater may be
 latent or factor-graph-backed. Exact duplicate hypotheses are structurally
@@ -198,18 +206,22 @@ TrajectoryPool + L1/L1.5 graph
   legal local actions are considered by the IWM/planner. Neither stage uses an
   embedding Top-K or hand-written score to select a winner. Pair comparisons
   are request-batched to keep model outputs bounded without sampling pairs.
-- Every mode abstains on a non-unique order. The legacy
-  `--execute-stable-ties` option is retained only as an audited request flag;
-  it cannot restore construction-order execution. Imagined consequence is
-  never used as final-answer evidence.
+- A non-unique trajectory frontier remains alive. When configured, the
+  categorical evidence scheduler chooses one observation action without a
+  score or construction-order tie-break; a genuinely incomparable scheduler
+  result still fails closed. Imagined consequence is never used as
+  final-answer evidence.
 - A real role resolution is persisted as `(role, acquired_node_id)`. It cannot
   cite imagined evidence. Multi-role questions cannot become answerable from
   only one real observation, even if the categorical updater over-resolves its
   first read; readiness requires complete role lineage and at least two real
   observations.
 - Actions without a real read (`stop`, `answer`, `abstain`, `backtrack`) have
-  deterministic `inconclusive + unchanged` dynamics and cannot hallucinate an
-  observation.
+  deterministic `inconclusive + unchanged` dynamics, bypass model inference,
+  and cannot hallucinate an observation.
+- Repeated hypothesis-conditioned outcomes are serialized as exact descriptor
+  equivalence classes. Every member alias and hypothesis is retained, so this
+  reduces context without Top-K, sampling, or information loss.
 
 ## Components
 
@@ -293,10 +305,11 @@ The repository now connects both sides of this design:
   executed observation may produce different persistent corrections for
   competing interpretations;
 - the IWM predicts every legal chain separately under every persistent
-  trajectory. Identical legal action sequences are then represented as one
-  joint Planner candidate containing all hypothesis-conditioned outcomes. This
-  removes duplicate execution candidates without dropping a hypothesis,
-  outcome or action and without applying Top-K;
+  trajectory. All continuations with the same executable first hop are then
+  represented as one joint first-hop action tree containing every
+  hypothesis-conditioned one-/two-hop outcome. This removes duplicate
+  execution candidates without dropping a hypothesis, outcome or action and
+  without applying Top-K;
 - the focused multi-trajectory suite reports 23 passed tests. The combined
   focused IWM, multi-trajectory and GTSAM-backup suite reports 53 passed and 1
   dependency-gated skip.
@@ -363,9 +376,9 @@ provenance remains in the audit trace.
 For every trajectory-specific legal first action, the IWM predicts a
 categorical observation and belief delta. At horizon two it projects a
 temporary imagined belief, compiles every legal second hop and predicts the
-complete chain outcome. The Planner groups only identical legal action
-sequences, retaining one hypothesis-conditioned outcome for every persistent
-trajectory that can produce that chain:
+complete chain outcome. The Planner groups all continuations under their shared
+executable first hop, retaining every hypothesis-conditioned chain in that
+first-hop action tree:
 
 ```text
 every competing trajectory + its current real belief
@@ -373,21 +386,29 @@ every competing trajectory + its current real belief
   -> one categorical first transition per trajectory/action
   -> every legal second action under that imagined trajectory belief
   -> one categorical outcome per complete trajectory/chain
-  -> group identical action sequences into joint candidates without pruning
-  -> exhaustive categorical pairwise partial order over joint chains
+  -> group all continuations into shared-first-hop action trees without pruning
+  -> exhaustive categorical partial order over complete first-hop trees
   -> execute one first action only when the preferred execution key is unique
   -> broadcast real evidence, correct every trajectory, and replan
 ```
 
-This representation avoids comparing duplicate action sequences while
-preserving their distinct hypothesis-conditioned predicted consequences. It is
-not Top-K: every legal first and second action remains visible, every
-hypothesis-conditioned outcome remains attached to its joint chain, and every
-joint chain participates in the pairwise partial order. Transport batching only
-splits complete prediction or comparison sets across requests. If a configured
+This representation compares the decision that is actually executed now while
+preserving distinct hypothesis-conditioned second-hop branches. It is not
+Top-K: every legal first and second action remains visible, every
+hypothesis-conditioned outcome remains attached to its joint tree, and every
+joint tree participates in the partial order. Transport batching only splits
+complete prediction or comparison sets across requests. If a configured
 complete-pair budget is too small, the planner explicitly abstains with
 `rollout_abstain_complete_comparison_budget_exceeded`; it never runs a partial
 tournament.
+
+One real read also updates the cursor and action history of every persistent
+path, because all paths executed the same shared navigation action. Subsequent
+semantic support, counterevidence and role correction remain independently
+hypothesis-conditioned. The earlier behavior updated only the source path's
+cursor; after one read that produced different legal action spaces and partial
+joint chains. A two-cycle structured-9B regression test now guards this
+boundary.
 
 `multi_trajectory_cgbench.py` provides the end-to-end CG-Bench CLI. Public
 answer choices initialize the trajectory pool. Hidden answer and clue fields
@@ -843,6 +864,25 @@ improve transition calibration, preference identifiability, delayed-planning
 advantage, clue recall and answer accuracy on the locked cohort. In this
 document, **code-complete** must not be interpreted as trained, baseline-beating
 or production-ready.
+
+The latest no-training GPT-5-mini H2 smoke also makes the evaluator boundary
+explicit. A compile-time oracle that may start at any retained node measures the
+L1/L1.5 substrate ceiling, not the ceiling available to the runtime method.
+The executed oracle now shares the exact model-localized entry frontier and
+read budget with the learned arms. Across three cases its mean clue ceiling is
+0.833 rather than the compile-time 1.0; one case is entry-unreachable under the
+two-read contract. Such cases must fail the localized-entry preflight before
+being used to claim an IWM navigation advantage.
+
+All five arms then completed without runtime or method failures. The intact IWM
+retained every hypothesis-conditioned joint outcome, scheduled real reads, and
+produced post-read belief divergence, but its mean clue recall was 0.333, tied
+with no-WM and shuffled-IWM and below immediate-only at 0.667. Its categorical
+observation/progress calibration was 0.305/0.218. This is a working closed-loop
+implementation and a negative zero-shot result: coarse address descriptors are
+often over-credited (for example, `hand holds object` is imagined to resolve
+all roles). The next intervention is grounded transition and discrimination
+supervision, not Top-K, a fixed tie-break, or another hand-written utility.
 
 The model-backed transition transport now losslessly factors requests by exact
 action sequence. One shared legal action and address-level L1/L1.5 descriptor

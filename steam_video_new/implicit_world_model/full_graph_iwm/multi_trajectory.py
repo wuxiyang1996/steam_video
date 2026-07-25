@@ -740,15 +740,13 @@ def execute_shared_trajectory_action(
             action_history = (*trajectory.action_history, action.action_id)
         else:
             belief = _share_execution_state(trajectory.belief, action)
-            action_history = trajectory.action_history
+            action_history = (*trajectory.action_history, action.action_id)
         shared_observations = trajectory.shared_observation_ids
         shared_observations = tuple(
             dict.fromkeys((*shared_observations, observation.node_id))
         )
         if belief_updater is not None:
-            hypothesis_aware = getattr(
-                belief_updater, "update_for_trajectory", None
-            )
+            hypothesis_aware = getattr(belief_updater, "update_for_trajectory", None)
             action_aware = getattr(belief_updater, "update_after_action", None)
             if callable(hypothesis_aware):
                 belief = hypothesis_aware(
@@ -953,17 +951,32 @@ def _share_execution_state(
     belief: CursorBeliefState,
     action: LegalGraphAction,
 ) -> CursorBeliefState:
+    """Apply one executed shared read to every persistent reasoning path.
+
+    The hypotheses may receive different semantic belief corrections, but they
+    all executed the same physical/navigation action. Keeping a stale cursor or
+    action history on non-source paths creates different legal action spaces and
+    breaks the next joint-tree replan.
+    """
+
     if not action.reads_evidence or action.target_id is None:
         return belief
     acquired = tuple(dict.fromkeys((*belief.acquired_evidence, action.target_id)))
     imagined = tuple(
         node_id for node_id in belief.imagined_evidence if node_id != action.target_id
     )
+    history = (
+        belief.cursor_history
+        if belief.current_node_id is None
+        else (*belief.cursor_history, belief.current_node_id)
+    )
     return replace(
         belief,
         belief_id=f"{belief.belief_id}:shared-read:{action.action_id}",
+        current_node_id=action.target_id,
         acquired_evidence=acquired,
         imagined_evidence=imagined,
+        cursor_history=history,
         remaining_reads=max(0, belief.remaining_reads - 1),
         step=belief.step + 1,
     )

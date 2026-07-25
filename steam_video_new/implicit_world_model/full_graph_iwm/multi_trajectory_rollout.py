@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 import hashlib
 from itertools import combinations
+import json
 from typing import Any, Protocol, Sequence
 
 from .action_compiler import GraphActionCompiler
@@ -57,7 +58,7 @@ class HypothesisExpansionRequest:
 
 @dataclass(frozen=True)
 class ImaginedHypothesisPath:
-    """A complete short chain with every matching hypothesis-conditioned outcome."""
+    """A raw short chain or a joint first-hop tree across competing paths."""
 
     path_id: str
     trajectory_id: str
@@ -76,20 +77,15 @@ class ImaginedHypothesisPath:
                 "canonical per-chain rollout stores continuations as distinct paths"
             )
         if self.conditioned_outcomes:
-            trajectory_ids = [
-                row.trajectory_id for row in self.conditioned_outcomes
-            ]
-            if len(trajectory_ids) != len(set(trajectory_ids)):
-                raise ValueError(
-                    "a joint chain may contain one outcome per trajectory"
-                )
+            root_key = shared_action_key(self.transitions[0].action)
             if any(
-                tuple(value.action.action_id for value in row.transitions)
-                != tuple(value.action.action_id for value in self.transitions)
+                not row.transitions
+                or len(row.transitions) > 2
+                or shared_action_key(row.transitions[0].action) != root_key
                 for row in self.conditioned_outcomes
             ):
                 raise ValueError(
-                    "joint-chain outcomes must share one legal action sequence"
+                    "joint-tree outcomes must share one legal first-hop action"
                 )
 
     @property
@@ -156,6 +152,21 @@ class CategoricalHypothesisSetwisePreference(Protocol):
     ) -> tuple[str, ...]: ...
 
 
+class CategoricalEvidenceActionScheduler(Protocol):
+    """Schedule one real read while preserving every surviving trajectory."""
+
+    model_name: str
+
+    def select_evidence_action(
+        self,
+        pool: TrajectoryPool,
+        paths: Sequence[ImaginedHypothesisPath],
+        graph: RetainedEvidenceGraph,
+        *,
+        include_imagined_transitions: bool,
+    ) -> str | None: ...
+
+
 class MultiTrajectoryRolloutPlanner:
     """Enumerate all short paths and select from their categorical partial order."""
 
@@ -170,6 +181,7 @@ class MultiTrajectoryRolloutPlanner:
         setwise_preference_model: (
             CategoricalHypothesisSetwisePreference | None
         ) = None,
+        evidence_scheduler: CategoricalEvidenceActionScheduler | None = None,
     ) -> None:
         if horizon not in {1, 2}:
             raise ValueError("multi-trajectory rollout horizon must be one or two")
@@ -181,6 +193,7 @@ class MultiTrajectoryRolloutPlanner:
             raise ValueError("max_complete_pairs must be positive when supplied")
         self.max_complete_pairs = max_complete_pairs
         self.setwise_preference_model = setwise_preference_model
+        self.evidence_scheduler = evidence_scheduler
         self.last_complete_coverage_audit: dict[str, Any] = {}
 
     def plan(
@@ -188,8 +201,9 @@ class MultiTrajectoryRolloutPlanner:
         pool: TrajectoryPool,
         graph: RetainedEvidenceGraph,
     ) -> MultiTrajectoryPlanDecision:
-        requests = compile_hypothesis_requests(pool, graph, self.action_compiler)
-        if not requests:
+        all_requests = compile_hypothesis_requests(pool, graph, self.action_compiler)
+        requests = _active_planning_requests(all_requests)
+        if not all_requests or not requests:
             raise RuntimeError("trajectory pool has no legal expansions")
         first_predictions = self._predict_checked(requests, graph)
         paths: list[ImaginedHypothesisPath] = []
@@ -205,14 +219,17 @@ class MultiTrajectoryRolloutPlanner:
                 request.belief,
                 prediction,
             )
-            for child in _compile_trajectory_requests(
-                request.trajectory_id,
-                request.hypothesis,
-                imagined_belief,
-                graph,
-                self.action_compiler,
-                imagined_history=(prediction,),
-            ):
+            children = _active_planning_requests(
+                _compile_trajectory_requests(
+                    request.trajectory_id,
+                    request.hypothesis,
+                    imagined_belief,
+                    graph,
+                    self.action_compiler,
+                    imagined_history=(prediction,),
+                )
+            )
+            for child in children:
                 second_requests.append(child)
                 parent_by_request[child.request_id] = (request, prediction)
         if second_requests:
@@ -251,7 +268,7 @@ class MultiTrajectoryRolloutPlanner:
                 "canonical_path_order": True,
             }
             return MultiTrajectoryPlanDecision(
-                selected_action=_abstain_action(requests),
+                selected_action=_abstain_action(all_requests),
                 planning_status="rollout_abstain_complete_comparison_budget_exceeded",
                 expansions=expansions,
                 preferred_expansion_ids=(),
@@ -286,23 +303,61 @@ class MultiTrajectoryRolloutPlanner:
             )
             preferred = _undominated_paths(ordered_paths, pairs, preferences)
         known_path_ids = {path.path_id for path in ordered_paths}
-        if len(preferred) != len(set(preferred)) or not set(preferred) <= known_path_ids:
+        if (
+            len(preferred) != len(set(preferred))
+            or not set(preferred) <= known_path_ids
+        ):
             raise ValueError("preference frontier contains invalid chain IDs")
         first_hops = {
             shared_action_key(path.first_action): path.first_action
             for path in ordered_paths
             if path.path_id in set(preferred)
         }
+        scheduler_used = False
+        scheduler_status = "not_needed"
         if len(first_hops) == 1:
             selected = next(iter(first_hops.values()))
             status = "rollout_selected_unique_preferred_first_hop"
-        else:
-            selected = _abstain_action(requests)
-            status = (
-                "rollout_abstain_preference_cycle"
-                if not first_hops
-                else "rollout_abstain_non_unique_first_hops"
+        elif first_hops:
+            scheduler = getattr(self.evidence_scheduler, "select_evidence_action", None)
+            scheduler_used = callable(scheduler)
+            if not scheduler_used:
+                selected = _abstain_action(all_requests)
+                status = "rollout_abstain_non_unique_first_hops"
+                scheduler_status = "not_configured"
+                scheduled_path_id = None
+            else:
+                scheduled_path_id = scheduler(
+                    pool,
+                    tuple(
+                        path for path in ordered_paths if path.path_id in set(preferred)
+                    ),
+                    graph,
+                    include_imagined_transitions=True,
+                )
+            scheduled_path = next(
+                (
+                    path
+                    for path in ordered_paths
+                    if path.path_id == scheduled_path_id
+                    and path.path_id in set(preferred)
+                    and path.first_action.kind not in TERMINAL_ACTIONS
+                ),
+                None,
             )
+            if not scheduler_used:
+                pass
+            elif scheduled_path is not None:
+                selected = scheduled_path.first_action
+                status = "rollout_scheduled_discriminating_first_hop"
+                scheduler_status = "selected"
+            else:
+                selected = _abstain_action(all_requests)
+                status = "rollout_abstain_scheduler_inconclusive"
+                scheduler_status = "inconclusive"
+        else:
+            selected = _abstain_action(all_requests)
+            status = "rollout_abstain_preference_cycle"
         preferred_first_request_ids = tuple(
             request.request_id
             for request in requests
@@ -314,7 +369,9 @@ class MultiTrajectoryRolloutPlanner:
             "second_expansion_count": len(second_requests),
             "imagined_path_count": len(ordered_paths),
             "hypothesis_conditioned_outcome_count": len(paths),
-            "path_representation": "one_hypothesis_conditioned_reasoning_chain",
+            "path_representation": (
+                "one_joint_first_hop_tree_with_all_hypothesis_conditioned_chains"
+            ),
             "exhaustive_pair_count": len(pairs),
             "comparison_count": (
                 1 if self.setwise_preference_model is not None else len(preferences)
@@ -331,6 +388,9 @@ class MultiTrajectoryRolloutPlanner:
             ),
             "top_k_applied": False,
             "canonical_path_order": True,
+            "evidence_scheduler_used": scheduler_used,
+            "evidence_scheduler_status": scheduler_status,
+            "surviving_trajectory_paths_preserved": True,
         }
         return MultiTrajectoryPlanDecision(
             selected_action=selected,
@@ -361,6 +421,12 @@ class MultiTrajectoryRolloutPlanner:
                 raise ValueError("imagined observation was marked real")
             if not prediction.belief_delta.predicted_only:
                 raise ValueError("imagined belief delta was marked real")
+            if not request.action.reads_evidence and prediction != _neutral_transition(
+                request
+            ):
+                raise ValueError(
+                    "no-read action must have an invariant neutral transition"
+                )
         return predictions
 
 
@@ -375,16 +441,19 @@ class ReactiveMultiTrajectoryPlanner:
         setwise_preference_model: (
             CategoricalHypothesisSetwisePreference | None
         ) = None,
+        evidence_scheduler: CategoricalEvidenceActionScheduler | None = None,
     ) -> None:
         self.preference_model = preference_model
         self.action_compiler = action_compiler or GraphActionCompiler()
         self.setwise_preference_model = setwise_preference_model
+        self.evidence_scheduler = evidence_scheduler
         self.last_complete_coverage_audit: dict[str, Any] = {}
 
     def plan(
         self, pool: TrajectoryPool, graph: RetainedEvidenceGraph
     ) -> MultiTrajectoryPlanDecision:
-        requests = compile_hypothesis_requests(pool, graph, self.action_compiler)
+        all_requests = compile_hypothesis_requests(pool, graph, self.action_compiler)
+        requests = _active_planning_requests(all_requests)
         raw_paths = tuple(
             _path(request, (_neutral_transition(request),)) for request in requests
         )
@@ -414,16 +483,49 @@ class ReactiveMultiTrajectoryPlanner:
             for path in paths
             if path.path_id in set(preferred)
         }
-        selected = (
-            next(iter(first_hops.values()))
-            if len(first_hops) == 1
-            else _abstain_action(requests)
-        )
-        status = (
-            "reactive_selected_unique_preferred_first_hop"
-            if len(first_hops) == 1
-            else "reactive_abstain_non_unique_first_hops"
-        )
+        scheduler_used = False
+        scheduler_status = "not_needed"
+        if len(first_hops) == 1:
+            selected = next(iter(first_hops.values()))
+            status = "reactive_selected_unique_preferred_first_hop"
+        elif first_hops:
+            scheduler = getattr(self.evidence_scheduler, "select_evidence_action", None)
+            scheduler_used = callable(scheduler)
+            if not scheduler_used:
+                selected = _abstain_action(all_requests)
+                status = "reactive_abstain_non_unique_first_hops"
+                scheduler_status = "not_configured"
+                scheduled_path_id = None
+            else:
+                scheduled_path_id = scheduler(
+                    pool,
+                    tuple(path for path in paths if path.path_id in set(preferred)),
+                    graph,
+                    include_imagined_transitions=False,
+                )
+            scheduled_path = next(
+                (
+                    path
+                    for path in paths
+                    if path.path_id == scheduled_path_id
+                    and path.path_id in set(preferred)
+                    and path.first_action.kind not in TERMINAL_ACTIONS
+                ),
+                None,
+            )
+            if not scheduler_used:
+                pass
+            elif scheduled_path is not None:
+                selected = scheduled_path.first_action
+                status = "reactive_scheduled_discriminating_first_hop"
+                scheduler_status = "selected"
+            else:
+                selected = _abstain_action(all_requests)
+                status = "reactive_abstain_scheduler_inconclusive"
+                scheduler_status = "inconclusive"
+        else:
+            selected = _abstain_action(all_requests)
+            status = "reactive_abstain_empty_frontier"
         expansions = tuple(
             TrajectoryExpansion(row.request_id, row.trajectory_id, row.action)
             for row in requests
@@ -449,6 +551,9 @@ class ReactiveMultiTrajectoryPlanner:
             ),
             "top_k_applied": False,
             "world_model_predictions_visible": False,
+            "evidence_scheduler_used": scheduler_used,
+            "evidence_scheduler_status": scheduler_status,
+            "surviving_trajectory_paths_preserved": True,
         }
         return MultiTrajectoryPlanDecision(
             selected_action=selected,
@@ -496,7 +601,8 @@ class GPTOSSCategoricalMultiTrajectoryModel:
     ) -> Sequence[ImaginedTransition]:
         normalization_start = self._transition_sequence_normalizations
         predictions: list[ImaginedTransition] = []
-        groups = _group_transition_requests(requests)
+        model_requests = tuple(row for row in requests if row.action.reads_evidence)
+        groups = _group_transition_requests(model_requests)
         for start in range(0, len(groups), self.transition_batch_size):
             batch = tuple(groups[start : start + self.transition_batch_size])
             predictions.extend(self._predict_one_batch(batch, graph))
@@ -508,12 +614,17 @@ class GPTOSSCategoricalMultiTrajectoryModel:
             )
         }
         ordered_predictions = tuple(
-            prediction_by_request[request.request_id] for request in requests
+            prediction_by_request[request.request_id]
+            if request.action.reads_evidence
+            else _neutral_transition(request)
+            for request in requests
         )
         self.transport_audits.append(
             {
                 "operation": "categorical_transition",
                 "item_count": len(requests),
+                "model_predicted_item_count": len(model_requests),
+                "neutral_no_read_item_count": len(requests) - len(model_requests),
                 "shared_action_group_count": len(groups),
                 "batch_count": _batch_count(len(groups), self.transition_batch_size),
                 "transport_batch_unit": "shared_action_group",
@@ -526,6 +637,107 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         )
         return ordered_predictions
 
+    def select_evidence_action(
+        self,
+        pool: TrajectoryPool,
+        paths: Sequence[ImaginedHypothesisPath],
+        graph: RetainedEvidenceGraph,
+        *,
+        include_imagined_transitions: bool,
+    ) -> str | None:
+        """Categorically schedule one observation without deleting any path."""
+
+        ordered = tuple(
+            path
+            for path in sorted(paths, key=lambda row: row.path_id)
+            if path.first_action.kind not in TERMINAL_ACTIONS
+        )
+        if not ordered:
+            return None
+        aliases = {
+            _alias("evidence_action", index): path for index, path in enumerate(ordered)
+        }
+        payload = {
+            "question": pool.trajectories[0].belief.question,
+            "acquired_real_evidence": _acquired_evidence_payload(pool, graph),
+            "surviving_reasoning_paths": {
+                alias: _path_payload(
+                    path,
+                    graph,
+                    include_imagined_transitions=include_imagined_transitions,
+                )
+                for alias, path in aliases.items()
+            },
+            "allowed_status": ["select", "incomparable"],
+            "required_output": {
+                "only_keys": ["status", "selected", "rationale"],
+                "selected": (
+                    "one exact evidence_action alias when select; "
+                    "none when genuinely incomparable"
+                ),
+            },
+            "contract": {
+                "schedule_one_real_observation_only": True,
+                "preserve_every_surviving_reasoning_path": True,
+                "prefer_hypothesis_discrimination_and_future_recoverability": True,
+                "do_not_treat_frontier_size_as_progress": True,
+                "no_candidate_pruning_or_top_k": True,
+                "no_numeric_reward_score_probability_confidence_or_utility": True,
+            },
+        }
+        task = (
+            "The reasoning-path frontier remains alive. Select the single real "
+            "evidence action whose predicted observation best distinguishes the "
+            "surviving hypotheses or unlocks their next grounded reasoning step. "
+            "This schedules one read only and must not delete any path. Return "
+            "incomparable only when the supplied outcomes provide no categorical "
+            "basis for choosing. Emit no numbers."
+        )
+        for attempt in range(2):
+            result = self.client.complete_json(
+                task=(task if attempt == 0 else _SCHEDULER_REPAIR_TASK),
+                payload=payload,
+            )
+            try:
+                if (
+                    not isinstance(result, dict)
+                    or set(result) != {"status", "selected", "rationale"}
+                    or _contains_number(result)
+                ):
+                    raise ValueError("evidence scheduler response schema is invalid")
+                status = str(result.get("status") or "")
+                selected = result.get("selected")
+                if status == "select":
+                    if not isinstance(selected, str) or selected not in aliases:
+                        raise ValueError(
+                            "evidence scheduler selected an unknown action"
+                        )
+                    selected_path_id: str | None = aliases[selected].path_id
+                elif status == "incomparable":
+                    if selected not in {None, "none"}:
+                        raise ValueError(
+                            "incomparable scheduler result must not select"
+                        )
+                    selected_path_id = None
+                else:
+                    raise ValueError("evidence scheduler status is invalid")
+                self.transport_audits.append(
+                    {
+                        "operation": "categorical_evidence_scheduler",
+                        "item_count": len(ordered),
+                        "batch_count": 1,
+                        "complete_coverage": True,
+                        "top_k_applied": False,
+                        "surviving_paths_preserved": True,
+                        "imagined_transitions_visible": include_imagined_transitions,
+                    }
+                )
+                return selected_path_id
+            except (TypeError, ValueError):
+                if attempt == 1:
+                    raise
+        raise RuntimeError("unreachable evidence scheduler repair state")
+
     def _predict_one_batch(
         self,
         groups: tuple[tuple[HypothesisExpansionRequest, ...], ...],
@@ -533,7 +745,7 @@ class GPTOSSCategoricalMultiTrajectoryModel:
     ) -> tuple[ImaginedTransition, ...]:
         requests = tuple(request for group in groups for request in group)
         aliases = {
-            _alias("outcome", index): row for index, row in enumerate(requests)
+            _alias("prediction", index): row for index, row in enumerate(requests)
         }
         alias_by_request = {
             request.request_id: alias for alias, request in aliases.items()
@@ -582,6 +794,10 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                     "relation_updates",
                     "rationale",
                 ],
+                "resolved_roles": (
+                    "zero or more exact strings copied from that conditioned "
+                    "request's belief.missing_roles"
+                ),
             },
             "contract": {
                 "every_conditioned_request_is_independent": True,
@@ -590,6 +806,8 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                 "target_descriptor_is_backend_bound": True,
                 "target_semantic_key_is_an_address_level_observation_clue": True,
                 "missing_acquired_evidence_is_not_an_empty_outcome_signal": True,
+                "resolved_roles_must_be_exact_missing_role_copies": True,
+                "do_not_rephrase_or_invent_resolved_roles": True,
                 "no_numeric_reward_score_probability_confidence_or_utility": True,
             },
         }
@@ -606,22 +824,26 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         )
         for attempt in range(2):
             result = self.client.complete_json(
-                task=(task if attempt == 0 else _REPAIR_TASK),
+                task=(task if attempt == 0 else _TRANSITION_REPAIR_TASK),
                 payload=payload,
             )
             try:
-                if (
-                    not isinstance(result, dict)
-                    or set(result) != {"predictions"}
-                    or _contains_number(result)
-                ):
+                if not isinstance(result, dict) or _contains_number(result):
+                    raise ValueError(
+                        "categorical transition response schema is invalid"
+                    )
+                if set(result) == {"predictions"}:
+                    raw_predictions = result.get("predictions")
+                elif set(result) == set(aliases):
+                    raw_predictions = result
+                else:
                     raise ValueError(
                         "categorical transition response schema is invalid"
                     )
                 rows, normalized = _normalize_alias_rows(
-                    result.get("predictions"),
+                    raw_predictions,
                     tuple(aliases),
-                    alias_fields=("action",),
+                    alias_fields=("action", "alias", "outcome_id", "outcome_alias"),
                     context="categorical transition",
                 )
                 self._transition_sequence_normalizations += int(normalized)
@@ -683,9 +905,7 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         """Jointly compare every chain and return the categorical frontier."""
 
         ordered = tuple(sorted(paths, key=lambda row: row.path_id))
-        aliases = {
-            _alias("chain", index): path for index, path in enumerate(ordered)
-        }
+        aliases = {_alias("chain", index): path for index, path in enumerate(ordered)}
         payload = {
             "question": pool.trajectories[0].belief.question,
             "acquired_real_evidence": _acquired_evidence_payload(pool, graph),
@@ -734,27 +954,22 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                 ):
                     raise ValueError("setwise preference response schema is invalid")
                 status = str(result.get("status") or "")
-                preferred_aliases = _strings(
-                    result.get("preferred"), "preferred"
-                )
+                preferred_aliases = _strings(result.get("preferred"), "preferred")
                 if not set(preferred_aliases) <= set(aliases):
                     raise ValueError("setwise preference returned an unknown chain")
                 if status == "unique" and len(preferred_aliases) != 1:
                     raise ValueError("unique setwise preference requires one chain")
                 if status == "tie" and len(preferred_aliases) < 2:
                     raise ValueError("tied setwise preference requires multiple chains")
-                if status == "incomparable" and preferred_aliases:
+                if status == "incomparable" and len(preferred_aliases) < 2:
                     raise ValueError(
-                        "incomparable setwise preference cannot select chains"
+                        "incomparable setwise preference requires the complete "
+                        "multi-chain frontier"
                     )
                 if status not in {"unique", "tie", "incomparable"}:
                     raise ValueError("setwise preference status is invalid")
-                by_alias = {
-                    alias: path.path_id for alias, path in aliases.items()
-                }
-                selected = tuple(
-                    by_alias[alias] for alias in preferred_aliases
-                )
+                by_alias = {alias: path.path_id for alias, path in aliases.items()}
+                selected = tuple(by_alias[alias] for alias in preferred_aliases)
                 self.transport_audits.append(
                     {
                         "operation": "categorical_setwise_frontier",
@@ -762,9 +977,7 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                         "batch_count": 1,
                         "complete_coverage": True,
                         "top_k_applied": False,
-                        "imagined_transitions_visible": (
-                            include_imagined_transitions
-                        ),
+                        "imagined_transitions_visible": (include_imagined_transitions),
                     }
                 )
                 return selected
@@ -875,24 +1088,42 @@ class ShuffledHypothesisWorldModel:
         graph: RetainedEvidenceGraph,
     ) -> Sequence[ImaginedTransition]:
         predictions = tuple(self.delegate.predict_batch(requests, graph))
-        if len(predictions) < 2:
+        read_indices = [
+            index
+            for index, request in enumerate(requests)
+            if request.action.reads_evidence
+        ]
+        if len(read_indices) < 2:
             return predictions
-        donors = predictions[1:] + predictions[:1]
-        shuffled = tuple(
-            ImaginedTransition(
-                action=request.action,
-                observation=replace(
-                    donor.observation,
-                    target_id=request.action.target_id,
-                    descriptor=_target_descriptor(request.action, graph),
-                ),
-                belief_delta=donor.belief_delta,
+        donors = [predictions[index] for index in read_indices]
+        rotated = donors[1:] + donors[:1]
+        donor_by_index = dict(zip(read_indices, rotated))
+        shuffled_rows: list[ImaginedTransition] = []
+        for index, (request, prediction) in enumerate(zip(requests, predictions)):
+            donor = donor_by_index.get(index)
+            if donor is None:
+                # Terminal/cursor-only controls are protocol invariants, not
+                # learned consequences, and therefore are never intervened on.
+                shuffled_rows.append(prediction)
+                continue
+            shuffled_rows.append(
+                ImaginedTransition(
+                    action=request.action,
+                    observation=replace(
+                        donor.observation,
+                        target_id=request.action.target_id,
+                        descriptor=_target_descriptor(request.action, graph),
+                    ),
+                    belief_delta=donor.belief_delta,
+                    structured_patch=donor.structured_patch,
+                )
             )
-            for request, donor in zip(requests, donors)
-        )
+        shuffled = tuple(shuffled_rows)
         self.audits.append(
             {
                 "request_count": len(requests),
+                "intervened_read_count": len(read_indices),
+                "preserved_no_read_count": len(requests) - len(read_indices),
                 "permutation": "deterministic_left_rotation",
                 "top_k_applied": False,
             }
@@ -923,6 +1154,35 @@ def compile_hypothesis_requests(
     )
 
 
+def _active_planning_requests(
+    requests: Sequence[HypothesisExpansionRequest],
+) -> tuple[HypothesisExpansionRequest, ...]:
+    """Separate evidence acquisition from terminal control decisions.
+
+    A ready trajectory may answer. Otherwise all available navigation actions
+    remain legal and terminal controls do not compete with evidence reads.
+    Abstention is retained only as a fail-closed controller outcome.
+    """
+
+    grouped: dict[str, list[HypothesisExpansionRequest]] = {}
+    for request in requests:
+        grouped.setdefault(request.trajectory_id, []).append(request)
+    selected: list[HypothesisExpansionRequest] = []
+    for rows in grouped.values():
+        belief = rows[0].belief
+        if belief.answerability is AnswerabilityState.READY:
+            answers = [row for row in rows if row.action.kind is ActionKind.ANSWER]
+            if answers:
+                selected.extend(answers)
+                continue
+        navigation = [row for row in rows if row.action.kind not in TERMINAL_ACTIONS]
+        if navigation:
+            selected.extend(navigation)
+            continue
+        selected.extend(row for row in rows if row.action.kind is ActionKind.ABSTAIN)
+    return tuple(sorted(selected, key=lambda row: row.request_id))
+
+
 def _compile_trajectory_requests(
     trajectory_id: str,
     hypothesis: str,
@@ -936,11 +1196,11 @@ def _compile_trajectory_requests(
         sorted(
             (
                 _request(
-                trajectory_id=trajectory_id,
-                hypothesis=hypothesis,
-                belief=belief,
-                action=action,
-                imagined_history=imagined_history,
+                    trajectory_id=trajectory_id,
+                    hypothesis=hypothesis,
+                    belief=belief,
+                    action=action,
+                    imagined_history=imagined_history,
                 )
                 for action in compiler.compile(belief, graph)
             ),
@@ -1021,25 +1281,40 @@ def _path(
 def _joint_reasoning_chains(
     paths: Sequence[ImaginedHypothesisPath],
 ) -> tuple[ImaginedHypothesisPath, ...]:
-    """Group identical legal action sequences without dropping any hypothesis."""
+    """Group all hypothesis-conditioned chains under their shared first hop.
+
+    Persistent hypotheses may retain different graph cursors after a shared
+    read. Grouping by exact two-hop sequence then creates partial "joint"
+    candidates. A Planner decision executes only the first real hop, so the
+    correct comparison unit is the complete first-hop action tree containing
+    every predicted one-/two-hop continuation for every hypothesis.
+    """
 
     grouped: dict[tuple[str, ...], list[ImaginedHypothesisPath]] = {}
     for path in paths:
-        key = tuple(row.action.action_id for row in path.transitions)
+        key = shared_action_key(path.first_action)
         grouped.setdefault(key, []).append(path)
     result: list[ImaginedHypothesisPath] = []
-    for action_ids, members in grouped.items():
-        ordered_members = tuple(sorted(members, key=lambda row: row.trajectory_id))
+    for first_hop_key, members in grouped.items():
+        ordered_members = tuple(
+            sorted(
+                members,
+                key=lambda row: (
+                    row.trajectory_id,
+                    tuple(value.action.action_id for value in row.transitions),
+                ),
+            )
+        )
         representative = ordered_members[0]
-        digest = hashlib.sha256(
-            "\x1e".join(action_ids).encode("utf-8")
-        ).hexdigest()[:20]
+        digest = hashlib.sha256("\x1e".join(first_hop_key).encode("utf-8")).hexdigest()[
+            :20
+        ]
         result.append(
             ImaginedHypothesisPath(
-                path_id=f"joint-reasoning-chain:{digest}",
+                path_id=f"joint-first-hop-tree:{digest}",
                 trajectory_id="trajectory-pool",
                 hypothesis="competing trajectory pool",
-                transitions=representative.transitions,
+                transitions=(representative.transitions[0],),
                 conditioned_outcomes=tuple(
                     HypothesisConditionedOutcome(
                         trajectory_id=member.trajectory_id,
@@ -1157,11 +1432,7 @@ def _transition_action_payload(
 ) -> dict[str, Any]:
     graph_input = build_iwm_graph_input(belief, graph, (action,))
     target = next(
-        (
-            row
-            for row in graph_input.nodes
-            if row.key.node_id == action.target_id
-        ),
+        (row for row in graph_input.nodes if row.key.node_id == action.target_id),
         None,
     )
     return {
@@ -1219,9 +1490,7 @@ def _parse_transition(
     if not isinstance(row, dict) or set(row) != expected or _contains_number(row):
         raise ValueError("categorical transition row schema is invalid")
     resolved = _strings(row.get("resolved_roles"), "resolved_roles")
-    known_roles = set(
-        request.belief.required_roles or request.belief.missing_roles
-    )
+    known_roles = set(request.belief.required_roles or request.belief.missing_roles)
     if not set(resolved).issubset(known_roles):
         raise ValueError("imagined transition resolved an unknown role")
     currently_missing = set(request.belief.missing_roles)
@@ -1268,21 +1537,48 @@ def _path_payload(
         ],
     }
     if include_imagined_transitions:
-        result["hypothesis_conditioned_outcomes"] = [
-            {
-                "hypothesis": outcome.hypothesis,
-                "imagined_transitions": [
-                    _transition_descriptor(row, graph)
-                    for row in outcome.transitions
-                ],
-            }
-            for outcome in path.conditioned_outcomes
-        ]
+        result["hypothesis_conditioned_outcome_classes"] = _lossless_outcome_classes(
+            path, graph
+        )
+        result["outcome_grouping_contract"] = (
+            "exact_descriptor_equivalence_only; every conditioned member retained"
+        )
     else:
         result["competing_hypotheses"] = [
             outcome.hypothesis for outcome in path.conditioned_outcomes
         ]
     return result
+
+
+def _lossless_outcome_classes(
+    path: ImaginedHypothesisPath,
+    graph: RetainedEvidenceGraph,
+) -> dict[str, Any]:
+    """Deduplicate exact descriptors while retaining every hypothesis member."""
+
+    grouped: dict[str, dict[str, Any]] = {}
+    ordered_keys: list[str] = []
+    for outcome in path.conditioned_outcomes:
+        descriptors = [
+            _transition_descriptor(row, graph) for row in outcome.transitions
+        ]
+        key = json.dumps(
+            descriptors,
+            sort_keys=True,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        if key not in grouped:
+            grouped[key] = {
+                "imagined_transitions": descriptors,
+                "conditioned_members": [],
+            }
+            ordered_keys.append(key)
+        grouped[key]["conditioned_members"].append({"hypothesis": outcome.hypothesis})
+    return {
+        _alias("outcome_class", index): grouped[key]
+        for index, key in enumerate(ordered_keys)
+    }
 
 
 def _transition_descriptor(
@@ -1300,6 +1596,7 @@ def _transition_descriptor(
         "resolved_roles": list(delta.resolved_roles),
         "opened_roles": list(delta.opened_roles),
         "relation_updates": list(delta.relation_updates),
+        "structured_belief_event_patch": transition.structured_patch,
     }
 
 
@@ -1363,6 +1660,20 @@ _REPAIR_TASK = (
     "every alias, and emit no numeric values."
 )
 
+_TRANSITION_REPAIR_TASK = (
+    "Repair the JSON to exactly match the requested categorical transition "
+    "schema and cover every prediction alias. For each conditioned request, "
+    "resolved_roles may contain only exact strings copied verbatim from that "
+    "request's belief.missing_roles; do not rephrase, shorten, or invent role "
+    "names. Emit no numeric values."
+)
+
+_SCHEDULER_REPAIR_TASK = (
+    "Repair the JSON to exactly contain status, selected, and rationale. Status "
+    "must be select with one exact evidence_action alias, or incomparable with "
+    "selected set to none. Emit no numeric values."
+)
+
 
 def _contains_number(value: Any) -> bool:
     if isinstance(value, bool) or value is None:
@@ -1401,23 +1712,26 @@ def _normalize_alias_rows(
     if isinstance(value, dict):
         if set(value) != set(aliases):
             raise ValueError(f"{context} response coverage mismatch")
-        return value, False
-    if not isinstance(value, list) or len(value) != len(aliases):
+        raw_rows = tuple((alias, value[alias]) for alias in aliases)
+        ordered_sequence = False
+    elif isinstance(value, list) and len(value) == len(aliases):
+        raw_rows = tuple(zip(aliases, value))
+        ordered_sequence = True
+    else:
         raise ValueError(f"{context} response coverage mismatch")
     rows: dict[str, Any] = {}
-    for alias, raw in zip(aliases, value):
+    for alias, raw in raw_rows:
         if not isinstance(raw, dict):
             raise ValueError(f"{context} ordered row is not an object")
         row = dict(raw)
         supplied = [row.pop(field) for field in alias_fields if field in row]
-        if supplied and (
-            len(supplied) != 1
-            or not isinstance(supplied[0], str)
-            or supplied[0] != alias
+        if supplied and any(
+            not isinstance(candidate, str) or candidate != alias
+            for candidate in supplied
         ):
             raise ValueError(f"{context} ordered row alias mismatch")
         rows[alias] = row
-    return rows, True
+    return rows, ordered_sequence
 
 
 def _alias(prefix: str, index: int) -> str:

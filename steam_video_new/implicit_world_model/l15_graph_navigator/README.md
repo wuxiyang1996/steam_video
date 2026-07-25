@@ -405,9 +405,13 @@ those labels must be locked as `ai_provisional`. The exporter rejects them by
 default; `--allow-ai-provisional` exists only for clearly marked engineering
 experiments. No command converts a preference into a numeric reward.
 
-### 1.4 Current engineering evidence, not a formal result
+### 1.4 Historical Video-Holmes engineering evidence (not the active testbed)
 
-The latest reproducible provisional status is recorded in
+**Active testbed is CG-Bench** (`../cgbench_grounded_navigation/`,
+`../datasets/cgbench_gt_navigation_pilot_v2/`). The Video-Holmes packet below is
+historical only and must not be cited as the current protocol.
+
+A reproducible provisional Video-Holmes status is recorded in
 `baselines/video_holmes_engineering_status_v3.json`. Scanning 15 overlays from
 11 unique videos produced 40 draft cases over 8 selected videos, with 20/10/10
 video-disjoint train/dev/test cases. It also exposed decisive coverage gaps:
@@ -415,13 +419,12 @@ zero admitted `state_transition`, one admitted verified dependency, and zero
 admitted counterevidence candidates. Forty real batch runs produced 480
 blinded comparisons with no posterior or rule-label leakage.
 
-The provisional ablation currently fails two of three engineering gates:
-rule-world-model lookahead trails direct preference by 0.05 answer accuracy,
-and freezing posterior correction changes nothing. Relation shuffling does
-hurt by 0.20, indicating that graph structure carries signal. These numbers
-must not be cited as formal results because the cases and preferences are not
-human locked. The next data-generation work must fill state/dependency/counter
-coverage before model training can test the central claim.
+That provisional ablation failed two of three engineering gates:
+rule-world-model lookahead trailed direct preference by 0.05 answer accuracy,
+and freezing posterior correction changed nothing. Relation shuffling hurt by
+0.20, indicating that graph structure carried signal. Those numbers must not be
+cited as formal results. Current gates and data generation follow the CG-Bench
+protocol in §18.
 
 ## 2. Why Use the L1.5 Graph
 
@@ -1150,9 +1153,10 @@ from the current model-provisional packet alone.
 
 ## 18. CG-Bench ground-truth-anchored data
 
-CG-Bench is now the primary source for scaling real-video navigation data. The
-independent builder lives in `../cgbench_grounded_navigation/`; the first pilot
-is stored in `../datasets/cgbench_grounded_navigation_pilot_v1/`.
+CG-Bench is the primary testbed for real-video navigation and IWM evaluation.
+The independent builder lives in `../cgbench_grounded_navigation/`; the active
+protocol is `../datasets/cgbench_gt_navigation_pilot_v2/`. The earlier
+`../datasets/cgbench_grounded_navigation_pilot_v1/` artifact is historical.
 
 The builder uses manual question-linked `clue_intervals` to supervise evidence
 coverage and ordinal trajectory preference. It does not convert QA answers or

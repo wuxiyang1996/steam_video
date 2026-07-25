@@ -159,7 +159,7 @@ def test_one_real_read_is_broadcast_to_every_active_trajectory() -> None:
     assert supported.status is TrajectoryStatus.SUPPORTED
     assert contradicted.status is TrajectoryStatus.CONTRADICTED
     assert supported.belief.current_node_id == "l1:first"
-    assert contradicted.belief.current_node_id is None
+    assert contradicted.belief.current_node_id == "l1:first"
     assert all(
         row.belief.acquired_evidence == ("l1:first",)
         for row in execution.pool.trajectories
@@ -167,6 +167,10 @@ def test_one_real_read_is_broadcast_to_every_active_trajectory() -> None:
     assert all(row.belief.remaining_reads == 1 for row in execution.pool.trajectories)
     assert all(
         row.shared_observation_ids == ("l1:first",)
+        for row in execution.pool.trajectories
+    )
+    assert all(
+        row.action_history == (decision.selected_action.action_id,)
         for row in execution.pool.trajectories
     )
 
@@ -258,9 +262,7 @@ def test_real_belief_correction_is_conditioned_on_each_hypothesis() -> None:
     )
 
     assert updater.hypotheses == [row.hypothesis for row in pool.trajectories]
-    assert {
-        row.belief.contradictions for row in execution.pool.trajectories
-    } == {
+    assert {row.belief.contradictions for row in execution.pool.trajectories} == {
         ("hypothesis:the entrant opened the door",),
         ("hypothesis:another person opened the door",),
     }
@@ -275,9 +277,7 @@ class _HypothesisConditionedCorrectionClient:
     def complete_json(self, *, task, payload):
         del task
         self.payloads.append(payload)
-        resolves_identity = payload["trajectory_hypothesis"].startswith(
-            "the entrant"
-        )
+        resolves_identity = payload["trajectory_hypothesis"].startswith("the entrant")
         return {
             "resolved_roles": ["identity"] if resolves_identity else [],
             "opened_roles": [],

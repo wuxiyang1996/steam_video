@@ -183,7 +183,9 @@ class CursorBeliefState:
             raise ValueError("imagined evidence must be a subset of acquired addresses")
         if len(self.required_roles) != len(set(self.required_roles)):
             raise ValueError("required roles must be unique")
-        if not set(self.missing_roles).issubset(self.required_roles or self.missing_roles):
+        if not set(self.missing_roles).issubset(
+            self.required_roles or self.missing_roles
+        ):
             raise ValueError("missing roles must belong to required roles")
         bound_roles: set[str] = set()
         for role, node_id in self.grounded_role_evidence:
@@ -191,7 +193,10 @@ class CursorBeliefState:
                 raise ValueError("a grounded role may have only one evidence binding")
             if self.required_roles and role not in self.required_roles:
                 raise ValueError("grounded role must belong to required roles")
-            if node_id not in self.acquired_evidence or node_id in self.imagined_evidence:
+            if (
+                node_id not in self.acquired_evidence
+                or node_id in self.imagined_evidence
+            ):
                 raise ValueError("grounded role must cite acquired real evidence")
             bound_roles.add(role)
 
@@ -286,10 +291,13 @@ class ImaginedTransition:
     action: LegalGraphAction
     observation: PredictedObservation
     belief_delta: CategoricalBeliefDelta
+    structured_patch: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.action.target_id != self.observation.target_id:
             raise ValueError("imagined observation target must match its action")
+        if not isinstance(self.structured_patch, dict):
+            raise ValueError("imagined structured patch must be an object")
 
 
 @dataclass(frozen=True)
