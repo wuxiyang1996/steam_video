@@ -40,12 +40,30 @@ def _slug(case_id: str) -> str:
 def _complete(path: Path) -> bool:
     if not path.is_file():
         return False
-    value = _read(path)
-    return (
-        not value.get("errors")
-        and set(value.get("arms") or ()) == set(MULTI_ARMS)
-        and len(value.get("runs") or ()) == len(MULTI_ARMS)
-    )
+    try:
+        value = _read(path)
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError):
+        return False
+    selected_case_ids = value.get("selected_case_ids") or ()
+    runs = value.get("runs") or ()
+    if (
+        value.get("errors")
+        or not isinstance(selected_case_ids, list)
+        or len(selected_case_ids) != 1
+        or not isinstance(runs, list)
+        or len(runs) != len(MULTI_ARMS)
+        or set(value.get("arms") or ()) != set(MULTI_ARMS)
+    ):
+        return False
+    case_id = str(selected_case_ids[0])
+    run_keys = [
+        (str(run.get("case_id") or ""), str(run.get("arm") or ""))
+        for run in runs
+        if isinstance(run, dict)
+    ]
+    return len(run_keys) == len(runs) and set(run_keys) == {
+        (case_id, arm) for arm in MULTI_ARMS
+    }
 
 
 def _select_case_ids(

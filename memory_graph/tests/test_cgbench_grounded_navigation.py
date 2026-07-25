@@ -708,13 +708,16 @@ def test_provisional_filter_rejects_contaminated_control() -> None:
             {"review_id": "r:control", "case_id": "case:one"},
         ]
     }
-    decision = lambda review_id, relevance: {
-        "review_id": review_id,
-        "request_status": "completed",
-        "media_alignment": "accept",
-        "descriptor_grounding": "accept",
-        "question_relevance": relevance,
-    }
+
+    def decision(review_id: str, relevance: str) -> dict[str, str]:
+        return {
+            "review_id": review_id,
+            "request_status": "completed",
+            "media_alignment": "accept",
+            "descriptor_grounding": "accept",
+            "question_relevance": relevance,
+        }
+
     audit = {
         "decisions": [decision("r:clue", "relevant"), decision("r:control", "relevant")]
     }

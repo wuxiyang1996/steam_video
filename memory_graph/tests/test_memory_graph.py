@@ -15,7 +15,6 @@ from memory_graph.contracts import (
     EntityLinkJudgment,
     EntityMention,
     L1HumanAudit,
-    StateAssertion,
 )
 from memory_graph.event_adapter import atomic_events_to_graph_nodes
 from memory_graph.embedding import EMBEDDING_TEXT_CONTRACT, embed_memory_nodes
@@ -224,11 +223,11 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(accepted.status, "pass")
         self.assertEqual(accepted.grade, "high")
         self.assertEqual(self_edge_fail.status, "fail")
-        self.assertTrue(
-            any("self-edges" in issue for issue in self_edge_fail.issues)
-        )
+        self.assertTrue(any("self-edges" in issue for issue in self_edge_fail.issues))
 
-    def test_video_skills_l1_gate_rejects_missing_ids_and_nonfinite_values(self) -> None:
+    def test_video_skills_l1_gate_rejects_missing_ids_and_nonfinite_values(
+        self,
+    ) -> None:
         canonical = {
             "metadata": {
                 "clip_schemas": [{"clip_id": "clip:1"}],
@@ -651,8 +650,7 @@ class MemoryGraphTest(unittest.TestCase):
 
         tracks, report = build_identity_tracks(nodes, edges)
         reasons = {
-            row["edge_id"]: " ".join(row["reasons"])
-            for row in report.rejected_edges
+            row["edge_id"]: " ".join(row["reasons"]) for row in report.rejected_edges
         }
 
         self.assertEqual(tracks["person:a"], tracks["person:b"])
@@ -934,27 +932,21 @@ class MemoryGraphTest(unittest.TestCase):
             ],
         }
         l1_src = _grounded_node("memory:event:car:1")
-        l1_src.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:1"}
-        )
+        l1_src.metadata.update({"source_node_type": "event", "clip_id": "clip:1"})
         l1_src.source_node_id = "event:car:1"
         l1_dst = _grounded_node(
             "memory:event:car:2",
             start_s=3,
             end_s=5,
         )
-        l1_dst.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:2"}
-        )
+        l1_dst.metadata.update({"source_node_type": "event", "clip_id": "clip:2"})
         l1_dst.source_node_id = "event:car:2"
         l1_support = _grounded_node(
             "memory:event:car:3",
             start_s=6,
             end_s=8,
         )
-        l1_support.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:3"}
-        )
+        l1_support.metadata.update({"source_node_type": "event", "clip_id": "clip:3"})
         l1_support.source_node_id = "event:car:3"
 
         relations, report = materialize_l1_structural_relations(
@@ -1024,14 +1016,10 @@ class MemoryGraphTest(unittest.TestCase):
         }
         l1_event = _grounded_node("memory:event:car:1")
         l1_event.source_node_id = "event:car:1"
-        l1_event.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:1"}
-        )
+        l1_event.metadata.update({"source_node_type": "event", "clip_id": "clip:1"})
         l1_dst = _grounded_node("memory:event:car:2", start_s=3, end_s=5)
         l1_dst.source_node_id = "event:car:2"
-        l1_dst.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:2"}
-        )
+        l1_dst.metadata.update({"source_node_type": "event", "clip_id": "clip:2"})
 
         relations, report = materialize_l1_structural_relations(
             graph,
@@ -1139,25 +1127,33 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertIn(("a", "b", "before"), relations)
         self.assertIn(("b", "c", "overlaps"), relations)
         self.assertIn(("d", "c", "during"), relations)
-        self.assertTrue(all(edge.status is RelationStatus.DETERMINISTIC for edge in graph.relations))
+        self.assertTrue(
+            all(edge.status is RelationStatus.DETERMINISTIC for edge in graph.relations)
+        )
 
     def test_probabilistic_relations_require_explicit_scorer_weights(self) -> None:
         nodes = [_node("a", 0, 2), _node("b", 3, 5), _node("c", 8, 10)]
         scorer = LinearRelationScorer(
             weights={
                 "same_entity": {"cosine_similarity": 2.0},
-                "state_transition": {"cosine_similarity": 1.0, "temporal_proximity": 1.0},
+                "state_transition": {
+                    "cosine_similarity": 1.0,
+                    "temporal_proximity": 1.0,
+                },
                 "explains": {"temporal_proximity": 1.0, "forward_order": 1.0},
                 "enables": {"temporal_proximity": 0.5},
                 "contradicts": {"cosine_similarity": -1.0},
             },
-            biases={relation: -0.5 for relation in (
-                "same_entity",
-                "state_transition",
-                "explains",
-                "enables",
-                "contradicts",
-            )},
+            biases={
+                relation: -0.5
+                for relation in (
+                    "same_entity",
+                    "state_transition",
+                    "explains",
+                    "enables",
+                    "contradicts",
+                )
+            },
             calibrated=False,
         )
         graph = build_memory_graph(
@@ -1174,10 +1170,18 @@ class MemoryGraphTest(unittest.TestCase):
             top_k_candidates=1,
         )
 
-        candidates = [edge for edge in graph.relations if edge.status is RelationStatus.UNCALIBRATED_PRIOR]
+        candidates = [
+            edge
+            for edge in graph.relations
+            if edge.status is RelationStatus.UNCALIBRATED_PRIOR
+        ]
         self.assertTrue(candidates)
-        self.assertTrue(all("explains" in edge.relation_probabilities for edge in candidates))
-        self.assertTrue(all(edge.provenance["producer"] == scorer.producer for edge in candidates))
+        self.assertTrue(
+            all("explains" in edge.relation_probabilities for edge in candidates)
+        )
+        self.assertTrue(
+            all(edge.provenance["producer"] == scorer.producer for edge in candidates)
+        )
 
     def test_schema_and_embedding_contract_use_qwen_2b(self) -> None:
         schema_path = Path(__file__).parents[1] / "memory_graph.schema.json"
@@ -1241,14 +1245,14 @@ class MemoryGraphTest(unittest.TestCase):
                 )
             ],
             relations=[],
-            metadata={
-                "layer_contract": "l1_observations_plus_l1_5_atomic_overlay"
-            },
+            metadata={"layer_contract": "l1_observations_plus_l1_5_atomic_overlay"},
         )
 
         self.assertEqual(validate_overlay_artifact(overlay.to_dict()), [])
 
-    def test_overlay_schema_accepts_legacy_build_report_without_candidates(self) -> None:
+    def test_overlay_schema_accepts_legacy_build_report_without_candidates(
+        self,
+    ) -> None:
         overlay = CausalTemporalOverlay(
             overlay_id="overlay:legacy",
             example_id="example:legacy",
@@ -1256,9 +1260,7 @@ class MemoryGraphTest(unittest.TestCase):
             l1_observations=[_grounded_node("memory:legacy")],
             atomic_events=[],
             relations=[],
-            metadata={
-                "layer_contract": "l1_observations_plus_l1_5_atomic_overlay"
-            },
+            metadata={"layer_contract": "l1_observations_plus_l1_5_atomic_overlay"},
         ).to_dict()
         overlay["build_report"] = {
             "l1_reliability": {},
@@ -1289,15 +1291,19 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(accepted, [])
         self.assertIn("outside", rejected[0]["reason"])
 
-    def test_video_l1_accepts_categorical_grounding_without_model_confidence(self) -> None:
+    def test_video_l1_accepts_categorical_grounding_without_model_confidence(
+        self,
+    ) -> None:
         accepted, rejected = _parse_coarse_response(
             {
-                "events": [{
-                    "predicate": "A hand touches the cup.",
-                    "coarse_start_s": 4.0,
-                    "coarse_end_s": 7.0,
-                    "grounding_status": "observed",
-                }]
+                "events": [
+                    {
+                        "predicate": "A hand touches the cup.",
+                        "coarse_start_s": 4.0,
+                        "coarse_end_s": 7.0,
+                        "grounding_status": "observed",
+                    }
+                ]
             },
             window={"start_s": 0.0, "end_s": 8.0, "purpose": "coarse_scan"},
             window_index=0,
@@ -1306,9 +1312,12 @@ class MemoryGraphTest(unittest.TestCase):
         )
         self.assertEqual(rejected, [])
         self.assertEqual(accepted[0]["confidence"], 1.0)
-        self.assertIn("Do not output confidence", _coarse_prompt(
-            window={"start_s": 0.0, "end_s": 8.0}, frame_records=[], max_events=4
-        ))
+        self.assertIn(
+            "Do not output confidence",
+            _coarse_prompt(
+                window={"start_s": 0.0, "end_s": 8.0}, frame_records=[], max_events=4
+            ),
+        )
 
     def test_video_l1_fine_localization_tracks_states_and_frame_evidence(self) -> None:
         records = [
@@ -1377,7 +1386,9 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(atomic[0].participants[0].surface, "red cup")
         self.assertEqual(atomic[0].states[0].value, "held in hand")
 
-    def test_video_l1_evaluation_separates_structure_from_human_correctness(self) -> None:
+    def test_video_l1_evaluation_separates_structure_from_human_correctness(
+        self,
+    ) -> None:
         node = _grounded_node("visual_l1:1")
         node.metadata.update(
             {
@@ -1572,33 +1583,33 @@ class MemoryGraphTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            exit_code = cli_main([
-                "--canonical",
-                str(canonical_path),
-                "--output",
-                str(output_path),
-                "--atomic-events",
-                str(events_path),
-                "--input-mode",
-                "video_only",
-            ])
+            exit_code = cli_main(
+                [
+                    "--canonical",
+                    str(canonical_path),
+                    "--output",
+                    str(output_path),
+                    "--atomic-events",
+                    str(events_path),
+                    "--input-mode",
+                    "video_only",
+                ]
+            )
 
             output = json.loads(output_path.read_text(encoding="utf-8"))
             self.assertEqual(exit_code, 0)
             self.assertEqual(output["schema_version"], "steam-causal-overlay/v0.2")
-            self.assertEqual(output["metadata"]["l1_reliability"]["status"], "incomplete")
+            self.assertEqual(
+                output["metadata"]["l1_reliability"]["status"], "incomplete"
+            )
             self.assertEqual(len(output["l1_observations"]), 2)
             self.assertEqual(len(output["atomic_events"]), 2)
             self.assertEqual(validate_overlay_artifact(output), [])
             self.assertIn("candidate_relations", output["build_report"])
             self.assertIn("rejected_relations", output["build_report"])
             self.assertIn("verifier_summary", output["build_report"])
-            self.assertIn(
-                "identity_candidates", output["metadata"]["relation_layers"]
-            )
-            self.assertIn(
-                "observation_support", output["metadata"]["relation_layers"]
-            )
+            self.assertIn("identity_candidates", output["metadata"]["relation_layers"])
+            self.assertIn("observation_support", output["metadata"]["relation_layers"])
             self.assertNotEqual(
                 output["metadata"]["node_event_assumption"],
                 "one_memory_node_approximately_one_event",
@@ -1633,7 +1644,9 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertTrue(report.metrics["provenance_completeness"].passed)
         self.assertIsNone(report.metrics["grounded_event_precision"].passed)
 
-    def test_l1_reliability_gate_passes_only_with_complete_independent_labels(self) -> None:
+    def test_l1_reliability_gate_passes_only_with_complete_independent_labels(
+        self,
+    ) -> None:
         nodes = [
             _grounded_node("memory:event:1"),
             _grounded_node("memory:event:2", start_s=2, end_s=4),
@@ -1744,7 +1757,9 @@ class MemoryGraphTest(unittest.TestCase):
         nodes, index = atomic_events_to_graph_nodes(events, l1_nodes=[l1])
 
         self.assertEqual(len(nodes), 2)
-        self.assertEqual(index.l1_to_events[l1.node_id], ("event:atomic:1", "event:atomic:2"))
+        self.assertEqual(
+            index.l1_to_events[l1.node_id], ("event:atomic:1", "event:atomic:2")
+        )
         self.assertTrue(all(node.source_segments == [l1.node_id] for node in nodes))
 
     def test_dict_visibility_hidden_supervision_fails_l1_gate(self) -> None:
@@ -1840,7 +1855,9 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertTrue(verify_relation(belief, src, dst).passed)
 
-    def test_state_transition_rejects_surface_match_without_accepted_track(self) -> None:
+    def test_state_transition_rejects_surface_match_without_accepted_track(
+        self,
+    ) -> None:
         src = _atomic_node(
             "event:closed",
             0,
@@ -2001,10 +2018,20 @@ class MemoryGraphTest(unittest.TestCase):
 
     def test_regression_5P_6Q2Q0NLk_timer_narrative_does_not_enable(self) -> None:
         src = _atomic_node(
-            "event:src", 0, 1, "A timer starts.", mention_id="timer:1", surface="a timer"
+            "event:src",
+            0,
+            1,
+            "A timer starts.",
+            mention_id="timer:1",
+            surface="a timer",
         )
         dst = _atomic_node(
-            "event:dst", 2, 3, "A person leaves.", mention_id="person:1", surface="a person"
+            "event:dst",
+            2,
+            3,
+            "A person leaves.",
+            mention_id="person:1",
+            surface="a person",
         )
         belief = _belief(
             src,
@@ -2333,7 +2360,9 @@ class MemoryGraphTest(unittest.TestCase):
         )
 
         self.assertEqual(count, 1)
-        self.assertEqual(proposals[0].provenance["visual_verification"]["status"], "passed")
+        self.assertEqual(
+            proposals[0].provenance["visual_verification"]["status"], "passed"
+        )
         self.assertEqual(len(accepted), 1)
         self.assertEqual(rejected, [])
 
@@ -2402,7 +2431,9 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(witness["mechanism"], "contact_transfer")
         self.assertEqual(witness["cause_event_id"], src.node_id)
 
-    def test_visual_evidence_indices_enforce_frame_roles_and_time_direction(self) -> None:
+    def test_visual_evidence_indices_enforce_frame_roles_and_time_direction(
+        self,
+    ) -> None:
         records = [
             {"frame_index": 0, "time_s": 10.0, "purpose": "cause"},
             {"frame_index": 1, "time_s": 20.0, "purpose": "mechanism"},
@@ -2561,7 +2592,9 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertFalse(verify_relation(belief, src, dst).passed)
 
-    def test_world_model_navigation_follows_dependency_then_reads_real_node(self) -> None:
+    def test_world_model_navigation_follows_dependency_then_reads_real_node(
+        self,
+    ) -> None:
         src = _atomic_node(
             "event:paper-ground",
             0,
@@ -2765,7 +2798,9 @@ class MemoryGraphTest(unittest.TestCase):
         )
         self.assertNotIn("causal_witness", dependency.provenance)
 
-    def test_navigation_ablation_keeps_candidate_and_verified_edges_separate(self) -> None:
+    def test_navigation_ablation_keeps_candidate_and_verified_edges_separate(
+        self,
+    ) -> None:
         events = [
             _atomic_node(
                 "event:seed",
@@ -2802,7 +2837,9 @@ class MemoryGraphTest(unittest.TestCase):
                 entity_type="object",
             ),
         ]
-        l1_nodes = [_grounded_node(ref) for event in events for ref in event.source_segments]
+        l1_nodes = [
+            _grounded_node(ref) for event in events for ref in event.source_segments
+        ]
         temporal = RelationBelief(
             edge_id="temporal:seed-background",
             src="event:seed",
@@ -2818,9 +2855,7 @@ class MemoryGraphTest(unittest.TestCase):
             relation_probabilities={"transition_support": 0.9},
             status=RelationStatus.UNCALIBRATED_PRIOR,
             direction_confidence=0.9,
-            provenance={
-                "hard_verifier": {"transition_support": {"passed": True}}
-            },
+            provenance={"hard_verifier": {"transition_support": {"passed": True}}},
         )
         native = RelationBelief(
             edge_id="native:candidate",
@@ -2889,9 +2924,7 @@ class MemoryGraphTest(unittest.TestCase):
             example_id="example:embedding-ablation",
             video_id="video-1",
             l1_observations=[
-                _grounded_node(ref)
-                for event in events
-                for ref in event.source_segments
+                _grounded_node(ref) for event in events for ref in event.source_segments
             ],
             atomic_events=events,
             relations=[],
@@ -2957,9 +2990,7 @@ class MemoryGraphTest(unittest.TestCase):
             example_id="example:priority",
             video_id="video-1",
             l1_observations=[
-                _grounded_node(ref)
-                for event in events
-                for ref in event.source_segments
+                _grounded_node(ref) for event in events for ref in event.source_segments
             ],
             atomic_events=events,
             relations=[
@@ -3138,9 +3169,7 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertTrue(report["acceptance_passed"])
         self.assertEqual(report["groups"]["identity"]["strict_precision"], 1.0)
-        self.assertEqual(
-            report["groups"]["state_transition"]["strict_precision"], 1.0
-        )
+        self.assertEqual(report["groups"]["state_transition"]["strict_precision"], 1.0)
 
         packet["labels_source"] = "model_provisional"
         provisional = evaluate_l1_relation_packet(packet)
@@ -3155,9 +3184,7 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(
             conservative["groups"]["identity"]["conservative_precision"], 0.0
         )
-        self.assertEqual(
-            conservative["groups"]["identity"]["decision_coverage"], 0.0
-        )
+        self.assertEqual(conservative["groups"]["identity"]["decision_coverage"], 0.0)
 
         split = create_locked_audit_split(
             packet,

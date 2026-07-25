@@ -13,7 +13,12 @@ from typing import Any, Callable, Protocol, Sequence
 from memory_graph.embedding import Qwen3VLEmbeddingProvider
 from memory_graph.visual_verifier import VLMClient, _sample_frame_data_uris
 
-from .builder import EMBEDDING_MODEL, _checksum, _write_json, validate_cgbench_navigation_dataset
+from .builder import (
+    EMBEDDING_MODEL,
+    _checksum,
+    _write_json,
+    validate_cgbench_navigation_dataset,
+)
 
 
 GROUNDING_SCHEMA = "steam-cgbench-qwen-grounding/v0.1"
@@ -24,7 +29,9 @@ class TextEmbeddingProvider(Protocol):
     model_name: str
     dimension: int
 
-    def encode(self, texts: Sequence[str], *, batch_size: int = 8) -> Sequence[Sequence[float]]: ...
+    def encode(
+        self, texts: Sequence[str], *, batch_size: int = 8
+    ) -> Sequence[Sequence[float]]: ...
 
 
 def ground_navigation_dataset(
@@ -63,7 +70,9 @@ def ground_navigation_dataset(
                 frames_per_window=frames_per_interval,
             )
             if not images:
-                observation.update({"descriptor_status": "grounding_failed", "descriptor": None})
+                observation.update(
+                    {"descriptor_status": "grounding_failed", "descriptor": None}
+                )
                 failed += 1
                 continue
             payload = client.perceive(
@@ -91,27 +100,45 @@ def ground_navigation_dataset(
                     descriptor = _validated_descriptor(repair, frame_records)
                 except ValueError as repair_exc:
                     observation.update(
-                        {"descriptor_status": "grounding_failed", "descriptor": None,
-                         "failure_reason": str(repair_exc), "first_failure_reason": str(exc),
-                         "rejected_model_payload": repair}
+                        {
+                            "descriptor_status": "grounding_failed",
+                            "descriptor": None,
+                            "failure_reason": str(repair_exc),
+                            "first_failure_reason": str(exc),
+                            "rejected_model_payload": repair,
+                        }
                     )
                     failed += 1
                     continue
                 repaired += 1
             observation.update(
-                {"descriptor_status": "grounded_qwen_vl_read", "descriptor": descriptor,
-                 "observed_modalities": ["sampled_video_frames", "readable_text_in_frames"],
-                 "unobserved_requested_modalities": ["audio"],
-                 "producer": {"model": client.model, "protocol": GROUNDING_SCHEMA}}
+                {
+                    "descriptor_status": "grounded_qwen_vl_read",
+                    "descriptor": descriptor,
+                    "observed_modalities": [
+                        "sampled_video_frames",
+                        "readable_text_in_frames",
+                    ],
+                    "unobserved_requested_modalities": ["audio"],
+                    "producer": {"model": client.model, "protocol": GROUNDING_SCHEMA},
+                }
             )
             transition["target"]["observation_descriptor"].update(
-                {"grounding_status": "grounded", "descriptor_ref": transition["transition_id"]}
+                {
+                    "grounding_status": "grounded",
+                    "descriptor_ref": transition["transition_id"],
+                }
             )
             completed += 1
         if progress_callback is not None:
-            progress_callback(result, {"grounded_transition_count": completed,
-                                       "failed_transition_count": failed,
-                                       "repaired_transition_count": repaired})
+            progress_callback(
+                result,
+                {
+                    "grounded_transition_count": completed,
+                    "failed_transition_count": failed,
+                    "repaired_transition_count": repaired,
+                },
+            )
     statuses = [
         transition.get("real_observation", {}).get("descriptor_status")
         for case in result.get("cases") or []
@@ -155,7 +182,9 @@ def attach_descriptor_embeddings(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Embed only grounded descriptor text; vectors stay in a .npy sidecar."""
     if provider.model_name != EMBEDDING_MODEL or provider.dimension != 2048:
-        raise ValueError("the embedding provider violates the Qwen3-VL-Embedding-2B contract")
+        raise ValueError(
+            "the embedding provider violates the Qwen3-VL-Embedding-2B contract"
+        )
     try:
         import numpy as np
     except ImportError as exc:
@@ -171,45 +200,71 @@ def attach_descriptor_embeddings(
             descriptor = observation.get("descriptor") or {}
             text = _embedding_text(question, descriptor)
             rows.append((transition, text, str(transition.get("transition_id"))))
-    matrix = np.asarray(provider.encode([row[1] for row in rows], batch_size=batch_size), dtype=np.float32)
+    matrix = np.asarray(
+        provider.encode([row[1] for row in rows], batch_size=batch_size),
+        dtype=np.float32,
+    )
     if matrix.shape != (len(rows), 2048):
-        raise ValueError(f"embedding matrix has shape {matrix.shape}; expected {(len(rows), 2048)}")
+        raise ValueError(
+            f"embedding matrix has shape {matrix.shape}; expected {(len(rows), 2048)}"
+        )
     if len(rows):
         norms = np.linalg.norm(matrix, axis=1, keepdims=True)
         matrix = matrix / np.clip(norms, 1e-12, None)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     np.save(output_path, matrix)
-    saved_path = output_path if output_path.suffix == ".npy" else output_path.with_suffix(".npy")
+    saved_path = (
+        output_path if output_path.suffix == ".npy" else output_path.with_suffix(".npy")
+    )
     checksum = hashlib.sha256(saved_path.read_bytes()).hexdigest()
     uri = storage_uri or saved_path.name
     for index, (transition, _, _) in enumerate(rows):
         transition["target"]["observation_descriptor"]["embedding_ref"] = {
-            "model": EMBEDDING_MODEL, "status": "available", "dimension": 2048,
-            "dtype": "float32", "normalized": True, "storage_uri": uri,
-            "row_index": index, "checksum": checksum,
+            "model": EMBEDDING_MODEL,
+            "status": "available",
+            "dimension": 2048,
+            "dtype": "float32",
+            "normalized": True,
+            "storage_uri": uri,
+            "row_index": index,
+            "checksum": checksum,
         }
     manifest = {
         "schema_version": "steam-cgbench-embedding-manifest/v0.1",
-        "model": EMBEDDING_MODEL, "matrix_uri": uri, "row_count": len(rows),
-        "dimension": 2048, "dtype": "float32", "normalized": True,
+        "model": EMBEDDING_MODEL,
+        "matrix_uri": uri,
+        "row_count": len(rows),
+        "dimension": 2048,
+        "dtype": "float32",
+        "normalized": True,
         "checksum": checksum,
-        "rows": [{"row_index": i, "transition_id": row[2]} for i, row in enumerate(rows)],
+        "rows": [
+            {"row_index": i, "transition_id": row[2]} for i, row in enumerate(rows)
+        ],
     }
     return result, manifest
 
 
-def refresh_hidden_checksum(hidden: dict[str, Any], dataset: dict[str, Any]) -> dict[str, Any]:
+def refresh_hidden_checksum(
+    hidden: dict[str, Any], dataset: dict[str, Any]
+) -> dict[str, Any]:
     result = deepcopy(hidden)
     result["dataset_sha256"] = _checksum(dataset)
     return result
 
 
-def _descriptor_prompt(case: dict[str, Any], interval: dict[str, Any], frames: list[dict[str, Any]]) -> str:
+def _descriptor_prompt(
+    case: dict[str, Any], interval: dict[str, Any], frames: list[dict[str, Any]]
+) -> str:
     planner = case.get("planner_input") or {}
     template = {
-        "summary": "one factual sentence", "visible_entities": [],
-        "visible_actions": [], "visible_states": [], "readable_text": [],
-        "question_relevance": "inconclusive", "relevance_reason": "one sentence",
+        "summary": "one factual sentence",
+        "visible_entities": [],
+        "visible_actions": [],
+        "visible_states": [],
+        "readable_text": [],
+        "question_relevance": "inconclusive",
+        "relevance_reason": "one sentence",
         "evidence_frames": [0],
     }
     return (
@@ -224,20 +279,35 @@ def _descriptor_prompt(case: dict[str, Any], interval: dict[str, Any], frames: l
         "(integer frame indices). Use empty lists when absent. Every list must contain at most six "
         "short unique items. Never repeat UI/subtitle text and never include the synthetic F0/F1 "
         "frame labels in readable_text. Return every template key; do not repeat the request.\n"
-        + json.dumps({"question": planner.get("question"), "choices": planner.get("choices"),
-                      "interval": interval, "frame_records": frames, "required_template": template},
-                     ensure_ascii=False)
+        + json.dumps(
+            {
+                "question": planner.get("question"),
+                "choices": planner.get("choices"),
+                "interval": interval,
+                "frame_records": frames,
+                "required_template": template,
+            },
+            ensure_ascii=False,
+        )
     )
 
 
-def _repair_prompt(case: dict[str, Any], interval: dict[str, Any], frames: list[dict[str, Any]],
-                   error: str) -> str:
+def _repair_prompt(
+    case: dict[str, Any],
+    interval: dict[str, Any],
+    frames: list[dict[str, Any]],
+    error: str,
+) -> str:
     planner = case.get("planner_input") or {}
     template = {
         "summary": "one directly observed factual sentence",
-        "visible_entities": [], "visible_actions": [], "visible_states": [],
-        "readable_text": [], "question_relevance": "inconclusive",
-        "relevance_reason": "one sentence", "evidence_frames": [0],
+        "visible_entities": [],
+        "visible_actions": [],
+        "visible_states": [],
+        "readable_text": [],
+        "question_relevance": "inconclusive",
+        "relevance_reason": "one sentence",
+        "evidence_frames": [0],
     }
     return (
         "The prior response failed validation. Re-inspect the attached frames and return exactly "
@@ -247,14 +317,23 @@ def _repair_prompt(case: dict[str, Any], interval: dict[str, Any], frames: list[
         "partial contribution, not whether this interval alone fully answers the question. Do "
         "not repeat this request or the template. Every list must have at most six unique short "
         "items; do not repeat UI text.\n"
-        + json.dumps({"validation_error": error, "template": template,
-                      "question": planner.get("question"),
-                      "choices": planner.get("choices"), "interval": interval,
-                      "frame_records": frames}, ensure_ascii=False)
+        + json.dumps(
+            {
+                "validation_error": error,
+                "template": template,
+                "question": planner.get("question"),
+                "choices": planner.get("choices"),
+                "interval": interval,
+                "frame_records": frames,
+            },
+            ensure_ascii=False,
+        )
     )
 
 
-def _validated_descriptor(payload: dict[str, Any], frames: list[dict[str, Any]]) -> dict[str, Any]:
+def _validated_descriptor(
+    payload: dict[str, Any], frames: list[dict[str, Any]]
+) -> dict[str, Any]:
     if not isinstance(payload, dict) or payload.get("parse_error"):
         raise ValueError("Qwen-VL response is not valid JSON")
     raw_relevance = str(payload.get("question_relevance") or "").strip().casefold()
@@ -270,8 +349,12 @@ def _validated_descriptor(payload: dict[str, Any], frames: list[dict[str, Any]])
     frame_index_status = "native_zero_based"
     if any(index not in allowed_frames for index in cited_frames):
         one_based = set(range(1, len(frames) + 1))
-        if cited_frames and 0 not in cited_frames and len(frames) in cited_frames \
-                and set(cited_frames) <= one_based:
+        if (
+            cited_frames
+            and 0 not in cited_frames
+            and len(frames) in cited_frames
+            and set(cited_frames) <= one_based
+        ):
             cited_frames = [index - 1 for index in cited_frames]
             frame_index_status = "canonicalized_from_one_based"
         else:
@@ -285,23 +368,37 @@ def _validated_descriptor(payload: dict[str, Any], frames: list[dict[str, Any]])
     }
     if raw_relevance not in ALLOWED_RELEVANCE:
         result["raw_question_relevance"] = raw_relevance or None
-        result["relevance_schema_status"] = "invalid_model_label_coerced_to_inconclusive"
-    for key in ("visible_entities", "visible_actions", "visible_states", "readable_text"):
+        result["relevance_schema_status"] = (
+            "invalid_model_label_coerced_to_inconclusive"
+        )
+    for key in (
+        "visible_entities",
+        "visible_actions",
+        "visible_states",
+        "readable_text",
+    ):
         values = payload.get(key)
         if not isinstance(values, list):
             raise ValueError(f"{key} is not a list")
-        result[key] = list(dict.fromkeys(
-            str(value).strip() for value in values if str(value).strip()
-        ))[:6]
+        result[key] = list(
+            dict.fromkeys(str(value).strip() for value in values if str(value).strip())
+        )[:6]
     if not result["summary"] or not result["relevance_reason"]:
         raise ValueError("descriptor text is incomplete")
     return result
 
 
 def _embedding_text(question: str, descriptor: dict[str, Any]) -> str:
-    parts = [f"Question: {question}", f"Observed interval: {descriptor.get('summary', '')}"]
-    for key, label in (("visible_entities", "Entities"), ("visible_actions", "Actions"),
-                       ("visible_states", "States"), ("readable_text", "Readable text")):
+    parts = [
+        f"Question: {question}",
+        f"Observed interval: {descriptor.get('summary', '')}",
+    ]
+    for key, label in (
+        ("visible_entities", "Entities"),
+        ("visible_actions", "Actions"),
+        ("visible_states", "States"),
+        ("readable_text", "Readable text"),
+    ):
         values = descriptor.get(key) or []
         if values:
             parts.append(f"{label}: " + "; ".join(str(value) for value in values))
@@ -315,8 +412,9 @@ def _load_client(model: str, endpoint: str, timeout_s: int) -> VLMClient:
         def __init__(self) -> None:
             self.model = model
 
-        def perceive(self, prompt: str, *, image_urls: list[str] | None = None,
-                     system: str = "") -> dict[str, Any]:
+        def perceive(
+            self, prompt: str, *, image_urls: list[str] | None = None, system: str = ""
+        ) -> dict[str, Any]:
             content: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
             content.extend(
                 {"type": "image_url", "image_url": {"url": url}}
@@ -324,13 +422,21 @@ def _load_client(model: str, endpoint: str, timeout_s: int) -> VLMClient:
             )
             response = requests.post(
                 endpoint,
-                json={"model": model, "messages": [{"role": "system", "content": system},
-                      {"role": "user", "content": content}], "temperature": 0,
-                      "max_tokens": 512},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": content},
+                    ],
+                    "temperature": 0,
+                    "max_tokens": 512,
+                },
                 timeout=timeout_s,
             )
             response.raise_for_status()
-            text = str(response.json()["choices"][0]["message"].get("content") or "").strip()
+            text = str(
+                response.json()["choices"][0]["message"].get("content") or ""
+            ).strip()
             text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.DOTALL)
             match = re.search(r"\{.*\}", text, flags=re.DOTALL)
             try:
@@ -356,7 +462,8 @@ def main(argv: list[str] | None = None) -> int:
     ground.add_argument("--frames-per-interval", type=int, default=6)
     ground.add_argument("--case-limit", type=int)
     ground.add_argument(
-        "--review-packet", type=Path,
+        "--review-packet",
+        type=Path,
         help="Optional blinded audit packet; ground only videos represented in its public items.",
     )
     ground.add_argument("--timeout-s", type=int, default=120)
@@ -376,17 +483,29 @@ def main(argv: list[str] | None = None) -> int:
         selected_video_ids = None
         if args.review_packet is not None:
             review = json.loads(args.review_packet.read_text(encoding="utf-8"))
-            selected_video_ids = {str(item["video_id"]) for item in review.get("items") or []}
+            selected_video_ids = {
+                str(item["video_id"]) for item in review.get("items") or []
+            }
+
         def checkpoint(partial: dict[str, Any], counts: dict[str, Any]) -> None:
             _write_json(args.output, partial)
             _write_json(args.hidden_output, refresh_hidden_checksum(hidden, partial))
-            _write_json(args.report, {"schema_version": GROUNDING_SCHEMA,
-                                      "dataset_id": partial.get("dataset_id"), **counts,
-                                      "status": "running_checkpoint"})
+            _write_json(
+                args.report,
+                {
+                    "schema_version": GROUNDING_SCHEMA,
+                    "dataset_id": partial.get("dataset_id"),
+                    **counts,
+                    "status": "running_checkpoint",
+                },
+            )
 
         result, report = ground_navigation_dataset(
-            dataset, video_root=args.video_root, client=_load_client(args.model, args.endpoint, args.timeout_s),
-            frames_per_interval=args.frames_per_interval, case_limit=args.case_limit,
+            dataset,
+            video_root=args.video_root,
+            client=_load_client(args.model, args.endpoint, args.timeout_s),
+            frames_per_interval=args.frames_per_interval,
+            case_limit=args.case_limit,
             selected_video_ids=selected_video_ids,
             progress_callback=checkpoint,
         )
@@ -394,15 +513,21 @@ def main(argv: list[str] | None = None) -> int:
         errors = validate_cgbench_navigation_dataset(result, hidden)
         if errors:
             raise ValueError("grounded dataset is invalid: " + "; ".join(errors[:8]))
-        _write_json(args.output, result); _write_json(args.hidden_output, hidden); _write_json(args.report, report)
+        _write_json(args.output, result)
+        _write_json(args.hidden_output, hidden)
+        _write_json(args.report, report)
     else:
         provider = Qwen3VLEmbeddingProvider(device=args.device)
-        result, manifest = attach_descriptor_embeddings(dataset, provider, output_path=args.matrix, batch_size=args.batch_size)
+        result, manifest = attach_descriptor_embeddings(
+            dataset, provider, output_path=args.matrix, batch_size=args.batch_size
+        )
         hidden = refresh_hidden_checksum(hidden, result)
         errors = validate_cgbench_navigation_dataset(result, hidden)
         if errors:
             raise ValueError("embedded dataset is invalid: " + "; ".join(errors[:8]))
-        _write_json(args.output, result); _write_json(args.hidden_output, hidden); _write_json(args.manifest, manifest)
+        _write_json(args.output, result)
+        _write_json(args.hidden_output, hidden)
+        _write_json(args.manifest, manifest)
     return 0
 
 

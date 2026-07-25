@@ -13,7 +13,10 @@ from .evaluation import build_blinded_review_packet
 
 
 def render_audit_assets(
-    packet: dict[str, Any], *, video_root: Path, output_dir: Path,
+    packet: dict[str, Any],
+    *,
+    video_root: Path,
+    output_dir: Path,
     frames_per_interval: int = 6,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     try:
@@ -40,8 +43,16 @@ def render_audit_assets(
                 if not ok:
                     continue
                 frame = cv2.resize(frame, (384, 216), interpolation=cv2.INTER_AREA)
-                cv2.putText(frame, f"F{index} {time_s:.2f}s", (10, 26),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2, cv2.LINE_AA)
+                cv2.putText(
+                    frame,
+                    f"F{index} {time_s:.2f}s",
+                    (10, 26),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (0, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
                 frames.append(frame)
         finally:
             capture.release()
@@ -62,16 +73,21 @@ def render_audit_assets(
         rendered += 1
     report = {
         "schema_version": "steam-cgbench-audit-asset-report/v0.1",
-        "item_count": len(result.get("items") or []), "rendered_count": rendered,
-        "failed_count": failed, "frames_per_interval": frames_per_interval,
+        "item_count": len(result.get("items") or []),
+        "rendered_count": rendered,
+        "failed_count": failed,
+        "frames_per_interval": frames_per_interval,
         "labels_exposed": False,
     }
     return result, report
 
 
 def prepare_grounded_asset_packet(
-    grounded_dataset: dict[str, Any], terminal_key: dict[str, Any],
-    asset_packet: dict[str, Any], *, sample_videos: int = 32,
+    grounded_dataset: dict[str, Any],
+    terminal_key: dict[str, Any],
+    asset_packet: dict[str, Any],
+    *,
+    sample_videos: int = 32,
 ) -> dict[str, Any]:
     """Refresh observations while preserving label-free contact-sheet references."""
     packet, _ = build_blinded_review_packet(
@@ -82,10 +98,18 @@ def prepare_grounded_asset_packet(
         source = assets.get(str(item["review_id"]))
         if source is None or source.get("contact_sheet_status") != "available":
             raise ValueError(f"contact sheet missing for {item.get('review_id')}")
-        for key in ("contact_sheet_status", "contact_sheet_ref", "contact_sheet_frame_times_s"):
+        for key in (
+            "contact_sheet_status",
+            "contact_sheet_ref",
+            "contact_sheet_frame_times_s",
+        ):
             item[key] = source[key]
-        if (item.get("observation") or {}).get("descriptor_status") != "grounded_qwen_vl_read":
-            raise ValueError(f"Qwen observation is not grounded for {item.get('review_id')}")
+        if (item.get("observation") or {}).get(
+            "descriptor_status"
+        ) != "grounded_qwen_vl_read":
+            raise ValueError(
+                f"Qwen observation is not grounded for {item.get('review_id')}"
+            )
     return packet
 
 
@@ -108,15 +132,20 @@ def main(argv: list[str] | None = None) -> int:
         result = prepare_grounded_asset_packet(grounded, terminal, packet)
         report = {
             "schema_version": "steam-cgbench-grounded-audit-packet-report/v0.1",
-            "item_count": len(result.get("items") or []), "grounded_count": len(result.get("items") or []),
-            "contact_sheet_count": len(result.get("items") or []), "labels_exposed": False,
+            "item_count": len(result.get("items") or []),
+            "grounded_count": len(result.get("items") or []),
+            "contact_sheet_count": len(result.get("items") or []),
+            "labels_exposed": False,
         }
-        _write_json(args.output_packet, result); _write_json(args.report, report)
+        _write_json(args.output_packet, result)
+        _write_json(args.report, report)
         print(json.dumps(report, indent=2))
         return 0
-    result, report = render_audit_assets(packet, video_root=args.video_root,
-                                         output_dir=args.output_dir)
-    _write_json(args.output_packet, result); _write_json(args.report, report)
+    result, report = render_audit_assets(
+        packet, video_root=args.video_root, output_dir=args.output_dir
+    )
+    _write_json(args.output_packet, result)
+    _write_json(args.report, report)
     print(json.dumps(report, indent=2))
     return 0
 

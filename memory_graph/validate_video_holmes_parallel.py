@@ -111,7 +111,6 @@ def main(argv: list[str] | None = None) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     _add_video_skills_import(Path(args.video_skills_root))
-    from dataset_clip_wrapper.pipeline import build_canonical_example
     from dataset_clip_wrapper.adapters.video_holmes import VideoHolmesAdapter
     from dataset_clip_wrapper.schemas import RuntimeMode, VideoRegime, WrapperConfig
 
@@ -125,7 +124,10 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps({"video_ids": list(video_ids)}, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(f"[setup] validating {len(video_ids)} videos with {args.api_workers} API workers", flush=True)
+    print(
+        f"[setup] validating {len(video_ids)} videos with {args.api_workers} API workers",
+        flush=True,
+    )
 
     qa_rows = _load_qa_rows(Path(args.dataset_root), video_ids)
     selected_items = _load_selected_items(
@@ -138,7 +140,9 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         raise ValueError(f"Video-Holmes examples not found: {sorted(missing)}")
 
-    all_questions: dict[str, list[dict[str, Any]]] = {video_id: [] for video_id in video_ids}
+    all_questions: dict[str, list[dict[str, Any]]] = {
+        video_id: [] for video_id in video_ids
+    }
     for row in qa_rows:
         all_questions[str(row["video ID"])].append(row)
 
@@ -170,7 +174,9 @@ def main(argv: list[str] | None = None) -> int:
             sample_dir = output_dir / video_id
             audit_path = sample_dir / "audit.json"
             if args.skip_existing and audit_path.exists():
-                print(f"[{index}/{len(video_ids)}] skip existing {video_id}", flush=True)
+                print(
+                    f"[{index}/{len(video_ids)}] skip existing {video_id}", flush=True
+                )
                 summaries.append(_summary_from_existing(sample_dir, video_id))
                 continue
 
@@ -192,7 +198,10 @@ def main(argv: list[str] | None = None) -> int:
                     "traceback": traceback.format_exc(),
                 }
                 errors.append(err)
-                print(f"[{index}/{len(video_ids)}] PREPARE FAIL {video_id}: {err['error']}", flush=True)
+                print(
+                    f"[{index}/{len(video_ids)}] PREPARE FAIL {video_id}: {err['error']}",
+                    flush=True,
+                )
                 continue
 
             print(
@@ -234,12 +243,19 @@ def main(argv: list[str] | None = None) -> int:
         "samples": summaries,
         "errors": errors,
     }
-    (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    (output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
     (output_dir / "evaluation.json").write_text(
         json.dumps(evaluation, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps({"evaluation": evaluation, "elapsed_s": summary["elapsed_s"]}, indent=2), flush=True)
+    print(
+        json.dumps(
+            {"evaluation": evaluation, "elapsed_s": summary["elapsed_s"]}, indent=2
+        ),
+        flush=True,
+    )
     return 0 if not errors else 2
 
 
@@ -276,7 +292,9 @@ def evaluate_summaries(summaries: list[dict[str, Any]]) -> dict[str, Any]:
             {
                 "video_id": row.get("video_id"),
                 "strict_precision": computed.get("strict_precision"),
-                "supported_or_plausible_rate": computed.get("supported_or_plausible_rate"),
+                "supported_or_plausible_rate": computed.get(
+                    "supported_or_plausible_rate"
+                ),
                 "audited_predictions": a,
                 "temporal_passed": temporal.get("passed"),
             }
@@ -294,7 +312,9 @@ def evaluate_summaries(summaries: list[dict[str, Any]]) -> dict[str, Any]:
         "unsupported_or_contradicted": unsupported,
         "strict_precision": strict,
         "supported_or_plausible_rate": soft,
-        "temporal_pass_rate": (temporal_pass / temporal_total) if temporal_total else None,
+        "temporal_pass_rate": (temporal_pass / temporal_total)
+        if temporal_total
+        else None,
         "gate_strict_precision": gate_strict,
         "candidate_causal_gate": "pass" if strict >= gate_strict else "fail",
         "temporal_gate": (
@@ -326,7 +346,9 @@ def _prepare_sample(
         if node.metadata.get("source_type") == "segment_description"
     ]
     if len(nodes) < 2:
-        raise ValueError(f"{video_id} has fewer than two timestamped segment-description nodes")
+        raise ValueError(
+            f"{video_id} has fewer than two timestamped segment-description nodes"
+        )
 
     sample_dir = output_dir / video_id
     sample_dir.mkdir(parents=True, exist_ok=True)
@@ -465,9 +487,9 @@ def _resolve_video_ids(
         return tuple(ids[:limit])
 
     qa = json.loads(
-        (dataset_root / "Video-Holmes" / "Benchmark" / "train_Video-Holmes.json").read_text(
-            encoding="utf-8"
-        )
+        (
+            dataset_root / "Video-Holmes" / "Benchmark" / "train_Video-Holmes.json"
+        ).read_text(encoding="utf-8")
     )
     by_vid: dict[str, dict[str, Any]] = {}
     for row in qa:

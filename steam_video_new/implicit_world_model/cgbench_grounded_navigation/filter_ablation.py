@@ -13,12 +13,16 @@ from .builder import _write_json
 
 
 def filter_ablation_cases(
-    ablation: dict[str, Any], review_packet: dict[str, Any],
-    audit: dict[str, Any], hidden_review_key: dict[str, Any],
+    ablation: dict[str, Any],
+    review_packet: dict[str, Any],
+    audit: dict[str, Any],
+    hidden_review_key: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     decisions = {row["review_id"]: row for row in audit.get("decisions") or []}
-    roles = {row["review_id"]: row["gt_interval_role"]
-             for row in hidden_review_key.get("items") or []}
+    roles = {
+        row["review_id"]: row["gt_interval_role"]
+        for row in hidden_review_key.get("items") or []
+    }
     items_by_case: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in review_packet.get("items") or []:
         items_by_case[str(item["case_id"])].append(item)
@@ -52,16 +56,21 @@ def filter_ablation_cases(
         else:
             accepted.add(case_id)
     result = deepcopy(ablation)
-    result["cases"] = [case for case in result.get("cases") or [] if case.get("case_id") in accepted]
+    result["cases"] = [
+        case for case in result.get("cases") or [] if case.get("case_id") in accepted
+    ]
     result["annotation_status"] = "gpt56_filtered_provisional"
     result["training_ready"] = False
     result["formal_eligible"] = False
     report = {
         "schema_version": "steam-cgbench-provisional-ablation-filter-report/v0.1",
-        "labels_source": "model_provisional", "input_review_case_count": len(items_by_case),
-        "accepted_case_count": len(accepted), "excluded_case_count": len(exclusions),
+        "labels_source": "model_provisional",
+        "input_review_case_count": len(items_by_case),
+        "accepted_case_count": len(accepted),
+        "excluded_case_count": len(exclusions),
         "exclusion_reason_case_counts": dict(sorted(reason_counts.items())),
-        "exclusions": exclusions, "formal_eligible": False,
+        "exclusions": exclusions,
+        "formal_eligible": False,
         "formal_blocker": "independent human review must confirm every retained case",
     }
     return result, report
@@ -76,10 +85,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
     args = parser.parse_args(argv)
-    payloads = [json.loads(path.read_text(encoding="utf-8")) for path in
-                (args.ablation, args.review_packet, args.audit, args.hidden_review_key)]
+    payloads = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in (
+            args.ablation,
+            args.review_packet,
+            args.audit,
+            args.hidden_review_key,
+        )
+    ]
     result, report = filter_ablation_cases(*payloads)
-    _write_json(args.output, result); _write_json(args.report, report)
+    _write_json(args.output, result)
+    _write_json(args.report, report)
     print(json.dumps(report, indent=2))
     return 0
 

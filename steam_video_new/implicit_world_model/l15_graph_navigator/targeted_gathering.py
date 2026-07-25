@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 import hashlib
-import json
 from typing import Any
 
 from .executed_transitions import validate_executed_transition_dataset
@@ -62,7 +61,8 @@ def inspect_inconclusive_failure_slices(packet: dict[str, Any]) -> dict[str, Any
                 "action_type": (item.get("action") or {}).get("action_type"),
                 "relation": (item.get("action") or {}).get("relation"),
                 "visible_signals": signals,
-                "evidence_refs": (item.get("annotation") or {}).get("evidence_refs") or [],
+                "evidence_refs": (item.get("annotation") or {}).get("evidence_refs")
+                or [],
                 "rationale": (item.get("annotation") or {}).get("rationale") or "",
             }
         )
@@ -102,7 +102,9 @@ def build_targeted_transition_gathering(
 
     dataset_errors = validate_executed_transition_dataset(dataset)
     if dataset_errors:
-        raise ValueError("invalid executed transition dataset: " + "; ".join(dataset_errors[:8]))
+        raise ValueError(
+            "invalid executed transition dataset: " + "; ".join(dataset_errors[:8])
+        )
     case_errors = validate_navigation_case_set(case_set)
     if case_errors:
         raise ValueError("invalid navigation case set: " + "; ".join(case_errors[:8]))
@@ -133,13 +135,17 @@ def build_targeted_transition_gathering(
             available["identity_hard_negative_candidate"].append(record)
         if relation == "contradicts" and execution.get("status") == "executed":
             available["counterevidence_support_or_refute"].append(record)
-        if execution.get("status") != "executed" or execution.get("observation_outcome") == "empty":
+        if (
+            execution.get("status") != "executed"
+            or execution.get("observation_outcome") == "empty"
+        ):
             available["empty_or_reject_control"].append(record)
         if outcome == "inconclusive" and execution.get("status") == "executed":
             available["inconclusive_control"].append(record)
-        if "delayed_two_hop" in tags and (
-            record.get("action_provenance") or {}
-        ).get("reviewed_accepted") is True:
+        if (
+            "delayed_two_hop" in tags
+            and (record.get("action_provenance") or {}).get("reviewed_accepted") is True
+        ):
             available["delayed_two_hop"].append(record)
 
     selected: dict[str, str] = {}
@@ -147,7 +153,8 @@ def build_targeted_transition_gathering(
     counts: Counter[str] = Counter()
     for stratum in TARGET_STRATA:
         candidates = [
-            record for record in available[stratum]
+            record
+            for record in available[stratum]
             if str(record["record_id"]) not in selected
         ]
         for record in _diverse_sample(candidates, int(requested.get(stratum, 0))):
@@ -204,7 +211,8 @@ def build_targeted_transition_gathering(
             "counterevidence support versus refute remains a human review target",
             *(
                 ["requested targeted quotas have source-data deficits"]
-                if any(deficits.values()) else []
+                if any(deficits.values())
+                else []
             ),
         ],
     }
@@ -262,7 +270,11 @@ def _common_state_attributes(item: dict[str, Any]) -> set[str]:
     for endpoint in endpoint_ids[:2]:
         node = nodes.get(str(endpoint)) or {}
         attribute_sets.append(
-            {str(state.get("attribute")) for state in node.get("states") or [] if state.get("attribute")}
+            {
+                str(state.get("attribute"))
+                for state in node.get("states") or []
+                if state.get("attribute")
+            }
         )
     return set.intersection(*attribute_sets) if len(attribute_sets) == 2 else set()
 
@@ -274,7 +286,9 @@ def _diverse_sample(records: list[dict[str, Any]], limit: int) -> list[dict[str,
     for video_id in by_video:
         by_video[video_id].sort(key=lambda row: _stable_key(row, "within-video"))
     selected = []
-    video_ids = sorted(by_video, key=lambda value: hashlib.sha256(value.encode()).hexdigest())
+    video_ids = sorted(
+        by_video, key=lambda value: hashlib.sha256(value.encode()).hexdigest()
+    )
     while len(selected) < limit:
         advanced = False
         for video_id in video_ids:

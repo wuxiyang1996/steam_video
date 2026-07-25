@@ -41,6 +41,8 @@ def analyze_pilot(
     if missing:
         raise ValueError("missing completed case artifacts: " + ", ".join(missing))
 
+    model = _consistent_model_name(case_artifacts)
+
     runs = [run for artifact in case_artifacts for run in artifact.get("runs") or ()]
     errors = [
         row for artifact in case_artifacts for row in artifact.get("errors") or ()
@@ -70,12 +72,15 @@ def analyze_pilot(
     ]
     wm_runs = [run for run in runs if run.get("arm") == "world_model_guided"]
     method_failure_case_ids = sorted({str(row["case_id"]) for row in method_failures})
+    integrity_exclusion_count = len(integrity.get("excluded_cases") or ())
     summary = {
-        "schema_version": "steam-gpt5mini-matched-pilot-analysis/v0.1",
-        "model": "openai/gpt-5-mini",
-        "requested_case_count": int(integrity.get("requested_case_count") or 0),
+        "schema_version": "steam-matched-pilot-analysis/v0.2",
+        "model": model,
+        "requested_case_count": int(
+            integrity.get("requested_case_count") or len(case_ids)
+        ),
         "integrity_pass_case_count": len(case_ids),
-        "integrity_exclusion_count": len(integrity.get("excluded_cases") or ()),
+        "integrity_exclusion_count": integrity_exclusion_count,
         "completed_case_count": len(case_artifacts),
         "matched_arm_count": len(MULTI_ARMS),
         "completed_case_arm_count": len(runs),
@@ -130,7 +135,7 @@ def analyze_pilot(
             "scientific_validation_passed": False,
         },
         "limitations": [
-            "two preselected cases were excluded because their source graph no longer matched the frozen fingerprint",
+            f"{integrity_exclusion_count} requested cases were excluded by the frozen integrity audit",
             "method-failure cases are retained and reported fail-closed",
             "the pilot is too small for significance claims",
             "exported traces are unreviewed and prohibited from training",
@@ -139,7 +144,7 @@ def analyze_pilot(
     }
     candidates = {
         "schema_version": "steam-executed-iwm-trace-candidates/v0.1",
-        "model": "openai/gpt-5-mini",
+        "model": model,
         "review_status": "unreviewed",
         "training_allowed": False,
         "hidden_evaluator_labels_included": False,
@@ -147,6 +152,21 @@ def analyze_pilot(
         "training_performed": False,
     }
     return summary, candidates
+
+
+def _consistent_model_name(case_artifacts: Iterable[dict[str, Any]]) -> str:
+    models = {
+        str(artifact.get("model") or "").strip()
+        for artifact in case_artifacts
+        if str(artifact.get("model") or "").strip()
+    }
+    if not models:
+        raise ValueError("completed pilot artifacts do not declare a model")
+    if len(models) != 1:
+        raise ValueError(
+            "completed pilot mixes model identities: " + ", ".join(sorted(models))
+        )
+    return next(iter(models))
 
 
 def _divergence_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
