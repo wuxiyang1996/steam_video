@@ -131,6 +131,7 @@ class LocalVideoQwen:
         from transformers import AutoModelForImageTextToText, AutoProcessor
 
         from .embeddings import resolve_torch_device
+        from .model_runtime import attention_kwargs
 
         self.max_new_tokens = max_new_tokens
         self.enable_thinking = enable_thinking
@@ -142,6 +143,7 @@ class LocalVideoQwen:
             device_map={"": self.device},
             trust_remote_code=True,
             low_cpu_mem_usage=True,
+            **attention_kwargs(),
         )
         self.model.eval()
 

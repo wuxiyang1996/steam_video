@@ -35,6 +35,8 @@ class Qwen35_VL(nn.Module):
         max_history_turns: int = 6,
     ):
         super().__init__()
+        from baseline.model_runtime import attention_kwargs
+
         self.dtype = dtype
         self.ckpt = ckpt
         self.video_path = video_path
@@ -54,6 +56,7 @@ class Qwen35_VL(nn.Module):
             device_map=device_map,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
+            **attention_kwargs(),
         )
         self.language_model.eval()
 

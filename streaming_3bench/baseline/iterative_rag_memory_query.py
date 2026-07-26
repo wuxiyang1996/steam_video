@@ -307,6 +307,7 @@ class LocalTextQwen:
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         from .embeddings import resolve_torch_device
+        from .model_runtime import attention_kwargs
 
         self.max_new_tokens = max_new_tokens
         self.device = resolve_torch_device(device)
@@ -317,6 +318,7 @@ class LocalTextQwen:
             device_map={"": self.device},
             trust_remote_code=True,
             low_cpu_mem_usage=True,
+            **attention_kwargs(),
         )
         self.model.eval()
 

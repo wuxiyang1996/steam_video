@@ -29,6 +29,10 @@ def _label_from_index(index: int) -> str:
 
 
 def _normalize_options(options: Any) -> list[dict[str, str]]:
+    if hasattr(options, "tolist") and not isinstance(options, (str, dict, list, tuple)):
+        options = options.tolist()
+    if isinstance(options, tuple):
+        options = list(options)
     if isinstance(options, str):
         text = options.strip()
         if not text:
@@ -137,8 +141,9 @@ class OVOBenchAdapter(DatasetAdapter):
     def _root(self) -> Path:
         return _first_existing(
             [
-                self.dataset_root / "streambridge_tiny",
+                self.dataset_root / "OVO-Bench" / "data",
                 self.dataset_root / "OVO-Bench",
+                self.dataset_root / "streambridge_tiny",
                 CLUSTER_OVO_BENCH_ROOT,
             ]
         )
@@ -147,6 +152,8 @@ class OVOBenchAdapter(DatasetAdapter):
         tiny_root = self.dataset_root / "streambridge_tiny"
         return _first_existing(
             [
+                self.dataset_root / "OVO-Bench" / "data" / "ovo_bench_new.json",
+                self.dataset_root / "OVO-Bench" / "data" / "ovo_bench.json",
                 tiny_root / "tiny_ovo_bench_50videos.json",
                 tiny_root / "tiny_ovo_bench.json",
                 self.dataset_root / "ovo_bench.json",
@@ -238,9 +245,10 @@ class VideoMMEAdapter(DatasetAdapter):
     def _root(self) -> Path:
         return _first_existing(
             [
-                self.dataset_root / "streambridge_tiny",
+                self.dataset_root / "Video-MME",
                 self.dataset_root / "videomme",
                 self.dataset_root / "VideoMME",
+                self.dataset_root / "streambridge_tiny",
                 CLUSTER_VIDEOMME_ROOT,
             ]
         )
@@ -249,6 +257,8 @@ class VideoMMEAdapter(DatasetAdapter):
         tiny_root = self.dataset_root / "streambridge_tiny"
         return _first_existing(
             [
+                self.dataset_root / "Video-MME" / "videomme" / "test-00000-of-00001.parquet",
+                self.dataset_root / "Video-MME" / "videomme.json",
                 tiny_root / "tiny_videomme.json",
                 self.dataset_root / "videomme.json",
                 self.dataset_root / "videomme" / "videomme.json",
@@ -262,6 +272,7 @@ class VideoMMEAdapter(DatasetAdapter):
         candidates = [
             self.dataset_root / "streambridge_tiny" / "videos" / f"{video_id}.mp4",
             root / "videos" / f"{video_id}.mp4",
+            root / "data" / f"{video_id}.mp4",
             root / f"{video_id}.mp4",
         ]
         for candidate in candidates:
@@ -274,12 +285,13 @@ class VideoMMEAdapter(DatasetAdapter):
         candidates = [
             root / "subtitle" / f"{video_id}.srt",
             root / "subtitles" / f"{video_id}.srt",
+            self.dataset_root / "Video-MME" / "subtitle" / f"{video_id}.srt",
         ]
-        return [candidate for candidate in candidates if candidate.exists()]
+        return list(dict.fromkeys(candidate for candidate in candidates if candidate.exists()))
 
     def iter_items(self, limit: int | None = None) -> Iterator[RawDatasetItem]:
         qa_path = self._qa_path()
-        records = json.loads(qa_path.read_text(encoding="utf-8"))
+        records = _load_records(qa_path)
         count = 0
         for row in records:
             video_id = str(row.get("videoID") or "")

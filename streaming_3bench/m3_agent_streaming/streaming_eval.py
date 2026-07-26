@@ -595,6 +595,8 @@ def main() -> int:
     import torch
     from transformers import AutoModelForImageTextToText, AutoProcessor
 
+    from baseline.model_runtime import attention_kwargs
+
     args.output_dir.mkdir(parents=True, exist_ok=True)
     schema_path = args.output_dir / "canonical_schemas.jsonl"
     records_path = args.output_dir / "records.jsonl"
@@ -613,6 +615,7 @@ def main() -> int:
         device_map="auto",
         trust_remote_code=True,
         low_cpu_mem_usage=True,
+        **attention_kwargs(),
     )
     model.eval()
     load_s = time.perf_counter() - t0
