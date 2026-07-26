@@ -105,6 +105,26 @@ Qwen embedding 通过 projector 映射为 model tokens，或暴露经过 leakage
 semantic descriptor；再把 observation prediction 与 belief-delta calibration 分开报告。
 这一步通过以后才能训练 Planner preference。
 
+上述 v3 缺陷已经由 `iwm_grounded_transition_v4` 在数据合同层修复，而不是继续调 LoRA：
+
+- 1336 条 train hypothesis expansions 被压缩为 194 个独立 executed reads / 31 videos；
+- validation 只保留 10 个表示完整的独立 reads / 5 个不重叠 videos；
+- 已读取 source/path evidence 现在携带真实 compact descriptor，合法 action 携带
+  entry/temporal/correlation channel 与 relation；
+- 未读取 target 仍只暴露 question-independent semantic key 和 embedding reference；
+- clue overlap 改名为 evaluator-only `clue_acquisition`，不进入 SFT target，也不再被称为
+  hypothesis support；
+- 1810 个 hypothesis candidates 单独保存，但 264 个 executed-read groups 都没有独立
+  effect supervision，因此 hypothesis-effect 和 Planner gate 保持 blocked；
+- Qwen embedding sidecar 留给下一步 projector，text bridge 明确记录
+  `embedding_values_consumed=false`。
+
+v4 observation dry-run 已通过，解析出 194 条可训练 records，不执行训练。semantic-copy
+baseline 在 10 条 held-out smoke 上 event accuracy 为 1.0，但 entity/full-descriptor
+accuracy 均为 0.0；所以后续 LoRA 必须在完整 observation descriptor 和
+entry/temporal/correlation slices 上超过它，不能靠复制 target event 名称宣布成功。整个修复
+没有增加 numeric reward、class weighting、positive duplication、heuristic Top-K 或放宽 gate。
+
 ## 2026-07 GPT-5-mini matched pilot
 
 真实 `openai/gpt-5-mini` 已在 10 条 fingerprint 完整的 CG-Bench cases 上完成
@@ -809,6 +829,41 @@ rollout。这样后续可以用 Qwen-VL 对模糊 L1 window 做高保真重读�
 hidden sufficiency evaluator 使用独立的 uncached transport；代码会拒绝把它接到
 Planner response cache，避免 evaluator answer 污染未来 IWM/Planner 数据。
 
+### Correction 安全合同与组件隔离
+
+真实 observation 到 persistent hypothesis belief 之间采用两阶段 categorical
+合同，而不是一次 LLM 判断直接改状态：
+
+```text
+executed observation
+  -> hypothesis-effect proposal
+  -> independent grounding verification
+  -> only same_target + direct + verified may update persistent semantics
+```
+
+`different_target / indirect / unresolved / rejected / inconclusive` 都不能淘汰
+hypothesis，也不能改变 missing roles、contradictions 或 answerability；系统只记录
+真实 read、cursor、action history 和剩余 budget。该约束是防止不可逆错误的状态合同，
+不是 action ranking heuristic，也不产生数字 reward。
+
+随后以同一 Planner 做四组 teacher-forced 隔离：
+
+- oracle observation + oracle hypothesis effect；
+- predicted observation + oracle hypothesis effect；
+- predicted observation + predicted hypothesis effect；
+- no-WM。
+
+其中 oracle hypothesis effect 必须来自独立审核的同实体/同属性/同事件直接关系。
+CG-Bench clue overlap 只表示某时间窗覆盖 dataset clue，不能作为 hypothesis effect。
+当前 v4 的 independent effect 和 eligible Planner preference 均为零，因此四组真实
+实验保持 blocked；这比用 clue overlap 构造伪 oracle 更可信。
+
+历史 rollout 另以 matched-action 方式重算：只比较同 case、同初始 belief、同 legal
+action，并把一个 action 作为一个统计单位。旧 runtime 若对同一 action 的“将看到什么”
+因 hypothesis 而互相冲突，则该 action 不进入 observation calibration；这类差异只能在
+后续 hypothesis-effect gate 中评估。正式报告分开给出 balanced accuracy、over-credit
+FDR、scheduler reliance、answer accuracy、clue recall 和 delayed success。
+
 model-backed smoke 还暴露出大 transition batch 偶发 `finish_reason=length`。runtime
 现已在 transport/schema 失败时递归拆分 shared-action-group batch，并完整恢复全部
 request；拆分只改变请求封装，不删除 candidate、hypothesis 或 reasoning path，审计中
@@ -931,3 +986,42 @@ contradiction_change:
    belief 不会进入 persistent belief。
 5. **正式方法 gate**：补齐 train-split grounded joint preferences 后，重新运行
    IWM、no-WM、shuffled-IWM、immediate-only 和 oracle 五臂实验。
+
+### 2026-07-26 correction 回归结果
+
+matched-action 重分析覆盖两个历史 cohort 的 31 cases、78 个实际执行过的初始
+action。real WM 有 20/78 个 action 因为“同一 action 的 observation outcome 随
+hypothesis 互相冲突”而不能进入 observation calibration；剩余 58 个 action-unit 的
+observation balanced accuracy 为 0.356，over-credit FDR 为 1.0。WM 的 56 个
+planning steps 中有 35 个由 evidence scheduler 接管。历史 29 次 false
+correct-hypothesis elimination 中，27 次发生在该 run 的全部 evaluator reads 都是
+inconclusive 时。
+
+严格 correction smoke 在按钮颜色失败例上通过了目标回归：第一遍 assessor 仍错误地
+从 shoulder/collar yellow fill 提出 1 个 support 和 5 个 counterevidence；第二遍
+全部判为 `different_target + unrelated + rejected`，因此 false elimination 归零。
+WM 的第二跳覆盖两个 clue intervals，但 L1 只给出 generic `color_applied`，没有按钮
+属性；系统保留全部六条 hypothesis 并 abstain。该结果说明安全修复有效，同时证明
+temporal clue-retention gate 不能替代 evidence-content sufficiency gate。
+
+## 2026-07-26 reasoning v2 重构决定
+
+对真实 L1/L1.5 产物和 31-case rollout 的重新审计否定了“继续在 v1 上换模型或补
+prompt”的路线。新实现位于
+`steam_video_new/implicit_world_model/reasoning_v2/`，采用以下不可变边界：
+
+1. L1 将 pre-read address 与 executed grounded value 分开。旧 node 的 predicate、
+   participant attributes、state 不再通过 semantic key 提前暴露。
+2. L1.5 edge 只是 typed navigation proposal。模型输入不含 cosine/affinity；没有
+   trusted hard negatives 时 calibration 必须 fail closed。
+3. observation prediction 完全 hypothesis-independent；belief effect 才按 reasoning
+   path/hypothesis 条件化。运行时拒绝同一物理 action 的冲突 observation。
+4. Planner 维护不同 action histories。执行一个 shared read 后，未选 alternatives
+   保持 suspended，不能把 selected action 写进每条 path。
+5. trajectory frontier 和最终执行选择属于同一个 categorical Planner，不再设置
+   第二个 evidence scheduler 接管非唯一结果。
+6. GTSAM 只实现 real-effect correction 接口的可选 backend，不进入 IWM imagination
+   或 Planner preference。
+
+在 learned L1 windowing、完整 clue retention、L1.5 hard-negative precision、明确
+two-hop delayed cases 和 oracle decomposition 通过之前，不启动 9B training。

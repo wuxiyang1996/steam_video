@@ -1,5 +1,11 @@
 # World-Model-Guided Multi-Hop Video Reasoning
 
+> **Architecture status (2026-07-26):** the active implementation is now
+> [`implicit_world_model/reasoning_v2`](implicit_world_model/reasoning_v2/README.md).
+> The older `full_graph_iwm` runtime remains reproducible but is classified as a
+> v1 single-cursor/answer-hypothesis baseline. It must not be described as the
+> final persistent multi-reasoning-path method.
+
 `steam_video_new` is the research workspace for **world-model-guided reasoning over
 grounded video evidence memory**. The central question is not whether a graph can
 store video facts. It is whether an implicit world model (IWM) can predict how a
@@ -17,20 +23,25 @@ Detailed formulations: [English](problem-formulation-en.html) ·
 ## 1. Current research thesis
 
 ```text
-question-independent L1/L1.5 evidence memory
-        ↓ expose the retained graph and cursor-local legal hops
-current latent belief z_t + grounded evidence read so far
+question-independent L1 evidence memory
+        ├─ safe pre-read address
+        └─ hidden-until-executed grounded value
         ↓
-IWM imagines each legal reasoning action
-        ├─ backend-bound target observation descriptor
-        └─ categorical future belief delta
+typed L1.5 local navigation proposals
         ↓
-pairwise trajectory preference (no scalar reward)
+hypothesis-independent IWM observation prediction
         ↓
-planner executes only the preferred trajectory's first hop
+hypothesis-conditioned belief-effect prediction
         ↓
-real evidence observation → correct belief → replan
+one categorical Planner over persistent reasoning trajectories
+        ↓
+execute one read; retain unselected paths; correct; replan
 ```
+
+The v2 method does not equate answer choices with reasoning paths. A persistent
+path owns its own action history, cursor, belief, and pending continuation.
+Real evidence is shared globally, while unexecuted alternatives remain
+suspended instead of being rewritten to contain the selected action.
 
 The novelty is the middle of this loop: **action-conditioned prediction of
 reasoning dynamics in belief space and model-predictive selection of the next
@@ -168,20 +179,22 @@ An action is a reasoning/evidence-acquisition hop, not a physical robot action:
 - backtrack to an acquired node without rereading it;
 - stop/answer/abstain.
 
-The main method uses a **single active current-node cursor**. Ordinary move,
-follow actions always use that cursor as their source; all
-previously acquired nodes remain in belief/frontier history but are not expanded
-simultaneously. This avoids the invalid `all frontier sources × all targets`
-action product. A recorded `BACKTRACK`/`SHIFT_FOCUS` operation can return the
-cursor to an acquired node without rereading evidence.
+The main method maintains **multiple persistent reasoning paths, each with one
+active current-node cursor**. Ordinary move/follow actions for a path always
+use that path's cursor as their source; all previously acquired nodes remain in
+shared evidence history but are not expanded simultaneously. This avoids the
+invalid `all frontier sources × all targets` action product without collapsing
+competing reasoning histories into one cursor. A recorded
+`BACKTRACK`/`SHIFT_FOCUS` operation can return an individual path to an acquired
+node without rereading evidence.
 
 Legal actions are compiled deterministically from executability, not proposed
 or ranked by the IWM:
 
 ```text
-current-node temporal outgoing edges
-+ current-node positive-direction soft-correlation edges
-+ backtrack to acquired frontier-history nodes
+each path's current-node temporal outgoing edges
++ each path's current-node positive-direction soft-correlation edges
++ per-path backtrack to acquired frontier-history nodes
 + stop / answer / abstain
 ```
 
@@ -214,7 +227,7 @@ answer value but reveal a bridge that makes the second hop decisive.
 
 The planner therefore performs horizon-1/2 model-predictive control:
 
-1. compile all legal actions from the single current-node cursor and the fixed L1.5 graph;
+1. compile local legal actions from every persistent path cursor and the fixed L1.5 graph;
 2. imagine action-conditioned future belief transitions;
 3. compare full candidate trajectories pairwise;
 4. execute only the first hop of the selected trajectory;
