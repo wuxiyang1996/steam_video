@@ -173,6 +173,13 @@ def _run_case(args: argparse.Namespace, case_id: str) -> dict[str, Any]:
     ]
     if args.disable_caption_candidates:
         command.append("--disable-caption-candidates")
+    if args.real_evidence_reread_artifact is not None:
+        command.extend(
+            [
+                "--real-evidence-reread-artifact",
+                str(args.real_evidence_reread_artifact),
+            ]
+        )
     completed = subprocess.run(
         command,
         cwd=args.repo_root,
@@ -200,6 +207,7 @@ def _combine(
     runs: list[dict[str, Any]] = []
     errors: list[dict[str, Any]] = []
     method_failures: list[dict[str, Any]] = []
+    localized_entry_preflight: list[dict[str, Any]] = []
     completed_case_ids: list[str] = []
     for case_id in case_ids:
         output = output_dir / "cases" / f"{_slug(case_id)}.json"
@@ -208,6 +216,9 @@ def _combine(
         value = _read(output)
         errors.extend(value.get("errors") or ())
         method_failures.extend(value.get("method_failures") or ())
+        localized_entry_preflight.extend(
+            value.get("localized_entry_preflight") or ()
+        )
         if _complete(output):
             completed_case_ids.append(case_id)
             runs.extend(value.get("runs") or ())
@@ -224,6 +235,11 @@ def _combine(
                 divergences.append(
                     {"case_id": case_id, **action_divergence(reference, candidate)}
                 )
+    evaluable_case_ids = {
+        str(row["case_id"])
+        for row in localized_entry_preflight
+        if row.get("clue_coverage_complete") is True
+    }
     return {
         "schema_version": "steam-multi-trajectory-cohort-launch/v0.1",
         "requested_case_ids": case_ids,
@@ -236,6 +252,11 @@ def _combine(
         "errors": errors,
         "method_failures": method_failures,
         "metrics_by_arm": _aggregate(runs, MULTI_ARMS),
+        "metrics_by_arm_localized_frontier_complete": _aggregate(
+            [run for run in runs if str(run["case_id"]) in evaluable_case_ids],
+            MULTI_ARMS,
+        ),
+        "localized_entry_preflight": localized_entry_preflight,
         "action_divergence": divergences,
         "training_performed": False,
     }
@@ -275,6 +296,11 @@ def build_parser() -> argparse.ArgumentParser:
             "Do not load optional caption-candidate overlays. Required when the "
             "frozen compile gate was built without them."
         ),
+    )
+    parser.add_argument(
+        "--real-evidence-reread-artifact",
+        type=Path,
+        help="Optional locked raw-clip reread artifact shared across cases.",
     )
     parser.add_argument(
         "--case-id",

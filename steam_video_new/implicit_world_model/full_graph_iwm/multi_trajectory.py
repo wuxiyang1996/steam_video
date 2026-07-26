@@ -194,6 +194,7 @@ class MultiTrajectoryRunTrace:
     final_pool: TrajectoryPool
     steps: tuple[MultiTrajectoryTraceStep, ...]
     termination: str
+    real_observations: tuple[MemoryNode, ...] = ()
 
 
 class DirectMultiTrajectoryIWM(Protocol):
@@ -211,6 +212,17 @@ class RealBeliefUpdater(Protocol):
     def update(
         self, belief: CursorBeliefState, observation: MemoryNode
     ) -> CursorBeliefState: ...
+
+
+class RealEvidenceReader(Protocol):
+    """Optionally enrich one executed read without exposing imagined evidence."""
+
+    def read(
+        self,
+        observation: MemoryNode,
+        action: LegalGraphAction,
+        graph: RetainedEvidenceGraph,
+    ) -> MemoryNode: ...
 
 
 class ActionAwareRealBeliefUpdater(Protocol):
@@ -679,6 +691,7 @@ def execute_shared_trajectory_action(
     *,
     belief_updater: RealBeliefUpdater | None = None,
     assessor: TrajectoryEvidenceAssessor | None = None,
+    evidence_reader: RealEvidenceReader | None = None,
 ) -> MultiTrajectoryExecution:
     action = decision.selected_action
     if action.kind in {ActionKind.STOP, ActionKind.ANSWER, ActionKind.ABSTAIN}:
@@ -722,6 +735,15 @@ def execute_shared_trajectory_action(
             ),
             assessments=(),
         )
+    if evidence_reader is not None:
+        enriched = evidence_reader.read(observation, action, graph)
+        if enriched.node_id != observation.node_id:
+            raise ValueError("real evidence reader cannot change the executed node ID")
+        if enriched.video_id != observation.video_id:
+            raise ValueError("real evidence reader cannot change the source video ID")
+        if enriched.time_span != observation.time_span:
+            raise ValueError("real evidence reader cannot change the executed time span")
+        observation = enriched
     pending: list[
         tuple[
             ReasoningTrajectory,
@@ -829,6 +851,7 @@ def run_multi_trajectory_closed_loop(
     max_decisions: int = 16,
     belief_updater: RealBeliefUpdater | None = None,
     assessor: TrajectoryEvidenceAssessor | None = None,
+    evidence_reader: RealEvidenceReader | None = None,
 ) -> MultiTrajectoryRunTrace:
     """Execute one shared real action per decision and preserve the full pool."""
 
@@ -836,6 +859,7 @@ def run_multi_trajectory_closed_loop(
         raise ValueError("max_decisions must be positive")
     initial = pool
     steps: list[MultiTrajectoryTraceStep] = []
+    real_observations: list[MemoryNode] = []
     seen: set[tuple[Any, ...]] = set()
     termination = "decision_limit"
     for _ in range(max_decisions):
@@ -882,8 +906,11 @@ def run_multi_trajectory_closed_loop(
             graph,
             belief_updater=belief_updater,
             assessor=assessor,
+            evidence_reader=evidence_reader,
         )
         pool = execution.pool
+        if execution.observation is not None:
+            real_observations.append(execution.observation)
         steps.append(
             MultiTrajectoryTraceStep(
                 pool_before=before,
@@ -905,6 +932,7 @@ def run_multi_trajectory_closed_loop(
         final_pool=pool,
         steps=tuple(steps),
         termination=termination,
+        real_observations=tuple(real_observations),
     )
 
 

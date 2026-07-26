@@ -66,6 +66,7 @@ from .multi_trajectory import (
     PoolPreferenceStatus,
     PredictedLifecycle,
     ReasoningTrajectory,
+    RealEvidenceReader,
     TrajectoryEvidenceAssessment,
     TrajectoryExpansion,
     TrajectoryPool,
@@ -93,6 +94,11 @@ from .multi_trajectory_rollout import (
 )
 from .planner import FullGraphIWMPlanner
 from .reactive import GPTOSSReactiveGraphPlanner
+from .real_evidence import (
+    ArtifactBackedRealEvidenceReader,
+    REREAD_SCHEMA,
+    build_node_reread_artifact,
+)
 from .interventions import FrozenWorldModel, NullWorldModel, ShuffledWorldModel
 from .transition_cache import (
     PersistentCategoricalResponseCacheClient,
@@ -102,6 +108,7 @@ from .transition_cache import (
 
 __all__ = [
     "ActionKind",
+    "ArtifactBackedRealEvidenceReader",
     "AnswerabilityState",
     "BatchedCategoricalWorldModel",
     "BatchedTrajectoryPreferenceModel",
@@ -158,7 +165,9 @@ __all__ = [
     "PersistentQuestionRoleCache",
     "RetainedEvidenceGraph",
     "ReasoningTrajectory",
+    "RealEvidenceReader",
     "ReactiveMultiTrajectoryPlanner",
+    "REREAD_SCHEMA",
     "TemporalNavigationEdge",
     "TrajectoryPrediction",
     "TrajectoryEvidenceAssessment",
@@ -171,6 +180,7 @@ __all__ = [
     "audit_permutation_invariance",
     "augment_graph_with_caption_candidates",
     "build_iwm_graph_input",
+    "build_node_reread_artifact",
     "build_grounded_local_choice_packet",
     "build_l1_l15_navigation_graph",
     "build_retained_graph_from_legacy_overlay",

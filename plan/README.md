@@ -665,6 +665,73 @@ shuffled-IWM 相同，而 immediate-only 为 1.0。当前最具体的错误是�
 与 hypothesis-discrimination supervision，并单独报告 entry recall；不能通过新的
 planner heuristic 掩盖 upstream transition over-crediting。
 
+### 证据链修复（已实现）
+
+为避免把 IWM 错误与 L1 证据降质混在一起，runtime 现在保持两条严格分离的链：
+
+```text
+imagined transition -> 只供 Planner 比较，不能进入 acquired evidence
+executed legal action -> real observation -> belief correction -> terminal answer
+```
+
+此前 belief correction 能看到 `action_kind / participants / states /
+state_change`，但 terminal answer 只看到一句扁平 caption。现在 executed real
+observation 会作为独立对象贯穿 trace，answer selector 同时接收 timestamp、
+provenance 和上述 structured L1 fields，不再在最后一步丢失信息。
+
+同时加入可插拔的 locked raw-clip reread adapter。它只允许在合法 action 已执行后
+替换同一 video、同一 node ID、同一 timestamp 的 observation descriptor；未审核
+artifact 默认 fail closed，reread 不能新增 graph address，也不能参与 imagined
+rollout。这样后续可以用 Qwen-VL 对模糊 L1 window 做高保真重读，而不改变 L1/L1.5
+导航图或泄漏 hidden answer。
+
+代码同时提供 blinded node-reread artifact builder：输入仅为 frozen node、原视频和
+该 node 的时间窗，不输入 question、choices 或 GT answer；产物默认为
+`unreviewed / training_allowed=false`，独立锁定后 runtime adapter 才会接受。
+
+评估现在另外报告两个互不替代的门禁：
+
+- `localized_entry_preflight`：在模型 localization 之后，以相同 read budget 跑
+  evaluator-only oracle，区分“证据不可达”和“Planner 选错”；
+- `evidence_sufficiency_evaluator_only`：直接判断实际读到的内容是否足以区分 GT
+  answer，而不是把 timestamp overlap 当作证据充分。
+
+两者都使用 hidden evaluator 信息，因此明确标记
+`fed_back_to_planner=false`，绝不进入 IWM/Planner input。分析脚本还会把 imagined
+`ready / resolved_roles / advanced` 与真实 correction 后 belief 对齐，导出
+`over_crediting / under_crediting / consistent / inconclusive` categorical candidates。
+这些记录默认 `unreviewed` 且 `training_allowed=false`，审核锁定前不能训练。
+hidden sufficiency evaluator 使用独立的 uncached transport；代码会拒绝把它接到
+Planner response cache，避免 evaluator answer 污染未来 IWM/Planner 数据。
+
+model-backed smoke 还暴露出大 transition batch 偶发 `finish_reason=length`。runtime
+现已在 transport/schema 失败时递归拆分 shared-action-group batch，并完整恢复全部
+request；拆分只改变请求封装，不删除 candidate、hypothesis 或 reasoning path，审计中
+单独记录 `adaptive_transport_split_count`，因此这不是 heuristic Top-K。
+
+对原三例 smoke 的 post-hoc 重分析得到 36 条 hypothesis-conditioned executed
+transition 对照：19 条 provisional `over_crediting`、7 条 `consistent`、7 条
+`under_crediting`、3 条 `inconclusive`。这不使用 hidden clue/answer，reference 是真实
+read 后的 corrected hypothesis belief；记录仍需独立审核，不能直接训练。
+
+新 rich-evidence 路径的一例 GPT-5-mini 五臂 replay 已完成且零 runtime error。该例中
+localized clue oracle 和部分方法能达到 clue recall 1.0，但独立 evaluator 仍判断实际
+证据 `insufficient`；因此旧的 temporal clue overlap 确实高估了 answer evidence
+sufficiency。其余两例的完整远程 replay 遇到 OpenRouter 长 JSON 延迟/截断，已用于
+复现并修复 adaptive split，但尚未形成新的完整三例结果，不能宣称方法收益改善。
+
+当前 runtime 已冻结为 `steam-multi-trajectory-runtime/v1.0`，对应 pilot/run artifact
+schema v0.2。第一批 36 条记录已导出到
+`datasets/iwm_runtime_transition_audit_v1/`；packet 使用独立
+`steam-iwm-transition-audit/v0.1` schema，并逐项报告 case、video、failure slice 与
+review coverage。它刻意不提供 aggregate reward 或一条综合 gate boolean。
+
+这 36 条全部来自 test split，只能用于 diagnosis。新的 train collection 已冻结为
+40 cases / 40 videos，selection 使用 stable hash、每视频一例，不读取 question text
+或 hidden answer。对应 manifest 位于
+`datasets/iwm_runtime_train_collection_v1/collection_manifest.json`；在完成独立
+L1/L1.5 构建、真实执行和审核前，所有状态保持 pending，不能启动 9B SFT。
+
 建议接下来的实现顺序：
 
 1. 冻结 `structured belief-event patch` V2 schema；

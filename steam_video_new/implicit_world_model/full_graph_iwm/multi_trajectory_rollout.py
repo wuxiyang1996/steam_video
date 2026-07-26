@@ -593,6 +593,7 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         self.transport_audits: list[dict[str, Any]] = []
         self._transition_sequence_normalizations = 0
         self._comparison_sequence_normalizations = 0
+        self._transition_adaptive_splits = 0
 
     def predict_batch(
         self,
@@ -600,12 +601,13 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         graph: RetainedEvidenceGraph,
     ) -> Sequence[ImaginedTransition]:
         normalization_start = self._transition_sequence_normalizations
+        split_start = self._transition_adaptive_splits
         predictions: list[ImaginedTransition] = []
         model_requests = tuple(row for row in requests if row.action.reads_evidence)
         groups = _group_transition_requests(model_requests)
         for start in range(0, len(groups), self.transition_batch_size):
             batch = tuple(groups[start : start + self.transition_batch_size])
-            predictions.extend(self._predict_one_batch(batch, graph))
+            predictions.extend(self._predict_with_adaptive_split(batch, graph))
         prediction_by_request = {
             request.request_id: prediction
             for request, prediction in zip(
@@ -632,10 +634,32 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                 "ordered_sequence_normalization_count": (
                     self._transition_sequence_normalizations - normalization_start
                 ),
+                "adaptive_transport_split_count": (
+                    self._transition_adaptive_splits - split_start
+                ),
                 "top_k_applied": False,
             }
         )
         return ordered_predictions
+
+    def _predict_with_adaptive_split(
+        self,
+        groups: tuple[tuple[HypothesisExpansionRequest, ...], ...],
+        graph: RetainedEvidenceGraph,
+    ) -> tuple[ImaginedTransition, ...]:
+        """Split only failed transport batches; preserve every request and group."""
+
+        try:
+            return self._predict_one_batch(groups, graph)
+        except (RuntimeError, ValueError):
+            if len(groups) <= 1:
+                raise
+            midpoint = len(groups) // 2
+            self._transition_adaptive_splits += 1
+            return (
+                *self._predict_with_adaptive_split(groups[:midpoint], graph),
+                *self._predict_with_adaptive_split(groups[midpoint:], graph),
+            )
 
     def select_evidence_action(
         self,
@@ -733,7 +757,9 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                     }
                 )
                 return selected_path_id
-            except (TypeError, ValueError):
+            except (TypeError, ValueError) as exc:
+                if "finish_reason=length" in str(exc):
+                    raise
                 if attempt == 1:
                     raise
         raise RuntimeError("unreachable evidence scheduler repair state")
@@ -851,7 +877,9 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                     _parse_transition(aliases[alias], rows[alias], graph)
                     for alias in aliases
                 )
-            except (TypeError, ValueError):
+            except (TypeError, ValueError) as exc:
+                if "finish_reason=length" in str(exc):
+                    raise
                 if attempt == 1:
                     raise
         raise RuntimeError("unreachable categorical transition repair state")

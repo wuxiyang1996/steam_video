@@ -51,13 +51,15 @@ from .multi_trajectory_rollout import (
     ReactiveMultiTrajectoryPlanner,
     ShuffledHypothesisWorldModel,
 )
+from .real_evidence import ArtifactBackedRealEvidenceReader
 from .transition_cache import (
     PersistentCategoricalResponseCacheClient,
     PersistentQuestionRoleCache,
 )
 
 
-MULTI_PILOT_SCHEMA = "steam-multi-trajectory-iwm-cgbench-pilot/v0.1"
+MULTI_PILOT_SCHEMA = "steam-multi-trajectory-iwm-cgbench-pilot/v0.2"
+MULTI_RUNTIME_CONTRACT = "steam-multi-trajectory-runtime/v1.0"
 MULTI_ARMS = (
     "world_model_guided",
     "no_world_model",
@@ -74,6 +76,77 @@ class TerminalAnswerDecision:
     rationale: str
 
 
+@dataclass(frozen=True)
+class EvidenceSufficiencyDecision:
+    status: str
+    rationale: str
+    evaluator_only: bool = True
+    fed_back_to_planner: bool = False
+
+
+class GPTOSSEvidenceSufficiencyEvaluator:
+    """Judge grounded evidence after execution; never participate in planning."""
+
+    def __init__(self, client: Any) -> None:
+        self.client = client
+
+    def evaluate(
+        self,
+        *,
+        question: str,
+        choices: Sequence[str],
+        evaluator_answer: str,
+        observations: Sequence[Any],
+    ) -> EvidenceSufficiencyDecision:
+        aliases = {_alias("choice", index): row for index, row in enumerate(choices)}
+        answer_alias = next(
+            (alias for alias, value in aliases.items() if value == evaluator_answer),
+            None,
+        )
+        if answer_alias is None:
+            raise ValueError("evaluator answer is absent from public choices")
+        result = self.client.complete_json(
+            task=(
+                "As an evaluator only, decide whether the acquired grounded evidence "
+                "is sufficient to distinguish the reference answer from alternatives."
+            ),
+            payload={
+                "question": question,
+                "choices": aliases,
+                "reference_answer": answer_alias,
+                "acquired_grounded_evidence": [
+                    _real_observation_payload(row) for row in observations
+                ],
+                "allowed_status": [
+                    "supports_reference",
+                    "supports_alternative",
+                    "insufficient",
+                    "inconclusive",
+                ],
+                "required_output": {"only_keys": ["status", "rationale"]},
+                "contract": {
+                    "evaluation_only": True,
+                    "not_available_to_planner": True,
+                    "judge_direct_evidence_not_temporal_overlap": True,
+                    "categorical_only": True,
+                },
+            },
+        )
+        if not isinstance(result, dict) or set(result) != {"status", "rationale"}:
+            raise ValueError("evidence-sufficiency response schema is invalid")
+        if _contains_number(result):
+            raise ValueError("evidence-sufficiency response contains a numeric value")
+        status = str(result["status"])
+        if status not in {
+            "supports_reference",
+            "supports_alternative",
+            "insufficient",
+            "inconclusive",
+        }:
+            raise ValueError("evidence-sufficiency status is invalid")
+        return EvidenceSufficiencyDecision(status, str(result["rationale"] or ""))
+
+
 class GPTOSSMultiTrajectoryAnswerSelector:
     """Select an answer categorically from real evidence and final trajectories."""
 
@@ -86,6 +159,8 @@ class GPTOSSMultiTrajectoryAnswerSelector:
         pool: TrajectoryPool,
         choices: Sequence[str],
         graph: RetainedEvidenceGraph,
+        *,
+        real_observations: Sequence[Any] = (),
     ) -> TerminalAnswerDecision:
         if not choices or len(choices) != len(set(choices)):
             raise ValueError("answer choices must be non-empty and unique")
@@ -96,29 +171,28 @@ class GPTOSSMultiTrajectoryAnswerSelector:
             _alias("trajectory", index): row
             for index, row in enumerate(pool.trajectories)
         }
-        acquired = set(
+        acquired_ids = tuple(
             pool.trajectories[0].belief.acquired_evidence if pool.trajectories else ()
         )
-        if not acquired:
+        if not acquired_ids:
             return TerminalAnswerDecision(
                 status="abstain",
                 selected_choice=None,
                 rationale="no acquired real evidence",
             )
+        observation_by_id = {
+            str(node.node_id): node for node in real_observations
+        }
+        acquired_nodes = [
+            observation_by_id.get(node_id, graph.node_by_id[node_id])
+            for node_id in acquired_ids
+        ]
         payload = {
             "question": pool.trajectories[0].belief.question,
             "choices": choice_aliases,
             "acquired_real_evidence": [
-                {
-                    "semantic_key": str(
-                        node.metadata.get("predicate") or node.text or node.node_id
-                    ),
-                    "evidence_value": str(
-                        node.text or node.metadata.get("predicate") or ""
-                    ),
-                }
-                for node in graph.nodes
-                if node.node_id in acquired
+                _real_observation_payload(node)
+                for node in acquired_nodes
             ],
             "final_trajectories": {
                 alias: {
@@ -233,6 +307,8 @@ def run_multi_trajectory_case(
     initial_entry_node_ids: Sequence[str] = (),
     belief_updater: Any | None = None,
     assessor: Any | None = None,
+    evidence_reader: Any | None = None,
+    evidence_sufficiency_evaluator: Any | None = None,
     evaluator_answer: str | None = None,
     max_decisions: int | None = None,
 ) -> dict[str, Any]:
@@ -260,9 +336,29 @@ def run_multi_trajectory_case(
         max_decisions=max_decisions or max(4, read_budget * 3 + 2),
         belief_updater=belief_updater,
         assessor=assessor,
+        evidence_reader=evidence_reader,
     )
     # The selector has no access to evaluator_answer or clue intervals.
-    answer = answer_selector.select(trace.final_pool, choices, graph)
+    answer = answer_selector.select(
+        trace.final_pool,
+        choices,
+        graph,
+        real_observations=trace.real_observations,
+    )
+    sufficiency: EvidenceSufficiencyDecision | None = None
+    if evidence_sufficiency_evaluator is not None and evaluator_answer is not None:
+        try:
+            sufficiency = evidence_sufficiency_evaluator.evaluate(
+                question=question,
+                choices=choices,
+                evaluator_answer=evaluator_answer,
+                observations=trace.real_observations,
+            )
+        except Exception as exc:
+            sufficiency = EvidenceSufficiencyDecision(
+                "inconclusive",
+                f"evaluator failure: {type(exc).__name__}: {exc}",
+            )
 
     evaluator = HiddenClueCoverageEvaluator(clue_intervals)
     realized_rows: list[dict[str, Any]] = []
@@ -312,16 +408,19 @@ def run_multi_trajectory_case(
     steps = [_jsonable(row) for row in trace.steps]
     empirical_audit = _multi_trajectory_empirical_audit(trace, realized_rows)
     return {
-        "schema_version": "steam-multi-trajectory-closed-loop-run/v0.1",
+        "schema_version": "steam-multi-trajectory-closed-loop-run/v0.2",
+        "runtime_contract_version": MULTI_RUNTIME_CONTRACT,
         "case_id": case_id,
         "arm": arm,
         "graph_fingerprint": graph_fingerprint(graph),
         "hypothesis_source": "public_answer_choices",
         "initial_hypothesis_count": len(choices),
         "steps": steps,
+        "real_observations": [_jsonable(row) for row in trace.real_observations],
         "realized_labels_evaluator_only": realized_rows,
         "termination": trace.termination,
         "terminal_answer": _jsonable(answer),
+        "evidence_sufficiency_evaluator_only": _jsonable(sufficiency),
         "final_trajectory_statuses": statuses,
         "empirical_audit": empirical_audit,
         "metrics": {
@@ -579,9 +678,18 @@ def run_multi_trajectory_matched_pilot(
     question_role_cache_path: Path | None = None,
     cache_mode: str = "record",
     belief_backend: str = "latent",
+    real_evidence_reader: Any | None = None,
+    evidence_sufficiency_evaluator: Any | None = None,
 ) -> dict[str, Any]:
     if not gate.get("gate_passed"):
         raise ValueError("CG-Bench compile gate did not pass")
+    if isinstance(
+        getattr(evidence_sufficiency_evaluator, "client", None),
+        PersistentCategoricalResponseCacheClient,
+    ):
+        raise ValueError(
+            "hidden evidence-sufficiency evaluation cannot share the planner cache"
+        )
     requested_arms = tuple(dict.fromkeys(arms))
     if set(requested_arms) - set(MULTI_ARMS):
         raise ValueError("unsupported multi-trajectory matched arm")
@@ -686,6 +794,9 @@ def run_multi_trajectory_matched_pilot(
                     run["metrics"]["correct_hypothesis_survived"] = None
                     run["metrics"]["false_correct_hypothesis_elimination"] = None
                 else:
+                    reread_audit_start = len(
+                        getattr(real_evidence_reader, "audit_records", ())
+                    )
                     model = GPTOSSCategoricalMultiTrajectoryModel(
                         client,
                         transition_batch_size=transition_batch_size,
@@ -726,6 +837,10 @@ def run_multi_trajectory_matched_pilot(
                         initial_entry_node_ids=entry_node_ids,
                         belief_updater=updater,
                         assessor=GPTOSSRealTrajectoryEvidenceAssessor(client),
+                        evidence_reader=real_evidence_reader,
+                        evidence_sufficiency_evaluator=(
+                            evidence_sufficiency_evaluator
+                        ),
                         evaluator_answer=str(hidden.get("answer_text") or ""),
                     )
                     run["method_audit"] = {
@@ -740,6 +855,9 @@ def run_multi_trajectory_matched_pilot(
                         "top_k_applied": False,
                         "belief_backend": belief_backend,
                         "gtsam_audit": list(getattr(updater, "audit_records", ())),
+                        "real_evidence_reread": list(
+                            getattr(real_evidence_reader, "audit_records", ())
+                        )[reread_audit_start:],
                         "entry_localization": entry_localizer.audits[-1],
                         "entry_localization_failure": entry_failure,
                     }
@@ -792,8 +910,35 @@ def run_multi_trajectory_matched_pilot(
                 divergences.append(
                     {"case_id": case_id, **action_divergence(reference, candidate)}
                 )
+    localized_entry_preflight = []
+    scientifically_evaluable_case_ids: list[str] = []
+    for case_id in selected:
+        oracle = by_case.get(case_id, {}).get("oracle_clue_ceiling")
+        complete = bool(
+            oracle and oracle.get("metrics", {}).get("clue_coverage_complete")
+        )
+        if complete:
+            scientifically_evaluable_case_ids.append(case_id)
+        localized_entry_preflight.append(
+            {
+                "case_id": case_id,
+                "status": "complete" if complete else "insufficient_frontier",
+                "clue_recall_ceiling": (
+                    oracle.get("metrics", {}).get("clue_recall") if oracle else None
+                ),
+                "clue_coverage_complete": complete,
+                "evaluator_only": True,
+                "fed_back_to_planner": False,
+            }
+        )
+    evaluable_runs = [
+        run
+        for run in runs
+        if str(run["case_id"]) in set(scientifically_evaluable_case_ids)
+    ]
     return {
         "schema_version": MULTI_PILOT_SCHEMA,
+        "runtime_contract_version": MULTI_RUNTIME_CONTRACT,
         "dataset_id": dataset.get("dataset_id"),
         "model": str(getattr(client, "model", "unknown")),
         "arms": list(requested_arms),
@@ -810,11 +955,24 @@ def run_multi_trajectory_matched_pilot(
             "belief_backend": belief_backend,
             "gtsam_is_optional_and_never_ranks_actions": True,
             "same_entry_localization_across_model_backed_arms": True,
+            "hidden_evidence_sufficiency_evaluator_is_uncached_and_posthoc": True,
         },
         "runs": runs,
         "errors": errors,
         "method_failures": method_failures,
         "metrics_by_arm": _aggregate(runs, requested_arms),
+        "metrics_by_arm_localized_frontier_complete": _aggregate(
+            evaluable_runs, requested_arms
+        ),
+        "localized_entry_preflight": localized_entry_preflight,
+        "scientifically_evaluable_case_ids": scientifically_evaluable_case_ids,
+        "localized_entry_preflight_contract": {
+            "uses_hidden_clues_for_evaluation_only": True,
+            "runs_after_model_entry_localization": True,
+            "same_read_budget_as_model_arms": True,
+            "fed_back_to_planner": False,
+            "purpose": "separate navigation quality from unreachable evidence",
+        },
         "action_divergence": divergences,
         "training_performed": False,
     }
@@ -926,6 +1084,43 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
+def _real_observation_payload(node: Any) -> dict[str, Any]:
+    """Preserve grounded L1/reread structure instead of collapsing to a caption."""
+
+    metadata = node.metadata or {}
+    structured_keys = (
+        "action_kind",
+        "participants",
+        "states",
+        "state_change",
+        "actor",
+        "target",
+        "objects",
+        "location",
+        "visual_reread",
+        "reread_descriptor",
+    )
+    return {
+        "node_id": str(node.node_id),
+        "semantic_key": str(metadata.get("predicate") or node.text or node.node_id),
+        "evidence_value": str(node.text or metadata.get("predicate") or ""),
+        "time_span": {
+            "start_s": node.time_span.start_s,
+            "end_s": node.time_span.end_s,
+        },
+        "structured_observation": {
+            key: _jsonable(metadata[key])
+            for key in structured_keys
+            if metadata.get(key) not in (None, "", [], {})
+        },
+        "provenance": {
+            "video_id": str(node.video_id),
+            "source_segments": list(node.source_segments),
+            "producer": str(node.provenance.get("producer") or ""),
+        },
+    }
+
+
 def _contains_number(value: Any) -> bool:
     if isinstance(value, bool) or value is None:
         return False
@@ -1012,6 +1207,14 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("latent", "gtsam_backup", "gtsam_always"),
         default="latent",
     )
+    parser.add_argument(
+        "--real-evidence-reread-artifact",
+        type=Path,
+        help=(
+            "Optional human/ground-truth-locked raw-clip reread artifact; applied "
+            "only after a legal real read."
+        ),
+    )
     return parser
 
 
@@ -1054,13 +1257,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if gate["gate_passed"] else 2
     if args.keys_py is None:
         raise ValueError("--mode run requires --keys-py")
-    client: Any = OpenAICompatibleCategoricalClient.from_openrouter_keys_file(
+    uncached_client: Any = OpenAICompatibleCategoricalClient.from_openrouter_keys_file(
         args.keys_py,
         model=args.model,
         timeout_s=args.timeout_s,
         max_tokens=args.max_tokens,
         reasoning_effort=args.reasoning_effort,
     )
+    client: Any = uncached_client
     if args.response_cache is not None:
         client = PersistentCategoricalResponseCacheClient(
             client,
@@ -1085,6 +1289,14 @@ def main(argv: list[str] | None = None) -> int:
         question_role_cache_path=args.question_role_cache,
         cache_mode=args.cache_mode,
         belief_backend=args.belief_backend,
+        evidence_sufficiency_evaluator=GPTOSSEvidenceSufficiencyEvaluator(
+            uncached_client
+        ),
+        real_evidence_reader=(
+            ArtifactBackedRealEvidenceReader(args.real_evidence_reread_artifact)
+            if args.real_evidence_reread_artifact is not None
+            else None
+        ),
     )
     result["compile_gate"] = gate
     _write_json(args.output, result)

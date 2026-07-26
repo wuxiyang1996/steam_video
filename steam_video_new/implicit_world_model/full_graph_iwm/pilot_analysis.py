@@ -71,6 +71,35 @@ def analyze_pilot(
         for row in artifact.get("action_divergence") or ()
     ]
     wm_runs = [run for run in runs if run.get("arm") == "world_model_guided"]
+    localized_preflight = [
+        row
+        for artifact in case_artifacts
+        for row in artifact.get("localized_entry_preflight") or ()
+    ]
+    if not localized_preflight:
+        localized_preflight = [
+            {
+                "case_id": str(run["case_id"]),
+                "clue_coverage_complete": bool(
+                    run.get("metrics", {}).get("clue_coverage_complete")
+                ),
+                "derived_from_legacy_oracle_run": True,
+                "evaluator_only": True,
+                "fed_back_to_planner": False,
+            }
+            for run in runs
+            if run.get("arm") == "oracle_clue_ceiling"
+        ]
+    localized_evaluable_ids = {
+        str(row["case_id"])
+        for row in localized_preflight
+        if row.get("clue_coverage_complete") is True
+    }
+    localized_evaluable_runs = [
+        run
+        for run in runs
+        if str(run["case_id"]) in localized_evaluable_ids
+    ]
     method_failure_case_ids = sorted({str(row["case_id"]) for row in method_failures})
     integrity_exclusion_count = len(integrity.get("excluded_cases") or ())
     summary = {
@@ -90,6 +119,15 @@ def analyze_pilot(
         "delayed_case_ids": delayed_case_ids,
         "control_case_ids": control_case_ids,
         "metrics_by_arm": _aggregate(runs, MULTI_ARMS),
+        "metrics_by_arm_localized_frontier_complete": _aggregate(
+            localized_evaluable_runs, MULTI_ARMS
+        ),
+        "localized_entry_preflight": {
+            "evaluable_case_ids": sorted(localized_evaluable_ids),
+            "insufficient_case_ids": sorted(set(case_ids) - localized_evaluable_ids),
+            "evaluator_only": True,
+            "fed_back_to_planner": False,
+        },
         "delayed_metrics_by_arm": _aggregate(delayed_runs, MULTI_ARMS),
         "control_metrics_by_arm": _aggregate(control_runs, MULTI_ARMS),
         "action_divergence": _divergence_summary(divergences),
@@ -143,12 +181,21 @@ def analyze_pilot(
         "training_performed": False,
     }
     candidates = {
-        "schema_version": "steam-executed-iwm-trace-candidates/v0.1",
+        "schema_version": "steam-executed-iwm-trace-candidates/v0.2",
         "model": model,
         "review_status": "unreviewed",
         "training_allowed": False,
         "hidden_evaluator_labels_included": False,
         "records": _executed_candidates(wm_runs, cases_dir),
+        "transition_over_crediting_candidates": (
+            _transition_over_crediting_candidates(wm_runs, cases_dir)
+        ),
+        "over_crediting_contract": {
+            "uses_hidden_clues_or_answers": False,
+            "reference": "post-read corrected hypothesis belief",
+            "labels_are_categorical": True,
+            "requires_independent_review_before_training": True,
+        },
         "training_performed": False,
     }
     return summary, candidates
@@ -244,6 +291,128 @@ def _executed_candidates(
                 }
             )
     return records
+
+
+def _transition_over_crediting_candidates(
+    wm_runs: Iterable[dict[str, Any]],
+    cases_dir: Path,
+) -> list[dict[str, Any]]:
+    """Compare selected imagined deltas with correction, without hidden GT."""
+
+    records: list[dict[str, Any]] = []
+    for run in wm_runs:
+        case_id = str(run["case_id"])
+        source = cases_dir / f"{_slug(case_id)}.json"
+        for step_index, step in enumerate(run.get("steps") or ()):
+            if not step.get("observation_id"):
+                continue
+            decision = step.get("decision") or {}
+            selected = decision.get("selected_action") or {}
+            before = {
+                str(row["trajectory_id"]): row
+                for row in (step.get("pool_before") or {}).get("trajectories") or ()
+            }
+            after = {
+                str(row["trajectory_id"]): row
+                for row in (step.get("pool_after") or {}).get("trajectories") or ()
+            }
+            seen: set[tuple[str, str, tuple[str, ...]]] = set()
+            for path in decision.get("imagined_paths") or ():
+                transitions = path.get("transitions") or ()
+                if not transitions or not _same_action(
+                    transitions[0].get("action") or {}, selected
+                ):
+                    continue
+                for outcome in path.get("conditioned_outcomes") or ():
+                    trajectory_id = str(outcome.get("trajectory_id") or "")
+                    predicted_rows = outcome.get("transitions") or ()
+                    if not trajectory_id or not predicted_rows:
+                        continue
+                    predicted = predicted_rows[0].get("belief_delta") or {}
+                    resolved_roles = tuple(
+                        str(row) for row in predicted.get("resolved_roles") or ()
+                    )
+                    key = (
+                        trajectory_id,
+                        str(predicted.get("answerability_after") or ""),
+                        resolved_roles,
+                    )
+                    if key in seen or trajectory_id not in before or trajectory_id not in after:
+                        continue
+                    seen.add(key)
+                    before_belief = before[trajectory_id].get("belief") or {}
+                    after_belief = after[trajectory_id].get("belief") or {}
+                    remaining_after = set(after_belief.get("missing_roles") or ())
+                    unsupported_resolutions = sorted(
+                        role for role in resolved_roles if role in remaining_after
+                    )
+                    predicted_ready = (
+                        predicted.get("answerability_after") == "ready"
+                    )
+                    corrected_ready = after_belief.get("answerability") == "ready"
+                    before_signature = (
+                        tuple(before_belief.get("missing_roles") or ()),
+                        tuple(before_belief.get("contradictions") or ()),
+                        before_belief.get("answerability"),
+                    )
+                    after_signature = (
+                        tuple(after_belief.get("missing_roles") or ()),
+                        tuple(after_belief.get("contradictions") or ()),
+                        after_belief.get("answerability"),
+                    )
+                    predicted_advanced = predicted.get("progress") == "advanced"
+                    if (
+                        (predicted_ready and not corrected_ready)
+                        or unsupported_resolutions
+                        or (predicted_advanced and before_signature == after_signature)
+                    ):
+                        label = "over_crediting"
+                    elif predicted.get("progress") == "unchanged" and (
+                        before_signature != after_signature
+                    ):
+                        label = "under_crediting"
+                    elif predicted_ready == corrected_ready and not unsupported_resolutions:
+                        label = "consistent"
+                    else:
+                        label = "inconclusive"
+                    record_id = hashlib.sha256(
+                        f"{case_id}\x1f{step_index}\x1f{trajectory_id}".encode()
+                    ).hexdigest()[:20]
+                    records.append(
+                        {
+                            "record_id": f"transition_audit:{record_id}",
+                            "case_id": case_id,
+                            "step_index": step_index,
+                            "trajectory_id": trajectory_id,
+                            "source_artifact": str(source.resolve()),
+                            "executed_real_observation_id": step["observation_id"],
+                            "predicted_belief_delta": predicted,
+                            "corrected_belief_before": before_belief,
+                            "corrected_belief_after": after_belief,
+                            "provisional_label": label,
+                            "unsupported_predicted_resolved_roles": (
+                                unsupported_resolutions
+                            ),
+                            "hidden_evaluator_labels_included": False,
+                            "review_status": "unreviewed",
+                            "training_allowed": False,
+                        }
+                    )
+    return records
+
+
+def _same_action(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    return (
+        left.get("kind"),
+        left.get("source_id"),
+        left.get("target_id"),
+        left.get("edge_id"),
+    ) == (
+        right.get("kind"),
+        right.get("source_id"),
+        right.get("target_id"),
+        right.get("edge_id"),
+    )
 
 
 def _read(path: Path) -> dict[str, Any]:

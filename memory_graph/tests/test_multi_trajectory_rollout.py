@@ -403,6 +403,45 @@ def test_gpt_adapter_strictly_normalizes_complete_ordered_sequences() -> None:
     assert comparison_audit["complete_coverage"] is True
 
 
+class _SplitRequiredClient(_SchemaClient):
+    def complete_json(self, *, task, payload):
+        if (
+            "shared_action_groups" in payload
+            and len(payload["shared_action_groups"]) > 1
+        ):
+            self.payloads.append(payload)
+            raise ValueError("simulated transport truncation; finish_reason=length")
+        return super().complete_json(task=task, payload=payload)
+
+
+def test_transition_transport_adaptively_splits_without_pruning() -> None:
+    client = _SplitRequiredClient()
+    model = GPTOSSCategoricalMultiTrajectoryModel(
+        client,
+        transition_batch_size=3,
+    )
+
+    decision = MultiTrajectoryRolloutPlanner(model, model, horizon=1).plan(
+        _pool(), _graph()
+    )
+
+    assert decision.preference_audit["complete_coverage"] is True
+    audit = next(
+        row
+        for row in model.transport_audits
+        if row["operation"] == "categorical_transition"
+    )
+    assert audit["adaptive_transport_split_count"] == 1
+    assert audit["complete_coverage"] is True
+    assert audit["top_k_applied"] is False
+    oversized_calls = [
+        payload
+        for payload in client.payloads
+        if len(payload.get("shared_action_groups") or {}) > 1
+    ]
+    assert len(oversized_calls) == 1
+
+
 class _GPT5MiniTransportClient(_SchemaClient):
     def complete_json(self, *, task, payload):
         del task

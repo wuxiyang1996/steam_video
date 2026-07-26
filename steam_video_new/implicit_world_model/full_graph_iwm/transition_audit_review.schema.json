@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/iwm_transition_audit_review.schema.json",
+  "title": "IWMTransitionModelProvisionalReview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "packet_id", "packet_sha256", "labels_source",
+    "annotator", "automatic_failure_slice_visible_to_reviewer",
+    "hidden_clues_or_answers_visible_to_reviewer", "decisions",
+    "formal_gate_eligible", "training_allowed", "training_performed"
+  ],
+  "properties": {
+    "schema_version": {"const": "steam-iwm-transition-model-review/v0.1"},
+    "packet_id": {"type": "string", "minLength": 1},
+    "packet_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "labels_source": {"const": "model_provisional"},
+    "annotator": {"type": "string", "minLength": 1},
+    "automatic_failure_slice_visible_to_reviewer": {"const": false},
+    "hidden_clues_or_answers_visible_to_reviewer": {"const": false},
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["record_id", "decision", "rationale"],
+        "properties": {
+          "record_id": {"type": "string", "minLength": 1},
+          "decision": {"enum": ["over_crediting", "under_crediting", "consistent", "inconclusive"]},
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "formal_gate_eligible": {"const": false},
+    "training_allowed": {"const": false},
+    "training_performed": {"const": false}
+  }
+}

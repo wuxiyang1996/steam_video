@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .action_compiler import visible_graph_nodes
@@ -53,8 +54,9 @@ class GPTOSSEntryLocalizer:
                 "only_keys": ["status", "preferred", "rationale"],
                 "status": ["located", "inconclusive"],
                 "preferred": (
-                    "complete plausible frontier of candidate address aliases; "
-                    "may contain multiple aliases when status is inconclusive"
+                    "either a flat alias list or a missing-role-to-alias mapping; "
+                    "use a minimal complete frontier of nonredundant entry cursors "
+                    "and multiple aliases only for semantically distinct event sequences"
                 ),
             },
             "required_contract": {
@@ -62,19 +64,29 @@ class GPTOSSEntryLocalizer:
                 "semantic_addresses_only_no_unread_evidence_values": True,
                 "select_only_directly_relevant_entry_addresses": True,
                 "preserve_multiple_plausible_entries_when_inconclusive": True,
+                "one_representative_cursor_per_missing_role_or_event_sequence": True,
+                "do_not_enumerate_temporal_repetitions_of_the_same_event": True,
+                "later_related_events_are_reached_by_graph_hops": True,
+                "preferred_is_not_a_list_of_all_relevant_evidence": True,
                 "no_numeric_reward_score_probability_confidence_or_utility": True,
                 "no_fixed_ranking_or_top_k": True,
             },
         }
         result: dict[str, Any] | None = None
         alias_prefix_normalization_count = 0
+        role_key_normalization_count = 0
+        role_conditioned_output = False
         for attempt in range(2):
             candidate = self.client.complete_json(
                 task=(
-                    "Locate a small categorical set of grounded evidence entry addresses. "
-                    "This establishes graph cursors only; do not plan later hops."
+                    "Locate a categorical nonredundant frontier of grounded entry "
+                    "cursors. Choose representative starts for distinct missing roles "
+                    "or event sequences, not every repeated relevant event; temporal "
+                    "and correlated repetitions are reached by later graph hops. This "
+                    "establishes cursors only and does not plan later hops."
                     if attempt == 0
-                    else "Repair the localization response using only the required fields."
+                    else "Repair the localization response using only the required "
+                    "fields and nonredundant entry-cursor contract."
                 ),
                 payload=payload,
             )
@@ -84,10 +96,61 @@ class GPTOSSEntryLocalizer:
                 status = str(candidate["status"])
                 if status not in {"located", "inconclusive"}:
                     raise ValueError("entry localization status is invalid")
-                preferred = candidate["preferred"]
-                if not isinstance(preferred, list) or any(
-                    not isinstance(value, str) for value in preferred
+                raw_preferred = candidate["preferred"]
+                role_conditioned_output = isinstance(raw_preferred, dict)
+                if role_conditioned_output:
+                    if any(
+                        not isinstance(role, str)
+                        or not isinstance(values, (str, list))
+                        or (
+                            isinstance(values, list)
+                            and any(not isinstance(value, str) for value in values)
+                        )
+                        for role, values in raw_preferred.items()
+                    ):
+                        raise ValueError(
+                            "entry localization returned an invalid role frontier"
+                        )
+                    role_aliases: dict[str, str] = {}
+                    for role in missing_roles:
+                        normalized_role = _normalized_role(role)
+                        if normalized_role in role_aliases:
+                            raise ValueError(
+                                "missing-role normalization is ambiguous"
+                            )
+                        role_aliases[normalized_role] = role
+                    normalized_frontier: dict[str, str | list[str]] = {}
+                    role_key_normalization_count = 0
+                    for raw_role, values in raw_preferred.items():
+                        resolved_role = (
+                            raw_role
+                            if raw_role in missing_roles
+                            else role_aliases.get(_normalized_role(raw_role))
+                        )
+                        if resolved_role is None:
+                            raise ValueError(
+                                "entry localization returned an unknown missing role"
+                            )
+                        if resolved_role in normalized_frontier:
+                            raise ValueError(
+                                "entry localization returned duplicate missing roles"
+                            )
+                        role_key_normalization_count += raw_role != resolved_role
+                        normalized_frontier[resolved_role] = values
+                    expanded = []
+                    for role in missing_roles:
+                        values = normalized_frontier.get(role, [])
+                        expanded.extend([values] if isinstance(values, str) else values)
+                    preferred = list(dict.fromkeys(expanded))
+                elif isinstance(raw_preferred, list) and all(
+                    isinstance(value, str) for value in raw_preferred
                 ):
+                    preferred = raw_preferred
+                    if len(preferred) != len(set(preferred)):
+                        raise ValueError(
+                            "entry localization returned duplicate addresses"
+                        )
+                else:
                     raise ValueError("entry localization returned an unknown address")
                 normalized = [
                     value
@@ -102,8 +165,6 @@ class GPTOSSEntryLocalizer:
                 )
                 candidate = {**candidate, "preferred": normalized}
                 preferred = normalized
-                if len(preferred) != len(set(preferred)):
-                    raise ValueError("entry localization returned duplicate addresses")
                 if len(preferred) > self.maximum_anchors:
                     raise ValueError("entry localization frontier exceeds its contract")
                 if status == "located" and not preferred:
@@ -124,6 +185,8 @@ class GPTOSSEntryLocalizer:
                 "top_k_applied": False,
                 "numeric_score_used": False,
                 "alias_prefix_normalization_count": (alias_prefix_normalization_count),
+                "role_conditioned_output": role_conditioned_output,
+                "role_key_normalization_count": role_key_normalization_count,
             }
         )
         return selected
@@ -136,3 +199,7 @@ def _letters(index: int) -> str:
         value, remainder = divmod(value - 1, 26)
         chars.append(chr(ord("a") + remainder))
     return "".join(reversed(chars))
+
+
+def _normalized_role(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.casefold()).strip("_")

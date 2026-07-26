@@ -16,6 +16,7 @@ from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory import
     PoolPreferenceStatus,
 )
 from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_cgbench import (
+    GPTOSSEvidenceSufficiencyEvaluator,
     GPTOSSMultiTrajectoryAnswerSelector,
     MULTI_ARMS,
     _aggregate,
@@ -27,6 +28,9 @@ from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_rollou
     MultiTrajectoryRolloutPlanner,
     ReactiveMultiTrajectoryPlanner,
     ShuffledHypothesisWorldModel,
+)
+from steam_video_new.implicit_world_model.full_graph_iwm.pilot_analysis import (
+    _transition_over_crediting_candidates,
 )
 from steam_video_new.implicit_world_model.full_graph_iwm.localization import (
     GPTOSSEntryLocalizer,
@@ -152,6 +156,10 @@ def test_cgbench_case_uses_public_choices_and_joins_hidden_labels_after_run() ->
     )
 
     assert result["hypothesis_source"] == "public_answer_choices"
+    assert result["schema_version"] == "steam-multi-trajectory-closed-loop-run/v0.2"
+    assert result["runtime_contract_version"] == (
+        "steam-multi-trajectory-runtime/v1.0"
+    )
     assert result["initial_hypothesis_count"] == 2
     assert result["metrics"]["answer_correct"] is True
     assert result["metrics"]["clue_recall"] == 1.0
@@ -159,6 +167,10 @@ def test_cgbench_case_uses_public_choices_and_joins_hidden_labels_after_run() ->
     assert result["hidden_evaluator_feedback_to_planner"] is False
     assert "attacked by a cat" in client.payload["choices"].values()
     assert "evaluator_answer" not in str(client.payload)
+    evidence = client.payload["acquired_real_evidence"]
+    assert evidence[0]["time_span"] == {"start_s": 0.0, "end_s": 1.0}
+    assert evidence[0]["structured_observation"] == {}
+    assert evidence[0]["provenance"]["video_id"] == "video:cgbench-multi"
 
 
 def test_terminal_answer_selector_rejects_numeric_model_output() -> None:
@@ -207,12 +219,47 @@ def test_terminal_answer_selector_cannot_guess_without_real_evidence() -> None:
     assert client.payload is None
 
 
+def test_evidence_sufficiency_is_categorical_and_evaluator_only() -> None:
+    class _SufficiencyClient:
+        model = "sufficiency-test"
+
+        def __init__(self):
+            self.payload = None
+
+        def complete_json(self, *, task, payload):
+            del task
+            self.payload = payload
+            return {
+                "status": "supports_reference",
+                "rationale": "the observed attack distinguishes the answer",
+            }
+
+    client = _SufficiencyClient()
+    decision = GPTOSSEvidenceSufficiencyEvaluator(client).evaluate(
+        question="What happened?",
+        choices=("visited", "attacked"),
+        evaluator_answer="attacked",
+        observations=(_graph().node_by_id["l1:second"],),
+    )
+
+    assert decision.status == "supports_reference"
+    assert decision.evaluator_only is True
+    assert decision.fed_back_to_planner is False
+    assert client.payload["contract"]["not_available_to_planner"] is True
+
+
 def test_inconclusive_entry_localization_preserves_multiple_paths() -> None:
     class _InconclusiveEntryClient:
         model = "inconclusive-entry-test"
 
         def complete_json(self, *, task, payload):
             del task
+            assert payload["required_contract"][
+                "one_representative_cursor_per_missing_role_or_event_sequence"
+            ] is True
+            assert payload["required_contract"][
+                "do_not_enumerate_temporal_repetitions_of_the_same_event"
+            ] is True
             aliases = list(payload["candidate_addresses"])
             return {
                 "status": "inconclusive",
@@ -227,6 +274,34 @@ def test_inconclusive_entry_localization_preserves_multiple_paths() -> None:
     )
 
     assert selected == ("l1:first", "l1:second")
+
+
+def test_role_conditioned_entry_localization_flattens_without_ranking() -> None:
+    class _RoleConditionedEntryClient:
+        model = "role-conditioned-entry-test"
+
+        def complete_json(self, *, task, payload):
+            del task, payload
+            return {
+                "status": "located",
+                "preferred": {
+                    "event": "anchor_b",
+                    "actor_identity": ["anchor_a", "anchor_b"],
+                },
+                "rationale": "one cursor can ground multiple roles",
+            }
+
+    localizer = GPTOSSEntryLocalizer(_RoleConditionedEntryClient())
+    selected = localizer.localize(
+        question="who did what?",
+        missing_roles=("actor identity", "event"),
+        graph=_graph(),
+    )
+
+    assert selected == ("l1:first", "l1:second")
+    assert localizer.audits[0]["role_conditioned_output"] is True
+    assert localizer.audits[0]["role_key_normalization_count"] == 1
+    assert localizer.audits[0]["top_k_applied"] is False
 
 
 def test_five_matched_arms_have_distinct_world_model_interventions() -> None:
@@ -279,3 +354,69 @@ def test_matched_metrics_remain_separate_without_aggregate_reward() -> None:
     assert metrics["answer_accuracy"] == 1.0
     assert metrics["mean_clue_recall"] == 0.5
     assert not ({"reward", "score", "utility", "passed"} & set(metrics))
+
+
+def test_transition_over_crediting_uses_corrected_belief_without_hidden_gt(
+    tmp_path,
+) -> None:
+    action = {
+        "kind": "start_at",
+        "source_id": None,
+        "target_id": "l1:first",
+        "edge_id": None,
+    }
+    belief = {
+        "missing_roles": ["event"],
+        "contradictions": [],
+        "answerability": "not_ready",
+    }
+    runs = [
+        {
+            "case_id": "case:test",
+            "steps": [
+                {
+                    "observation_id": "l1:first",
+                    "pool_before": {
+                        "trajectories": [
+                            {"trajectory_id": "trajectory:a", "belief": belief}
+                        ]
+                    },
+                    "pool_after": {
+                        "trajectories": [
+                            {"trajectory_id": "trajectory:a", "belief": belief}
+                        ]
+                    },
+                    "decision": {
+                        "selected_action": action,
+                        "imagined_paths": [
+                            {
+                                "transitions": [{"action": action}],
+                                "conditioned_outcomes": [
+                                    {
+                                        "trajectory_id": "trajectory:a",
+                                        "transitions": [
+                                            {
+                                                "belief_delta": {
+                                                    "progress": "advanced",
+                                                    "answerability_after": "ready",
+                                                    "resolved_roles": ["event"],
+                                                }
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    ]
+
+    records = _transition_over_crediting_candidates(runs, tmp_path)
+
+    assert len(records) == 1
+    assert records[0]["provisional_label"] == "over_crediting"
+    assert records[0]["unsupported_predicted_resolved_roles"] == ["event"]
+    assert records[0]["hidden_evaluator_labels_included"] is False
+    assert records[0]["training_allowed"] is False

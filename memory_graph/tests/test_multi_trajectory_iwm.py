@@ -175,6 +175,48 @@ def test_one_real_read_is_broadcast_to_every_active_trajectory() -> None:
     )
 
 
+class _EnrichingEvidenceReader:
+    def read(self, observation, action, graph):
+        del action, graph
+        return replace(
+            observation,
+            text="person in white enters the room",
+            metadata={**observation.metadata, "actor": {"clothing": "white"}},
+        )
+
+
+def test_real_evidence_reader_runs_only_after_executed_read() -> None:
+    trace = run_multi_trajectory_closed_loop(
+        _pool(),
+        _graph(),
+        MultiTrajectoryIWMPlanner(_SharedFirstIWM()),
+        max_decisions=1,
+        evidence_reader=_EnrichingEvidenceReader(),
+    )
+
+    assert len(trace.real_observations) == 1
+    assert trace.real_observations[0].node_id == "l1:first"
+    assert trace.real_observations[0].text == "person in white enters the room"
+    assert trace.real_observations[0].metadata["actor"] == {"clothing": "white"}
+    assert trace.final_pool.trajectories[0].belief.acquired_evidence == ("l1:first",)
+
+
+def test_real_evidence_reader_cannot_redirect_executed_address() -> None:
+    class _RedirectingReader:
+        def read(self, observation, action, graph):
+            del action, graph
+            return replace(observation, node_id="l1:second")
+
+    decision = MultiTrajectoryIWMPlanner(_SharedFirstIWM()).plan(_pool(), _graph())
+    with pytest.raises(ValueError, match="cannot change the executed node ID"):
+        execute_shared_trajectory_action(
+            _pool(),
+            decision,
+            _graph(),
+            evidence_reader=_RedirectingReader(),
+        )
+
+
 class _ActionAwareUpdater:
     def __init__(self):
         self.calls = []
