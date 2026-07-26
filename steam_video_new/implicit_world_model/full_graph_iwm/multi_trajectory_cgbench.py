@@ -10,7 +10,7 @@ import hashlib
 from pathlib import Path
 import json
 from statistics import fmean
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from steam_video_new.implicit_world_model.l15_graph_navigator.gpt_oss import (
     DEFAULT_GPT_OSS_MODEL,
@@ -186,9 +186,7 @@ class GPTOSSMultiTrajectoryAnswerSelector:
                 selected_choice=None,
                 rationale="no acquired real evidence",
             )
-        observation_by_id = {
-            str(node.node_id): node for node in real_observations
-        }
+        observation_by_id = {str(node.node_id): node for node in real_observations}
         acquired_nodes = [
             observation_by_id.get(node_id, graph.node_by_id[node_id])
             for node_id in acquired_ids
@@ -197,8 +195,7 @@ class GPTOSSMultiTrajectoryAnswerSelector:
             "question": pool.trajectories[0].belief.question,
             "choices": choice_aliases,
             "acquired_real_evidence": [
-                _real_observation_payload(node)
-                for node in acquired_nodes
+                _real_observation_payload(node) for node in acquired_nodes
             ],
             "final_trajectories": {
                 alias: {
@@ -500,6 +497,12 @@ def run_multi_trajectory_case(
             "transition_answerability_over_credit_fdr": empirical_audit[
                 "transition_calibration"
             ]["answerability_over_credit_fdr"],
+            "post_read_effect_verification_rate": empirical_audit[
+                "post_read_effect_verification"
+            ]["verification_rate"],
+            "post_read_effect_downgrade_rate": empirical_audit[
+                "post_read_effect_verification"
+            ]["downgrade_rate"],
         },
         "hidden_evaluator_feedback_to_planner": False,
         "top_k_applied": False,
@@ -516,6 +519,7 @@ def _multi_trajectory_empirical_audit(
     coverage_rows: list[dict[str, Any]] = []
     divergence_rows: list[dict[str, Any]] = []
     calibration_rows: list[dict[str, str]] = []
+    verification_rows: list[dict[str, Any]] = []
     realized_by_observation = {str(row["observation_id"]): row for row in realized_rows}
     for step_index, step in enumerate(trace.steps):
         paths = tuple(step.decision.imagined_paths)
@@ -583,6 +587,22 @@ def _multi_trajectory_empirical_audit(
                 ],
             }
         )
+        for assessment in step.assessments:
+            verification_rows.append(
+                {
+                    "step_index": step_index,
+                    "observation_id": step.observation_id,
+                    "trajectory_id": assessment.trajectory_id,
+                    "proposed_effect": assessment.effect.value,
+                    "effective_effect": assessment.effective_effect.value,
+                    "target_binding": assessment.target_binding.value,
+                    "relation_scope": assessment.relation_scope.value,
+                    "verification": assessment.verification.value,
+                    "downgraded": (
+                        assessment.effective_effect is not assessment.effect
+                    ),
+                }
+            )
         realized = realized_by_observation[step.observation_id]
         selected_key = shared_action_key(step.decision.selected_action)
         for path in paths:
@@ -631,6 +651,33 @@ def _multi_trajectory_empirical_audit(
                 if divergence_rows
                 else None
             ),
+        },
+        "post_read_effect_verification": {
+            "rows": verification_rows,
+            "proposed_non_inconclusive_count": sum(
+                row["proposed_effect"] != "inconclusive" for row in verification_rows
+            ),
+            "verified_non_inconclusive_count": sum(
+                row["effective_effect"] != "inconclusive" for row in verification_rows
+            ),
+            "verification_rate": _ratio_or_none(
+                sum(
+                    row["effective_effect"] != "inconclusive"
+                    for row in verification_rows
+                ),
+                sum(
+                    row["proposed_effect"] != "inconclusive"
+                    for row in verification_rows
+                ),
+            ),
+            "downgrade_rate": _ratio_or_none(
+                sum(row["downgraded"] for row in verification_rows),
+                sum(
+                    row["proposed_effect"] != "inconclusive"
+                    for row in verification_rows
+                ),
+            ),
+            "inconclusive_changes_persistent_semantics": False,
         },
         "transition_calibration": {
             "reference": "hidden_clue_overlap_evaluator_only",
@@ -761,9 +808,7 @@ def _categorical_false_discovery_rate(
 ) -> float | None:
     """Fraction of predicted categorical progress not confirmed by the real read."""
 
-    predicted_positive = [
-        row for row in rows if row[predicted_key] in positive_values
-    ]
+    predicted_positive = [row for row in rows if row[predicted_key] in positive_values]
     if not predicted_positive:
         return None
     return sum(
@@ -976,9 +1021,7 @@ def run_multi_trajectory_matched_pilot(
                         belief_updater=updater,
                         assessor=GPTOSSRealTrajectoryEvidenceAssessor(client),
                         evidence_reader=real_evidence_reader,
-                        evidence_sufficiency_evaluator=(
-                            evidence_sufficiency_evaluator
-                        ),
+                        evidence_sufficiency_evaluator=(evidence_sufficiency_evaluator),
                         evaluator_answer=str(hidden.get("answer_text") or ""),
                     )
                     run["method_audit"] = {
@@ -1050,27 +1093,9 @@ def run_multi_trajectory_matched_pilot(
                 divergences.append(
                     {"case_id": case_id, **action_divergence(reference, candidate)}
                 )
-    localized_entry_preflight = []
-    scientifically_evaluable_case_ids: list[str] = []
-    for case_id in selected:
-        oracle = by_case.get(case_id, {}).get("oracle_clue_ceiling")
-        complete = bool(
-            oracle and oracle.get("metrics", {}).get("clue_coverage_complete")
-        )
-        if complete:
-            scientifically_evaluable_case_ids.append(case_id)
-        localized_entry_preflight.append(
-            {
-                "case_id": case_id,
-                "status": "complete" if complete else "insufficient_frontier",
-                "clue_recall_ceiling": (
-                    oracle.get("metrics", {}).get("clue_recall") if oracle else None
-                ),
-                "clue_coverage_complete": complete,
-                "evaluator_only": True,
-                "fed_back_to_planner": False,
-            }
-        )
+    localized_entry_preflight, scientifically_evaluable_case_ids = (
+        _localized_entry_preflight(by_case, selected)
+    )
     evaluable_runs = [
         run
         for run in runs
@@ -1113,6 +1138,7 @@ def run_multi_trajectory_matched_pilot(
             "same_read_budget_as_model_arms": True,
             "fed_back_to_planner": False,
             "purpose": "separate navigation quality from unreachable evidence",
+            "not_run_when_oracle_arm_is_not_requested": True,
         },
         "action_divergence": divergences,
         "input_visibility_audits": visibility_audits,
@@ -1160,6 +1186,40 @@ def _planner_for_arm(
         setwise_preference_model=model,
         evidence_scheduler=model,
     )
+
+
+def _localized_entry_preflight(
+    by_case: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    selected: Sequence[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    rows: list[dict[str, Any]] = []
+    scientifically_evaluable: list[str] = []
+    for case_id in selected:
+        oracle = by_case.get(case_id, {}).get("oracle_clue_ceiling")
+        complete = bool(
+            oracle and oracle.get("metrics", {}).get("clue_coverage_complete")
+        )
+        if complete:
+            scientifically_evaluable.append(case_id)
+        rows.append(
+            {
+                "case_id": case_id,
+                "status": (
+                    "not_run"
+                    if oracle is None
+                    else "complete"
+                    if complete
+                    else "insufficient_frontier"
+                ),
+                "clue_recall_ceiling": (
+                    oracle.get("metrics", {}).get("clue_recall") if oracle else None
+                ),
+                "clue_coverage_complete": complete,
+                "evaluator_only": True,
+                "fed_back_to_planner": False,
+            }
+        )
+    return rows, scientifically_evaluable
 
 
 def _aggregate(runs: Sequence[dict[str, Any]], arms: Iterable[str]) -> dict[str, Any]:
@@ -1277,6 +1337,10 @@ def _pooled_transition_calibration(
 def _mean(values: Iterable[Any]) -> float | None:
     selected = [float(row) for row in values if row is not None]
     return fmean(selected) if selected else None
+
+
+def _ratio_or_none(numerator: int, denominator: int) -> float | None:
+    return numerator / denominator if denominator else None
 
 
 def _node_key(graph: RetainedEvidenceGraph, node_id: str) -> str:

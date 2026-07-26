@@ -92,10 +92,7 @@ def test_zero_shot_diagnostic_separates_pre_read_and_post_read_failures() -> Non
 
     assert report["runtime_integrity"]["observed_first_action_divergence_count"] == 1
     assert (
-        report["pre_read_transition"][
-            "obvious_semantic_contract_violation_count"
-        ]
-        == 1
+        report["pre_read_transition"]["obvious_semantic_contract_violation_count"] == 1
     )
     assert (
         report["post_read_oracle_observation"][
@@ -103,3 +100,69 @@ def test_zero_shot_diagnostic_separates_pre_read_and_post_read_failures() -> Non
         ]
         == 1.0
     )
+
+
+def test_zero_shot_diagnostic_downgrades_unverified_effect_proposal() -> None:
+    artifact = {
+        "runs": [
+            {
+                "case_id": "case:strict",
+                "arm": "world_model_guided",
+                "steps": [
+                    {
+                        "observation_id": "node:one",
+                        "pool_before": {
+                            "trajectories": [
+                                {
+                                    "trajectory_id": "trajectory:correct",
+                                    "hypothesis": "answer",
+                                    "belief": {"missing_roles": ["attribute"]},
+                                }
+                            ]
+                        },
+                        "assessments": [
+                            {
+                                "trajectory_id": "trajectory:correct",
+                                "effect": "counterevidence",
+                                "verification": "inconclusive",
+                                "target_binding": "unresolved",
+                                "relation_scope": "indirect",
+                            }
+                        ],
+                        "pool_after": {
+                            "trajectories": [
+                                {
+                                    "trajectory_id": "trajectory:correct",
+                                    "hypothesis": "answer",
+                                    "status": "active",
+                                    "belief": {"missing_roles": ["attribute"]},
+                                }
+                            ]
+                        },
+                        "decision": {"imagined_paths": []},
+                    }
+                ],
+                "realized_labels_evaluator_only": [
+                    {
+                        "observation_id": "node:one",
+                        "observation_outcome": "inconclusive",
+                    }
+                ],
+                "empirical_audit": {
+                    "joint_chain_coverage": {"outcome_retention_rate": None},
+                    "post_read_belief_divergence": {"divergence_rate": 0.0},
+                    "transition_calibration": {"rows": []},
+                },
+                "metrics": {},
+            }
+        ]
+    }
+    report = analyze_zero_shot_artifacts(
+        [artifact],
+        {"cases": [{"case_id": "case:strict", "answer_text": "answer"}]},
+    )
+
+    row = report["post_read_oracle_observation"]["rows"][0]
+    assert row["correct_hypothesis_proposed_effect"] == "counterevidence"
+    assert row["correct_hypothesis_effect"] == "inconclusive"
+    assert row["correct_hypothesis_status_after"] == "active"

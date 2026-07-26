@@ -1,4 +1,9 @@
-# Full-Graph IWM Navigation
+# Full-Graph IWM Navigation (v1 compatibility runtime)
+
+> This directory is retained for historical artifact reproduction. The audit
+> found that its persistent pool represents public answer hypotheses sharing one
+> executed action history, not independently persistent reasoning trajectories.
+> New method work lives in [`../reasoning_v2`](../reasoning_v2/README.md).
 
 This package implements the main reasoning path over a fixed-capacity,
 question-independent video memory. The current layer contract is deliberately
@@ -176,6 +181,16 @@ latent or factor-graph-backed. Exact duplicate hypotheses are structurally
 merged, while tied or incomparable non-equivalent hypotheses remain active.
 Pool size is never controlled by a numeric score or fixed K.
 
+Post-read correction now has a strict two-pass grounding boundary. The first
+categorical pass may only propose a hypothesis effect. A separate blind
+grounding pass must return `same_target + direct + verified` before support,
+counterevidence, completion, role resolution, contradiction updates or
+answerability changes may enter persistent belief. A rejected, indirect,
+different-target or unresolved proposal is reduced to `inconclusive`: the real
+read address, cursor and read budget are retained, while prior semantic belief
+and trajectory lifecycle remain unchanged. This prevents observations about a
+parent object from silently becoming evidence about an unseen subpart.
+
 ```text
 TrajectoryPool + L1/L1.5 graph
   -> all legal hypothesis-conditioned expansions
@@ -222,6 +237,33 @@ TrajectoryPool + L1/L1.5 graph
 - Repeated hypothesis-conditioned outcomes are serialized as exact descriptor
   equivalence classes. Every member alias and hypothesis is retained, so this
   reduces context without Top-K, sampling, or information loss.
+
+## Component isolation and matched-action calibration
+
+`component_isolation.py` builds four planners with one unchanged Planner:
+
+```text
+oracle observation + oracle hypothesis effect
+predicted observation + oracle hypothesis effect
+predicted observation + predicted hypothesis effect
+no world model
+```
+
+The runner fails closed unless hypothesis effects are independently supervised,
+show real within-observation hypothesis divergence, and have grounded Planner
+preferences. Dataset clue overlap is evaluator-only and is never promoted to a
+hypothesis effect. The current v4 corpus has zero independently supervised
+hypothesis effects, so the real four-arm experiment remains blocked rather than
+reporting a synthetic oracle result.
+
+`matched_action_diagnostic.py` retrospectively compares only identical
+`(case, initial belief, legal action)` units. It counts one action once rather
+than once per answer hypothesis and excludes an action from observation-level
+calibration when the old runtime predicts mutually inconsistent observation
+outcomes across hypotheses. Progress and answerability remain separate
+hypothesis-effect channels. Reports include balanced accuracy, categorical
+confusion, over-credit false-discovery rate, scheduler reliance and unsafe
+post-read elimination counts.
 
 ## Components
 

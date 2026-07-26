@@ -220,6 +220,39 @@ Run artifacts are outside the repository at:
 /fs/gamma-projects/vlm-robot/steam_video_runs/iwm_9b_transition_lora_a6000_v3_b2/
 ```
 
+### Corrected v4 observation-first export
+
+`datasets/iwm_grounded_transition_v4/` fixes the failed v3 contract rather than
+retuning its loss. The old 1336 train rows collapse to 194 independent executed
+reads across 31 videos; validation retains 10 representation-complete reads
+across five disjoint videos. Each observation record is hypothesis independent.
+Acquired source/path descriptors and typed entry/temporal/correlation context
+are now visible, while unread targets still expose only a compact
+question-independent semantic key and embedding reference.
+
+GT clue overlap has moved to evaluator-only `clue_acquisition` metadata and is
+not rendered into the SFT target. The 1810 hypothesis candidates remain in a
+separate audit file, but none is training eligible: all 264 executed-read groups
+lack independent hypothesis-effect labels and therefore have zero established
+label divergence. Hypothesis-effect and Planner training remain locked.
+
+The semantic-address copy baseline obtains event accuracy `1.0` but
+entity-set/full-descriptor accuracy `0.0` on the 10-row validation smoke. The
+new observation calibration reports event, entities, states, state change and
+full descriptor separately, plus entry/temporal/correlation and delayed slices.
+A LoRA cannot pass by merely copying the target event name. The v4 dry-run
+loads 194 eligible observation records and performs no training. Materialized
+Qwen embeddings remain referenced for a later projector; the v4 text bridge
+does not claim to consume their values.
+
+Relevant modules are:
+
+- `grounded_runtime_v4.py`;
+- `observation_baseline.py`;
+- `predict_observation_validation.py`;
+- `observation_calibration.py`;
+- `run_observation_lora_a6000.sbatch`.
+
 ## Export the existing data
 
 ```bash
@@ -310,6 +343,20 @@ IWM rich multi-path rollout
 
 This is an engineering verification of the intended control flow. It is not a
 claim that the untrained 9B model has learned useful transition dynamics.
+
+Before any new 9B training, the runtime now separates three contracts:
+
+1. observation prediction is one question-independent executed-read unit;
+2. hypothesis effect requires an independently grounded same-target/direct
+   label and may differ across competing hypotheses;
+3. Planner preference is trained only after the first two channels pass their
+   held-out gates.
+
+The teacher-forced component-isolation interface evaluates oracle/oracle,
+predicted/oracle, predicted/predicted and no-WM arms without changing the
+Planner. Current v4 readiness correctly fails because there are no independent
+hypothesis-effect labels or eligible grounded Planner preferences. Clue overlap
+cannot fill either missing supervision source.
 
 Run the same two-cycle boundary with a real OpenAI-compatible model:
 

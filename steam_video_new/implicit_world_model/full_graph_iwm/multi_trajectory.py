@@ -43,6 +43,25 @@ class EvidenceEffect(str, Enum):
     COMPLETE = "complete"
 
 
+class EvidenceTargetBinding(str, Enum):
+    SAME_TARGET = "same_target"
+    DIFFERENT_TARGET = "different_target"
+    UNRESOLVED = "unresolved"
+
+
+class EvidenceRelationScope(str, Enum):
+    DIRECT = "direct"
+    INDIRECT = "indirect"
+    UNRELATED = "unrelated"
+
+
+class EvidenceVerification(str, Enum):
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+    INCONCLUSIVE = "inconclusive"
+    NOT_REQUIRED = "not_required"
+
+
 EXPANDABLE_STATUSES = {
     TrajectoryStatus.ACTIVE,
     TrajectoryStatus.SUPPORTED,
@@ -169,6 +188,29 @@ class TrajectoryEvidenceAssessment:
     trajectory_id: str
     effect: EvidenceEffect
     rationale: str = ""
+    target_binding: EvidenceTargetBinding = EvidenceTargetBinding.UNRESOLVED
+    relation_scope: EvidenceRelationScope = EvidenceRelationScope.INDIRECT
+    verification: EvidenceVerification = EvidenceVerification.INCONCLUSIVE
+    verification_rationale: str = ""
+
+    @property
+    def effective_effect(self) -> EvidenceEffect:
+        """Return the only lifecycle effect allowed to touch persistent belief.
+
+        Inconclusive evidence is intrinsically non-destructive. Every stronger
+        proposal must pass a separate grounding check that binds the observation
+        to the same target and to the hypothesis's direct claim.
+        """
+
+        if self.effect is EvidenceEffect.INCONCLUSIVE:
+            return EvidenceEffect.INCONCLUSIVE
+        if (
+            self.verification is EvidenceVerification.VERIFIED
+            and self.target_binding is EvidenceTargetBinding.SAME_TARGET
+            and self.relation_scope is EvidenceRelationScope.DIRECT
+        ):
+            return self.effect
+        return EvidenceEffect.INCONCLUSIVE
 
 
 @dataclass(frozen=True)
@@ -515,7 +557,7 @@ def _parse_multi_trajectory_iwm_result(
 
 
 class GPTOSSRealTrajectoryEvidenceAssessor:
-    """Broadcast one real observation to all hypotheses in one categorical call."""
+    """Propose effects, then independently verify direct hypothesis grounding."""
 
     def __init__(self, client: Any) -> None:
         self.client = client
@@ -613,11 +655,144 @@ class GPTOSSRealTrajectoryEvidenceAssessor:
                         )
                     )
                 parsed_by_id = {row.trajectory_id: row for row in parsed}
-                return tuple(parsed_by_id[row.trajectory_id] for row in trajectories)
+                proposals = tuple(
+                    parsed_by_id[row.trajectory_id] for row in trajectories
+                )
+                return self._verify_grounding(
+                    trajectories,
+                    observation,
+                    proposals,
+                )
             except ValueError:
                 if attempt == 1:
                     raise
         raise RuntimeError("unreachable real trajectory assessment repair state")
+
+    def _verify_grounding(
+        self,
+        trajectories: Sequence[ReasoningTrajectory],
+        observation: MemoryNode,
+        proposals: Sequence[TrajectoryEvidenceAssessment],
+    ) -> tuple[TrajectoryEvidenceAssessment, ...]:
+        """Blind second pass; proposals cannot mutate state without acceptance."""
+
+        aliases = {
+            row.trajectory_id: _alphabetic_alias("trajectory", index)
+            for index, row in enumerate(trajectories)
+        }
+        proposal_by_id = {row.trajectory_id: row for row in proposals}
+        proposed = {
+            aliases[row.trajectory_id]: proposal_by_id[row.trajectory_id].effect.value
+            for row in trajectories
+        }
+        if set(proposed.values()) == {EvidenceEffect.INCONCLUSIVE.value}:
+            return tuple(
+                replace(
+                    row,
+                    verification=EvidenceVerification.NOT_REQUIRED,
+                    verification_rationale="inconclusive proposal changes no state",
+                )
+                for row in proposals
+            )
+        payload = {
+            "question": trajectories[0].belief.question,
+            "executed_real_observation": {
+                "text": observation.text,
+                "predicate": observation.metadata.get("predicate"),
+                "action_kind": observation.metadata.get("action_kind"),
+                "participants": observation.metadata.get("participants") or [],
+                "states": observation.metadata.get("states") or [],
+                "state_change": observation.metadata.get("state_change"),
+            },
+            "hypotheses_and_proposed_effects": {
+                aliases[row.trajectory_id]: {
+                    "hypothesis": row.hypothesis,
+                    "proposed_effect": proposed[aliases[row.trajectory_id]],
+                }
+                for row in trajectories
+            },
+            "allowed_target_binding": [value.value for value in EvidenceTargetBinding],
+            "allowed_relation_scope": [value.value for value in EvidenceRelationScope],
+            "allowed_verification": [
+                EvidenceVerification.VERIFIED.value,
+                EvidenceVerification.REJECTED.value,
+                EvidenceVerification.INCONCLUSIVE.value,
+            ],
+            "required_output": {
+                "only_key": "verifications",
+                "verifications": {
+                    alias: {
+                        "target_binding": "one allowed categorical value",
+                        "relation_scope": "one allowed categorical value",
+                        "verification": "one allowed categorical value",
+                        "rationale": "short observation-grounded rationale",
+                    }
+                    for alias in aliases.values()
+                },
+            },
+            "required_contract": {
+                "independent_from_first_pass_rationale": True,
+                "same_target_means_the_exact_queried_entity_or_event": True,
+                "direct_means_the_observation_explicitly_entails_or_refutes_the_claim": True,
+                "attributes_of_a_parent_object_do_not_bind_to_an_unseen_subpart": True,
+                "verified_requires_same_target_and_direct_relation": True,
+                "no_hidden_clue_or_answer_label": True,
+                "no_numeric_reward_score_probability_confidence_or_utility": True,
+            },
+        }
+        for attempt in range(2):
+            result = self.client.complete_json(
+                task=(
+                    "Independently verify whether the executed observation directly "
+                    "binds to each hypothesis claim. Reject attribute, entity, event, "
+                    "or part-whole substitutions. Return categorical grounding only."
+                    if attempt == 0
+                    else "Repair the grounding response to exactly cover every alias."
+                ),
+                payload=payload,
+            )
+            try:
+                if set(result) != {"verifications"} or _contains_number(result):
+                    raise ValueError("trajectory verification schema is invalid")
+                rows = result.get("verifications")
+                if not isinstance(rows, dict) or set(rows) != set(aliases.values()):
+                    raise ValueError("trajectory verification coverage mismatch")
+                trajectory_by_alias = {
+                    alias: trajectory_id for trajectory_id, alias in aliases.items()
+                }
+                verified: dict[str, TrajectoryEvidenceAssessment] = {}
+                for alias, row in rows.items():
+                    if not isinstance(row, dict) or set(row) != {
+                        "target_binding",
+                        "relation_scope",
+                        "verification",
+                        "rationale",
+                    }:
+                        raise ValueError("trajectory verification fields are invalid")
+                    trajectory_id = trajectory_by_alias[alias]
+                    proposal = proposal_by_id[trajectory_id]
+                    binding = EvidenceTargetBinding(str(row["target_binding"]))
+                    scope = EvidenceRelationScope(str(row["relation_scope"]))
+                    verification = EvidenceVerification(str(row["verification"]))
+                    if verification is EvidenceVerification.VERIFIED and (
+                        binding is not EvidenceTargetBinding.SAME_TARGET
+                        or scope is not EvidenceRelationScope.DIRECT
+                    ):
+                        raise ValueError(
+                            "verified effect lacks same-target direct grounding"
+                        )
+                    verified[trajectory_id] = replace(
+                        proposal,
+                        target_binding=binding,
+                        relation_scope=scope,
+                        verification=verification,
+                        verification_rationale=str(row["rationale"] or ""),
+                    )
+                return tuple(verified[row.trajectory_id] for row in trajectories)
+            except (KeyError, ValueError):
+                if attempt == 1:
+                    raise
+        raise RuntimeError("unreachable trajectory verification repair state")
 
 
 def initialize_trajectory_pool(
@@ -742,7 +917,9 @@ def execute_shared_trajectory_action(
         if enriched.video_id != observation.video_id:
             raise ValueError("real evidence reader cannot change the source video ID")
         if enriched.time_span != observation.time_span:
-            raise ValueError("real evidence reader cannot change the executed time span")
+            raise ValueError(
+                "real evidence reader cannot change the executed time span"
+            )
         observation = enriched
     pending: list[
         tuple[
@@ -820,13 +997,21 @@ def execute_shared_trajectory_action(
     updated_by_id = {row.trajectory_id: row for row in untouched}
     for trajectory, belief, action_history, shared_observations in pending:
         assessment = assessment_by_id[trajectory.trajectory_id]
+        effect = assessment.effective_effect
+        if effect is EvidenceEffect.INCONCLUSIVE:
+            belief = _preserve_unverified_belief_semantics(trajectory.belief, belief)
         updated_by_id[trajectory.trajectory_id] = replace(
             trajectory,
             belief=belief,
             action_history=action_history,
             shared_observation_ids=shared_observations,
-            status=_status_after_evidence(assessment.effect),
-            lifecycle_rationale=assessment.rationale,
+            status=_status_after_evidence(trajectory.status, effect),
+            lifecycle_rationale=(
+                assessment.rationale
+                if effect is assessment.effect
+                else assessment.verification_rationale
+                or "proposed effect was not independently grounded"
+            ),
         )
     updated_rows = [updated_by_id[row.trajectory_id] for row in pool.trajectories]
     updated_pool = consolidate_trajectory_pool(
@@ -1010,13 +1195,36 @@ def _share_execution_state(
     )
 
 
-def _status_after_evidence(effect: EvidenceEffect) -> TrajectoryStatus:
+def _status_after_evidence(
+    previous: TrajectoryStatus,
+    effect: EvidenceEffect,
+) -> TrajectoryStatus:
+    if effect is EvidenceEffect.INCONCLUSIVE:
+        return previous
     return {
         EvidenceEffect.SUPPORT: TrajectoryStatus.SUPPORTED,
         EvidenceEffect.COUNTEREVIDENCE: TrajectoryStatus.CONTRADICTED,
-        EvidenceEffect.INCONCLUSIVE: TrajectoryStatus.INCONCLUSIVE,
         EvidenceEffect.COMPLETE: TrajectoryStatus.COMPLETED,
     }[effect]
+
+
+def _preserve_unverified_belief_semantics(
+    previous: CursorBeliefState,
+    structurally_updated: CursorBeliefState,
+) -> CursorBeliefState:
+    """Keep the real read/cursor, but reject unverified semantic correction."""
+
+    return replace(
+        structurally_updated,
+        accepted_relations=previous.accepted_relations,
+        rejected_relations=previous.rejected_relations,
+        unresolved_relations=previous.unresolved_relations,
+        required_roles=previous.required_roles,
+        missing_roles=previous.missing_roles,
+        grounded_role_evidence=previous.grounded_role_evidence,
+        contradictions=previous.contradictions,
+        answerability=previous.answerability,
+    )
 
 
 def _trajectory_signature(trajectory: ReasoningTrajectory) -> tuple[Any, ...]:

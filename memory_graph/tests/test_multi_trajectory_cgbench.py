@@ -22,6 +22,7 @@ from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_cgbenc
     _aggregate,
     _categorical_balanced_accuracy,
     _categorical_false_discovery_rate,
+    _localized_entry_preflight,
     _planner_for_arm,
     run_multi_trajectory_case,
 )
@@ -159,9 +160,7 @@ def test_cgbench_case_uses_public_choices_and_joins_hidden_labels_after_run() ->
 
     assert result["hypothesis_source"] == "public_answer_choices"
     assert result["schema_version"] == "steam-multi-trajectory-closed-loop-run/v0.2"
-    assert result["runtime_contract_version"] == (
-        "steam-multi-trajectory-runtime/v1.0"
-    )
+    assert result["runtime_contract_version"] == ("steam-multi-trajectory-runtime/v1.0")
     assert result["initial_hypothesis_count"] == 2
     assert result["metrics"]["answer_correct"] is True
     assert result["metrics"]["clue_recall"] == 1.0
@@ -256,12 +255,18 @@ def test_inconclusive_entry_localization_preserves_multiple_paths() -> None:
 
         def complete_json(self, *, task, payload):
             del task
-            assert payload["required_contract"][
-                "one_representative_cursor_per_missing_role_or_event_sequence"
-            ] is True
-            assert payload["required_contract"][
-                "do_not_enumerate_temporal_repetitions_of_the_same_event"
-            ] is True
+            assert (
+                payload["required_contract"][
+                    "one_representative_cursor_per_missing_role_or_event_sequence"
+                ]
+                is True
+            )
+            assert (
+                payload["required_contract"][
+                    "do_not_enumerate_temporal_repetitions_of_the_same_event"
+                ]
+                is True
+            )
             aliases = list(payload["candidate_addresses"])
             return {
                 "status": "inconclusive",
@@ -401,6 +406,38 @@ def test_matched_metrics_remain_separate_without_aggregate_reward() -> None:
     assert metrics["answer_accuracy"] == 1.0
     assert metrics["mean_clue_recall"] == 0.5
     assert not ({"reward", "score", "utility", "passed"} & set(metrics))
+
+
+def test_localized_preflight_distinguishes_not_run_from_insufficient() -> None:
+    rows, evaluable = _localized_entry_preflight(
+        {
+            "case:not-run": {},
+            "case:insufficient": {
+                "oracle_clue_ceiling": {
+                    "metrics": {
+                        "clue_coverage_complete": False,
+                        "clue_recall": 0.5,
+                    }
+                }
+            },
+            "case:complete": {
+                "oracle_clue_ceiling": {
+                    "metrics": {
+                        "clue_coverage_complete": True,
+                        "clue_recall": 1.0,
+                    }
+                }
+            },
+        },
+        ("case:not-run", "case:insufficient", "case:complete"),
+    )
+
+    assert [row["status"] for row in rows] == [
+        "not_run",
+        "insufficient_frontier",
+        "complete",
+    ]
+    assert evaluable == ["case:complete"]
 
 
 def test_categorical_calibration_reports_class_balance_and_over_credit() -> None:

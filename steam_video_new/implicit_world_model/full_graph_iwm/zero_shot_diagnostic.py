@@ -7,7 +7,7 @@ from collections import Counter
 import json
 from pathlib import Path
 from statistics import fmean
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from .multi_trajectory_cgbench import _pooled_transition_calibration
 
@@ -19,9 +19,7 @@ def analyze_zero_shot_artifacts(
     artifacts: Sequence[dict[str, Any]],
     hidden_key: dict[str, Any],
 ) -> dict[str, Any]:
-    hidden = {
-        str(row["case_id"]): row for row in hidden_key.get("cases") or ()
-    }
+    hidden = {str(row["case_id"]): row for row in hidden_key.get("cases") or ()}
     runs = [
         run
         for artifact in artifacts
@@ -209,7 +207,11 @@ def _postread_rows(
             "realized_outcome": (
                 realized.get(observation_id, {}).get("observation_outcome")
             ),
-            "correct_hypothesis_effect": assessment.get("effect"),
+            "correct_hypothesis_proposed_effect": assessment.get("effect"),
+            "correct_hypothesis_effect": _effective_assessment(assessment),
+            "effect_verification": assessment.get("verification"),
+            "effect_target_binding": assessment.get("target_binding"),
+            "effect_relation_scope": assessment.get("relation_scope"),
             "correct_hypothesis_status_after": after.get("status"),
             "missing_role_count_decreased": len(after_belief.get("missing_roles") or ())
             < len(before_belief.get("missing_roles") or ()),
@@ -250,6 +252,27 @@ def _postread_summary(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _effective_assessment(assessment: Mapping[str, Any]) -> str | None:
+    effect = assessment.get("effect")
+    if effect == "inconclusive":
+        return "inconclusive"
+    if not assessment:
+        return None
+    if not {
+        "verification",
+        "target_binding",
+        "relation_scope",
+    }.issubset(assessment):
+        return str(effect) if effect is not None else None
+    if (
+        assessment.get("verification") == "verified"
+        and assessment.get("target_binding") == "same_target"
+        and assessment.get("relation_scope") == "direct"
+    ):
+        return str(effect)
+    return "inconclusive"
+
+
 def _normalize(value: Any) -> str:
     return " ".join(str(value or "").casefold().split())
 
@@ -281,7 +304,9 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps({key: report[key] for key in ("runtime_integrity", "qa")}, indent=2))
+    print(
+        json.dumps({key: report[key] for key in ("runtime_integrity", "qa")}, indent=2)
+    )
     return 0
 
 

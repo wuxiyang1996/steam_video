@@ -25,6 +25,8 @@ steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/*.respon
 steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/*.roles.json
 steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/*.log
 outputs/**/*.responses.json
+steam_video_new/implicit_world_model/datasets/iwm_grounded_transition_v4/
+steam_video_new/implicit_world_model/datasets/iwm_runtime_train_collection_v1/multi_trajectory_v1/
 
 # Local CG-Bench materializations; curated files already tracked by Git remain visible.
 steam_video_new/implicit_world_model/datasets/cgbench_grounded_navigation_pilot_v1/

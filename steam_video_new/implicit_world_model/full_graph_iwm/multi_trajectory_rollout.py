@@ -42,10 +42,7 @@ from .multi_trajectory import (
     shared_action_key,
 )
 from .planner import project_imagined_belief
-from .transition_contract import (
-    TransitionContractError,
-    validate_transition_contract,
-)
+from .transition_contract import validate_transition_contract
 
 
 TERMINAL_ACTIONS = {ActionKind.STOP, ActionKind.ANSWER, ActionKind.ABSTAIN}

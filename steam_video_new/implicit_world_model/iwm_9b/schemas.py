@@ -8,8 +8,15 @@ from typing import Any
 
 SCHEMA_VERSION = "steam-iwm-9b-sft/v0.1"
 TRANSITION_TASK = "iwm_transition"
+OBSERVATION_TASK = "iwm_observation_transition"
+HYPOTHESIS_EFFECT_TASK = "iwm_hypothesis_effect"
 PLANNER_TASK = "planner_preference"
-TASKS = {TRANSITION_TASK, PLANNER_TASK}
+TASKS = {
+    TRANSITION_TASK,
+    OBSERVATION_TASK,
+    HYPOTHESIS_EFFECT_TASK,
+    PLANNER_TASK,
+}
 PREFERENCE_LABELS = {
     "prefer_left",
     "prefer_right",

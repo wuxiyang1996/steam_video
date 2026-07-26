@@ -6,6 +6,8 @@ import json
 from typing import Any, Mapping
 
 from .schemas import (
+    HYPOTHESIS_EFFECT_TASK,
+    OBSERVATION_TASK,
     PLANNER_TASK,
     TRANSITION_TASK,
     supervised_target,
@@ -18,6 +20,18 @@ SYSTEM_PROMPTS = {
         "You are an action-conditioned implicit world model. Predict only the "
         "supervised structured future fields. Do not emit reward, utility, "
         "probability, confidence, Q-values, or unseen evidence as fact."
+    ),
+    OBSERVATION_TASK: (
+        "You are an action-conditioned observation world model. Given the "
+        "grounded L1/L1.5 state available before a legal read, predict only "
+        "the compact future observation descriptor. Do not predict dataset "
+        "clue labels, reward, utility, probability, confidence, or Q-values."
+    ),
+    HYPOTHESIS_EFFECT_TASK: (
+        "You are a hypothesis-conditioned belief transition model. Predict "
+        "only independently supervised effects of grounded evidence on the "
+        "given hypothesis. Abstain when the effect is not established. Do not "
+        "emit reward, utility, probability, confidence, or Q-values."
     ),
     PLANNER_TASK: (
         "You are a multi-path reasoning planner. Compare both complete available "

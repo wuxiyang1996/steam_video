@@ -9,6 +9,9 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
     ActionKind,
     CursorBeliefState,
     EvidenceEffect,
+    EvidenceRelationScope,
+    EvidenceTargetBinding,
+    EvidenceVerification,
     GPTOSSMultiTrajectoryIWM,
     GPTOSSRealEvidenceBeliefUpdater,
     GPTOSSRealTrajectoryEvidenceAssessor,
@@ -136,6 +139,9 @@ class _HypothesisAssessor:
                     else EvidenceEffect.COUNTEREVIDENCE
                 ),
                 "categorical grounded assessment",
+                target_binding=EvidenceTargetBinding.SAME_TARGET,
+                relation_scope=EvidenceRelationScope.DIRECT,
+                verification=EvidenceVerification.VERIFIED,
             )
             for trajectory in trajectories
         )
@@ -253,6 +259,7 @@ def test_action_aware_backup_receives_only_executed_real_observation() -> None:
         decision,
         _graph(),
         belief_updater=updater,
+        assessor=_HypothesisAssessor(),
     )
 
     assert len(updater.calls) == 2
@@ -301,6 +308,7 @@ def test_real_belief_correction_is_conditioned_on_each_hypothesis() -> None:
         decision,
         _graph(),
         belief_updater=updater,
+        assessor=_HypothesisAssessor(),
     )
 
     assert updater.hypotheses == [row.hypothesis for row in pool.trajectories]
@@ -338,6 +346,7 @@ def test_gpt_real_updater_receives_hypothesis_and_diverges_beliefs() -> None:
         decision,
         _graph(),
         belief_updater=GPTOSSRealEvidenceBeliefUpdater(client),
+        assessor=_HypothesisAssessor(),
     )
 
     assert [row["trajectory_hypothesis"] for row in client.payloads] == [
@@ -486,11 +495,24 @@ class _RecordingRealAssessmentClient:
     def __init__(self):
         self.calls = 0
         self.payload = None
+        self.proposal_payload = None
 
     def complete_json(self, *, task, payload):
-        del task
         self.calls += 1
         self.payload = payload
+        if "Independently verify" in task:
+            return {
+                "verifications": {
+                    alias: {
+                        "target_binding": "same_target",
+                        "relation_scope": "direct",
+                        "verification": "verified",
+                        "rationale": "the observation directly addresses the claim",
+                    }
+                    for alias in payload["hypotheses_and_proposed_effects"]
+                }
+            }
+        self.proposal_payload = payload
         return {
             "assessments": {
                 alias: {
@@ -517,9 +539,10 @@ def test_real_observation_assessor_updates_all_hypotheses_in_one_call() -> None:
         assessor=GPTOSSRealTrajectoryEvidenceAssessor(client),
     )
 
-    assert client.calls == 1
+    assert client.calls == 2
     assert client.payload is not None
-    assert len(client.payload["competing_trajectories"]) == 2
+    assert client.proposal_payload is not None
+    assert len(client.proposal_payload["competing_trajectories"]) == 2
     assert [row.effect for row in execution.assessments] == [
         EvidenceEffect.SUPPORT,
         EvidenceEffect.COUNTEREVIDENCE,
@@ -528,6 +551,66 @@ def test_real_observation_assessor_updates_all_hypotheses_in_one_call() -> None:
         TrajectoryStatus.SUPPORTED,
         TrajectoryStatus.CONTRADICTED,
     ]
+
+
+class _UnverifiedSemanticCorrection:
+    def update_for_trajectory(
+        self,
+        trajectory_id,
+        hypothesis,
+        previous_belief,
+        structurally_updated_belief,
+        action,
+        observation,
+        graph,
+    ):
+        del trajectory_id, hypothesis, previous_belief, action, observation, graph
+        return replace(
+            structurally_updated_belief,
+            missing_roles=(),
+            contradictions=("model-proposed contradiction",),
+        )
+
+
+class _UnverifiedAssessor:
+    def assess_batch(self, trajectories, observation, corrected_beliefs):
+        del observation, corrected_beliefs
+        return tuple(
+            TrajectoryEvidenceAssessment(
+                row.trajectory_id,
+                EvidenceEffect.COUNTEREVIDENCE,
+                "related attribute was mistaken for the queried subpart",
+                target_binding=EvidenceTargetBinding.UNRESOLVED,
+                relation_scope=EvidenceRelationScope.INDIRECT,
+                verification=EvidenceVerification.INCONCLUSIVE,
+            )
+            for row in trajectories
+        )
+
+
+def test_unverified_effect_cannot_change_persistent_belief_or_lifecycle() -> None:
+    pool = _pool()
+    decision = MultiTrajectoryIWMPlanner(_SharedFirstIWM()).plan(pool, _graph())
+    execution = execute_shared_trajectory_action(
+        pool,
+        decision,
+        _graph(),
+        belief_updater=_UnverifiedSemanticCorrection(),
+        assessor=_UnverifiedAssessor(),
+    )
+
+    for before, after, assessment in zip(
+        pool.trajectories,
+        execution.pool.trajectories,
+        execution.assessments,
+    ):
+        assert assessment.effect is EvidenceEffect.COUNTEREVIDENCE
+        assert assessment.effective_effect is EvidenceEffect.INCONCLUSIVE
+        assert after.status is before.status
+        assert after.belief.missing_roles == before.belief.missing_roles
+        assert after.belief.contradictions == before.belief.contradictions
+        assert after.belief.acquired_evidence == ("l1:first",)
+        assert after.belief.remaining_reads == before.belief.remaining_reads - 1
 
 
 def test_cursor_only_backtrack_does_not_change_other_trajectory_lifecycle() -> None:
