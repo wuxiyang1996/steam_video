@@ -6,6 +6,7 @@ import argparse
 from collections import defaultdict
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
+import hashlib
 from pathlib import Path
 import json
 from statistics import fmean
@@ -33,6 +34,11 @@ from .closed_loop import (
 )
 from .contracts import ActionKind, CursorBeliefState, RetainedEvidenceGraph
 from .gpt_oss import GPTOSSQuestionBeliefInitializer, GPTOSSRealEvidenceBeliefUpdater
+from .information_regimes import (
+    TransitionInputRegime,
+    audit_graph_visibility,
+    visibility_contract,
+)
 from .gtsam_backup import GTSAMMultiTrajectoryBeliefUpdater
 from .localization import GPTOSSEntryLocalizer
 from .multi_trajectory import (
@@ -786,6 +792,9 @@ def run_multi_trajectory_matched_pilot(
     belief_backend: str = "latent",
     real_evidence_reader: Any | None = None,
     evidence_sufficiency_evaluator: Any | None = None,
+    iwm_input_regime: TransitionInputRegime | str = (
+        TransitionInputRegime.SEMANTIC_ADDRESS
+    ),
 ) -> dict[str, Any]:
     if not gate.get("gate_passed"):
         raise ValueError("CG-Bench compile gate did not pass")
@@ -801,6 +810,7 @@ def run_multi_trajectory_matched_pilot(
         raise ValueError("unsupported multi-trajectory matched arm")
     if belief_backend not in {"latent", "gtsam_backup", "gtsam_always"}:
         raise ValueError("unknown multi-trajectory belief backend")
+    input_regime = TransitionInputRegime(iwm_input_regime)
     public_by_case = {str(row["case_id"]): row for row in dataset.get("cases") or []}
     hidden_by_case = {str(row["case_id"]): row for row in hidden_key.get("cases") or []}
     requested_ids = set(case_ids)
@@ -823,6 +833,8 @@ def run_multi_trajectory_matched_pilot(
     runs: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     method_failures: list[dict[str, str]] = []
+    visibility_audits: list[dict[str, Any]] = []
+    initial_role_fingerprints: list[dict[str, str]] = []
     for case_id in selected:
         public = public_by_case[case_id]
         hidden = hidden_by_case[case_id]
@@ -839,6 +851,13 @@ def run_multi_trajectory_matched_pilot(
             capacity=capacity,
             include_caption_candidates=include_caption_candidates,
         )
+        visibility_audit = {
+            "case_id": case_id,
+            **audit_graph_visibility(graph, input_regime),
+        }
+        visibility_audits.append(visibility_audit)
+        if visibility_audit["leakage_detected"]:
+            raise ValueError(f"IWM input visibility leakage detected for {case_id}")
         expected_fingerprint = next(
             row["graph_fingerprint"]
             for row in gate["cases"]
@@ -853,10 +872,22 @@ def run_multi_trajectory_matched_pilot(
         if not choices:
             raise ValueError(f"public choices are missing for {case_id}")
         roles: tuple[str, ...] = ()
+        role_fingerprint: str | None = None
         entry_node_ids: tuple[str, ...] = ()
         entry_failure: str | None = None
         try:
             roles = initializer.initialize(question)
+            role_fingerprint = hashlib.sha256(
+                json.dumps(
+                    list(roles), ensure_ascii=False, separators=(",", ":")
+                ).encode("utf-8")
+            ).hexdigest()
+            initial_role_fingerprints.append(
+                {
+                    "case_id": case_id,
+                    "fingerprint": role_fingerprint,
+                }
+            )
             entry_node_ids = entry_localizer.localize(
                 question=question,
                 missing_roles=roles,
@@ -907,6 +938,7 @@ def run_multi_trajectory_matched_pilot(
                         client,
                         transition_batch_size=transition_batch_size,
                         comparison_batch_size=comparison_batch_size,
+                        input_regime=input_regime,
                     )
                     planner = (
                         _FailClosedMultiTrajectoryPlanner()
@@ -958,6 +990,7 @@ def run_multi_trajectory_matched_pilot(
                             planner, "last_complete_coverage_audit", {}
                         ),
                         "transport": model.transport_audits,
+                        "transition_contract": model.transition_contract_audits,
                         "top_k_applied": False,
                         "belief_backend": belief_backend,
                         "gtsam_audit": list(getattr(updater, "audit_records", ())),
@@ -966,6 +999,7 @@ def run_multi_trajectory_matched_pilot(
                         )[reread_audit_start:],
                         "entry_localization": entry_localizer.audits[-1],
                         "entry_localization_failure": entry_failure,
+                        "initial_role_fingerprint": role_fingerprint,
                     }
                 if run["graph_fingerprint"] != expected_fingerprint:
                     raise ValueError("matched arm mutated the retained graph")
@@ -1062,6 +1096,7 @@ def run_multi_trajectory_matched_pilot(
             "gtsam_is_optional_and_never_ranks_actions": True,
             "same_entry_localization_across_model_backed_arms": True,
             "hidden_evidence_sufficiency_evaluator_is_uncached_and_posthoc": True,
+            "iwm_input_visibility": visibility_contract(input_regime),
         },
         "runs": runs,
         "errors": errors,
@@ -1080,6 +1115,19 @@ def run_multi_trajectory_matched_pilot(
             "purpose": "separate navigation quality from unreachable evidence",
         },
         "action_divergence": divergences,
+        "input_visibility_audits": visibility_audits,
+        "initial_role_fingerprints": initial_role_fingerprints,
+        "response_cache_audit": {
+            "available": isinstance(client, PersistentCategoricalResponseCacheClient),
+            "hit_count": sum(
+                row.get("cache_hit") is True
+                for row in getattr(client, "response_audits", ())
+            ),
+            "miss_count": sum(
+                row.get("cache_hit") is False
+                for row in getattr(client, "response_audits", ())
+            ),
+        },
         "training_performed": False,
     }
 
@@ -1376,6 +1424,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="latent",
     )
     parser.add_argument(
+        "--iwm-input-regime",
+        choices=tuple(value.value for value in TransitionInputRegime),
+        default=TransitionInputRegime.SEMANTIC_ADDRESS.value,
+        help=(
+            "Pre-read transition input. rich_question_independent exposes the "
+            "frozen L1 descriptor but never hidden clues, answers, or post-read "
+            "VLM observations."
+        ),
+    )
+    parser.add_argument(
         "--real-evidence-reread-artifact",
         type=Path,
         help=(
@@ -1465,6 +1523,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.real_evidence_reread_artifact is not None
             else None
         ),
+        iwm_input_regime=args.iwm_input_regime,
     )
     result["compile_gate"] = gate
     _write_json(args.output, result)

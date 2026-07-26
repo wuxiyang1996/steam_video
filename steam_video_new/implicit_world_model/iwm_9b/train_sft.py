@@ -14,6 +14,7 @@ from typing import Any
 
 from .schemas import PLANNER_TASK, TASKS, validate_sft_record
 from .serialization import render_sft_example
+from .peft_compat import disable_incompatible_unused_torchao_dispatch
 
 
 def load_training_records(path: Path, task: str) -> list[dict[str, Any]]:
@@ -115,6 +116,7 @@ def train_lora(
         torch_dtype="auto",
     )
     model.config.use_cache = False
+    torchao_dispatch_disabled = disable_incompatible_unused_torchao_dispatch(model)
     model = get_peft_model(
         model,
         LoraConfig(
@@ -179,6 +181,7 @@ def train_lora(
         "adapter_kind": f"{task}_adapter",
         "max_length": max_length,
         "train_metrics": dict(result.metrics),
+        "incompatible_unused_torchao_dispatch_disabled": torchao_dispatch_disabled,
         "training_performed": True,
     }
     (output_dir / "training_report.json").write_text(

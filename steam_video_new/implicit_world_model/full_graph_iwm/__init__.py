@@ -51,6 +51,11 @@ from .gpt_oss import (
 from .gtsam_backup import GTSAMMultiTrajectoryBeliefUpdater
 from .localization import GPTOSSEntryLocalizer
 from .local_choice_data import build_grounded_local_choice_packet
+from .information_regimes import (
+    TransitionInputRegime,
+    audit_graph_visibility,
+    visibility_contract,
+)
 from .model_input import build_iwm_graph_input
 from .multi_trajectory import (
     DirectMultiTrajectoryIWM,
@@ -104,6 +109,13 @@ from .transition_cache import (
     PersistentCategoricalResponseCacheClient,
     PersistentQuestionRoleCache,
     PersistentTransitionCacheWorldModel,
+)
+from .transition_contract import (
+    TransitionContractError,
+    TransitionContractReport,
+    inspect_transition_contract,
+    projected_answerability,
+    validate_transition_contract,
 )
 
 __all__ = [
@@ -169,6 +181,9 @@ __all__ = [
     "ReactiveMultiTrajectoryPlanner",
     "REREAD_SCHEMA",
     "TemporalNavigationEdge",
+    "TransitionContractError",
+    "TransitionContractReport",
+    "TransitionInputRegime",
     "TrajectoryPrediction",
     "TrajectoryEvidenceAssessment",
     "TrajectoryExpansion",
@@ -178,6 +193,7 @@ __all__ = [
     "ShuffledHypothesisWorldModel",
     "action_divergence",
     "audit_permutation_invariance",
+    "audit_graph_visibility",
     "augment_graph_with_caption_candidates",
     "build_iwm_graph_input",
     "build_node_reread_artifact",
@@ -192,9 +208,13 @@ __all__ = [
     "execute_shared_trajectory_action",
     "graph_fingerprint",
     "initialize_trajectory_pool",
+    "inspect_transition_contract",
     "propose_caption_candidate_overlay",
+    "projected_answerability",
     "run_oracle_clue_ceiling",
     "run_multi_trajectory_closed_loop",
     "run_real_read_closed_loop",
     "shared_action_key",
+    "validate_transition_contract",
+    "visibility_contract",
 ]

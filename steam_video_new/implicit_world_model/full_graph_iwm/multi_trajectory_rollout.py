@@ -31,6 +31,10 @@ from .contracts import (
     RetainedEvidenceGraph,
 )
 from .model_input import build_iwm_graph_input
+from .information_regimes import (
+    TransitionInputRegime,
+    transition_action_payload,
+)
 from .multi_trajectory import (
     MultiTrajectoryPlanDecision,
     TrajectoryExpansion,
@@ -38,6 +42,10 @@ from .multi_trajectory import (
     shared_action_key,
 )
 from .planner import project_imagined_belief
+from .transition_contract import (
+    TransitionContractError,
+    validate_transition_contract,
+)
 
 
 TERMINAL_ACTIONS = {ActionKind.STOP, ActionKind.ANSWER, ActionKind.ABSTAIN}
@@ -583,6 +591,9 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         *,
         transition_batch_size: int = 1,
         comparison_batch_size: int = 24,
+        input_regime: TransitionInputRegime | str = (
+            TransitionInputRegime.SEMANTIC_ADDRESS
+        ),
     ) -> None:
         if transition_batch_size < 1 or comparison_batch_size < 1:
             raise ValueError("transport batch sizes must be positive")
@@ -590,10 +601,12 @@ class GPTOSSCategoricalMultiTrajectoryModel:
         self.model_name = str(getattr(client, "model", "openai/gpt-oss-120b"))
         self.transition_batch_size = transition_batch_size
         self.comparison_batch_size = comparison_batch_size
+        self.input_regime = TransitionInputRegime(input_regime)
         self.transport_audits: list[dict[str, Any]] = []
         self._transition_sequence_normalizations = 0
         self._comparison_sequence_normalizations = 0
         self._transition_adaptive_splits = 0
+        self.transition_contract_audits: list[dict[str, Any]] = []
 
     def predict_batch(
         self,
@@ -638,6 +651,7 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                     self._transition_adaptive_splits - split_start
                 ),
                 "top_k_applied": False,
+                "input_regime": self.input_regime.value,
             }
         )
         return ordered_predictions
@@ -784,6 +798,7 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                     representative.action,
                     representative.belief,
                     graph,
+                    self.input_regime,
                 ),
                 "conditioned_requests": {
                     alias_by_request[request.request_id]: (
@@ -848,10 +863,25 @@ class GPTOSSCategoricalMultiTrajectoryModel:
             "the target read will be empty. Do not select an action and do not emit "
             "numbers."
         )
+        repair_feedback: list[str] = []
         for attempt in range(2):
+            request_payload = (
+                payload
+                if attempt == 0
+                else {
+                    **payload,
+                    "repair_feedback": {
+                        "previous_response_violations": repair_feedback,
+                        "instruction": (
+                            "Repair every listed semantic inconsistency; do not "
+                            "make an optimistic replacement."
+                        ),
+                    },
+                }
+            )
             result = self.client.complete_json(
                 task=(task if attempt == 0 else _TRANSITION_REPAIR_TASK),
-                payload=payload,
+                payload=request_payload,
             )
             try:
                 if not isinstance(result, dict) or _contains_number(result):
@@ -873,14 +903,54 @@ class GPTOSSCategoricalMultiTrajectoryModel:
                     context="categorical transition",
                 )
                 self._transition_sequence_normalizations += int(normalized)
-                return tuple(
-                    _parse_transition(aliases[alias], rows[alias], graph)
-                    for alias in aliases
+                parsed_rows: list[ImaginedTransition] = []
+                failed_closed: list[dict[str, str]] = []
+                for alias, request in aliases.items():
+                    try:
+                        parsed_rows.append(
+                            _parse_transition(request, rows[alias], graph)
+                        )
+                    except (TypeError, ValueError) as exc:
+                        if attempt == 0:
+                            raise
+                        # A single persistently invalid conditioned row must not
+                        # erase every legal action and every hypothesis in its
+                        # transport batch. Preserve its action identity with a
+                        # conservative neutral consequence and record the exact
+                        # failure for calibration.
+                        parsed_rows.append(_neutral_transition(request))
+                        failed_closed.append(
+                            {"request_id": request.request_id, "violation": str(exc)}
+                        )
+                parsed = tuple(parsed_rows)
+                self.transition_contract_audits.append(
+                    {
+                        "request_count": len(parsed),
+                        "repair_required": attempt == 1,
+                        "initial_violations": repair_feedback,
+                        "failed_closed_rows": failed_closed,
+                        "failed_closed_row_count": len(failed_closed),
+                        "status": (
+                            "valid_with_neutral_failed_closed_rows"
+                            if failed_closed
+                            else "valid"
+                        ),
+                    }
                 )
+                return parsed
             except (TypeError, ValueError) as exc:
                 if "finish_reason=length" in str(exc):
                     raise
+                repair_feedback = [str(exc)]
                 if attempt == 1:
+                    self.transition_contract_audits.append(
+                        {
+                            "request_count": len(requests),
+                            "repair_required": True,
+                            "initial_violations": repair_feedback,
+                            "status": "failed_closed",
+                        }
+                    )
                     raise
         raise RuntimeError("unreachable categorical transition repair state")
 
@@ -1392,6 +1462,7 @@ def _undominated_paths(
 def _transition_request_payload(
     request: HypothesisExpansionRequest,
     graph: RetainedEvidenceGraph,
+    input_regime: TransitionInputRegime = TransitionInputRegime.SEMANTIC_ADDRESS,
 ) -> dict[str, Any]:
     return {
         "question": request.belief.question,
@@ -1405,6 +1476,7 @@ def _transition_request_payload(
             request.action,
             request.belief,
             graph,
+            input_regime,
         ),
         "imagined_prefix": [
             _transition_descriptor(row, graph) for row in request.imagined_history
@@ -1457,23 +1529,9 @@ def _transition_action_payload(
     action: LegalGraphAction,
     belief: CursorBeliefState,
     graph: RetainedEvidenceGraph,
+    input_regime: TransitionInputRegime = TransitionInputRegime.SEMANTIC_ADDRESS,
 ) -> dict[str, Any]:
-    graph_input = build_iwm_graph_input(belief, graph, (action,))
-    target = next(
-        (row for row in graph_input.nodes if row.key.node_id == action.target_id),
-        None,
-    )
-    return {
-        "kind": action.kind.value,
-        "relation": action.relation,
-        "target_semantic_key": target.key.semantic_key if target else None,
-        "target_structural_tags": list(target.key.structural_tags) if target else [],
-        "target_time_span": (
-            {"start_s": target.key.start_s, "end_s": target.key.end_s}
-            if target
-            else None
-        ),
-    }
+    return transition_action_payload(action, belief, graph, input_regime)
 
 
 def _transition_condition_payload(
@@ -1525,7 +1583,7 @@ def _parse_transition(
     resolved = tuple(role for role in resolved if role in currently_missing)
     opened = _strings(row.get("opened_roles"), "opened_roles")
     relation_updates = _strings(row.get("relation_updates"), "relation_updates")
-    return ImaginedTransition(
+    transition = ImaginedTransition(
         action=request.action,
         observation=PredictedObservation(
             target_id=request.action.target_id,
@@ -1546,6 +1604,8 @@ def _parse_transition(
             relation_updates=relation_updates,
         ),
     )
+    validate_transition_contract(request.belief, transition)
+    return transition
 
 
 def _path_payload(
@@ -1693,7 +1753,10 @@ _TRANSITION_REPAIR_TASK = (
     "schema and cover every prediction alias. For each conditioned request, "
     "resolved_roles may contain only exact strings copied verbatim from that "
     "request's belief.missing_roles; do not rephrase, shorten, or invent role "
-    "names. Emit no numeric values."
+    "names. An empty or inconclusive observation cannot resolve roles, advance "
+    "progress, resolve a contradiction, or make the belief ready. The declared "
+    "answerability must agree with the projected missing roles, contradictions, "
+    "and evidence lineage. Emit no numeric values."
 )
 
 _SCHEDULER_REPAIR_TASK = (

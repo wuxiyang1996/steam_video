@@ -1,0 +1,18 @@
+{
+  "schema_version": "steam-question-role-cache/v0.1",
+  "model": "qwen/qwen3.6-flash",
+  "question_text_stored": false,
+  "hidden_clue_or_answer_used": false,
+  "training_performed": false,
+  "entry_count": 1,
+  "entries": {
+    "3100a254ccd394943f1a52d3e10ea4b5e5e94e265238611291f401d30750f7a4": {
+      "question_sha256": "196b5d89038107e1ba2b03dc28cc9e47cd7fffab13339e562fab402010584c12",
+      "missing_roles": [
+        "victim_medical_state",
+        "rescuer_intervention",
+        "causal_motivation"
+      ]
+    }
+  }
+}

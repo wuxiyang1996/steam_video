@@ -1,0 +1,1756 @@
+{
+  "schema_version": "steam-categorical-response-cache/v0.1",
+  "model": "qwen/qwen3.6-flash",
+  "request_payload_stored": false,
+  "hidden_clue_or_answer_used": false,
+  "numeric_reward_present": false,
+  "training_performed": false,
+  "entry_count": 26,
+  "entries": {
+    "441a00c077f4a775055938aa4618ec852f501835c9efa0092b111e9b9398db17": {
+      "request_sha256": "441a00c077f4a775055938aa4618ec852f501835c9efa0092b111e9b9398db17",
+      "response": {
+        "assessments": {
+          "trajectory_a": {
+            "effect": "inconclusive",
+            "rationale": "The observation only records a fall and lacks context regarding instructional intent, making it inconclusive for a first aid demonstration."
+          },
+          "trajectory_b": {
+            "effect": "inconclusive",
+            "rationale": "The observation captures a fall but provides no details about training environments or structured exercises, leaving the hypothesis inconclusive."
+          },
+          "trajectory_c": {
+            "effect": "inconclusive",
+            "rationale": "The observation merely notes a fall without visual cues of staging or performance elements, rendering the hypothesis inconclusive."
+          },
+          "trajectory_d": {
+            "effect": "inconclusive",
+            "rationale": "The observation provides no evidence of rehearsal markers such as pauses or director cues, making it inconclusive for a rehearsal."
+          },
+          "trajectory_e": {
+            "effect": "inconclusive",
+            "rationale": "The observation shows a fall but does not specify whether the subsequent actions are part of a practiced rescue scenario, resulting in an inconclusive assessment."
+          },
+          "trajectory_f": {
+            "effect": "inconclusive",
+            "rationale": "The observation records a fall but lacks indicators of an organized emergency drill, such as official personnel or drill protocols, making it inconclusive."
+          }
+        }
+      }
+    },
+    "449d6a7c0410b42eb80cb7426fb5559168dd7f3e3a4b2595d3e6bd4159febe09": {
+      "request_sha256": "449d6a7c0410b42eb80cb7426fb5559168dd7f3e3a4b2595d3e6bd4159febe09",
+      "response": {
+        "predictions": [
+          {
+            "prediction": "prediction_a",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_b",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_c",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_d",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_e",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_f",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_g",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_h",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_i",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_j",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_k",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          },
+          {
+            "prediction": "prediction_l",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "The presence of camouflage uniforms and a laughing observer indicates a controlled training environment rather than a genuine emergency, supporting the hypothesis that the artificial respiration was part of a drill or exercise."
+          }
+        ]
+      }
+    },
+    "47af404be64c22ef5db55c01a3d0c40d09bd80a3d3c5fa101762527f159a2dc6": {
+      "request_sha256": "47af404be64c22ef5db55c01a3d0c40d09bd80a3d3c5fa101762527f159a2dc6",
+      "response": {
+        "predictions": {
+          "prediction_a": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_b": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_c": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_d": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_e": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_f": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_g": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_h": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_i": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_j": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_k": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_l": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_m": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_n": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_o": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_p": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_q": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          },
+          "prediction_r": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypotheses; prediction remains unverified."
+          }
+        }
+      }
+    },
+    "51eb764ae9a78cf10d1fe04df53a9e0f5fe6bf08725adb611e1d6f40876c0313": {
+      "request_sha256": "51eb764ae9a78cf10d1fe04df53a9e0f5fe6bf08725adb611e1d6f40876c0313",
+      "response": {
+        "missing_roles": [
+          "victim_medical_state",
+          "rescuer_intervention",
+          "causal_motivation"
+        ],
+        "rationale": "To determine why a specific medical intervention occurred, the system must ground the recipient's physiological condition that created the necessity, confirm the performer executed the intervention, and establish the direct causal link explaining the motivation. These categorical roles isolate the required evidence types without providing specific answers or referencing graph nodes."
+      }
+    },
+    "564b2998110f47ffb50340fea6f43c28e802f140b1b3ad4fc46707975167c48d": {
+      "request_sha256": "564b2998110f47ffb50340fea6f43c28e802f140b1b3ad4fc46707975167c48d",
+      "response": {
+        "resolved_roles": [],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation documents a falling motion event. It does not directly ground the missing roles rescuer_intervention or causal_motivation. Therefore, no roles are resolved. The event aligns with the rehearsal hypothesis, maintaining the unchanged contradiction status."
+      }
+    },
+    "630a874b413342d7efc3c278e3ea23b273ed48d34cadab97de80ef7d754d0cc9": {
+      "request_sha256": "630a874b413342d7efc3c278e3ea23b273ed48d34cadab97de80ef7d754d0cc9",
+      "response": {
+        "predictions": [
+          {
+            "prediction": "prediction_a",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_b",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_c",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_d",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_e",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_f",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_g",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_h",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_i",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_j",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_k",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_l",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_m",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_n",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_o",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_p",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_q",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_r",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_s",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_t",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_u",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_v",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_w",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          },
+          {
+            "prediction": "prediction_x",
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence to evaluate hypothesis."
+          }
+        ]
+      }
+    },
+    "6bf56f223647b9f958fa83ccfc0418b02fb8b832b56d16e93dec9d491543cb36": {
+      "request_sha256": "6bf56f223647b9f958fa83ccfc0418b02fb8b832b56d16e93dec9d491543cb36",
+      "response": {
+        "predictions": {
+          "prediction_a": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_b": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_c": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_d": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_e": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_f": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_g": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_h": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_i": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_j": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_k": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          },
+          "prediction_l": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "No acquired evidence provided to resolve missing roles or advance the belief state."
+          }
+        }
+      }
+    },
+    "6fbc6b3de61dab12bde0960137fe031fd5f9a97ee1b5fbeff90a229f0e587279": {
+      "request_sha256": "6fbc6b3de61dab12bde0960137fe031fd5f9a97ee1b5fbeff90a229f0e587279",
+      "response": {
+        "resolved_roles": [
+          "causal_motivation"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' establishes the precipitating event that necessitates medical attention, thereby directly grounding the 'causal_motivation' role. It does not depict the rescuer's actions, so 'rescuer_intervention' remains unresolved. No contradictions are introduced or resolved."
+      }
+    },
+    "7cdf035a766b1ad48d7ff9ebbd62a64631ac8adfa0dd6f8d437808f864d612c9": {
+      "request_sha256": "7cdf035a766b1ad48d7ff9ebbd62a64631ac8adfa0dd6f8d437808f864d612c9",
+      "response": {
+        "resolved_roles": [
+          "victim_medical_state"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation of a person falling directly establishes the victim's initial medical state, providing the necessary context for the subsequent rescue intervention."
+      }
+    },
+    "7fce11871a2e3ba18d61f3766ca499cd7602e6caeb9b365ecb8343bd79875b09": {
+      "request_sha256": "7fce11871a2e3ba18d61f3766ca499cd7602e6caeb9b365ecb8343bd79875b09",
+      "response": {
+        "resolved_roles": [
+          "victim_medical_state"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation 'person_falls' directly grounds the victim_medical_state role by establishing the incident that necessitated medical attention. It does not provide evidence for the rescuer_intervention role, which remains missing. No contradictions are introduced."
+      }
+    },
+    "848731674506714a971fe30c7efdb4d8ba1b698b3b82e3207c968b1c1c340ff9": {
+      "request_sha256": "848731674506714a971fe30c7efdb4d8ba1b698b3b82e3207c968b1c1c340ff9",
+      "response": {
+        "status": "select",
+        "selected": "evidence_action_c",
+        "rationale": "Observing the initial trigger event establishes the narrative context and physical cues that differentiate a staged or rehearsed fall from a genuine medical emergency, thereby unlocking the next step to confirm the specific nature of the scenario."
+      }
+    },
+    "84902521506129fa81cbbe1513edbc9813be6dbd7c5f797a8e76b247fed58bd9": {
+      "request_sha256": "84902521506129fa81cbbe1513edbc9813be6dbd7c5f797a8e76b247fed58bd9",
+      "response": {
+        "resolved_roles": [],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' describes a motion event but does not directly ground the missing roles 'rescuer_intervention' or 'causal_motivation' as it lacks explicit evidence of the rescuer's actions or the specific motivation context."
+      }
+    },
+    "8e04d7e8a65d506a3e929d47aa1e336c05d2c296ad6ba14d263429f861936f8b": {
+      "request_sha256": "8e04d7e8a65d506a3e929d47aa1e336c05d2c296ad6ba14d263429f861936f8b",
+      "response": {
+        "predictions": {
+          "prediction_a": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_b": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_c": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_d": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_e": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_f": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_g": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_h": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_i": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_j": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_k": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_l": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_m": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_n": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_o": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_p": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_q": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_r": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_s": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_t": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_u": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_v": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_w": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          },
+          "prediction_x": {
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "victim_medical_state",
+              "rescuer_intervention",
+              "causal_motivation"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Uniformed personnel and structured maneuvers indicate a formal training exercise."
+          }
+        }
+      }
+    },
+    "9536125817daed335664925a8e8796c8ea8a9507c9d56167d38b00efcf571f4f": {
+      "request_sha256": "9536125817daed335664925a8e8796c8ea8a9507c9d56167d38b00efcf571f4f",
+      "response": {
+        "assessments": {
+          "trajectory_a": {
+            "effect": "inconclusive",
+            "rationale": "The observation records a fall but provides no context to determine if the artificial respiration was for a first aid demonstration."
+          },
+          "trajectory_b": {
+            "effect": "inconclusive",
+            "rationale": "A fall is consistent with a training exercise, but the observation lacks specific markers to confirm this context over others."
+          },
+          "trajectory_c": {
+            "effect": "inconclusive",
+            "rationale": "The recorded fall could occur in a staged performance, yet the evidence does not verify the staged nature of the event."
+          },
+          "trajectory_d": {
+            "effect": "inconclusive",
+            "rationale": "The fall might be part of a rehearsal, but the observation provides no details to distinguish rehearsal from other simulated scenarios."
+          },
+          "trajectory_e": {
+            "effect": "inconclusive",
+            "rationale": "The observation documents a fall but does not indicate whether the situation involves a practiced rescue scenario."
+          },
+          "trajectory_f": {
+            "effect": "inconclusive",
+            "rationale": "While a fall could initiate an emergency drill, the observation lacks drill-specific indicators to support this hypothesis."
+          }
+        }
+      }
+    },
+    "ab3af31e31b1ae8febba661eb4eaeefd33a2b169dc19c466358f2319877bc833": {
+      "request_sha256": "ab3af31e31b1ae8febba661eb4eaeefd33a2b169dc19c466358f2319877bc833",
+      "response": {
+        "status": "located",
+        "preferred": {
+          "victim_medical_state": "anchor_aw",
+          "rescuer_intervention": "anchor_bc",
+          "causal_motivation": "anchor_bh"
+        },
+        "rationale": "The addresses anchor_bh, anchor_aw, and anchor_bc directly correspond to the onset of the incident, the victim's supine state, and the rescuer's intervention, respectively. They establish a minimal, nonredundant frontier for the missing roles without enumerating subsequent temporal repetitions."
+      }
+    },
+    "b3cb3debe27a382d2b4e0d1bd3570c597147caf4f2745824c8f7731b55d83c93": {
+      "request_sha256": "b3cb3debe27a382d2b4e0d1bd3570c597147caf4f2745824c8f7731b55d83c93",
+      "response": {
+        "resolved_roles": [
+          "victim_medical_state"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' directly establishes the victim's condition, grounding the 'victim_medical_state' role. It does not provide evidence regarding the rescuer's specific intervention or the underlying causal motivation, leaving those roles unresolved. No contradictions are introduced."
+      }
+    },
+    "b839112bf6d02097db2c0a5d133631306cf77e707b973d33a6fa74505e887866": {
+      "request_sha256": "b839112bf6d02097db2c0a5d133631306cf77e707b973d33a6fa74505e887866",
+      "response": {
+        "predictions": [
+          {
+            "prediction_a": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_b": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_c": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_d": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_e": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_f": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_g": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_h": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_i": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_j": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_k": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_l": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_m": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_n": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_o": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_p": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_q": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_r": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_s": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_t": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_u": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_v": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_w": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          },
+          {
+            "prediction_x": {
+              "outcome": "inconclusive",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence to confirm or refute the hypothesis; context remains ambiguous."
+            }
+          }
+        ]
+      }
+    },
+    "b87e9e4b8e6b559ed2dacca4950d2598e9181aad8049b24d434447f37015cdff": {
+      "request_sha256": "b87e9e4b8e6b559ed2dacca4950d2598e9181aad8049b24d434447f37015cdff",
+      "response": {
+        "resolved_roles": [
+          "victim_medical_state"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' directly establishes the physical condition of the individual, grounding the 'victim_medical_state' role. It does not provide direct evidence regarding the rescuer's specific actions or the underlying motivation, so those roles remain unresolved. The trajectory hypothesis remains consistent with the observed event."
+      }
+    },
+    "ba65d9e6bf776f12b0d80358f600a8bec6e106fbe2f8deb017d143c609d4d466": {
+      "request_sha256": "ba65d9e6bf776f12b0d80358f600a8bec6e106fbe2f8deb017d143c609d4d466",
+      "response": {
+        "status": "tie",
+        "preferred": [
+          "chain_a",
+          "chain_b",
+          "chain_c"
+        ],
+        "rationale": "All candidate chains present identical competing hypotheses and lack acquired evidence or divergent reasoning steps to differentiate them. The variation in initial semantic keys does not alter the explanatory content, rendering the chains functionally equivalent."
+      }
+    },
+    "c0168bcbbe839929eeeb2873469a2764b497732ded24aa5c826eb0e916fd36bb": {
+      "request_sha256": "c0168bcbbe839929eeeb2873469a2764b497732ded24aa5c826eb0e916fd36bb",
+      "response": {
+        "resolved_roles": [],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' describes the initial incident but does not directly ground the missing roles 'rescuer_intervention' or 'causal_motivation' in the context of the practice scenario hypothesis. Consequently, no roles are resolved or newly exposed, and the contradiction status remains unchanged."
+      }
+    },
+    "c4964993d87bcd2b49a93edfd0de4c19e0d73c3241fac0875898952e4ce39321": {
+      "request_sha256": "c4964993d87bcd2b49a93edfd0de4c19e0d73c3241fac0875898952e4ce39321",
+      "response": {
+        "resolved_roles": [
+          "victim_medical_state"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation 'person_falls' directly establishes the victim's physical condition, thereby grounding the 'victim_medical_state' role. The other missing roles are not addressed by this specific observation."
+      }
+    },
+    "dda37657de47fc8612b79a4b082816482694d8bc1f427bda889ca2ab3565ecad": {
+      "request_sha256": "dda37657de47fc8612b79a4b082816482694d8bc1f427bda889ca2ab3565ecad",
+      "response": {
+        "resolved_roles": [
+          "causal_motivation"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation of a person falling directly grounds the causal motivation for the artificial respiration, as the fall is the precipitating event necessitating the intervention. It provides no information regarding a training exercise, leaving the contradiction status unchanged."
+      }
+    },
+    "e289caff325107cef569d5c031bdb0d17537cd213a3a81ec5ae806c5fe7620e7": {
+      "request_sha256": "e289caff325107cef569d5c031bdb0d17537cd213a3a81ec5ae806c5fe7620e7",
+      "response": {
+        "resolved_roles": [
+          "victim_medical_state"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' directly grounds the 'victim_medical_state' role by establishing the initial incident requiring attention. The roles 'rescuer_intervention' and 'causal_motivation' are not directly evidenced by this specific observation node."
+      }
+    },
+    "eaf862a601a2c44348cec1152bbb6c358d7a0ba8fe57f2eef021cca83e82f457": {
+      "request_sha256": "eaf862a601a2c44348cec1152bbb6c358d7a0ba8fe57f2eef021cca83e82f457",
+      "response": {
+        "status": "abstain",
+        "choice": null,
+        "rationale": "The acquired evidence only indicates a person falling, and all reasoning trajectories are marked as inconclusive due to missing critical roles such as rescuer intervention and causal motivation. Consequently, no choice is sufficiently supported by the real evidence."
+      }
+    },
+    "eff611e9ced635ea99921b26f9c427dc33d4474745b7d07337e7efe0006c8c5a": {
+      "request_sha256": "eff611e9ced635ea99921b26f9c427dc33d4474745b7d07337e7efe0006c8c5a",
+      "response": {
+        "resolved_roles": [],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_falls' documents a motion event but does not directly ground the missing categorical roles 'rescuer_intervention' or 'causal_motivation'. Consequently, no roles are resolved, and the belief state remains unchanged."
+      }
+    },
+    "f6c482d428175522e38e707d686fc6e59ee64eb4fb8eb54b2b45052551ba8cdf": {
+      "request_sha256": "f6c482d428175522e38e707d686fc6e59ee64eb4fb8eb54b2b45052551ba8cdf",
+      "response": {
+        "status": "unique",
+        "preferred": "chain_f",
+        "rationale": "Chain_f is the only candidate that directly aligns with the acquired real evidence (person_falls) via semantic correlation. The remaining chains reference unacquired semantic targets, rendering chain_f the sole supported and undominated reasoning path."
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ import sys
 from typing import Any
 
 from .closed_loop import action_divergence
+from .information_regimes import TransitionInputRegime
 from .multi_trajectory_cgbench import MULTI_ARMS, _aggregate
 
 
@@ -37,7 +38,7 @@ def _slug(case_id: str) -> str:
     return f"case_{digest}"
 
 
-def _complete(path: Path) -> bool:
+def _complete(path: Path, expected_input_regime: str | None = None) -> bool:
     if not path.is_file():
         return False
     try:
@@ -46,6 +47,14 @@ def _complete(path: Path) -> bool:
         return False
     selected_case_ids = value.get("selected_case_ids") or ()
     runs = value.get("runs") or ()
+    if expected_input_regime is not None:
+        recorded = (
+            value.get("matched_contract", {})
+            .get("iwm_input_visibility", {})
+            .get("regime")
+        )
+        if recorded != expected_input_regime:
+            return False
     if (
         value.get("errors")
         or not isinstance(selected_case_ids, list)
@@ -117,7 +126,7 @@ def _run_case(args: argparse.Namespace, case_id: str) -> dict[str, Any]:
     case_dir = args.output_dir / "cases"
     output = case_dir / f"{slug}.json"
     log = case_dir / f"{slug}.log"
-    if not args.force and _complete(output):
+    if not args.force and _complete(output, args.iwm_input_regime):
         return {"case_id": case_id, "status": "reused", "output": str(output)}
     command = [
         sys.executable,
@@ -170,6 +179,8 @@ def _run_case(args: argparse.Namespace, case_id: str) -> dict[str, Any]:
         str(args.max_tokens),
         "--reasoning-effort",
         args.reasoning_effort,
+        "--iwm-input-regime",
+        args.iwm_input_regime,
     ]
     if args.disable_caption_candidates:
         command.append("--disable-caption-candidates")
@@ -208,6 +219,10 @@ def _combine(
     errors: list[dict[str, Any]] = []
     method_failures: list[dict[str, Any]] = []
     localized_entry_preflight: list[dict[str, Any]] = []
+    input_visibility_audits: list[dict[str, Any]] = []
+    initial_role_fingerprints: list[dict[str, str]] = []
+    response_cache_hit_count = 0
+    response_cache_miss_count = 0
     completed_case_ids: list[str] = []
     for case_id in case_ids:
         output = output_dir / "cases" / f"{_slug(case_id)}.json"
@@ -218,6 +233,16 @@ def _combine(
         method_failures.extend(value.get("method_failures") or ())
         localized_entry_preflight.extend(
             value.get("localized_entry_preflight") or ()
+        )
+        input_visibility_audits.extend(value.get("input_visibility_audits") or ())
+        initial_role_fingerprints.extend(
+            value.get("initial_role_fingerprints") or ()
+        )
+        response_cache_hit_count += int(
+            value.get("response_cache_audit", {}).get("hit_count") or 0
+        )
+        response_cache_miss_count += int(
+            value.get("response_cache_audit", {}).get("miss_count") or 0
         )
         if _complete(output):
             completed_case_ids.append(case_id)
@@ -258,6 +283,12 @@ def _combine(
         ),
         "localized_entry_preflight": localized_entry_preflight,
         "action_divergence": divergences,
+        "input_visibility_audits": input_visibility_audits,
+        "initial_role_fingerprints": initial_role_fingerprints,
+        "response_cache_audit": {
+            "hit_count": response_cache_hit_count,
+            "miss_count": response_cache_miss_count,
+        },
         "training_performed": False,
     }
 
@@ -288,6 +319,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-tokens", type=int, default=8000)
     parser.add_argument(
         "--reasoning-effort", choices=("low", "medium", "high"), default="low"
+    )
+    parser.add_argument(
+        "--iwm-input-regime",
+        choices=tuple(value.value for value in TransitionInputRegime),
+        default=TransitionInputRegime.SEMANTIC_ADDRESS.value,
     )
     parser.add_argument(
         "--disable-caption-candidates",

@@ -1,5 +1,110 @@
 # Multi-Path IWM + Planner 方案
 
+## 2026-07 grounded transition-first gate
+
+当前训练顺序已经收紧为：先学习真实 action-conditioned transition，再学习
+trajectory preference。不会继续用 GPT-5-mini/Qwen zero-shot 的负结果反复调 prompt，
+也不会增加 heuristic Top-K 或强制 tie-break。
+
+训练记录的输入边界是：
+
+```text
+persistent hypothesis belief
++ executed legal action
++ pre-read safe L1/L1.5 semantic/temporal/correlation context
+→ executed observation descriptor
++ evaluator-grounded categorical clue-coverage delta
+```
+
+只有实际执行过的 read 才能进入 transition corpus。模型生成的 belief correction 只作
+audit；没有独立监督的 hypothesis-specific logical delta 必须 mask，不能把 missing label
+写成 negative。数据必须显式包含 delayed positives、semantic-neighbor hard negatives、
+support 和 inconclusive controls，并以原始 video 做 train/validation 隔离。
+
+门禁拆为两层：
+
+1. grounded data gate 只授权 9B transition SFT；
+2. 训练后的模型必须在 held-out executed transitions 上通过 categorical confusion
+   matrix、balanced accuracy、delayed recall、hard-negative false support 与 ready FDR；
+3. 只有独立 calibration report 通过后，才能重新导出并授权 categorical trajectory
+   preference SFT；
+4. 小规模 matched IWM/no-WM 上出现稳定增益后，才运行完整 frozen cohort。
+
+模型依旧只输出 categorical transition/preference，不输出数字。accuracy、FDR 等数字由
+离线 evaluator 计算，不作为模型 reward。GTSAM 继续只作为可选 persistent-belief
+maintenance backup，不参与 action ranking。
+
+对应实现位于：
+
+- `steam_video_new/implicit_world_model/iwm_9b/grounded_runtime_data.py`；
+- `steam_video_new/implicit_world_model/iwm_9b/calibration_gate.py`；
+- `memory_graph/tests/test_grounded_runtime_iwm_data.py`。
+
+当前 `iwm_grounded_transition_v1` 的实际结果为：train 31 videos / 1165
+transitions，validation 5 disjoint videos / 108 transitions；train/validation 分别包含
+50/8 条 delayed positives 和 380/14 条 semantic-neighbor hard negatives。数据 gate
+曾通过旧版按 record 数量计算的 data gate，transition dry-run 也已通过。A6000 pilot
+之后门禁已修订为同时统计独立 `(video, question, target)` delayed units；同一 read 的
+多个 hypothesis expansion 不能重复充数。按修订后的门禁，train 有 7 个独立 delayed
+units，validation 只有 1 个，低于最低 3 个，因此新训练数据当前应视为未就绪。
+
+随后在单张 48 GB A6000 上完成了一次 Qwen3.5-9B transition LoRA 实证，而不是继续
+依赖 zero-shot。1165 条训练记录、1 epoch、73 optimizer steps 的训练和 108 条 held-out
+推理共耗时 56 分钟。108/108 输出均为合法、无数字的 categorical JSON。outcome/progress
+balanced accuracy 从 majority baseline 的 0.500 提升到 0.733；14 个 support 被正确
+检出，78 个 inconclusive 无一误报 support。但 8 个 delayed positives 全部漏检，coverage
+和 answerability balanced accuracy 也只有 0.417/0.500。因此 calibration gate 仍失败，
+Planner preference SFT 继续保持 `training_eligible=false`。
+
+这次失败暴露的是 delayed split 的结构性偏移：训练的 50 条 delayed records 来自 7 个
+视频/7 个不同 target，均有可用 embedding 和 correlation/temporal action；验证的 8 条
+其实只是同一视频、同一 question、同一 consolidated target 的 8 个 hypothesis expansion，
+其 embedding 为 `refresh_required`，且没有 local temporal/correlation context。下一轮应先
+刷新 consolidated-node 表示，并以独立 video/question/target/action 计数重建 delayed
+validation slice；不能通过增加 epoch、复制这 8 条记录或放宽 gate 掩盖问题。
+
+修复后的 `iwm_grounded_transition_v2` 已冻结：训练集保持同一 31 videos / 1165
+transitions，验证集扩展为 10 个完全不重叠的视频 / 253 transitions。验证集现在包含
+6 个独立 delayed units（41 条 hypothesis-conditioned records）和 29 条 semantic hard
+negatives；253/253 validation targets 都有已物化的 Qwen3-VL-Embedding-2B reference。
+这些 delayed units 是在冻结 question-localized entry frontier 后，从真实合法两跳中定向
+采集的：第一跳无 clue overlap，第二跳经 5 条 correlation paths 或 1 条 temporal path
+到达 clue。GT 只用于离线选择和执行后标签，不进入 IWM input。v0.2 data gate 已通过，
+Planner 在 transition calibration 通过前始终保持锁定。
+
+复用 v1 adapter 在 v2 validation 上的结果进一步否定了旧结论：253/253 generations
+合法且无数字，但 77 个 support 一个都未召回，6 个 delayed units 也全部为 0；outcome/
+progress balanced accuracy 为 0.491。说明旧 v1 held-out 的 0.733 主要是分布特例，
+不能视为跨视频 transition 泛化。calibration 也已增加严格 unit-level delayed recall：
+同一 `(video, question, target)` 的所有 hypothesis-conditioned outcomes 都正确才算一个
+unit 被召回。
+
+因此 `iwm_grounded_transition_v3` 又补采了 train-side coverage，而不是修改 loss 或阈值：
+训练集增至 31 videos / 1336 transitions / 290 support / 1046 inconclusive / 22 个独立
+delayed units，保留 380 个 hard negatives；v2 validation 完全不变。
+
+第三次实验已在单张 48 GB A6000 上完成：Qwen3.5-9B LoRA 训练 1 epoch、84 个
+optimizer steps，训练耗时 1819 秒，连同 253 条 held-out 推理总计 50 分钟。252/253
+generations 是合法、无数字的 categorical JSON，但 outcome/progress balanced accuracy
+只有 0.494；77 个 support 全部漏检；delayed recall 为 0/41 records、0/6 strict independent
+units；29 个 semantic hard negatives 没有误报。模型学到的是保守的
+`inconclusive/unchanged` 多数类，transition gate 失败，Planner 继续锁定。
+
+失败原因不是 delayed unit 数量这一项，也不是 LoRA 没有收敛，而是输入表示不满足设计：
+当前 text-only LoRA 只看到 embedding reference 的 model/dimension/row/checksum，没有读取
+Qwen embedding values；`semantic_key` 缺失时也没有可消费的 L1 caption。train 的
+1336/1336 inputs 都有 semantic key，validation 只有 75/253；同时 36 条 validation support
+的 executed descriptor 为空。模型却被要求生成完整 observation descriptor，其中一条超长
+generation 重复 participant list 直到耗尽生成预算，成为唯一 invalid JSON。精确 tokenizer
+审计确认 1336 条训练记录在 `max_length=1792` 下零截断，最长完整 input 加 target 为
+1313 tokens，因此不存在静默截断训练 target 的问题。不能继续靠增加 epoch、复制 positive、
+class weighting、heuristic Top-K 或放宽 gate 修补。
+
+下一版必须先把冻结的 question-independent L1/L1.5 表示真正接入 IWM：优先将已物化的
+Qwen embedding 通过 projector 映射为 model tokens，或暴露经过 leakage audit 的 L1
+semantic descriptor；再把 observation prediction 与 belief-delta calibration 分开报告。
+这一步通过以后才能训练 Planner preference。
+
 ## 2026-07 GPT-5-mini matched pilot
 
 真实 `openai/gpt-5-mini` 已在 10 条 fingerprint 完整的 CG-Bench cases 上完成

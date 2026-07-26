@@ -23,6 +23,7 @@ from .contracts import (
     TrajectoryPair,
     TrajectoryPrediction,
 )
+from .transition_contract import projected_answerability
 from .model_input import build_iwm_graph_input
 
 
@@ -353,7 +354,11 @@ def project_imagined_belief(
         required_roles=tuple(required),
         missing_roles=tuple(missing),
         contradictions=contradictions,
-        answerability=transition.belief_delta.answerability_after,
+        # Answerability is a consequence of the projected state.  Treating the
+        # model's declaration as an independent writable field allowed
+        # impossible states such as ``inconclusive + missing roles + ready`` to
+        # drive the second-hop planner.
+        answerability=projected_answerability(belief, transition),
         remaining_reads=remaining,
         step=belief.step + 1,
     )

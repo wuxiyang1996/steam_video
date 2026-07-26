@@ -27,6 +27,12 @@ from steam_video_new.implicit_world_model.full_graph_iwm import (
 from steam_video_new.implicit_world_model.full_graph_iwm.planner import (
     project_imagined_belief,
 )
+from steam_video_new.implicit_world_model.full_graph_iwm.information_regimes import (
+    TransitionInputRegime,
+)
+from steam_video_new.implicit_world_model.full_graph_iwm.transition_contract import (
+    inspect_transition_contract,
+)
 
 
 def _node(node_id: str, start: float, text: str) -> MemoryNode:
@@ -347,6 +353,122 @@ def test_gpt_adapter_batches_without_pruning_and_covers_every_pair() -> None:
         for alias in group["conditioned_requests"]
     )
     assert all(row["top_k_applied"] is False for row in model.transport_audits)
+
+
+class _InconsistentTransitionRepairClient(_SchemaClient):
+    def complete_json(self, *, task, payload):
+        self.payloads.append(payload)
+        if "shared_action_groups" not in payload:
+            return super().complete_json(task=task, payload=payload)
+        repairing = "repair_feedback" in payload
+        return {
+            "predictions": {
+                alias: {
+                    "outcome": "inconclusive",
+                    "progress": "unchanged" if repairing else "advanced",
+                    "answerability_after": "not_ready",
+                    "frontier_change": "unchanged",
+                    "contradiction_change": "unchanged",
+                    "resolved_roles": [] if repairing else ["identity"],
+                    "opened_roles": [],
+                    "relation_updates": [],
+                    "rationale": "strict contract repair",
+                }
+                for group in payload["shared_action_groups"].values()
+                for alias in group["conditioned_requests"]
+            }
+        }
+
+
+def test_transition_semantic_contract_reprompts_instead_of_over_crediting() -> None:
+    client = _InconsistentTransitionRepairClient()
+    model = GPTOSSCategoricalMultiTrajectoryModel(client)
+
+    predictions = model.predict_batch(
+        compile_hypothesis_requests(_pool(), _graph()),
+        _graph(),
+    )
+
+    assert predictions
+    assert all(
+        inspect_transition_contract(_pool().trajectories[0].belief, row).valid
+        for row in predictions
+        if row.action.reads_evidence
+    )
+    repair_payloads = [
+        payload for payload in client.payloads if "repair_feedback" in payload
+    ]
+    assert repair_payloads
+    assert any(
+        "inconclusive observation cannot resolve" in violation
+        for payload in repair_payloads
+        for violation in payload["repair_feedback"]["previous_response_violations"]
+    )
+    assert model.transition_contract_audits[-1]["repair_required"] is True
+
+
+class _PersistentlyInconsistentTransitionClient(_InconsistentTransitionRepairClient):
+    def complete_json(self, *, task, payload):
+        result = super().complete_json(task=task, payload=payload)
+        if "shared_action_groups" in payload and "repair_feedback" in payload:
+            first = next(iter(result["predictions"].values()))
+            first["progress"] = "advanced"
+        return result
+
+
+def test_one_persistently_invalid_row_fails_closed_without_erasing_batch() -> None:
+    model = GPTOSSCategoricalMultiTrajectoryModel(
+        _PersistentlyInconsistentTransitionClient()
+    )
+    requests = compile_hypothesis_requests(_pool(), _graph())
+
+    predictions = model.predict_batch(requests, _graph())
+
+    assert len(predictions) == len(requests)
+    audit = model.transition_contract_audits[-1]
+    assert audit["status"] == "valid_with_neutral_failed_closed_rows"
+    assert audit["failed_closed_row_count"] == 1
+    failed_request_id = audit["failed_closed_rows"][0]["request_id"]
+    failed_index = next(
+        index
+        for index, request in enumerate(requests)
+        if request.request_id == failed_request_id
+    )
+    assert predictions[failed_index].observation.outcome is EvidenceOutcome.INCONCLUSIVE
+    assert predictions[failed_index].belief_delta.progress is ProgressChange.UNCHANGED
+
+
+def test_rich_regime_is_explicit_and_does_not_change_legal_actions() -> None:
+    semantic_client = _SchemaClient()
+    rich_client = _SchemaClient()
+    requests = compile_hypothesis_requests(_pool(), _graph())
+
+    GPTOSSCategoricalMultiTrajectoryModel(
+        semantic_client,
+        input_regime=TransitionInputRegime.SEMANTIC_ADDRESS,
+    ).predict_batch(requests, _graph())
+    GPTOSSCategoricalMultiTrajectoryModel(
+        rich_client,
+        input_regime=TransitionInputRegime.RICH_QUESTION_INDEPENDENT,
+    ).predict_batch(requests, _graph())
+
+    semantic_groups = semantic_client.payloads[0]["shared_action_groups"]
+    rich_groups = rich_client.payloads[0]["shared_action_groups"]
+    semantic_actions = [row["shared_action"] for row in semantic_groups.values()]
+    rich_actions = [row["shared_action"] for row in rich_groups.values()]
+    assert [row["kind"] for row in semantic_actions] == [
+        row["kind"] for row in rich_actions
+    ]
+    assert all(
+        "question_independent_l1_descriptor" not in row for row in semantic_actions
+    )
+    assert all(
+        "question_independent_l1_descriptor" in row for row in rich_actions
+    )
+    assert all(row["input_regime"] == "semantic_address" for row in semantic_actions)
+    assert all(
+        row["input_regime"] == "rich_question_independent" for row in rich_actions
+    )
 
 
 class _OrderedSequenceSchemaClient(_SchemaClient):

@@ -1,0 +1,19 @@
+{
+  "schema_version": "steam-question-role-cache/v0.1",
+  "model": "qwen/qwen3.6-flash",
+  "question_text_stored": false,
+  "hidden_clue_or_answer_used": false,
+  "training_performed": false,
+  "entry_count": 1,
+  "entries": {
+    "8f9554c90f9f4244a3ad1f6a6ec846b9cfd4b7e2a51afda1746f2a82583bca36": {
+      "question_sha256": "31a4f1b31e6e10caa1fe166ff658c71ff20b432c8f02c6f4536961be2a73ac2e",
+      "missing_roles": [
+        "eating_agent",
+        "eating_recipient",
+        "consumed_object",
+        "interaction_context"
+      ]
+    }
+  }
+}

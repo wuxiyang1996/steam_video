@@ -963,3 +963,77 @@ unavailable. The diagnostic train-positive threshold is not applied to the
 graph. These are structural/evaluator smoke results, not evidence of navigation
 quality; the matched closed-loop experiment must still be rerun on the new
 graph fingerprint.
+
+## Zero-shot information-regime diagnostic
+
+Zero-shot IWM evaluation now separates three questions that were previously
+confounded:
+
+- `semantic_address`: the pre-read model receives the legal action, temporal or
+  correlation relation, address-level semantic key, structural tags and time
+  span. The unread evidence value remains hidden.
+- `rich_question_independent`: the model additionally receives the frozen L1
+  text and an allowlisted structured descriptor. The graph must be
+  question-independent; hidden clue intervals, terminal answers and post-read
+  VLM observations remain unavailable.
+- post-read oracle observation: an evaluator-only analysis of the existing real
+  belief updater and trajectory assessor after the action has executed. It is
+  never an action-selection arm and is never fed back to the planner.
+
+The runtime records the regime, visible-field contract, forbidden-field audit,
+question-role fingerprint, transition-contract repairs and response-cache hit
+or miss counts. Separate regime runs are matched only when they reuse the same
+question-role cache and a shared sequential response cache. Running two fresh
+role initializers is not a valid regime comparison: the different categorical
+role decompositions can change every later belief, trajectory assessment and
+terminal answer.
+
+Imagined transitions now pass a semantic state-integrity gate before they can
+affect a second hop. In particular, `empty` or `inconclusive` cannot resolve
+roles, claim progress or resolve a contradiction, and `ready` is accepted only
+when projected missing roles, contradictions and evidence lineage permit it.
+The gate only blocks optimistic inconsistency; it does not force a conservative
+`not_ready` or `abstain` prediction to become ready. One repair is attempted
+with exact violations. A persistently invalid conditioned row becomes a
+neutral `inconclusive/unchanged` consequence while preserving its legal action
+and hypothesis. It cannot erase the rest of the batch or create a planner
+preference.
+
+The historical 31-case GPT-5-mini traces contain 384/11,460 conditioned read
+transitions with obvious cross-field contradictions, including 248 cases where
+non-evidence resolves roles and 180 where it claims progress. Post-read oracle
+analysis is materially better but still imperfect: on the nine executed reads
+that overlap a hidden clue, the correct hypothesis is supported or completed
+in 0.667, survives in 1.0 and reduces missing roles in 0.889. This localizes the
+primary failure before the read, while retaining a separate correction-model
+error slice.
+
+A strict matched diagnostic on `cgcase:b2101769a6b2902e04ee` used one frozen
+384-node graph, the same role cache, the same real-read budget and shared cached
+responses. The final semantic-address IWM read one of two clues and tied no-WM
+at clue recall 0.5; both abstained. The rich IWM read `pick_up` followed by
+`hand_lifts_object`, covered no clues and abstained, while the localized oracle
+covered both clues. The rich first-hop tree predicted `empty/unchanged` for all
+28 hypothesis-conditioned first-hop outcomes, but two of its 28 imagined
+second-hop outcomes predicted support/progress, and the setwise planner selected
+the chain. This is a grounded delayed-value prediction error and lexical anchor
+shortcut, not a wiring failure. Richer descriptors alone therefore do not
+establish a zero-shot IWM advantage.
+
+Generate a post-hoc diagnostic without model calls:
+
+```bash
+python -m steam_video_new.implicit_world_model.full_graph_iwm.zero_shot_diagnostic \
+  --artifact /path/to/cohort.final.json \
+  --hidden-key /path/to/terminal_targets.hidden_key.json \
+  --output /path/to/zero_shot_diagnostic.json
+```
+
+For a strict semantic-versus-rich comparison, run the regimes sequentially
+with identical `--question-role-cache` and `--response-cache` paths. Use
+separate output artifacts, and never run concurrent writers against the shared
+cache. The next scientific gate is a multi-video, video-disjoint comparison of
+semantic-address, rich descriptor, no-WM, shuffled-IWM, immediate-only and the
+post-read oracle diagnostic. The present one-case result is sufficient to
+reject the assumption that adding L1 text automatically fixes zero-shot IWM,
+but not to estimate an average effect.

@@ -1,0 +1,2160 @@
+{
+  "schema_version": "steam-categorical-response-cache/v0.1",
+  "model": "qwen/qwen3.6-flash",
+  "request_payload_stored": false,
+  "hidden_clue_or_answer_used": false,
+  "numeric_reward_present": false,
+  "training_performed": false,
+  "entry_count": 23,
+  "entries": {
+    "00fa551cf34cdc6bf53b40d2e8ddbf0e51a943b13676a0afc02b954908309d1d": {
+      "request_sha256": "00fa551cf34cdc6bf53b40d2e8ddbf0e51a943b13676a0afc02b954908309d1d",
+      "response": {
+        "predictions": {
+          "prediction_a": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_b": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_c": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_d": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_e": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_f": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_g": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_h": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_i": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_j": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_k": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_l": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_m": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_n": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_o": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_p": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_q": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_r": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_s": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_t": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_u": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_v": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_w": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_x": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_y": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_z": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_aa": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_ab": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_ac": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_ad": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_ae": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          },
+          "prediction_af": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "relation_updates": "none",
+            "rationale": "no_acquired_evidence"
+          }
+        }
+      }
+    },
+    "090eb707681c9c59208da9a02a380b041634d51ae647c25ac10fcd9229061ae5": {
+      "request_sha256": "090eb707681c9c59208da9a02a380b041634d51ae647c25ac10fcd9229061ae5",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "resolved",
+        "rationale": "The executed observation explicitly documents a person_eating interaction involving an eater and a server, directly grounding the eating_agent and eating_recipient roles. This evidence contradicts the trajectory hypothesis that the heroine did not eat the pudding."
+      }
+    },
+    "11d279d86ccdedf1168885080303406e3423a81cf31f0be46a2d4d56bce4eef0": {
+      "request_sha256": "11d279d86ccdedf1168885080303406e3423a81cf31f0be46a2d4d56bce4eef0",
+      "response": {
+        "status": "unique",
+        "preferred": [
+          "chain_c"
+        ],
+        "rationale": "Chain_c directly targets the acquired real evidence semantic key 'person_eating' via a semantic recurrence correlation, providing an exact match to the observed action. The remaining chains reference unrelated or less direct semantic keys (person_smiles, person_sitting, person_holds_spoon, person_eats), rendering them inferior or incomparable to the direct observational support offered by chain_c. Thus, chain_c constitutes the complete undominated frontier."
+      }
+    },
+    "16d7ce2caa6ab060e9c6c6809f21d2405e3394958c2c298a6e9410f251a2837e": {
+      "request_sha256": "16d7ce2caa6ab060e9c6c6809f21d2405e3394958c2c298a6e9410f251a2837e",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation explicitly identifies an 'eater' and a 'server' involved in a 'person_eating' action, which directly grounds the 'eating_agent' and 'eating_recipient' roles from the missing list."
+      }
+    },
+    "17c5bda992d0cab07033e4222502ded15c8742fd662d9b45dbd8281662a1dd52": {
+      "request_sha256": "17c5bda992d0cab07033e4222502ded15c8742fd662d9b45dbd8281662a1dd52",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation explicitly depicts a server feeding an eater, which directly grounds the eating_agent and eating_recipient roles and supports the hypothesis that the heroine was fed by someone else."
+      }
+    },
+    "1ac32d181745b9d0cd060ba7d8053c8b2de896745436ee1478b66ed5c4b7a3b6": {
+      "request_sha256": "1ac32d181745b9d0cd060ba7d8053c8b2de896745436ee1478b66ed5c4b7a3b6",
+      "response": {
+        "resolved_roles": [],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation 'person_eating' confirms the action of eating but does not specify the consumed object or the interaction context. Therefore, the missing roles remain unresolved."
+      }
+    },
+    "25ebb8448a0b75a9e039ea168645f8d90e593917d21577379270cc6b127d0380": {
+      "request_sha256": "25ebb8448a0b75a9e039ea168645f8d90e593917d21577379270cc6b127d0380",
+      "response": {
+        "predictions": [
+          {
+            "prediction_a": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the fed by a child hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_b": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the played with pudding instead of eating hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_c": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the shared with someone else hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_d": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the feed yourself hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_e": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the feed by someone else hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_f": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the dropped the pudding hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_g": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the didn't eat the pudding hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_h": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the saved the pudding for later hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_i": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the fed by a child hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_j": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the played with pudding instead of eating hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_k": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the shared with someone else hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_l": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the feed yourself hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_m": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the feed by someone else hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_n": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the dropped the pudding hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_o": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the didn't eat the pudding hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          },
+          {
+            "prediction_p": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "eating_agent",
+                "eating_recipient",
+                "consumed_object",
+                "interaction_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "No acquired evidence is available to inspect the target semantic address. The read action yields no new information regarding the saved the pudding for later hypothesis, leaving the belief state unchanged and answerability unmet."
+            }
+          }
+        ]
+      }
+    },
+    "4a9a62aa58e6120e0c19c3b3f82704b48e191fdb0db3871b1de36f2696d4a000": {
+      "request_sha256": "4a9a62aa58e6120e0c19c3b3f82704b48e191fdb0db3871b1de36f2696d4a000",
+      "response": {
+        "predictions": {
+          "prediction_a": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_b": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_c": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_d": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_e": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_f": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_g": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_h": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_i": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_j": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_k": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_l": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_m": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_n": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_o": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          },
+          "prediction_p": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Empty observation cannot resolve roles or advance progress."
+          }
+        }
+      }
+    },
+    "55f865999f86f325e686469ce77dd7fced604411441ff0f802e6c4afddc8e13a": {
+      "request_sha256": "55f865999f86f325e686469ce77dd7fced604411441ff0f802e6c4afddc8e13a",
+      "response": {
+        "status": "tie",
+        "preferred": [
+          "chain_a",
+          "chain_b",
+          "chain_c",
+          "chain_d"
+        ],
+        "rationale": "All candidate chains initiate with an identical start action and share the exact same set of competing hypotheses. In the absence of acquired real evidence to differentiate their target semantic keys, no chain demonstrates superior grounding or logical precedence. Consequently, all chains remain equally valid starting points for reasoning, forming a complete tie across the undominated frontier."
+      }
+    },
+    "6bfe8b0c71b494979cc04875e70681719b7e1a27cd8ee617a1dc26d4a0883c4b": {
+      "request_sha256": "6bfe8b0c71b494979cc04875e70681719b7e1a27cd8ee617a1dc26d4a0883c4b",
+      "response": {
+        "predictions": [
+          {
+            "prediction_a": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_b": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_c": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_d": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_e": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_f": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_g": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_h": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_i": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_j": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_k": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_l": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_m": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_n": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_o": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          },
+          {
+            "prediction_p": {
+              "outcome": "empty",
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": [],
+              "rationale": "Insufficient acquired evidence to evaluate hypothesis; awaiting visual confirmation of eating interaction."
+            }
+          }
+        ]
+      }
+    },
+    "73ee37033ed5384f82d89925b7bb5b193731ddc63e8ddf3b95f2f7292225b3ab": {
+      "request_sha256": "73ee37033ed5384f82d89925b7bb5b193731ddc63e8ddf3b95f2f7292225b3ab",
+      "response": {
+        "status": "located",
+        "preferred": {
+          "eating_agent": "anchor_cr",
+          "eating_recipient": "anchor_co",
+          "consumed_object": "anchor_cp",
+          "interaction_context": "anchor_bc"
+        },
+        "rationale": "The selected anchors provide direct semantic coverage for the specified missing roles. anchor_cr explicitly delineates the server and eater, fulfilling the agent and recipient roles. anchor_co captures the primary eating action. anchor_cp introduces the utensil interaction pertinent to the consumed object. anchor_bc establishes the physical table setting, grounding the interaction context where the dialogue and consumption take place."
+      }
+    },
+    "773cd3b7cae516a4049067ac924d9eb8ffbfb5eb590e692dc486abc030a8866f": {
+      "request_sha256": "773cd3b7cae516a4049067ac924d9eb8ffbfb5eb590e692dc486abc030a8866f",
+      "response": {
+        "missing_roles": [
+          "eating_agent",
+          "eating_recipient",
+          "consumed_object",
+          "interaction_context"
+        ],
+        "rationale": "The question hinges on determining the agency of the consumption event. Grounding the eating_recipient and consumed_object establishes the baseline scene, while the interaction_context verifies the specified social setting. The critical role is the eating_agent, which must be categorized as either self-directed or externally assisted to directly answer the core query."
+      }
+    },
+    "7907105063b2c0c62ffae081476c420a5cb463f2e42adfcc7ac1d08ead90e799": {
+      "request_sha256": "7907105063b2c0c62ffae081476c420a5cb463f2e42adfcc7ac1d08ead90e799",
+      "response": {
+        "status": "select",
+        "choice": "choice_h",
+        "rationale": "The acquired real evidence explicitly identifies two participants in the eating interaction: an 'eater' and a 'server'. This directly supports the hypothesis that the heroine was fed by another person rather than eating the pudding herself."
+      }
+    },
+    "7e9848e5aa9a070c090b1408f34d4348593460c4c489d7572585ede575ca6a95": {
+      "request_sha256": "7e9848e5aa9a070c090b1408f34d4348593460c4c489d7572585ede575ca6a95",
+      "response": {
+        "predictions": [
+          {
+            "prediction_alias": "prediction_a",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine was not fed by a child, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_b",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not play with the pudding instead of eating, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_c",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not share the pudding with someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_d",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not feed herself, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_e",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address confirms the heroine was fed by someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_f",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not drop the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_g",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did eat the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_h",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not save the pudding for later, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_i",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine was not fed by a child, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_j",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not play with the pudding instead of eating, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_k",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not share the pudding with someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_l",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not feed herself, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_m",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address confirms the heroine was fed by someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_n",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not drop the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_o",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did eat the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_p",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not save the pudding for later, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_q",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine was not fed by a child, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_r",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not play with the pudding instead of eating, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_s",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not share the pudding with someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_t",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not feed herself, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_u",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address confirms the heroine was fed by someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_v",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not drop the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_w",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did eat the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_x",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not save the pudding for later, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_y",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine was not fed by a child, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_z",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not play with the pudding instead of eating, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_aa",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not share the pudding with someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_ab",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not feed herself, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_ac",
+            "outcome": "support",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address confirms the heroine was fed by someone else, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_ad",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not drop the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_ae",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did eat the pudding, resolving all missing roles and closing the inquiry frontier."
+          },
+          {
+            "prediction_alias": "prediction_af",
+            "outcome": "counterevidence",
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "closed",
+            "contradiction_change": "resolved",
+            "resolved_roles": [
+              "eating_agent",
+              "eating_recipient",
+              "consumed_object",
+              "interaction_context"
+            ],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Inspection of the target semantic address reveals the heroine did not save the pudding for later, resolving all missing roles and closing the inquiry frontier."
+          }
+        ]
+      }
+    },
+    "843cc3737c19716d00ba5bab5a08a3300b7157c0eb86e7643f3cdceefae234a8": {
+      "request_sha256": "843cc3737c19716d00ba5bab5a08a3300b7157c0eb86e7643f3cdceefae234a8",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation explicitly captures a person_eating action with distinct eater and server participants, directly grounding the eating_agent and eating_recipient roles from the missing list."
+      }
+    },
+    "880a7f7ea49d88809aa3af781bc6ce1746767cb0ba28cebe2474b809f8be2dd8": {
+      "request_sha256": "880a7f7ea49d88809aa3af781bc6ce1746767cb0ba28cebe2474b809f8be2dd8",
+      "response": {
+        "status": "select",
+        "selected": "evidence_action_a",
+        "rationale": "Observing the continuous action of eating directly targets the core query. It allows visual verification of the consumption event and reveals the agent's posture and hand position relative to the mouth, which is necessary to discriminate between self-feeding and being fed by another actor."
+      }
+    },
+    "8c72bba43f6d51fb9762e04b68f577fc1f9a65d439987d1c1b92aabf0e4650f4": {
+      "request_sha256": "8c72bba43f6d51fb9762e04b68f577fc1f9a65d439987d1c1b92aabf0e4650f4",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation explicitly documents a 'person_eating' action involving an 'eater' and a 'server', which directly grounds the eating_agent and eating_recipient roles from the missing set."
+      }
+    },
+    "9b8da4b57e987468e06f2920dd8f838c72345f9df310d441e7ac2adf224f271f": {
+      "request_sha256": "9b8da4b57e987468e06f2920dd8f838c72345f9df310d441e7ac2adf224f271f",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation explicitly identifies participants with roles 'eater' and 'server' during a 'person_eating' action, directly grounding the 'eating_agent' and 'eating_recipient' roles. This aligns with the trajectory hypothesis indicating an interactive or shared scenario rather than solitary consumption."
+      }
+    },
+    "ad1e6f1124b63472106c430b417c6ee613765dcd92fdc799ee72d9c611a510dd": {
+      "request_sha256": "ad1e6f1124b63472106c430b417c6ee613765dcd92fdc799ee72d9c611a510dd",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The observation explicitly describes a person_eating action involving an eater and a server, directly grounding the eating_agent and eating_recipient roles."
+      }
+    },
+    "c55c5364fa2c2a94d0374ef3fa8c7f7fcdb12337bbe73381b94fdb6757c52289": {
+      "request_sha256": "c55c5364fa2c2a94d0374ef3fa8c7f7fcdb12337bbe73381b94fdb6757c52289",
+      "response": {
+        "assessments": {
+          "trajectory_a": {
+            "effect": "counterevidence",
+            "rationale": "The observation explicitly records the action as person_eating, indicating independent consumption rather than being fed by another individual."
+          }
+        }
+      }
+    },
+    "d30632f3638c6db5abb3d6aafd2f7c7313bd315f5c30b799943532a577efdb05": {
+      "request_sha256": "d30632f3638c6db5abb3d6aafd2f7c7313bd315f5c30b799943532a577efdb05",
+      "response": {
+        "assessments": {
+          "trajectory_a": {
+            "effect": "counterevidence",
+            "rationale": "The observation explicitly records a person_eating action, directly contradicting the claim that she did not eat the pudding."
+          },
+          "trajectory_b": {
+            "effect": "counterevidence",
+            "rationale": "The presence of a server participant in the eating action indicates external feeding rather than self-feeding."
+          },
+          "trajectory_c": {
+            "effect": "counterevidence",
+            "rationale": "The observation confirms active consumption, ruling out the possibility of saving the pudding for later."
+          },
+          "trajectory_d": {
+            "effect": "counterevidence",
+            "rationale": "The recorded action is eating, which contradicts the hypothesis of dropping the pudding."
+          },
+          "trajectory_e": {
+            "effect": "counterevidence",
+            "rationale": "The observation documents a direct eating interaction with a server, not a sharing scenario."
+          },
+          "trajectory_f": {
+            "effect": "counterevidence",
+            "rationale": "The explicit person_eating action contradicts the claim that she only played with the pudding."
+          },
+          "trajectory_g": {
+            "effect": "counterevidence",
+            "rationale": "The server participant is identified by a white_shirt_bowtie visual signature, indicating an adult rather than a child."
+          },
+          "trajectory_h": {
+            "effect": "support",
+            "rationale": "The observation explicitly lists a server participant alongside the eater, confirming that she was fed by another person."
+          }
+        }
+      }
+    },
+    "fb1aebb38fb8dbf4fd1e42538ceb8e0894032ebf95aab56786caa746decb306a": {
+      "request_sha256": "fb1aebb38fb8dbf4fd1e42538ceb8e0894032ebf95aab56786caa746decb306a",
+      "response": {
+        "predictions": {
+          "prediction_a": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_b": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_c": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_d": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_e": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_f": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_g": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_h": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_i": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_j": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_k": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_l": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_m": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_n": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_o": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_p": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_q": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_r": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_s": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_t": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_u": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_v": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_w": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_x": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_y": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_z": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_aa": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_ab": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_ac": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_ad": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_ae": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          },
+          "prediction_af": {
+            "outcome": "empty",
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "rationale": "Acquired evidence is empty; no roles resolved or progress advanced."
+          }
+        }
+      }
+    },
+    "fcb3d9596316a85febef70133c694467c1e91cb1e36953e4da8623a2725d374f": {
+      "request_sha256": "fcb3d9596316a85febef70133c694467c1e91cb1e36953e4da8623a2725d374f",
+      "response": {
+        "resolved_roles": [
+          "eating_agent",
+          "eating_recipient"
+        ],
+        "opened_roles": [],
+        "contradiction_change": "unchanged",
+        "rationale": "The executed observation explicitly identifies an 'eater' and a 'server' participating in the 'person_eating' action. This directly grounds the 'eating_agent' and 'eating_recipient' roles. The presence of a server indicates the heroine was likely fed by another person, which contrasts with the 'Feed yourself' trajectory hypothesis."
+      }
+    }
+  }
+}

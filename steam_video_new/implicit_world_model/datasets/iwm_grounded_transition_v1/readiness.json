@@ -1,0 +1,145 @@
+{
+  "schema_version": "steam-grounded-runtime-iwm-data/v0.1",
+  "source_dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "source_artifact_count": 7,
+  "transition_gate": {
+    "passed": true,
+    "checks": {
+      "video_disjoint": true,
+      "train_video_count": true,
+      "train_record_count": true,
+      "train_has_support_and_inconclusive": true,
+      "train_delayed_positive_count": true,
+      "train_semantic_hard_negative_count": true,
+      "validation_video_count": true,
+      "validation_record_count": true,
+      "validation_has_support_and_inconclusive": true,
+      "validation_delayed_positive_count": true,
+      "validation_semantic_hard_negative_count": true
+    },
+    "minimums": {
+      "minimum_train_videos": 20,
+      "minimum_train_records": 100,
+      "minimum_validation_videos": 5,
+      "minimum_validation_records": 20,
+      "minimum_delayed_positives": 5,
+      "minimum_semantic_hard_negatives": 10,
+      "minimum_validation_delayed_positives": 1,
+      "minimum_validation_semantic_hard_negatives": 1
+    },
+    "blockers": [],
+    "training_performed": false
+  },
+  "transition_calibration_gate": {
+    "provided": false,
+    "passed": false,
+    "required_for_planner_training": true
+  },
+  "planner_gate": {
+    "passed": false,
+    "checks": {
+      "transition_gate_passed": true,
+      "transition_calibration_passed": false,
+      "train_preference_pairs_present": true,
+      "train_preference_label_diversity": true,
+      "validation_preference_pairs_present": true
+    },
+    "train_label_counts": {
+      "incomparable": 1,
+      "prefer_left": 11,
+      "prefer_right": 9,
+      "tie": 55
+    },
+    "validation_record_count": 7,
+    "blockers": [
+      "transition_calibration_passed"
+    ],
+    "training_performed": false
+  },
+  "split_audit": {
+    "video_ids_by_split": {
+      "train": [
+        "BV19uWFegERp",
+        "BV1AV411n7Jh",
+        "BV1Bt411u7RX",
+        "BV1Kj411e7Ee",
+        "BV1S83EesEHq",
+        "BV1SDYJejEcP",
+        "BV1TN411C782",
+        "BV1VS4y197ZF",
+        "BV1ZD4y1B7T3",
+        "BV1Zo4y1e7ki",
+        "BV1dx4y1J7CF",
+        "BV1n1421r7xi",
+        "BV1oB4y1z7FK",
+        "BV1oS411P7pF",
+        "BV1rb411P74P",
+        "BV1tA4y1R7q7",
+        "BV1th411W795",
+        "BV1uf421q7QH",
+        "BV1y54y1b7tL",
+        "BeAur755crI",
+        "E_XW3mo9g40",
+        "V8_UKWRcpew",
+        "aTV3damvdZs",
+        "allhO_JSNzY",
+        "d867YlU49uk",
+        "ixzwSAkxj4c",
+        "k-E6YthhO4g",
+        "q1JcMFekKLc",
+        "tgm_QjUiwlk",
+        "v72EanuzqHc",
+        "wgLE8D-HIFI"
+      ],
+      "validation": [
+        "-tpms_BbjHA",
+        "BV1NZ421q7Cb",
+        "BV1Qt4y1f7zw",
+        "BV1ft411Z7yp",
+        "BV1zJ41187BP"
+      ]
+    },
+    "cross_split_video_overlaps": {},
+    "video_disjoint": true,
+    "hidden_supervision_in_input": false
+  },
+  "transition_counts": {
+    "train": {
+      "delayed_positive": 50,
+      "embedding:available": 1143,
+      "embedding:refresh_required": 22,
+      "outcome:inconclusive": 977,
+      "outcome:support": 188,
+      "record_count": 1165,
+      "semantic_hard_negative": 380,
+      "video_count": 31
+    },
+    "validation": {
+      "delayed_positive": 8,
+      "embedding:available": 84,
+      "embedding:refresh_required": 24,
+      "outcome:inconclusive": 78,
+      "outcome:support": 30,
+      "record_count": 108,
+      "semantic_hard_negative": 14,
+      "video_count": 5
+    }
+  },
+  "contracts": {
+    "target_observation_is_executed_not_imagined": true,
+    "model_correction_is_not_supervision": true,
+    "unsupported_hypothesis_specific_belief_fields_are_masked": true,
+    "negative_means_executed_no_new_clue_not_missing_label": true,
+    "preference_is_ordinal_set_inclusion_not_numeric_reward": true,
+    "planner_training_waits_for_transition_data_and_calibration_gates": true,
+    "hidden_clue_or_answer_in_model_input": false,
+    "numeric_reward_present": false,
+    "numeric_model_target_present": false,
+    "top_k_applied": false,
+    "gtsam_ranks_actions": false
+  },
+  "transition_training_ready": true,
+  "planner_training_ready": false,
+  "training_ready": false,
+  "training_performed": false
+}

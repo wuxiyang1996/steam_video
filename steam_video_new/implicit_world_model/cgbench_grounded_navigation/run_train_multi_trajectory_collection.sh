@@ -18,6 +18,8 @@ WORKERS="${WORKERS:-8}"
 SKIP_COMPILE_GATE="${SKIP_COMPILE_GATE:-0}"
 FORCE="${FORCE:-0}"
 CASE_IDS_CSV="${CASE_IDS_CSV:-}"
+IWM_INPUT_REGIME="${IWM_INPUT_REGIME:-semantic_address}"
+TRANSITION_BATCH_SIZE="${TRANSITION_BATCH_SIZE:-4}"
 
 cd "${REPO_ROOT}"
 if [[ "${SKIP_COMPILE_GATE}" == "1" ]]; then
@@ -85,12 +87,13 @@ fi
   --workers "${WORKERS}" \
   --capacity "${CAPACITY}" \
   --read-budget "${READ_BUDGET}" \
-  --transition-batch-size 1 \
+  --transition-batch-size "${TRANSITION_BATCH_SIZE}" \
   --comparison-batch-size 12 \
   --max-complete-pairs 4096 \
   --timeout-s 180 \
   --max-tokens 8000 \
   --reasoning-effort low \
+  --iwm-input-regime "${IWM_INPUT_REGIME}" \
   --disable-caption-candidates \
   "${CASE_ARGS[@]}" \
   "${FORCE_ARGS[@]}"
