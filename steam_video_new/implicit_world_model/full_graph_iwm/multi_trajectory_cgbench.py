@@ -476,6 +476,24 @@ def run_multi_trajectory_case(
             "transition_progress_calibration_accuracy": empirical_audit[
                 "transition_calibration"
             ]["progress_exact_accuracy"],
+            "transition_outcome_balanced_accuracy": empirical_audit[
+                "transition_calibration"
+            ]["observation_outcome_balanced_accuracy"],
+            "transition_progress_balanced_accuracy": empirical_audit[
+                "transition_calibration"
+            ]["progress_balanced_accuracy"],
+            "transition_answerability_balanced_accuracy": empirical_audit[
+                "transition_calibration"
+            ]["answerability_balanced_accuracy"],
+            "transition_outcome_over_credit_fdr": empirical_audit[
+                "transition_calibration"
+            ]["observation_outcome_over_credit_fdr"],
+            "transition_progress_over_credit_fdr": empirical_audit[
+                "transition_calibration"
+            ]["progress_over_credit_fdr"],
+            "transition_answerability_over_credit_fdr": empirical_audit[
+                "transition_calibration"
+            ]["answerability_over_credit_fdr"],
         },
         "hidden_evaluator_feedback_to_planner": False,
         "top_k_applied": False,
@@ -626,10 +644,63 @@ def _multi_trajectory_empirical_audit(
                 "predicted_answerability",
                 "realized_answerability",
             ),
+            "observation_outcome_balanced_accuracy": (
+                _categorical_balanced_accuracy(
+                    calibration_rows,
+                    "predicted_observation_outcome",
+                    "realized_observation_outcome",
+                )
+            ),
+            "progress_balanced_accuracy": _categorical_balanced_accuracy(
+                calibration_rows,
+                "predicted_progress",
+                "realized_progress",
+            ),
+            "answerability_balanced_accuracy": _categorical_balanced_accuracy(
+                calibration_rows,
+                "predicted_answerability",
+                "realized_answerability",
+            ),
+            "observation_outcome_over_credit_fdr": (
+                _categorical_false_discovery_rate(
+                    calibration_rows,
+                    "predicted_observation_outcome",
+                    "realized_observation_outcome",
+                    positive_values={
+                        "support",
+                        "counterevidence",
+                        "identity_evidence",
+                        "state_evidence",
+                        "bridge_evidence",
+                    },
+                )
+            ),
+            "progress_over_credit_fdr": _categorical_false_discovery_rate(
+                calibration_rows,
+                "predicted_progress",
+                "realized_progress",
+                positive_values={"advanced"},
+            ),
+            "answerability_over_credit_fdr": _categorical_false_discovery_rate(
+                calibration_rows,
+                "predicted_answerability",
+                "realized_answerability",
+                positive_values={"ready"},
+            ),
             "observation_outcome_confusion": _categorical_confusion(
                 calibration_rows,
                 "predicted_observation_outcome",
                 "realized_observation_outcome",
+            ),
+            "progress_confusion": _categorical_confusion(
+                calibration_rows,
+                "predicted_progress",
+                "realized_progress",
+            ),
+            "answerability_confusion": _categorical_confusion(
+                calibration_rows,
+                "predicted_answerability",
+                "realized_answerability",
             ),
         },
     }
@@ -657,6 +728,41 @@ def _categorical_confusion(
         realized: dict(sorted(predicted.items()))
         for realized, predicted in sorted(confusion.items())
     }
+
+
+def _categorical_balanced_accuracy(
+    rows: Sequence[dict[str, str]],
+    predicted_key: str,
+    realized_key: str,
+) -> float | None:
+    """Macro-average recall so a dominant categorical control cannot mask errors."""
+
+    confusion = _categorical_confusion(rows, predicted_key, realized_key)
+    recalls = []
+    for realized, predictions in confusion.items():
+        total = sum(predictions.values())
+        if total:
+            recalls.append(predictions.get(realized, 0) / total)
+    return fmean(recalls) if recalls else None
+
+
+def _categorical_false_discovery_rate(
+    rows: Sequence[dict[str, str]],
+    predicted_key: str,
+    realized_key: str,
+    *,
+    positive_values: set[str],
+) -> float | None:
+    """Fraction of predicted categorical progress not confirmed by the real read."""
+
+    predicted_positive = [
+        row for row in rows if row[predicted_key] in positive_values
+    ]
+    if not predicted_positive:
+        return None
+    return sum(
+        row[realized_key] not in positive_values for row in predicted_positive
+    ) / len(predicted_positive)
 
 
 def run_multi_trajectory_matched_pilot(
@@ -1011,7 +1117,17 @@ def _planner_for_arm(
 def _aggregate(runs: Sequence[dict[str, Any]], arms: Iterable[str]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for arm in arms:
-        metrics = [row["metrics"] for row in runs if row["arm"] == arm]
+        arm_runs = [row for row in runs if row["arm"] == arm]
+        metrics = [row["metrics"] for row in arm_runs]
+        calibration_rows = [
+            calibration
+            for row in arm_runs
+            for calibration in (
+                row.get("empirical_audit", {})
+                .get("transition_calibration", {})
+                .get("rows", [])
+            )
+        ]
         result[arm] = {
             "case_count": len(metrics),
             "answer_accuracy": _mean(row.get("answer_correct") for row in metrics),
@@ -1054,8 +1170,60 @@ def _aggregate(runs: Sequence[dict[str, Any]], arms: Iterable[str]) -> dict[str,
             "transition_progress_calibration_accuracy": _mean(
                 row.get("transition_progress_calibration_accuracy") for row in metrics
             ),
+            "pooled_transition_calibration": _pooled_transition_calibration(
+                calibration_rows
+            ),
         }
     return result
+
+
+def _pooled_transition_calibration(
+    rows: Sequence[dict[str, str]],
+) -> dict[str, Any] | None:
+    if not rows:
+        return None
+    specifications = {
+        "observation_outcome": (
+            "predicted_observation_outcome",
+            "realized_observation_outcome",
+            {
+                "support",
+                "counterevidence",
+                "identity_evidence",
+                "state_evidence",
+                "bridge_evidence",
+            },
+        ),
+        "progress": (
+            "predicted_progress",
+            "realized_progress",
+            {"advanced"},
+        ),
+        "answerability": (
+            "predicted_answerability",
+            "realized_answerability",
+            {"ready"},
+        ),
+    }
+    return {
+        name: {
+            "row_count": len(rows),
+            "micro_exact_accuracy": _categorical_accuracy(rows, predicted, realized),
+            "balanced_accuracy": _categorical_balanced_accuracy(
+                rows, predicted, realized
+            ),
+            "over_credit_false_discovery_rate": (
+                _categorical_false_discovery_rate(
+                    rows,
+                    predicted,
+                    realized,
+                    positive_values=positive,
+                )
+            ),
+            "confusion": _categorical_confusion(rows, predicted, realized),
+        }
+        for name, (predicted, realized, positive) in specifications.items()
+    }
 
 
 def _mean(values: Iterable[Any]) -> float | None:

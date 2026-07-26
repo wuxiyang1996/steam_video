@@ -53,6 +53,7 @@ class GPTOSSEntryLocalizer:
             "required_output": {
                 "only_keys": ["status", "preferred", "rationale"],
                 "status": ["located", "inconclusive"],
+                "maximum_distinct_addresses": self.maximum_anchors,
                 "preferred": (
                     "either a flat alias list or a missing-role-to-alias mapping; "
                     "use a minimal complete frontier of nonredundant entry cursors "
@@ -76,7 +77,8 @@ class GPTOSSEntryLocalizer:
         alias_prefix_normalization_count = 0
         role_key_normalization_count = 0
         role_conditioned_output = False
-        for attempt in range(2):
+        request_payload = payload
+        for attempt in range(3):
             candidate = self.client.complete_json(
                 task=(
                     "Locate a categorical nonredundant frontier of grounded entry "
@@ -85,10 +87,11 @@ class GPTOSSEntryLocalizer:
                     "and correlated repetitions are reached by later graph hops. This "
                     "establishes cursors only and does not plan later hops."
                     if attempt == 0
-                    else "Repair the localization response using only the required "
-                    "fields and nonredundant entry-cursor contract."
+                    else "Repair the localization response according to "
+                    "repair_feedback. Copy role and address identifiers exactly; "
+                    "if role-key mapping is uncertain, return a flat alias list."
                 ),
-                payload=payload,
+                payload=request_payload,
             )
             try:
                 if set(candidate) != {"status", "preferred", "rationale"}:
@@ -171,9 +174,25 @@ class GPTOSSEntryLocalizer:
                     raise ValueError("located entry frontier must not be empty")
                 result = candidate
                 break
-            except ValueError:
-                if attempt == 1:
+            except ValueError as error:
+                if attempt == 2:
                     raise
+                request_payload = {
+                    **payload,
+                    "repair_feedback": {
+                        "attempt": attempt + 1,
+                        "validation_error": str(error),
+                        "invalid_response": candidate,
+                        "exact_valid_missing_roles": list(missing_roles),
+                        "exact_valid_address_aliases": list(aliases),
+                        "maximum_distinct_addresses": self.maximum_anchors,
+                        "repair_instruction": (
+                            "Return exactly status, preferred, and rationale. Use "
+                            "only exact identifiers listed above. A flat alias list "
+                            "is valid when exact role mapping is uncertain."
+                        ),
+                    },
+                }
         assert result is not None
         selected = tuple(aliases[value] for value in result["preferred"])
         self.audits.append(
@@ -187,6 +206,7 @@ class GPTOSSEntryLocalizer:
                 "alias_prefix_normalization_count": (alias_prefix_normalization_count),
                 "role_conditioned_output": role_conditioned_output,
                 "role_key_normalization_count": role_key_normalization_count,
+                "schema_repair_count": attempt,
             }
         )
         return selected

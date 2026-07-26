@@ -865,6 +865,29 @@ advantage, clue recall and answer accuracy on the locked cohort. In this
 document, **code-complete** must not be interpreted as trained, baseline-beating
 or production-ready.
 
+The frozen train collection now has 31/31 completed runnable cases across the
+capacity-192 and capacity-384 graph cohorts, with zero runtime errors and zero
+fail-closed method failures. This clears the infrastructure
+gate but is a negative scientific result: GPT-5-mini WM-guided answer accuracy
+is 0.129 versus 0.161 for no-WM, and clue recall is 0.145 versus 0.266. Of the
+763 executed WM-conditioned transition rows, 79% of realized outcomes are
+`inconclusive`; micro exact accuracy therefore overstates calibration. The
+pooled outcome/progress balanced accuracies are 0.332/0.419, while categorical
+over-credit false-discovery rates are 0.759/0.857. Predicted `ready` is not
+confirmed by the corrected belief in 0.974 of predicted-ready rows. These
+figures identify action-conditioned transition over-crediting as the immediate
+data/model target; they do not justify a planner tie-break, heuristic Top-K or
+hand-written utility.
+
+Runtime reports now keep micro exact accuracy only as a descriptive statistic
+and additionally emit pooled confusion matrices, macro-recall balanced
+accuracy, and categorical over-credit false-discovery rates for observation,
+progress and answerability. This prevents a shuffled model that mostly predicts
+the dominant `inconclusive/not_ready` controls from appearing calibrated.
+The stricter entry-localization repair was exercised by three of the nine
+capacity-384 cases (12 repeated arm audits), each requiring exactly one repair;
+all cases then completed without weakening the alias/role contract.
+
 The latest no-training GPT-5-mini H2 smoke also makes the evaluator boundary
 explicit. A compile-time oracle that may start at any retained node measures the
 L1/L1.5 substrate ceiling, not the ceiling available to the runtime method.

@@ -20,6 +20,8 @@ from steam_video_new.implicit_world_model.full_graph_iwm.multi_trajectory_cgbenc
     GPTOSSMultiTrajectoryAnswerSelector,
     MULTI_ARMS,
     _aggregate,
+    _categorical_balanced_accuracy,
+    _categorical_false_discovery_rate,
     _planner_for_arm,
     run_multi_trajectory_case,
 )
@@ -304,6 +306,51 @@ def test_role_conditioned_entry_localization_flattens_without_ranking() -> None:
     assert localizer.audits[0]["top_k_applied"] is False
 
 
+def test_entry_localization_repair_receives_exact_contract_feedback() -> None:
+    class _RepairingEntryClient:
+        model = "repairing-entry-test"
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def complete_json(self, *, task, payload):
+            self.calls += 1
+            if self.calls == 1:
+                return {
+                    "status": "located",
+                    "preferred": {"invented role": "anchor_a"},
+                    "rationale": "invalid role spelling",
+                }
+            assert "repair_feedback" in payload
+            feedback = payload["repair_feedback"]
+            assert feedback["validation_error"] == (
+                "entry localization returned an unknown missing role"
+            )
+            assert feedback["exact_valid_missing_roles"] == ["event"]
+            assert feedback["exact_valid_address_aliases"] == [
+                "anchor_a",
+                "anchor_b",
+            ]
+            assert "flat alias list" in task
+            return {
+                "status": "located",
+                "preferred": ["anchor_b"],
+                "rationale": "repaired using an exact address alias",
+            }
+
+    client = _RepairingEntryClient()
+    localizer = GPTOSSEntryLocalizer(client)
+    selected = localizer.localize(
+        question="what happened?",
+        missing_roles=("event",),
+        graph=_graph(),
+    )
+
+    assert selected == ("l1:second",)
+    assert client.calls == 2
+    assert localizer.audits[0]["schema_repair_count"] == 1
+
+
 def test_five_matched_arms_have_distinct_world_model_interventions() -> None:
     model = GPTOSSCategoricalMultiTrajectoryModel(_AnswerClient())
 
@@ -354,6 +401,26 @@ def test_matched_metrics_remain_separate_without_aggregate_reward() -> None:
     assert metrics["answer_accuracy"] == 1.0
     assert metrics["mean_clue_recall"] == 0.5
     assert not ({"reward", "score", "utility", "passed"} & set(metrics))
+
+
+def test_categorical_calibration_reports_class_balance_and_over_credit() -> None:
+    rows = [
+        {"predicted": "inconclusive", "realized": "inconclusive"},
+        {"predicted": "inconclusive", "realized": "inconclusive"},
+        {"predicted": "inconclusive", "realized": "support"},
+        {"predicted": "support", "realized": "inconclusive"},
+    ]
+
+    assert _categorical_balanced_accuracy(rows, "predicted", "realized") == 1 / 3
+    assert (
+        _categorical_false_discovery_rate(
+            rows,
+            "predicted",
+            "realized",
+            positive_values={"support"},
+        )
+        == 1.0
+    )
 
 
 def test_transition_over_crediting_uses_corrected_belief_without_hidden_gt(

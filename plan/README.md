@@ -734,6 +734,17 @@ L1/L1.5 构建、真实执行和审核前，所有状态保持 pending，不能�
 
 建议接下来的实现顺序：
 
+冻结 train collection 中通过 graph gate 的 31 例已全部跑完，且 `runtime_error=0`、
+`method_failure=0`；因此 infra 可以工作，但 zero-shot IWM 尚未通过实证。WM-guided
+answer accuracy / clue recall 为 0.129 / 0.145，no-WM 为 0.161 / 0.266。
+763 条 executed WM transition 中，realized `inconclusive` 占主导，原 micro exact
+accuracy 会让经常预测 control 类的 shuffled arm 虚高。现在评估同时报告 pooled
+confusion matrix、macro-recall balanced accuracy 与 categorical over-credit FDR；
+WM 的 outcome/progress balanced accuracy 为 0.332/0.419，对应 over-credit FDR 为
+0.759/0.857，predicted-ready FDR 为 0.974。所以下一步数据目标必须是 grounded
+action-conditioned negative/inconclusive/counterevidence/delayed transitions，而不是
+增加 Top-K、固定 tie-break 或手工 reward。
+
 1. 冻结 `structured belief-event patch` V2 schema；
 2. 编写 V1 executed-transition 到 V2 training record 的 adapter；
 3. 补采 negative、inconclusive、counterevidence 和 delayed cases；

@@ -11,8 +11,18 @@
 - selection 不读取 question text 或 hidden answer；
 - L1/L1.5 必须按视频 question-independently 构建。
 
-当前原始视频总时长约 68,641 秒。所有 graph、clue-retention、multi-trajectory
-execution 和 independent review 状态目前都是 `pending`，没有启动 9B 训练。
+当前原始视频总时长约 68,641 秒。40 个视频的 question-independent L1/L1.5 已完成；
+其中 22 例在 capacity 192 通过 compile gate，另有 9 例在 capacity 384 通过，合计
+31 例已完成五臂 multi-trajectory execution。两批均为 `pending=0 / runtime_error=0 /
+method_failure=0`。31 例中只有 15 例通过 model-localized entry frontier 的完整 clue
+coverage preflight，因此其余 16 例只能用于 substrate/localization failure analysis。
+尚未启动 9B 训练，executed records 在独立审核锁定前仍不可训练。
+
+当前 zero-shot GPT-5-mini 结果是负结果：WM-guided answer accuracy / clue recall 为
+0.129 / 0.145，no-WM 为 0.161 / 0.266。修正 class imbalance 后，WM transition 的
+outcome/progress balanced accuracy 为 0.332 / 0.419，over-credit FDR 为
+0.759 / 0.857，predicted-ready FDR 为 0.974。infra 已验证，但 IWM 尚未通过
+baseline-beating 或 calibration gate。
 
 每例采集后必须分类覆盖：
 
@@ -64,3 +74,8 @@ matched-arm diagnostics，不训练 GPT-OSS、Qwen 或 9B adapter。
 可以先对 clue-retained cases 生成独立的 passed compile-gate artifact，再设置
 `SKIP_COMPILE_GATE=1` 复用它。runner 只从该 frozen artifact 的
 `runnable_case_ids` 读取 case，不允许手工追加或绕过单例 clue/boundary checks。
+
+失败恢复时可设置 `CASE_IDS_CSV`，只重跑 frozen compile gate 中已存在的 case ID；
+runner 会拒绝任何不在 gate 内的 ID。配合 `FORCE=1` 可以重建 contract-failed case，
+同时复用其合法 response cache，避免重做已成功的模型调用。该机制不改变 cohort、
+legal action 集或 planner 规则。

@@ -17,16 +17,31 @@ READ_BUDGET="${READ_BUDGET:-2}"
 WORKERS="${WORKERS:-8}"
 SKIP_COMPILE_GATE="${SKIP_COMPILE_GATE:-0}"
 FORCE="${FORCE:-0}"
+CASE_IDS_CSV="${CASE_IDS_CSV:-}"
 
 cd "${REPO_ROOT}"
 if [[ "${SKIP_COMPILE_GATE}" == "1" ]]; then
-  mapfile -t CASE_IDS < <("${PYTHON_BIN}" -c \
+  mapfile -t RUNNABLE_CASE_IDS < <("${PYTHON_BIN}" -c \
     'import json,sys; print("\n".join(json.load(open(sys.argv[1]))["runnable_case_ids"]))' \
     "${COMPILED_GATE}")
 else
-  mapfile -t CASE_IDS < <("${PYTHON_BIN}" -c \
+  mapfile -t RUNNABLE_CASE_IDS < <("${PYTHON_BIN}" -c \
     'import json,sys; print("\n".join(x["case_id"] for x in json.load(open(sys.argv[1]))["cases"]))' \
     "${PROTOCOL}")
+fi
+CASE_IDS=("${RUNNABLE_CASE_IDS[@]}")
+if [[ -n "${CASE_IDS_CSV}" ]]; then
+  declare -A RUNNABLE_CASE_SET=()
+  for case_id in "${RUNNABLE_CASE_IDS[@]}"; do
+    RUNNABLE_CASE_SET["${case_id}"]=1
+  done
+  IFS=',' read -r -a CASE_IDS <<< "${CASE_IDS_CSV}"
+  for case_id in "${CASE_IDS[@]}"; do
+    if [[ -z "${case_id}" || -z "${RUNNABLE_CASE_SET[${case_id}]:-}" ]]; then
+      echo "Requested retry case is not in the frozen runnable gate: ${case_id}" >&2
+      exit 2
+    fi
+  done
 fi
 if [[ "${#CASE_IDS[@]}" -lt 1 ]]; then
   echo "No runnable frozen train cases were selected" >&2
