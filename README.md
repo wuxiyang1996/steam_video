@@ -6,6 +6,18 @@ Steam video agents: support-progressive navigation problem formulations.
 
 - `memory_graph/` — temporal / candidate-causal memory graph
 - `dynamic_navigation/` — progressive navigation formulations
-- `streaming_3bench/` — local implementations for OVO-Bench, VideoMME, and StreamingBench
+- `streaming_3bench/` — **5 baselines × 3 benchmarks** streaming eval package
 
-See [`streaming_3bench/README.md`](streaming_3bench/README.md) for the 3-benchmark streaming eval inventory and runners.
+### Streaming eval contract (`streaming_3bench/`)
+
+Benchmarks: OVO-Bench, VideoMME, StreamingBench.
+
+Baselines:
+
+1. Dispider
+2. StreamBridge
+3. M3-Agent
+4. Iterative RAG
+5. Qwen3.5-9B + FAISS
+
+See [`streaming_3bench/README.md`](streaming_3bench/README.md).
