@@ -1,0 +1,16 @@
+{
+  "training_export_eligible": false,
+  "training_performed": false,
+  "blocking_gates": [
+    "real_belief_hypotheses_diverged",
+    "localized_entry_contains_first_clue",
+    "iwm_first_action_matches_first_clue",
+    "action_diverges_from_no_wm",
+    "shuffling_changes_action",
+    "delayed_advantage_over_immediate",
+    "oracle_headroom_available",
+    "answer_accuracy_available",
+    "transition_calibration_available",
+    "multi_video_fixed_cohort"
+  ]
+}

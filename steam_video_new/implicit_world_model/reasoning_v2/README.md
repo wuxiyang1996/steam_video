@@ -31,6 +31,9 @@ question-independent video
 - Unselected reasoning alternatives remain suspended with their original
   action histories. One real read enters shared evidence memory without
   rewriting every path into the selected trajectory.
+- Normal replanning expands active paths only. Suspended paths remain
+  recoverable state and may be reactivated only by an explicit recovery
+  decision; retaining a path does not mean expanding it every round.
 - No fixed Top-K pruning and no numeric value emitted by an LLM. Numeric metrics
   exist only in offline evaluators.
 - GTSAM remains an optional real-belief correction backend, not the main method.
@@ -58,3 +61,34 @@ historical artifact reproduction but is not the v2 research implementation.
 
 Until these pass, conservative baselines fail closed instead of manufacturing
 belief progress.
+
+## First real model-backed smoke (GPT-5-mini)
+
+The first frozen CG-Bench case smoke is stored outside the training datasets at
+`outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.json`. It exercised five
+matched read-budget arms (`iwm`, `no_wm`, `shuffled_iwm`, `immediate_only`, and
+`oracle`) plus one executed read and replan.
+
+Confirmed infrastructure properties:
+
+- all 192 safe semantic addresses were inspected without Top-K;
+- physical observations were deduplicated across six hypotheses;
+- every joint action tree covered all six hypothesis-conditioned outcomes;
+- one real read was executed and a second planning round produced candidates;
+- short request/tree aliases eliminated long-ID copy corruption;
+- suspended paths were retained but not recursively expanded during normal
+  replanning;
+- strict categorical responses were cached, and no training was performed.
+
+The scientific gates did **not** pass. The localizer selected nodes `0045` and
+`0060`, while the hidden evaluator's delayed first clue was node `0021`. IWM,
+no-WM, and shuffled-IWM consequently selected the same incorrect first read;
+the immediate-only arm tied. The executed evidence was inconclusive for every
+hypothesis, so real beliefs did not diverge. Answer accuracy, independently
+calibrated transitions, and a multi-video fixed cohort were not available.
+
+This failure must not be repaired with heuristic Top-K or forced tie-breaking.
+It identifies the next data/model requirement: supervision for delayed entry
+localization and grounded hypothesis-conditioned effects, with semantic-neighbor
+hard negatives. `training_export.blocked.json` records the failed gate; no 9B
+training export was produced.

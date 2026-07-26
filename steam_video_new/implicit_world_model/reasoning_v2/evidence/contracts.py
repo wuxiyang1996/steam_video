@@ -18,6 +18,7 @@ class EvidenceAddress:
     start_s: float
     end_s: float
     event_family: str
+    semantic_key: str = ""
     structural_tags: tuple[str, ...] = ()
     source_segments: tuple[str, ...] = ()
     embedding_ref: Mapping[str, Any] | None = None
@@ -29,6 +30,8 @@ class EvidenceAddress:
             raise ValueError("evidence address has an invalid time span")
         if not self.event_family.strip():
             raise ValueError("evidence address requires a coarse event family")
+        if len(self.semantic_key) > 480:
+            raise ValueError("evidence address semantic key exceeds its bound")
         if len(self.structural_tags) != len(set(self.structural_tags)):
             raise ValueError("evidence address structural tags must be unique")
 

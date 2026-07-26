@@ -51,6 +51,7 @@ def _memory(*node_ids: str) -> EvidenceMemory:
                     start_s=float(index),
                     end_s=float(index + 1),
                     event_family="action",
+                    semantic_key=f"safe semantic key {node_id}",
                     source_segments=(f"clip:{node_id}",),
                 ),
                 EvidenceValue(
@@ -82,6 +83,7 @@ def test_evidence_address_does_not_leak_unread_grounded_value() -> None:
     assert views[0]["value"].predicate == "predicate_a"
     assert views[1]["value"] is None
     assert views[1]["address"].event_family == "action"
+    assert views[1]["address"].semantic_key == "safe semantic key b"
     assert "predicate_b" not in repr(views[1]["address"])
 
 

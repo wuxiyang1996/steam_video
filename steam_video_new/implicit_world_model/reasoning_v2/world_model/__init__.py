@@ -22,6 +22,12 @@ from .contracts import (
     observation_world_key,
     project_belief,
 )
+from .model_backed import (
+    CategoricalJSONClient,
+    ModelBackedHypothesisEffectModel,
+    ModelBackedObservationWorldModel,
+    ModelBackedRealEffectCorrector,
+)
 from .validation import validate_observation_predictions
 
 __all__ = [
@@ -30,11 +36,15 @@ __all__ = [
     "BeliefEffect",
     "BeliefState",
     "ConservativeEffectBaseline",
+    "CategoricalJSONClient",
     "ContradictionChange",
     "FrontierChange",
     "GroundedBeliefEffect",
     "HypothesisEffectModel",
     "HypothesisEffectRequest",
+    "ModelBackedHypothesisEffectModel",
+    "ModelBackedObservationWorldModel",
+    "ModelBackedRealEffectCorrector",
     "ObservationContext",
     "ObservationDescriptor",
     "ObservationKind",

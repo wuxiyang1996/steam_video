@@ -70,11 +70,15 @@ class ReasoningPathForest:
 
     @property
     def plannable(self) -> tuple[ReasoningPath, ...]:
-        return tuple(
-            row
-            for row in self.paths
-            if row.status in {PathStatus.ACTIVE, PathStatus.SUSPENDED}
-        )
+        """Active paths expanded in the normal MPC round."""
+
+        return tuple(row for row in self.paths if row.status is PathStatus.ACTIVE)
+
+    @property
+    def recoverable(self) -> tuple[ReasoningPath, ...]:
+        """Retained alternatives eligible for an explicit recovery decision."""
+
+        return tuple(row for row in self.paths if row.status is PathStatus.SUSPENDED)
 
 
 @dataclass(frozen=True)

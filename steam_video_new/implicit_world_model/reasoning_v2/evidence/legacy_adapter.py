@@ -8,6 +8,9 @@ from typing import Any
 from steam_video_new.implicit_world_model.full_graph_iwm.contracts import (
     RetainedEvidenceGraph,
 )
+from steam_video_new.implicit_world_model.full_graph_iwm.model_input import (
+    node_key_for_localization,
+)
 
 from .contracts import (
     EntityMention,
@@ -22,7 +25,7 @@ from .contracts import (
 
 
 def from_retained_graph(graph: RetainedEvidenceGraph) -> EvidenceMemory:
-    records = tuple(_record(node) for node in graph.nodes)
+    records = tuple(record_from_memory_node(node) for node in graph.nodes)
     links = tuple(
         TemporalLink(edge.edge_id, edge.src, edge.dst, edge.relation)
         for edge in graph.temporal_edges
@@ -40,7 +43,7 @@ def from_retained_graph(graph: RetainedEvidenceGraph) -> EvidenceMemory:
     )
 
 
-def _record(node: Any) -> EvidenceRecord:
+def record_from_memory_node(node: Any) -> EvidenceRecord:
     metadata = node.metadata
     entities = tuple(
         EntityMention(
@@ -78,6 +81,7 @@ def _record(node: Any) -> EvidenceRecord:
         # V2 intentionally exposes only a coarse family before a read.  The
         # predicate and participant attributes remain in EvidenceValue.
         event_family=action_kind,
+        semantic_key=node_key_for_localization(node).semantic_key,
         structural_tags=tuple(
             sorted(
                 {

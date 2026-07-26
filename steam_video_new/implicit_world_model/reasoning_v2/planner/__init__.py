@@ -15,10 +15,12 @@ from .contracts import (
     TrajectoryPreferenceDecision,
 )
 from .persistent import PersistentMultiPathPlanner, apply_real_read, initialize_forest
+from .model_backed import ModelBackedJointTreePlanner
 
 __all__ = [
     "CandidateReasoningTrajectory",
     "JointActionTree",
+    "ModelBackedJointTreePlanner",
     "CategoricalTrajectoryPlannerModel",
     "ImaginedReasoningStep",
     "IncomparablePlannerBaseline",

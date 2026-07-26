@@ -11,12 +11,14 @@ from .contracts import (
     ProposalCalibration,
     ProposalKind,
 )
+from .localization import ModelBackedEntryLocalizer
 
 __all__ = [
     "NavigationAction",
     "NavigationActionKind",
     "NavigationGraph",
     "NavigationProposal",
+    "ModelBackedEntryLocalizer",
     "ProposalCalibration",
     "ProposalCalibrationReport",
     "ProposalKind",

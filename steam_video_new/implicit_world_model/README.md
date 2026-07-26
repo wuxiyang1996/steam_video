@@ -32,3 +32,8 @@ hypothesis-conditioned one/two-hop futures before the categorical choice.
 
 No 9B training is authorized until the gates listed in
 `reasoning_v2/README.md` pass on a fixed multi-video cohort.
+
+The first real GPT-5-mini v2 smoke completed the full execute/correct/replan
+loop but failed delayed entry retention and intervention-divergence gates. See
+the v2 README for the exact result. This is an infrastructure validation, not
+evidence that zero-shot IWM improves QA, and it did not release training data.
