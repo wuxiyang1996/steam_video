@@ -3,8 +3,8 @@
 This repository develops an evidence-grounded memory graph for long-video
 understanding and bounded graph navigation. The active implementation lives in
 `memory_graph/`; the IWM-guided navigation research path lives in
-`steam_video_new/`. `dynamic_navigation/`, `legacy/`, and older Video-Holmes
-artifacts are historical or engineering-only.
+`steam_video_new/`. `legacy/` and older Video-Holmes artifacts remain
+historical or engineering-only.
 
 **Primary testbed: CG-Bench.** Supervision, frozen cohorts, matched IWM/planner
 arms, and held-out gates use CG-Bench multi-clue cases with human
