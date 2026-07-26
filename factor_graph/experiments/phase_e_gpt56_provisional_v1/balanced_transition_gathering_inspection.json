@@ -1,0 +1,551 @@
+{
+  "schema_version": "steam-transition-gathering-inspection/v0.1",
+  "dataset_id": "phase-e-balanced-executed-transitions-v1",
+  "source_case_set_id": "phase-e-balanced-reviewed-ai-provisional-v1",
+  "dataset_valid": true,
+  "case_set_valid": true,
+  "validation_errors": [],
+  "case_count": 52,
+  "record_count": 994,
+  "grounded_record_count": 978,
+  "unreviewed_target_count": 994,
+  "action_counts": {
+    "follow_dependency": 53,
+    "semantic": 41,
+    "temporal_back": 186,
+    "temporal_forward": 237,
+    "track_entity": 123,
+    "verify": 354
+  },
+  "missing_action_families": [
+    "inspect_state_change",
+    "search_counterevidence",
+    "find_bridge"
+  ],
+  "resolved_role_counts": {
+    "identity": 44
+  },
+  "verifier_source_outcomes": {
+    "no_post_read_relation_verifier": {
+      "inconclusive": 475
+    },
+    "not_applicable": {
+      "not_applicable": 41
+    },
+    "persisted_relation_verifier": {
+      "supports": 124
+    },
+    "video_skills_post_read_claim_verifier": {
+      "inconclusive": 335,
+      "supports": 19
+    }
+  },
+  "role_case_coverage": {
+    "bridge": {
+      "action_type": 17,
+      "data_case": 17,
+      "exact_action": 0,
+      "exact_grounded": 0,
+      "non_read_case": 10
+    },
+    "counterevidence": {
+      "action_type": 0,
+      "data_case": 10,
+      "exact_action": 0,
+      "exact_grounded": 0
+    },
+    "identity": {
+      "action_type": 10,
+      "data_case": 10,
+      "exact_action": 10,
+      "exact_grounded": 10
+    },
+    "state_transition": {
+      "action_type": 1,
+      "data_case": 5,
+      "exact_action": 1,
+      "exact_grounded": 1
+    }
+  },
+  "case_coverage": [
+    {
+      "case_id": "review-case:826136bc1a5e7164",
+      "role": "counterevidence",
+      "record_count": 9,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:5f6cfb5b63114f71",
+      "role": "identity",
+      "record_count": 16,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:6b9eca66b80dfc10",
+      "role": "counterevidence",
+      "record_count": 7,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:8a99115a64e12d3c",
+      "role": "identity",
+      "record_count": 24,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:b6ccc24367ef010d",
+      "role": "identity",
+      "record_count": 32,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:f6454c43918303ba",
+      "role": "identity",
+      "record_count": 16,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:fec4daf5ea7aa435",
+      "role": "bridge",
+      "record_count": 20,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:1d32a307bce6e2fa",
+      "role": "bridge",
+      "record_count": 23,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:29cd3882122bc4cd",
+      "role": "counterevidence",
+      "record_count": 7,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:beed6317ceb35d0c",
+      "role": "counterevidence",
+      "record_count": 6,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:2c1f51ca5ae75bd0",
+      "role": "state_transition",
+      "record_count": 17,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:c8606920d73e61b3",
+      "role": "bridge",
+      "record_count": 26,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:9f6cb5116d9b71aa",
+      "role": "bridge",
+      "record_count": 22,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:7a576c1849d28a56",
+      "role": "counterevidence",
+      "record_count": 5,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:96040f64a1b160df",
+      "role": "bridge",
+      "record_count": 19,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:7eb35bdd0de0a2ce",
+      "role": "identity",
+      "record_count": 21,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:122afac52e671c77",
+      "role": "bridge",
+      "record_count": 37,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:cb81a5a4ff36751e",
+      "role": "bridge",
+      "record_count": 25,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:de537f5750a2592e",
+      "role": "bridge",
+      "record_count": 24,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:364695ff40217a3b",
+      "role": "bridge",
+      "record_count": 26,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:112af1a46d295c75",
+      "role": "bridge",
+      "record_count": 21,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:162d35c6827df701",
+      "role": "state_transition",
+      "record_count": 11,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:cf27d57189101eed",
+      "role": "bridge",
+      "record_count": 22,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:33627a2f56523762",
+      "role": "bridge",
+      "record_count": 24,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:bd2ce3d0e0aca8af",
+      "role": "bridge",
+      "record_count": 11,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:b97284bf63de9ef0",
+      "role": "counterevidence",
+      "record_count": 8,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:183a34f143045bee",
+      "role": "state_transition",
+      "record_count": 17,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:a3e19a49689b2370",
+      "role": "bridge",
+      "record_count": 26,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:883bfa003083adfa",
+      "role": "bridge",
+      "record_count": 20,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:c6765acb6cb75f3d",
+      "role": "counterevidence",
+      "record_count": 8,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:0cea93d10fe4b4f5",
+      "role": "state_transition",
+      "record_count": 16,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:fea0060dcb2ef5cb",
+      "role": "bridge",
+      "record_count": 26,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:488cf60af031ee48",
+      "role": "identity",
+      "record_count": 16,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:3276b733350d5646",
+      "role": "counterevidence",
+      "record_count": 6,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:3016cedccb17e5c2",
+      "role": "bridge",
+      "record_count": 24,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:16c946dd35aebdfb",
+      "role": "bridge",
+      "record_count": 38,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:a72fba99edc7f144",
+      "role": "identity",
+      "record_count": 27,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:e87290b1165886d2",
+      "role": "bridge",
+      "record_count": 20,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:9a42b443126119bb",
+      "role": "bridge",
+      "record_count": 26,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:035d8b0fdcd62fe3",
+      "role": "identity",
+      "record_count": 8,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:cf75af872efaf69c",
+      "role": "bridge",
+      "record_count": 22,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:6217f932863f2290",
+      "role": "bridge",
+      "record_count": 37,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:33fe5bc3c6eec50b",
+      "role": "identity",
+      "record_count": 20,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:4a0418d5d55c2be1",
+      "role": "state_transition",
+      "record_count": 11,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:419a1b1045a9c0fe",
+      "role": "bridge",
+      "record_count": 20,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:ea9d6b203a07cb85",
+      "role": "bridge",
+      "record_count": 28,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:aa8cba2ca03dad7d",
+      "role": "bridge",
+      "record_count": 23,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:04a4458b73523d1c",
+      "role": "bridge",
+      "record_count": 24,
+      "proposed_data_action_count": 0,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:70d2ea9aaf4759ae",
+      "role": "identity",
+      "record_count": 15,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": true,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": true
+    },
+    {
+      "case_id": "review-case:849527c453c5eb27",
+      "role": "counterevidence",
+      "record_count": 7,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:23029ec366ad4e1b",
+      "role": "counterevidence",
+      "record_count": 6,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": false,
+      "exact_proposed_action_grounded": false
+    },
+    {
+      "case_id": "review-case:b7d4cb3d556d882e",
+      "role": "bridge",
+      "record_count": 24,
+      "proposed_data_action_count": 1,
+      "exact_proposed_action_executed": false,
+      "proposed_action_type_executed": true,
+      "exact_proposed_action_grounded": false
+    }
+  ],
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false,
+  "blockers": [
+    "executed transition targets are not independently human locked",
+    "executed transition targets still require record-level review",
+    "missing executed action families: inspect_state_change, search_counterevidence, find_bridge",
+    "not every reviewed case has its proposed action grounded",
+    "no executed record resolves the state_transition role",
+    "no executed record resolves the counterevidence role"
+  ]
+}

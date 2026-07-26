@@ -1,353 +1,225 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SelectStream 上的隐式因果—时序图导航 World Model</title><link rel="stylesheet" href="styles.css"></head><body>
-<header><h1>SelectStream 上的隐式因果—时序图导航 World Model</h1><p class="subtitle">Implicit Causal-Temporal Graph Navigation over Fixed-Capacity Streaming Video Memory</p><p class="meta">Problem formulation · 2026-07-17 · <a href="problem-formulation-en.html">English</a></p></header>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>基于真实视频证据记忆的世界模型引导多跳推理</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>基于真实视频证据记忆的世界模型引导多跳推理</h1>
+  <p class="subtitle">预测下一跳推理会如何改变未来 belief，执行一次真实证据读取，修正并重新规划。</p>
+  <p class="meta">当前问题定义 · 2026-07-22 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a></p>
+</header>
 
-<section class="card thesis"><span class="label">核心问题</span><h2>如何在 SelectStream latent memory 上推断不确定的因果—时序结构，并预见哪种证据动作最终补全答案？</h2><p>我们保留 SelectStream 的固定容量 latent evidence memory 作为 grounded substrate；causal-temporal graph、event identity、relations 与 reasoning frontier 并非预先给定的显式拓扑，而是随真实 observation 持续更新的 posterior。隐式 world model 预测 semantic、temporal、same-entity、candidate-causal、bridge 与 counter-evidence actions 将如何改变 future belief、chain completeness 与 answerability。</p><div class="equation">How can an implicit world model plan in belief space over uncertain causal-temporal structure,
-while grounding every posterior update in real SelectStream memory observations?</div><p><strong>主贡献是 belief-space evidence planning：</strong>短程 imagined rollout 负责比较具有延迟收益的候选动作；系统只执行第一步，从真实 memory anchor 获得 observation，更新整个 posterior 后重新规划。</p></section>
-
-<details><summary><strong>旧的连续状态语义导航路线（仅保留作对照，不是当前主方法）</strong></summary>
-
-<section class="card"><h2>1. Problem setting：固定、查询无关的多模态语义状态</h2><div class="equation">Z_t = Fuse(E_V(V_t),E_C(C_t))
-M_t = U_φ(M_{t-1},Z_t),   M_t∈R^{N×d},   N=constant</div><p><span class="math">M_t</span> 在任何未来问题出现前在线写入，并联合编码 entities、events、states、temporal relations、caption/ASR semantics、visual-only details 与 cross-modal conflicts。</p><p>历史表示严格不包含：</p><ul><li>独立 evidence items、frames、clips 或 caption entries；</li><li>timestamps、pointers、provenance、nodes 或 edges；</li><li>增长的 memory bank、Top-K retrieval 或 raw-video replay。</li></ul><p>因此本文研究的是 <strong>answer-supporting latent information</strong>，不能声称返回 grounded 或 source-traceable evidence。</p></section>
-
-<section class="card"><h2>2. Streaming interface：当前感知与历史状态解耦</h2><div class="equation">Current path:  W_t = RecentWindow(Z_{t-w:t})
-History path:  M_t = U_φ(M_{t-1},Z_{t-w-1})</div><p><span class="math">W_t</span> 保留最近几秒的 raw/轻压缩 tokens，保护 object、attribute、action、OCR 与细节感知；<span class="math">M_t</span> 只表示更早历史。该分离是 streaming interface，不是 novelty。</p></section>
-
-<section class="card"><h2>3. 主方法：Semantic-State Navigator</h2><p>初始化 query state，并在固定历史状态上执行最多 <span class="math">K</span> 步 operation-conditioned read：</p><div class="equation">u_0=E_Q(q)
-π_k=p_ψ(o_k|u_{k-1},q)
-e_k=Σ_o π_{k,o}e_o^{op}
-r_k=CrossAttn(u_{k-1}+e_k,M_t)
-u_k=GRU(u_{k-1},r_k,e_k)</div><p>第一版只使用一个共享 reader 和六个轻量 operation embeddings：</p><div class="equation">O={GROUND_ENTITY, RESOLVE_EVENT, TRACE_STATE,
-   LINK_TEMPORAL, CHECK_CONFLICT, COMPOSE}</div><p>Operation 不对应独立 agent 或网络专家；它只是控制同一 reader 在每一步需要从 latent state 解码哪类语义关系。</p></section>
-
-<section class="card"><h2>4. Navigation 的训练信号：support progress，而非 attention 次数</h2><p>第 <span class="math">k</span> 步后的 answer-support margin：</p><div class="equation">m_k=s(a^+|u_k,W_t)−max_{a^-∈A^-}s(a^-|u_k,W_t)</div><p>要求 navigation 每一步提高正确答案相对最危险 plausible alternative 的区分：</p><div class="equation">L_progress=Σ_k max(0,m_{k-1}+δ−m_k)</div><p>防止连续 steps 重复读取同一 latent direction：</p><div class="equation">L_comp=Σ_{k>1} Overlap(α_k,α_{k-1})</div><p>最终导航目标：</p><div class="equation">L_nav=L_QA+λ_pL_progress+λ_cL_comp+λ_oL_operation</div><p><span class="math">L_operation</span> 可由 question semantics / teacher trace 提供弱监督，但不能成为硬编码程序。若打乱 operation 不影响结果，则 semantic navigation claim 失败。</p></section>
-
-<section class="card"><h2>5. 与 SelectStream 的核心替换：graph routing → semantic navigation</h2><table><thead><tr><th>SelectStream</th><th>本文</th></tr></thead><tbody><tr><td>保存 addressable latent evidence nodes</td><td>只保存 single fixed consolidated state</td></tr><tr><td>Temporal / semantic graph edges</td><td>无 nodes、无 edges</td></tr><tr><td>Top-K seeds + subgraph expansion</td><td>对完整 state 做 operation-conditioned soft read</td></tr><tr><td>Graph attention + reranking</td><td>逐步更新 query state</td></tr><tr><td>输出 selected evidence tokens</td><td>输出最终 semantic query state</td></tr><tr><td>以 temporal retrieval recall 衡量</td><td>以 step-wise answer-support progress 衡量</td></tr></tbody></table><div class="equation">SelectStream: q → select nodes → traverse edges → evidence tokens
-Ours:        q → semantic operation → read M → update q → answer</div><p>SelectStream 导航“证据存在哪里”；本文导航“需要对连续语义状态执行什么变换，才能逐步形成答案”。</p></section>
-
-<section class="card"><h2>6. Answerability collapse：navigation 要恢复的 failure</h2><div class="equation">coarse semantic relevance survives
-                ≠
-future claim remains answerable</div><p>固定压缩可能记住红包、A、B 与窗边，却丢失 handoff、pickup 或 object continuity。Navigator 的目标不是重建原始 evidence，而是恢复区分正确答案与 plausible alternative 所需的 latent semantics。</p><div class="equation">FullHistoryAnswerable(q,S_≤t)=1
-LatentMemoryAnswerable(q,M_t)=0</div></section>
-
-<section class="card"><h2>7. 外层约束：历史导航不能破坏当前感知</h2><p>主 novelty 是 navigation；perception–memory trade-off 是 streaming 约束。Full-history teacher 与 recent-only teacher 分别定义历史收益和当前保护：</p><div class="equation">L_hist=KL[p_T(a|q,W_t,H_t)||p_S(a|q,W_t,M_t)]
-L_current=KL[p_R(a|q,W_t)||p_S(a|q,W_t,M_t)]</div><div class="equation">min L_hist+L_nav
-s.t. E_{q∈Q_current}L_current≤ε,   |M_t|=N</div><p>方法必须提高 historical questions，同时将 current interference 控制在预设 <span class="math">ε</span> 内。</p></section>
-
-<section class="card"><h2>8. Qwen3.5-2B 实现</h2><div class="equation">H_t=HiddenStates_Qwen3.5-2B(V_t,C_t)
-Z_t=Resampler(H_t),   Z_t∈R^{L×2048}</div><p>默认每 chunk 16 latent tokens，history 64 tokens；比较 <span class="math">L∈{8,16,32}</span>、<span class="math">N∈{32,64,128}</span>。不做单向量 mean pooling。</p><div class="equation">frozen Qwen3.5-2B encoder
-→ learned resampler / updater / navigator
-→ projection + LayerNorm
-→ frozen 7B/8B answer VLM</div><p>Qwen3-VL-Embedding-2B 是 encoder baseline。Qwen backbone 是 implementation choice，不是 contribution。</p></section>
-
-<section class="card benchmark"><span class="label">Representation probes</span><h2>9. 在训练 navigation 前验证 semantic state</h2><table><thead><tr><th>Probe</th><th>检查内容</th></tr></thead><tbody><tr><td>Entity / visual detail</td><td>身份、颜色、OCR、小物体、局部状态</td></tr><tr><td>Event / temporal</td><td>动作、before/after、state transition、object continuity</td></tr><tr><td>Caption dependence</td><td>video-only、caption-only、joint</td></tr><tr><td>Conflict</td><td>视觉与 caption 不一致时是否保留两种解释</td></tr><tr><td>Streaming overwrite</td><td>早期 semantics 随 horizon 的 retention</td></tr></tbody></table><p>如果 semantic distinction 在进入 navigator 前已丢失，任何 navigation 都无法恢复。</p></section>
-
-<section class="card"><h2>10. Navigation 必要性实验</h2><p>所有 reader 匹配参数、输入与 FLOPs：</p><ol><li>one-step global CrossAttn；</li><li>deeper one-shot Transformer reader；</li><li>HME/ReDAN-style recurrent attention；</li><li>HippoTune-style latent deliberation；</li><li>本文 navigator without operations；</li><li>本文 navigator without progress loss；</li><li>本文 full navigator；</li><li>SelectStream graph retrieval。</li></ol><p>关键干预：</p><ul><li>打乱、替换或移除 semantic operations；</li><li>检查 operation sequence 与 question type 的统计对应；</li><li>画 step-wise support margin <span class="math">m_0,…,m_K</span>；</li><li>比较不同 <span class="math">K</span> 与等 FLOP depth。</li></ul></section>
-
-<section class="card benchmark"><span class="label">Benchmarks</span><h2>11. OVO-Bench、StreamingBench 与 VideoMME</h2><table><thead><tr><th>Benchmark</th><th>用途</th></tr></thead><tbody><tr><td>OVO-Bench</td><td>Real-time perception、Backward Tracing；拆分 current 与 history</td></tr><tr><td>StreamingBench</td><td>Current perception、causal/event/context、多轮一致性</td></tr><tr><td>VideoMME</td><td>普通 short/medium/long video ability 保持</td></tr></tbody></table><p>导航收益应集中在 temporal、multi-event、state-transition、cross-modal conflict 与 history-dependent questions，而不能只提高 overall accuracy。</p></section>
-
-<section class="card"><h2>12. 指标</h2><div class="equation">Historical Gain=Acc(W_t,M_t)−Acc(W_t)
-Current Interference=Acc_current(W_t)−Acc_current(W_t,M_t)
-Net Memory Value=Historical Gain−λ·Current Interference</div><ul><li>step-wise answer-support margin 与 monotonic progress rate；</li><li>operation intervention sensitivity；</li><li>multi-hop / temporal question gain；</li><li>Answerability Collapse Rate；</li><li>memory tokens、read FLOPs、latency 与 steps；</li><li>VideoMME retention。</li></ul></section>
-
-<section class="card"><h2>13. Honest prior-work boundary</h2><p>已有工作分别覆盖 multi-step VideoQA attention、semantic-role-guided frame reasoning、recurrent question refinement、modern latent iterative retrieval 和 multimodal embedding navigation。本文不能声称首次 latent navigation 或首次 multi-step VideoQA reasoning。</p><p>尚未发现直接完整覆盖的严格组合是：</p><div class="equation">streaming query-independent fixed LLM-aligned semantic state
-+ no discrete items / graph / retrieval
-+ operation-conditioned navigation
-+ step-wise answer-support progress
-+ bounded current-scene interference</div></section>
-
-<section class="card warning"><span class="label">Go / No-Go</span><h2>14. 论文成立门槛</h2><p><strong>Go：</strong>等 FLOP 下 semantic navigator 显著优于 deeper one-shot、普通 recurrent attention 与 latent deliberation；operations 对问题类型有稳定对应，打乱会降点；support margin 随 step 提升；并在 historical questions 上接近或超过 SelectStream，同时保持 current perception。</p><p><strong>No-Go：</strong>收益由 Qwen embeddings 或更多 depth 解释；operations 可任意打乱；progress loss 等价于普通 deep supervision；或 fixed state 无法接近 SelectStream 的 graph retrieval。此时方法只是旧 recurrent attention 加现代 backbone。</p></section>
-
-<section class="card"><h2>旧路线一句话定位</h2><p><strong>We introduce support-progressive semantic navigation over a fixed, query-independent, LLM-aligned multimodal history state, progressively transforming the question without retrieving discrete video evidence.</strong></p></section>
-</details>
-
-<section class="card thesis"><span class="label">当前主路线</span><h2>15. SelectStream 上的隐式因果—时序图导航 World Model</h2>
-<p><strong>核心决定：</strong>保留 SelectStream 的固定容量 latent evidence memory、writing、consolidation 与 evidence injection；将 causal-temporal graph 视为未完全观测的 latent hypothesis，而不是新增一张确定图。隐式 world model 预测 evidence action 将如何改变 graph/relation posterior、共享变量与 answerability。</p>
-<div class="equation">SelectStream memory as grounded substrate
-+ uncertain causal-temporal structure as belief
-+ evidence operators as epistemic actions
-+ real memory reads as observations
-+ implicit belief transitions for short-horizon planning</div>
-<p>目标不是从观察视频识别真实因果效应，也不是建立通用 abstract reasoning world model。论文级 claim 是 <strong>belief-space planning over uncertain causal-temporal video structure</strong>：一至两步 imagined rollout 选择具有延迟收益的 evidence action，读取真实 memory anchor 后全局更新 posterior 并重新规划。</p>
-
-<h3>15.1 从 SelectStream latent evidence substrate 出发</h3>
-<div class="equation">M_t={m_i=(h_i,τ_i,p_i)}
-𝒢_t∼q_η(𝒢 | M_t,q,E_{1:k})
-q_η(r_ij)=P(r_ij | h_i,h_j,Δτ_ij,q,E_{1:k})</div>
-<p>SelectStream 原有 surprise-driven writing、priority-preserving consolidation 与 latent evidence injection 保持不变。Memory anchors 提供 latent representation、temporal span 与 provenance，但 event boundary、entity binding、state transition、explanatory link 和 contradiction 均可是不确定变量。Relation inference 只在 cheap Top-K candidate pairs / frontier 上执行；<span class="math">explain/enable</span> 表示 candidate causal support，不等于由 observational video 识别出的真实 causal edge。</p>
-
-<h3>15.2 Consolidation 是继承的约束，不是当前主贡献</h3>
-<p>因果效用有用，但孤立/未决/事实节点仍可能有价值；关系模型会错；很多 QA 只需视觉事实而非因果链。多目标重要性 + 三种操作：</p>
-<div class="equation">I_i=λ_s I_i^sem+λ_t I_i^temp+λ_c I_i^causal+λ_q I_i^query+λ_u I_i^unc
-ops ∈ {keep, merge, abstract, delete}</div>
-<ul>
-<li><strong>Delete</strong> — 冗余、因果贡献低、不确定性低、非唯一观察。</li>
-<li><strong>Merge</strong> — 同状态持续；保留时间跨度。</li>
-<li><strong>Abstract</strong> — 把因果 motif 压成带 provenance 的 summary node（最强新操作）。</li>
-</ul>
-<p>保护 bridge、唯一状态转移、高影响 candidate cause 与未解决 hypothesis；但第一版继承 SelectStream 的 consolidation，不把它作为 novelty。只有当预测式 navigation utility 被证明还能改善压缩决策时，才作为后续扩展。</p>
-
-<h3>15.3 动作空间与闭环状态</h3>
-<div class="equation">z_k=Enc(q,E_{1:k},H_k,g_k,B_k)
-a_k=(o_k,v_k)
-o_k∈{semantic,before,after,same-entity,cause,effect,bridge,counter,stop}</div>
-<p><span class="math">z_k</span> 是隐式 belief state，条件包括问题、已读取的真实证据、竞争假设、当前缺失的 reasoning role 与剩余预算。动作选择 relation operator 与 graph frontier；下一步必须依赖真实 graph read，而不是沿 imagined evidence 继续自回归。</p>
-
-<h3>15.4 贡献排序与 SelectStream 差异</h3>
-<ol>
-<li><strong>Implicit graph-navigation world model：</strong>预测 action-conditioned evidence-belief transition 与 delayed utility。</li>
-<li><strong>Closed-loop predictive navigation：</strong>短程 rollout → 执行一个 graph action → 读取真实 latent evidence → posterior correction → replan。</li>
-<li><strong>Uncertain causal-temporal augmentation：</strong>为 SelectStream 图提供可修订的 state-transition、explanatory、bridge 与 contradiction relations。</li>
-</ol>
-<table><thead><tr><th>工作</th><th>对我们的定位</th></tr></thead><tbody>
-<tr><td>Event-Causal RAG</td><td>仅 broader RW：硬文本 SES + TEMPORAL_NEXT、fixed-hop 遍历；不是最近邻</td></tr>
-<tr><td>MECD+</td><td>离线 event causal discovery teacher；无流式 consolidation / navigation</td></tr>
-<tr><td>RAVU</td><td>实体-事件图上的 symbolic operators；无不确定边 / 固定预算 consolidation</td></tr>
-<tr><td>SelectStream + MERLIN + latent relation models</td><td>我们真正延伸的交叉点</td></tr>
-</tbody></table>
-<div class="equation">SelectStream: q → static graph propagation → rank evidence nodes
-Ours: q,belief → imagine graph actions → predict future utility
-      → execute one action → observe real node → update and replan</div>
-<p><strong>一句话：</strong>在 SelectStream 的固定容量 latent evidence graph 上学习隐式 belief dynamics，预测 temporal 与 candidate-causal graph actions 的未来推理价值，并通过真实 evidence observation 进行闭环重规划。</p>
-
-<h4>15.4.1 复用 Video_Skills，不重建 video agent</h4>
-<p><a href="https://github.com/wuxiyang1996/Video_Skills" target="_blank" rel="noopener"><strong>Video_Skills</strong></a> 是本路线的实现底座。其 active integration branch 已提供 question-blind L1 clue-memory graph、question-conditioned L2 reasoning graph、typed temporal / causal / alternative edges、atomic skill actions、evidence verifiers、bounded local repair、trajectory logging、dataset adapters 以及 SFT / GRPO 基础设施。因此本文<strong>不再提出</strong>另一套 video decoding、captioning、skill runtime、verifier 或通用 graph stack。</p>
-<table><thead><tr><th>从 Video_Skills 继承</th><th>本文仍需完成的新研究</th></tr></thead><tbody>
-<tr><td>L1/L2 graph containers、evidence provenance、typed skill invocations、verifier/repair loop、benchmark 与 training interfaces</td><td>relation type/direction、temporal order、entity identity、missing bridge、contradiction、completeness、answerability 与 uncertainty 的 posterior</td></tr>
-<tr><td>MDP-compatible state/action/observation traces 与可执行的 evidence-acquisition skills</td><td>用 sibling counterfactual trajectories 训练 action-conditioned implicit transition model：<span class="math">p_θ(b_{t+1},o_{t+1}|b_t,a_t)</span></td></tr>
-<tr><td>确定性的 causal/temporal edge labels 与显式 rollout records</td><td>可 split、merge、消失或引入未实例化 node 的动态 latent hypothesis mass；不维护固定 Top-B 条显式 reasoning chains</td></tr>
-</tbody></table>
-<p><strong>关键区别：</strong>现有 typed graph 是执行与监督接口，不等于本文声称的 belief model；现有 MDP-compatible traces 使 transition learning 成为可能，但其本身也不是 learned world model。新模型必须预测一个 action 如何改变 future belief 与 observation，而不能只给当前 chain 或 action 打分。</p>
-<p><strong>修正后的工作量：</strong>在复用上述基础后，mechanism prototype 约 3–5 人周；包含 sibling branching、auxiliary belief probes、强 beam/direct-Q baselines 与三个数据集的可信 paper core 约 8–12 人周；覆盖五个数据集、具有竞争力的 ICLR submission 约 12–18 人周。主要风险是 counterfactual supervision 与可辨识的 belief dynamics，而不是视频系统工程。</p>
-
-<h3>15.5 为何需要 world model：延迟收益与不可逆性</h3>
-<p>只放在本 causality-aware track：continuous-state 路线没有离散 evidence actions / retrieval transitions，硬套 world-model framing 不自然。这里是短视的 <em>belief-transition / reasoning-utility</em> model，不是像素级视频 world model。</p>
-
-<p>两个最强动机：</p>
-<ul>
-<li><strong>Bridge evidence 的延迟收益。</strong>某次检索当下可能几乎不提高 relevance / answer gain，却能打开下一跳 temporal 或 causal hop。这与 greedy iterative retrieval 形成清晰区分。例：<span class="math">e1</span> 回到房间 → <span class="math">e2</span> 摸空口袋（bridge）→ <span class="math">e3</span> 钥匙留在房间。</li>
-<li><strong>Bounded memory 下的不可逆性。</strong>差的导航浪费检索预算；错误的 merge/delete 可能永久打断推理路径。同一 utility model 因此可同时指导 navigation 与 consolidation。</li>
-</ul>
-
-<p><strong>论文级表述：</strong>Existing iterative retrieval is reactive and optimizes locally useful evidence. We learn a short-horizon belief-transition model that predicts the delayed reasoning utility of semantic, temporal, and causal navigation actions, while estimating the path loss caused by memory consolidation.</p>
-<div class="equation">Greedy retrieval:  a_t = arg max_a V(s_{t+1})
-Our planning:      a_t = arg max_a E[V(s_{t+K})∣s_t,a]</div>
-<p><span class="math">K</span> 保持很小（通常 1–2 步想象中的 retrieval），模型轻量、claim 可辩护。</p>
-<div class="equation">learn T_φ(b_{t+1}∣b_t,a_t),   b_t=P(relevant path∣q,E_{1:t})
-r_t=Δchain completeness+Δanswerability−cost</div>
-
-<h3>15.6 Implicit Graph-Navigation World Model</h3>
-<p>在方法层面，将 multi-hop reasoning 建模为抽象 latent state space 中的 action-conditioned dynamics。Latent state 不要求解码成固定 belief schema、evidence list 或类似网页的显式状态：</p>
-<div class="equation">z_k=Enc_θ(q,E_{1:k},H_k,g_k,B_k)
-p_φ(ẑ_{k+1},ô_{k+1},r̂_k | z_k,a_k,G_t)
-o_{k+1}=ReadGraph(G_t,a_k)
-z_{k+1}=U_ψ(z_k,a_k,o_{k+1})</div>
-<p>World model 是执行动作前的 prior：预测 graph action 可能到达哪类节点、补全哪种 reasoning role，以及未来 answerability / chain completeness 的变化。测试时使用一至两步 model-predictive planning；只执行首个动作，再用真实 graph observation 更新 posterior。Imagined evidence 永远不能直接进入最终答案。</p>
-<p>在 video-graph 实例中，latent state 由以下信息条件化，但不要求把它们表示成显式 slots：</p>
-<ul>
-<li><strong>O<sub>t</sub> — 当前观察：</strong>当前/最近视频事件、可见实体、动作与状态变化；</li>
-<li><strong>E<sub>1:t</sub> — 推理历史：</strong>截至当前已获得的 grounded evidence，以及获取这些证据的动作；</li>
-<li><strong>H<sub>t</sub> — 活跃假设：</strong>候选 reasoning chains 与相互竞争的答案解释；</li>
-<li><strong>g<sub>t</sub> — 下一推理需求：</strong>当前缺失的 entity、temporal link、explanatory bridge、counterevidence 或 verification step；</li>
-<li><strong>B<sub>t</sub> — budget：</strong>剩余 retrieval calls、latency 与 memory/navigation cost。</li>
-</ul>
-<p>Navigator 不把状态定义成单一路径或固定大小的 chain bank，而是维护 latent graph structure、隐藏变量、关系与 reasoning frontier 上的联合 belief：</p>
-<div class="equation">b_t(𝒢,X,R,ℓ)=P(𝒢,X,R,ℓ | q,E_{1:t})
-b̂^-_{t+1}=T_φ(b_t,a_t)
-b_{t+1}=Update(b̂^-_{t+1},o_{t+1})</div>
-<p><span class="math">𝒢</span> 是不确定的 causal-temporal graph hypothesis；<span class="math">X</span> 包含 entity、event 与 state variables；<span class="math">R</span> 包含 identity、temporal、state-transition、explanatory 与 contradiction relations；<span class="math">ℓ</span> 是 latent reasoning frontier。World model 预测 action 如何重塑整个 belief，而不是把一条 chain 扩展成另一条 chain。</p>
-<p>计算时可用 sparse soft routing、共享子结构的 hypothesis DAG，或满足 <span class="math">Σ_{s∈𝒮_t}b_t(s)≥1−ε</span> 的 adaptive posterior support。支持大小随 posterior entropy 与剩余 budget 改变，并保留 <span class="math">p_other=1−Σ_{s∈𝒮_t}b_t(s)</span> 表示未展开的不确定性。显式 reasoning chains 只用于 posterior inspection、verifier auditing 与可视化，不是方法状态，也不预设固定数量。</p>
-<p>World model 预测的是下一步 multi-hop reasoning state，而不是评测指标。一次 transition 可以完成 entity grounding、建立 temporal order、延伸 explanatory link、暴露缺失 bridge、发现 contradiction、验证整条 chain，或使当前状态达到可以回答的条件。下面的 reasoning-stage variable 只是可解释 probe 或 auxiliary head，不是 <span class="math">z_t</span> 的定义：</p>
-<div class="equation">ρ_t∈{GROUND, TEMPORAL_LINK, EXPLANATORY_LINK, FIND_BRIDGE,
-SEEK_COUNTER, VERIFY_CHAIN, ANSWER, ABSTAIN}</div>
-<p>短程 imagined rollout 比较不同 actions 将如何改变 posterior：能否补齐所需 reasoning roles、解决 missing links、区分竞争解释、降低不确定性，并以较低成本到达 verified answer state。<strong>因果/解释连贯性、uncertainty calibration、temporal correctness 与 semantic relevance 是验证 belief transitions 的四个维度，而不是显式 world-state slots。</strong> Recall、relation F1、calibration 与 answer accuracy 同样只用于评测。</p>
-
-<h3>15.7 与 Reasoning World Model 和 Latent Retrieval 的边界</h3>
-<p>已有多条研究线覆盖了这一表述的重要组成部分，因此本文不能把“用 world model 做 reasoning”或“latent state transition”本身作为贡献。</p>
-<ul>
-<li><a href="https://aclanthology.org/2023.emnlp-main.507/" target="_blank" rel="noopener"><strong>RAP</strong></a> 将 LLM 同时作为 world model，并用 MCTS 在显式 reasoning states 上规划。它已经确立 reasoning-as-world-model planning，但 transition 主要发生在语言推理或环境状态中，而不是外部视频证据上的 implicit belief。</li>
-<li><a href="https://openreview.net/forum?id=KrWSrrYGpT" target="_blank" rel="noopener"><strong>Coconut</strong></a> 将连续 hidden state 重新输入模型，并可保留多个潜在下一推理方向。它已经覆盖 latent multi-path reasoning，但不以 action-conditioned 外部证据获取或 video graph 上 observation-driven update 为核心。</li>
-<li><a href="https://openreview.net/forum?id=afld4XGbQe" target="_blank" rel="noopener"><strong>CTRLS</strong></a> 明确把 CoT 建模为具有概率式 latent state transitions 与 epistemic uncertainty 的 MDP。因此它是 latent transition dynamics 的直接先例；本文的区别必须来自 evidence-grounded video navigation，而不是 latent-MDP 形式本身。</li>
-<li><a href="https://arxiv.org/abs/2510.08558" target="_blank" rel="noopener"><strong>Agent Learning via Early Experience</strong></a> 让同一个 language-agent policy 根据 state–action pair 预测文本形式的下一环境状态，并把 expert、当前 policy 与其他候选动作的真实后果作为辅助监督，再进行 expert fine-tuning。其 implicit world model 被内化进 policy 参数，测试时不会单独展开 world-model rollout。本文则预测 evidence-conditioned latent reasoning belief 的 transition，并在推理时显式比较概率式导航未来。</li>
-<li><a href="https://arxiv.org/abs/2510.14337" target="_blank" rel="noopener"><strong>Stop-RAG</strong></a> 学习 iterative retrieval 是否应继续的 forward-looking value。其主要控制是 stop/continue，而不是预测 semantic、temporal、explanatory、bridge 或 counterevidence expansion 将如何改变下一 reasoning state。</li>
-<li><a href="https://arxiv.org/abs/2604.17866" target="_blank" rel="noopener"><strong>LAnR</strong></a> 使用 latent query 检索，并训练是否需要更多 evidence 的控制头。它更接近 latent retrieval control，而不是对 future evidence observation 与并行 reasoning hypotheses 建模的 predictive transition model。</li>
-</ul>
-<p><strong>可辩护定位：</strong>学习一个用于 streaming video-graph QA 的 evidence-conditioned implicit belief-transition model，预测概率式并行 semantic、temporal 与 explanatory navigation 在获取真实新证据后，将如何改变下一步 multi-hop reasoning state。实验必须比较 RAP-style explicit planning、latent reasoning、direct action ranking、adaptive stopping 与普通 iterative retrieval。</p>
-<p><strong>更高层 framing：</strong>implicit world modeling for abstract reasoning dynamics。把 multi-hop reasoning 表述为 latent state space 中的 action-conditioned transitions，由 world model 预测中间 reasoning actions 如何重塑通向答案的轨迹。该表述是 motivation 与方法抽象；论文级 novelty 仍必须通过 evidence-conditioned video navigation、observation-grounded posterior update、delayed bridge utility 与 test-time planning 来成立。</p>
-<h4>15.7.1 Epistemic-Action Counterfactual Training</h4>
-<p><strong>必要边界：</strong>这里的 counterfactual 不是生成“视频世界中人物采取另一物理动作会怎样”的反事实视频，也不支持经典 causal-effect identification。它是在完全相同的 reasoning checkpoint 上分叉执行不同 evidence-acquisition actions，监督这些 epistemic interventions 对 observation、belief 与 future answerability 的不同后果。</p>
-
-<p><strong>Sibling counterfactual trajectories。</strong>冻结 checkpoint：</p>
-<div class="equation">𝒞_t=(M_t,q,E_{1:t},b_t,B_t)</div>
-<p>从同一 <span class="math">𝒞_t</span> 执行 expert、当前 policy 与其他 admissible actions：</p>
-<div class="equation">a_t^j∈{semantic,temporal-back,temporal-forward,same-entity,
-candidate-cause,effect,bridge,counter,verify,stop}
-o_{t+1}^j=Execute(M_t,a_t^j)
-b_{t+1}^j=Update(b_t,a_t^j,o_{t+1}^j)</div>
-<p>再从每个 sibling state 继续一至两步，记录 delayed consequence：</p>
-<div class="equation">𝒟_t={ (b_t,a_t^j,o_{t+1}^j,b_{t+1}^j,R_future^j) }_{j=1}^J</div>
-
-<p><strong>World-model targets：</strong></p>
-<ol>
-<li><strong>Observation：</strong>预测该 action 可能返回的 evidence role / latent observation distribution，而不是生成可直接回答的 imagined evidence。</li>
-<li><strong>Belief delta：</strong>预测 relation posterior、entity/event binding、missing role、contradiction 与 residual uncertainty 如何改变；split/merge 由 sibling outcomes 的 posterior geometry 监督，不要求固定 chain labels。</li>
-<li><strong>Future utility：</strong>用实际 continuation 的 answer support、required-role completion、contradiction resolution、information gain、answer correctness 与 cost 构造 <span class="math">R_future</span>；不能只奖励即时 relevance 或 confidence。</li>
-<li><strong>Counterfactual ranking：</strong>在共享同一 <span class="math">b_t</span> 的 sibling actions 之间学习 delayed-utility ordering。</li>
-</ol>
-<div class="equation">L_WM=λ_oL_obs+λ_bL_Δbelief+λ_uL_utility
-    +λ_rL_pairwise+λ_cL_calibration
-L_pairwise=−log σ(U_φ(b_t,a^+)−U_φ(b_t,a^-))</div>
-<p>该设计比单条行为轨迹的 next-state prediction 更强：单轨迹只告诉模型被选 action 的后果，sibling branching 才能识别同一 belief 下其他 actions 是否更好。训练时离线执行多个分支；测试时 world model 只 imagine 多个 actions，执行预期 future utility 最高的第一个动作，从真实 memory observation 更新 posterior 后 replan。</p>
-
-<p><strong>决定性实验：</strong>完整方法必须优于：(1) 只用行为轨迹训练；(2) 接受同样 counterfactual data 但直接学习 <span class="math">Q(b,a)</span>；(3) 接受相同 next-state supervision 但测试时不 rollout；(4) heuristic / learned beam search。否则收益不能归因于 belief-transition world modeling。</p>
-
-<h3>15.8 动态 belief support → 用校准置信度回答</h3>
-<p>World model 不维护固定数量的显式 reasoning chains，而是预测 action 对联合 causal-temporal belief 的 pushforward。共享证据与子路径在 hypothesis DAG / factorized belief 中只表示一次；新 observation 可使 posterior 分裂、合并、回流到早期变量或转移到新的解释结构。</p>
-<div class="equation">action → predicted belief change, not chain → chain score
-b̂^-_{t+1}=T_φ(b_t,a_t)
-b_{t+1}∝p_ω(o_{t+1}|𝒢,X,R,a_t)b̂^-_{t+1}</div>
-<p>例如“为何回厨房？”可同时存在“遗落物品”“听到声响”“寻找某人”等解释质量，但它们共享的 person、return event 与 temporal evidence 不被复制成固定 beam elements。需要审计时，可从 <span class="math">b_t</span> 自适应展开少量高 posterior paths，并单独报告 residual uncertainty。</p>
-
-<p><strong>三层置信度（不可混为一个分数）：</strong></p>
-<ol>
-<li><strong>Edge：</strong><span class="math">c_{ij}^r=P(r_{ij}∣e_i,e_j)</span>。</li>
-<li><strong>Belief structure：</strong>对共享变量、relations、contradictions 与 missing roles 做全局 posterior consistency；展开的 path verifier 只是审计 probe，不能代替 belief update。</li>
-<li><strong>Answer：</strong>对候选 <span class="math">y</span>，在 posterior 上边缘化并做 redundancy correction：</li>
-</ol>
-<div class="equation">S(y)=log E_{s∼b_t}[exp C(y;s)]
-P(y∣q,E)=softmax_y S(y)</div>
-<p>期望可用 adaptive support <span class="math">𝒮_t</span> 近似，但必须报告 retained mass 与 <span class="math">p_other</span>。最终置信度来自 evidence-grounded posterior，而非 VLM token probability 或固定 Top-B chains。</p>
-
-<p><strong>何时回答</strong>——同时满足：<span class="math">P(y_max)>τ_ans</span>、与第二名的 margin、必要 roles 已覆盖、无未解决强反证。否则：</p>
-<div class="equation">d_t ∈ {continue, verify, answer, abstain}
-a_t^*=arg max_a E_{b'∼T_φ(b_t,a)}[ΔC_answer+β·IG(b_t;b')−λcost]</div>
-<p>动作：temporal 前/后、causal predecessor/effect、bridge、counter-evidence、验证边。Bridge 步可能不立刻抬高答案置信度，但提升链可扩展性——即 §15.5 的延迟收益。</p>
-
-<p><strong>流水线：</strong>流式视频 → 有界 latent evidence memory → 不确定 causal-temporal belief 初始化 → world-model belief rollout → 取真实证据 → 全局 posterior update → 比较支持、反证与 residual uncertainty → answer / continue / abstain。</p>
-
-<p><strong>相关工作（无单篇完全一致）：</strong></p>
-<table><thead><tr><th>研究线</th><th>已有思想</th><th>与我们的差距</th></tr></thead><tbody>
-<tr><td>V-JEPA 2 / CausalVQA</td><td>Latent world 表示；用 QA 测因果理解</td><td>QA 是评测接口，非测试时多链证据搜索</td></tr>
-<tr><td>Embodied QA / OpenEQA</td><td>问题 → act/observe → 回答</td><td>物理导航；我们在 latent memory 上导航</td></tr>
-<tr><td>MoReVQA / agentic VideoQA</td><td>测试时多阶段程序 / 工具</td><td>无对 latent memory 的预测式 world，无多链 belief</td></tr>
-<tr><td>KGQA / Plan*RAG</td><td>结构化 memory 上的多跳路径 / planning</td><td>离散静态图或文本库，非持续 consolidation 的 latent 视频关系</td></tr>
-</tbody></table>
-<p><strong>定位：</strong>把 Embodied QA 式的 goal-directed information acquisition 迁到有界 latent video memory；world-model 的动作定义为 semantic、temporal 与 explanatory navigation。</p>
-
-<h3>15.9 三天 SelectStream + World Model 导航冲刺</h3>
-<p>三天内先在 20–50 个短视频上构建小型 temporal-explanatory event graph，再验证一至两步 world-model lookahead 能否改善图上导航。边表示从观察视频、caption、subtitle 与事件顺序推断出的 candidate causal-support relation，不能声称识别真实因果。可复用 Video Skills 的解码、分段、caption 与评测基础设施，但两篇论文的方法和运行时保持独立。</p>
-<ol>
-<li><strong>Day 1 — 视频事件图：</strong>将视频切分为 events，提取 entities、actions、state changes 与 timestamps；构建 temporal-next、same-entity、state-transition、explanatory-support 和 contradiction 等稀疏候选边。先用廉价 retrieval 提议 Top-K neighbors，再由 VLM/teacher 标注 relation type、direction、uncertainty 与简短 warrant，并人工抽查部分边。</li>
-<li><strong>Day 2 — World Model navigator：</strong>从同一个 question-conditioned graph checkpoint 执行多个 admissible actions，记录 <code>(z_k,a_k,o_{k+1},z_{k+1},R_future)</code>，训练轻量 transition / observation / value heads。测试时只做一至两步 MPC rollout。</li>
-<li><strong>Day 3 — 等预算评估：</strong>比较原始 SelectStream、SelectStream + 新关系、direct action ranker、heuristic beam、只有 value 没有 transition、接受相同 transition supervision 但测试时不 rollout、完整 world-model MPC 与 oracle graph path。核心判据是在相同 graph reads 下能否找到 delayed-utility bridge evidence。</li>
-</ol>
-<p><strong>Go：</strong>人工抽查的 candidate-edge precision 至少 70%；至少 20% 的有效问题需要 bridge event 或 delayed-utility hop；在相同 retrieval calls 下，world model 相比 greedy 与 direct-ranking baselines 的 supporting-event Recall@K 至少提高 10 个百分点，或 answer accuracy 至少提高 5 个百分点；打乱 edge/transition 后收益必须明显下降。<strong>No-Go：</strong>图噪声过高，大部分问题由直接 semantic retrieval 解决，非预测式 beam/direct ranker 能追平 world model，或等预算后收益消失。</p>
-
-<h3>15.10 长期愿景（不属于当前方法与 novelty claim）</h3>
-<p>以下 factor-graph / abstract-reasoning 内容仅保留为未来研究备注。当前论文不实现完整 GTSAM 式 factor graph，不声称 general reasoning world model，也不进行经典 causal effect estimation。当前方法边界止于：<strong>SelectStream latent memory substrate + uncertain causal-temporal belief + epistemic-action counterfactual training + implicit belief dynamics + real-observation posterior update</strong>。</p>
-
-<h4>15.10.1 最初问题：能否为抽象问题求解建立世界模型？</h4>
-<p>传统世界模型主要学习物理或游戏环境中的状态转移：</p>
-<div class="equation">s_{t+1}=F(s_t,a_t)</div>
-<p>更抽象的问题是：能否把多跳推理、证据获取和问题求解表示成一个动态系统，并学习其状态如何随推理动作和新证据演化？</p>
-<div class="equation">z_{t+1}=F_θ(z_t,a_t,o_{t+1})</div>
-<ul>
-<li><span class="math">z_t</span>：当前问题求解 / belief state；</li>
-<li><span class="math">a_t</span>：推理、检索、验证、回溯等动作；</li>
-<li><span class="math">o_{t+1}</span>：动作后获得的新证据；</li>
-<li><span class="math">z_{t+1}</span>：更新后的问题求解状态。</li>
-</ul>
-<p>已有工作分别涉及语言空间规划、latent reasoning、iterative retrieval 与 agent world modeling，但很少真正学习：reasoning action 如何改变证据状态、假设、不确定性与未来可解性。直接建模“通用抽象问题求解状态”过于宽泛；最大困难不是 architecture，而是无法明确回答：状态变量是什么、推理动作是什么、状态转移监督来自哪里、不同合理路径的下一状态如何统一、以及如何验证 latent state 是否真正表示问题求解状态。因此更现实的起点是具有清晰实体、事件、时间与证据结构的 <strong>multi-hop video reasoning</strong>。</p>
-
-<h4>15.10.2 为什么不只使用普通 reasoning graph？</h4>
-<p>普通 GraphRAG、knowledge graph 或 graph-of-thought 通常用 semantic similarity、entity overlap、temporal adjacency 或 retrieval relationship 连接文档、实体、事件、thoughts 或 retrieved evidence。它们回答“哪些信息彼此相关？”我们希望表示的是：当前有哪些未知变量、已有证据对这些变量施加了什么约束、哪些假设仍然不确定、以及加入新证据后整个 belief 应如何更新。因此核心不只是“在图上导航”，而是<strong>在结构化变量和约束上持续进行推断</strong>。</p>
-
-<h4>15.10.3 Factor graph 的作用</h4>
-<p>因子图将全局联合分布分解成一组局部约束：</p>
-<div class="equation">p(X∣E) ∝ ∏_i φ_i(X_i,E_i)</div>
-<p>Variable nodes 表示未知变量；factor nodes 表示 evidence、约束、依赖或状态转移。新证据加入后可重新计算全局 posterior，后期证据可反向修正早期假设。在 multi-hop video reasoning 中，变量可包括 entity identity、event occurrence、object state、temporal location、causal relation、bridge entity、intermediate subanswer 与 final answer。Factors 可包括：</p>
-<ul>
-<li><span class="math">φ_visual</span> — 某视频片段是否支持某个事件或状态；</li>
-<li><span class="math">φ_identity</span> — 不同片段中的人物/物体是否为同一实体；</li>
-<li><span class="math">φ_temporal</span> — before / after / during；</li>
-<li><span class="math">φ_causal</span> — 一个事件是否 causes 或 enables 另一个事件；</li>
-<li><span class="math">φ_consistency</span> — 不同证据或假设是否一致；</li>
-<li><span class="math">φ_answer</span> — 中间变量与最终答案是否兼容。</li>
-</ul>
-<p>因此多跳推理可理解为：不断获取新的 evidence factors，并对隐藏变量进行增量推断。</p>
-
-<h4>15.10.4 Reasoning 与 evidence 应联合建模</h4>
-<p>不能只说“用因子图建模 reasoning”。更准确的是：用因子图联合建模 reasoning、evidence acquisition 与 belief update：</p>
-<div class="equation">G_t →[reasoning] a_t →[evidence acquisition] e_{t+1}
-→[factor construction] φ_{t+1} →[global inference] G_{t+1}</div>
-<p>Reasoning 决定：当前哪个变量最需要解析、应查看哪个时间段、应追踪哪个实体、应验证哪条时间/因果关系、应补全哪个 reasoning gap、以及是否回溯或停止。新 evidence 不是简单追加到 memory，而是转化成新的 factor，并改变整张图上的 belief。更合适的描述是：</p>
-<ul>
-<li><strong>Reasoning as active constraint acquisition</strong>；</li>
-<li><strong>Joint evidence acquisition and reasoning over a dynamic epistemic factor graph</strong>。</li>
-</ul>
-
-<h4>15.10.5 Factor graph 与 world model 如何结合？</h4>
-<p>Factor graph 可作为 world model 的结构化状态表示。普通 latent world model 学习 <span class="math">z_{t+1}=F_θ(z_t,a_t)</span>；结构化版本则学习：</p>
-<div class="equation">G_{t+1}=F_θ(G_t,a_t,o_{t+1})</div>
-<p><span class="math">G_t</span> 表示当前对世界和问题的 posterior：哪些实体/事件已确定、哪些关系仍未知、哪些 evidence 支持或反驳某假设、当前答案分布如何、下一步应获取什么约束。World model 可包含两类 transition：</p>
-<ul>
-<li><strong>世界状态转移</strong> <span class="math">φ_world(X_t,u_t,X_{t+1})</span> — 例如 person presses switch → light turns on；</li>
-<li><strong>认识状态转移</strong> <span class="math">φ_belief(B_t,a_t,e_{t+1},B_{t+1})</span> — 例如 inspect earlier clip → resolve entity identity → reduce answer uncertainty。</li>
-</ul>
-<p>因此 world model 不只预测视频未来，也预测获取某项证据后问题求解图如何变化——与 §15.5–§15.6 的 belief-transition model 一致。</p>
-
-<h4>15.10.6 Factor graph 的 SLAM 类比</h4>
-<p>Frank Dellaert 的 factor graph / GTSAM 思路提供强启发，但不等于我们要实现完整 GTSAM：</p>
-<table><thead><tr><th>SLAM</th><th>Reasoning + Evidence</th></tr></thead><tbody>
-<tr><td>Robot pose</td><td>当前 observation / reasoning location</td></tr>
-<tr><td>Landmark</td><td>实体、事件、未知事实或子目标</td></tr>
-<tr><td>Measurement factor</td><td>Video evidence factor</td></tr>
-<tr><td>Odometry factor</td><td>Temporal 或 reasoning transition factor</td></tr>
-<tr><td>Loop closure</td><td>新证据重新约束早期假设</td></tr>
-<tr><td>Smoothing</td><td>利用后期证据修正早期 belief</td></tr>
-<tr><td>Active SLAM</td><td>主动选择下一项最有价值的 evidence</td></tr>
-</tbody></table>
-<p>关键价值是 <strong>incremental smoothing</strong>。传统 autoregressive reasoning <span class="math">A→B→C→D</span> 若 B 错了往往沿错误轨迹继续；因子图允许后期证据触发全局 posterior update，并修正早期变量——相当于 reasoning 中的 loop closure。</p>
-
-<h4>15.10.7 Factor graph 与因果性的关系</h4>
-<p>因子图本身不等于因果图。普通 factor <span class="math">φ(X,Y)</span> 只表达局部兼容性或概率依赖，无法自动说明 <span class="math">X→Y</span> 还是 <span class="math">Y→X</span>。因子图最擅长 evidence fusion、uncertainty、局部约束分解、全局一致性与 posterior correction。因果语义必须通过变量定义与特定 causal / temporal / transition factors 额外引入。系统可同时包含非因果 identity factors、temporal factors、evidence-support factors、consistency factors、causal mechanism factors 与 action-conditioned transition factors。更准确的表述是：</p>
-<div class="equation">Epistemic factor graph with causal-temporal and transition factors</div>
-<p>——而不是把所有图边都称为 causal。</p>
-
-<h4>15.10.8 因果、因果推断与因果推理</h4>
-<ul>
-<li><strong>因果</strong> — 世界中的生成机制，例如 <span class="math">Y=f(X,U)</span> 或 press switch → light on。</li>
-<li><strong>因果推断</strong> — 从 observational / interventional data 中识别和估计因果结构或效应，例如 <span class="math">P(Y∣do(X=x))</span>。</li>
-<li><strong>因果推理</strong> — 在已有或学习到的因果模型上进行预测、干预与反事实推演。</li>
-</ul>
-<p>当前设想的目标不主要是经典统计学意义上的 causal effect estimation，而是下面两阶段：从视频证据恢复可用的因果—时序结构，再将该结构作为 world-model state 进行推理与导航。</p>
-
-<h4>15.10.9 两阶段框架</h4>
-<p><strong>第一阶段：建立 causal-temporal evidence graph。</strong> 从流式视频和问题中增量建立 <span class="math">G_t=(V_t,E_t)</span>：节点包括 entities、events、states、evidence、hypotheses 与 unresolved variables；边/factors 包括 precedes、during、same entity、supports、contradicts、causes、enables 与 state transition。目标：<span class="math">E_{1:t},Q → G_t</span>。</p>
-<p><strong>第二阶段：将图作为 world-model state。</strong> 学习 <span class="math">G_{t+1}∼T_θ(G_t,a_t)</span>（并按 §15.6 用真实 observation 更新），再进行 causal reasoning、multi-hop graph completion、evidence navigation、hypothetical rollout、answer prediction 与 failure recovery。动作可包括：inspect a temporal window、track an entity、verify an event、follow a causal predecessor、search for a consequence、test a hypothesis、acquire a missing factor。</p>
-<div class="equation">Causal-temporal graph induction
-→ Factor-graph inference
-→ Graph world modeling
-→ Multi-hop reasoning and evidence acquisition</div>
-
-<h4>15.10.10 为什么先从 multi-hop video reasoning 开始？</h4>
-<p>视频提供相对清晰的结构：时间可观测、实体可追踪、事件可定位、状态变化可抽取、evidence 可对应具体 clip，且多跳问题通常包含明确的 temporal/entity/event chain。例如：“拿走杯子的人，在进入房间之前做了什么？”需要定位拿杯事件、识别执行者、在更早视频中追踪同一实体、定位进入房间、找到前序动作，并检查 identity 与 temporal consistency——可自然表示为 identity / event / temporal 约束链。文本多跳 QA（如 MuSiQue / 2Wiki）仍可用作 belief transition 与 delayed bridge utility 的 <em>mechanism sandbox</em>，但论文 novelty 仍须由视频证据设定支撑（§15.7）。</p>
-
-<h4>15.10.11 技术上最现实的第一版</h4>
-<p>第一版不应声称建立通用 reasoning world model，也不需要立即实现完整 GTSAM 式系统。可先构建：(1) 动态 evidence factor graph；(2) 少量定义明确的变量；(3) learned visual、identity、temporal 与 causal factors；(4) 图消息传递或近似 posterior inference；(5) 主动选择下一段视频 evidence 的 controller；(6) 新证据加入后的全局 belief revision。最关键的实验问题包括：</p>
-<ul>
-<li>图式全局更新是否比 append-only memory 更能修正早期错误？</li>
-<li>active factor acquisition 是否比 top-k retrieval 更节省观察预算？</li>
-<li>factor graph 是否在跨时间、跨事件、桥接实体问题上更有效？</li>
-<li>causal-temporal factors 是否改善多跳 chain consistency？</li>
-<li>后期 evidence 是否能够修正早期错误的 entity/event binding？</li>
-</ul>
-
-<h4>15.10.12 最终研究定位</h4>
-<p>不宜直接声称：“General causal world model for abstract reasoning.” 更稳妥、具体的定位是：</p>
-<ul>
-<li><strong>A dynamic causal-temporal factor graph for joint evidence acquisition and multi-hop video reasoning.</strong></li>
-<li><strong>A structured graph world model that incrementally integrates video evidence, revises latent event hypotheses, and actively navigates causal-temporal reasoning chains.</strong></li>
-</ul>
-<p>更高层的长期愿景：将问题求解表示为在动态 epistemic factor graph 上进行主动约束获取、全局 belief update 与 action-conditioned world-model planning。</p>
+<section class="card thesis">
+  <span class="label">核心命题</span>
+  <h2>推理必须真正依赖 world model</h2>
+  <p>每一步多跳推理之前，implicit world model（IWM）预测各个合法证据获取 action 将怎样改变未来 belief。Preference planner 比较完整的短轨迹，只执行获偏好轨迹的第一跳；获得真实证据后修正 belief，再重新规划。</p>
+  <div class="equation">问题无关的 L1/L1.5 evidence memory
+→ 有界候选 reasoning hops
+→ IWM 想象 observation 与 belief transition
+→ 序数 trajectory preference
+→ 只执行第一跳
+→ 真实 evidence correction
+→ 重新规划</div>
+  <p><strong>论文级贡献：</strong>在 belief space 中预测 action-conditioned reasoning dynamics，并用 model-predictive planning 导航下一跳；不是 graph construction、普通 retrieval 或数字 reward modeling。</p>
 </section>
-</body></html>
+
+<section class="card">
+  <h2>1. 问题设定</h2>
+  <p>给定问题 <span class="math">q</span>、问题无关的真实视频记忆 <span class="math">M</span>、已读取证据 <span class="math">E_{1:t}</span> 和有限读取预算，选择最可能使最终证据轨迹更优的下一步 reasoning action。</p>
+  <div class="equation">z_t = Enc(q, E_{1:t}, missing_t, alternatives_t, contradictions_t, budget_t)
+a_t ∈ A(M, z_t)
+T_θ(z_t,a_t) → (ô_{t+1}, Δẑ_{t+1})
+Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
+  <p><span class="math">z_t</span> 是 multi-token latent belief state，不必等同于显式 graph posterior。IWM 预测 observation descriptor 和 belief change，不预测下一句 reasoning text，也不能生成直接进入最终答案的想象证据。</p>
+</section>
+
+<section class="card">
+  <h2>2. Evidence memory：保留 L1/L1.5</h2>
+  <p>当前 memory graph 继续作为 evidence substrate，因为它能提供可寻址、可追溯来源的视频 observation；构建时不能读取未来问题或答案。</p>
+  <table>
+    <thead><tr><th>层级</th><th>职责</th><th>研究定位</th></tr></thead>
+    <tbody>
+      <tr><td>L1</td><td>真实 visual/text observations、时间戳、provenance、embedding</td><td>基础设施</td></tr>
+      <tr><td>L1.5</td><td>L1 node IDs 之间 question-independent 的 soft navigation correlation；已验证 typed relations 单独保存</td><td>导航拓扑和候选生成</td></tr>
+      <tr><td>Latent belief</td><td>问题条件下的 competing interpretations、missing links 和 answerability</td><td>主方法状态</td></tr>
+      <tr><td>L2</td><td>已执行 action、真实 observation、realized delta 和决策审计</td><td>轨迹记录，不是 world model</td></tr>
+    </tbody>
+  </table>
+  <p>Identity、state 和 candidate-causal relation 属于可选 strict layer，在通过相应 evidence gate 前只是 candidate。它们不是通用 L1.5 correlation overlay 的定义，也不能因为被提出就当成事实。</p>
+  <h3>2.1 L1 存储协议</h3>
+  <p>L1 是 question-independent、兼容 Video_Skills 的 <code>ClueMemoryGraph</code>。每个 node 存一条局部、有时间范围的 observation，而不是 reasoning conclusion。</p>
+  <table>
+    <thead><tr><th>Node/字段</th><th>存储内容</th></tr></thead>
+    <tbody>
+      <tr><td>公共字段</td><td>稳定 node/video ID、node type、grounded text descriptor、modality、time span、clip/local ID、evidence refs、source、producer、provenance、visibility 和可选 embedding sidecar reference</td></tr>
+      <tr><td><code>clip</code></td><td>可寻址视频区间、粒度和 segmentation policy</td></tr>
+      <tr><td><code>observation</code>/<code>event</code></td><td>直接可见/可读的局部描述或 atomic action，不存推断出的 motive</td></tr>
+      <tr><td><code>entity_mention</code></td><td>局部 mention ID、entity type、可见属性、时间和 evidence；不自动声明跨 clip identity</td></tr>
+      <tr><td><code>state</code></td><td>Subject、attribute、value、polarity、temporal scope 和 evidence</td></tr>
+      <tr><td><code>dialogue_span</code>/OCR</td><td>带真实 modality 的 time-aligned text；字幕不能冒充直接 audio observation</td></tr>
+    </tbody>
+  </table>
+  <p>L1 的主导航结构是 grounded semantic nodes 上确定性的 <code>temporal_next/before/overlaps/during</code> backbone。<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code>、<code>located_in</code> 等 composition links 只保留为 provenance/audit structure。Native <code>same_entity</code>、<code>state_change</code>、<code>causal_hint</code> 属于可选 strict-relation 路径，未通过各自 verifier 绝不成为 navigation fact。</p>
+  <h3>2.2 L1.5 correlation overlay</h3>
+  <p>L1.5 复用同一批 L1 node IDs，使用 <code>Qwen/Qwen3-VL-Embedding-2B</code> 生成 question-independent soft nonlocal navigation correlations。所有非 temporal pairs 都会被打分；相邻近重复语义先合并，剩余近相同 occurrences 用时间 recurrence chain 连接而不是形成 clique，再在 semantic equivalence classes 之间用 standardized sparsemax 产生 directional affinity，不使用固定 Top-K。Similarity/affinity 不是 probability、confidence、identity、state transition、support 或 causality；独立验证过的 categorical fact relations 单独保存。</p>
+  <h3>2.3 Correlation 不是 action preference</h3>
+  <div class="equation">L1.5 correlation：确定有支持的 node-to-node 可导航邻接
+→ legal-action compiler：暴露可执行的 cursor-incident hops
+→ IWM：预测每一跳的 categorical observation 和 belief effect
+→ planner：根据这些预测选择下一跳</div>
+  <p>这条边界是强制的。Correlation 负责构建 question-independent graph topology，不负责针对问题选出 winner。IWM/planner 可以消费固定 correlation edges，但不能在 action selection 时创建、验证或重分类这些 edges。来自测量的 embedding similarity、directional affinity、calibration 和 provenance 可以是数值 graph features。“模型不输出数字”的规则限制的是用于 planning 的虚构 reward、utility、Q-value、probability 或 confidence，不是这些可测量的建图特征。Edge affinity 绝不能直接排序并决定获胜 action。</p>
+  <p>L1/L1.5 永不保存 correct answer、hidden clue identity、question-conditioned belief、IWM imagination、predicted belief delta、planner trajectory、reward/utility/Q-value、GTSAM posterior 或 final claim。这些分别属于 hidden evaluation、latent belief 或 executed L2 trace。</p>
+</section>
+
+<section class="card">
+  <h2>3. Reasoning actions</h2>
+  <p>Action 表示 reasoning/evidence query，不是机器人在物理世界中的动作：</p>
+  <div class="equation">A = {start_at, temporal_before, temporal_after,
+     follow_soft_correlation, backtrack, stop, answer, abstain}</div>
+  <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回，不能把全部 frontier sources 与全部 targets 做笛卡尔积展开。</p>
+  <div class="equation">A_t = outgoing_temporal(current)
+    ∪ positive_direction_soft_correlation(current)
+    ∪ backtrack(acquired frontier history)
+    ∪ {stop, answer, abstain}</div>
+  <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。由于 L1 容量固定，Full-IWM arm 不使用 embedding Top-K；Top-K 只作为显式 retrieval baseline。</p>
+</section>
+
+<section class="card">
+  <h2>4. 短视界 model-predictive reasoning</h2>
+  <ol>
+    <li>从单一 current-node cursor 和固定 L1.5 graph 枚举全部合法 actions；</li>
+    <li>为每个 action 想象 horizon-one 或 horizon-two categorical transition；</li>
+    <li>对完整候选轨迹做 pairwise comparison；</li>
+    <li>只执行唯一获偏好轨迹的第一跳；</li>
+    <li>丢弃 imagined observation，读取真实证据，更新 belief，再规划。</li>
+  </ol>
+  <div class="equation">τ* = PreferredTrajectory({Rollout_T(z_t,a)}_a)
+a_t* = First(τ*)
+o_{t+1} = Execute(M,a_t*)
+z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
+  <p>World model 的价值体现在 delayed effect：第一跳可能几乎没有即时收益，却能打开一个 bridge，让第二跳补全关键证据。这是它区别于 reactive retrieval 或 immediate information-gain ranking 的核心。</p>
+  <p>Learned IWM 在一次 batched graph/tensor forward 中预测全部合法 first hops。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。</p>
+</section>
+
+<section class="card boundary">
+  <span class="label">非启发式边界</span>
+  <h2>5. 什么可以、什么不可以决定下一跳</h2>
+  <table>
+    <thead><tr><th>允许的职责</th><th>主实验中禁止的职责</th></tr></thead>
+    <tbody>
+      <tr><td>Embedding similarity 提出候选</td><td>相似度最高者自动获胜</td></tr>
+      <tr><td>Graph/factor constraint 排除 illegal 或 unsupported hop</td><td>Factor posterior 或 edge priority 排序 winner</td></tr>
+      <tr><td>Lexical/temporal rule 作为显式 baseline</td><td>在 IWM arm 中隐式用于 tie-break</td></tr>
+      <tr><td>IWM 预测 categorical future-belief effect</td><td>模型输出 scalar reward、utility、Q-value、confidence 或 probability</td></tr>
+    </tbody>
+  </table>
+  <p><code>tie</code> 或 <code>incomparable</code> 必须触发更多证据、进一步比较或 abstain，不能默认选择列表第一项。Candidate order 必须满足 permutation invariance。</p>
+</section>
+
+<section class="card">
+  <h2>6. 控制模型输入大小</h2>
+  <p>IWM/planner 不接收整个视频、raw embedding matrix、hidden answer 或未 consolidation 的全部历史。由于 L1 memory 容量固定，它可以在不做 Top-K truncation 的情况下消费完整 retained graph：question/belief tokens、current cursor node 的 key 与已读取 value、全部 retained node keys、所有 temporal/correlation edges、全部合法 cursor actions、recent history 和 budget status。</p>
+  <div class="equation">surprise-written、fixed-capacity L1 nodes
++ 完整 retained temporal/correlation graph
++ 单一 current-node cursor
+→ 一次 batched IWM forward 预测全部合法 actions
+→ partial-order planner</div>
+  <p>未读取 target node 只暴露 compact key/address representation，完整 evidence value 只有执行后才能读取。<code>Qwen/Qwen3-VL-Embedding-2B</code> 向量保存在 sidecar，作为 semantic action feature，而不是主方法 ranking gate、reward 或 supervision。</p>
+</section>
+
+<section class="card">
+  <h2>7. Belief correction 与 GTSAM backup</h2>
+  <p>主方法在每次真实 observation 后更新 latent belief。GTSAM/factor graph 保留为可选 correction backend、baseline、diagnostic oracle、teacher 和 visualization 工具。</p>
+  <div class="equation">默认主方法：       iwm_belief_only
+可选纠错：         iwm_with_gtsam_backup
+baseline/ablation：gtsam_always</div>
+  <p>只有真实执行、带 provenance、经过 categorical verification 的 observation 才能成为 factor；imagined rollout 永远不能写入 persistent belief。Backup 只由 identity ambiguity、contradiction、state-history conflict 或 correction failure 等显式 categorical condition 触发，不依赖手设 posterior threshold。</p>
+  <p>GTSAM 不生成 action、不遍历 graph、不排序候选、不预测 transition，也不为最终答案提供 grounding。主方法贡献必须在不使用 GTSAM 时仍然成立。</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">监督来源</span>
+  <h2>8. Learning signal 从哪里来</h2>
+  <p>CG-Bench 提供人工 clue intervals 和 terminal answers。执行一个 clue read 可以得到 <code>advances_required_clue_coverage</code>、<code>partial</code> 或 <code>complete</code> 等 categorical progress；完整 clue 轨迹与 leave-one-clue-out 轨迹提供 ordinal preference。</p>
+  <ul>
+    <li>未匹配的 L1.5 candidate 保持 unlabeled，不能伪造成 semantic negative；</li>
+    <li>Qwen-VL 生成 grounded observation descriptor，不冒充 GT relation label；</li>
+    <li>GPT-5.6 visual review 只是可选诊断，不能覆盖 CG-Bench ground truth；</li>
+    <li>Identity、state-transition、causal 和 counterevidence 需要各自可信的标注来源；</li>
+    <li>Validation/test 视频永不参与训练。</li>
+  </ul>
+  <p>从同一 immutable checkpoint 执行 sibling branches，可以监督 action-conditioned observation、belief-delta prediction 和 pairwise trajectory comparison，而不必给任何轨迹赋绝对 utility。</p>
+</section>
+
+<section class="card">
+  <h2>9. Post-training 策略</h2>
+  <ol>
+    <li>用审核后的 categorical observation descriptor 与 realized belief delta 做 SFT；</li>
+    <li>用 locked sibling trajectories 做 pairwise preference optimization；</li>
+    <li>只有在标签质量成立后，才可选做 group-relative ordinal optimization。</li>
+  </ol>
+  <p>LLM/VLM 不产生数字 reward。未来的 GRPO-style optimizer 可以从 categorical group ordering 内部计算 optimization advantage，但数据协议没有加权 heuristic reward，也没有 model-generated score。当前 GPT-OSS-120B 只用于 inference/data gathering，训练被明确暂停。</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">决定性实验</span>
+  <h2>10. 证明 planner 因果性依赖 IWM</h2>
+  <p>固定 question、evidence memory、candidate set、planner 和 read budget，只改变 world-model condition：</p>
+  <ol>
+    <li>完整 delayed-belief IWM；</li>
+    <li>no world model；</li>
+    <li>shuffled IWM predictions；</li>
+    <li>frozen IWM；</li>
+    <li>immediate-effect-only；</li>
+    <li>oracle clue ceiling，只作为诊断上界。</li>
+  </ol>
+  <p>Answer accuracy、evidence completeness、read efficiency、action divergence、categorical transition accuracy 和 delayed two-hop success 必须分开报告，不能压成一个 lexicographic gate 或 scalar utility。</p>
+</section>
+
+<section class="card warning">
+  <span class="label">Go / No-Go</span>
+  <h2>11. 支撑研究结论所需证据</h2>
+  <p><strong>Go：</strong>在 matched budget 下，完整 IWM 提升 delayed multi-hop success；移除、冻结或打乱预测会改变 action 并降低结果；prediction error 与 navigation failure 相关；收益在 candidate-order permutation 下仍存在。</p>
+  <p><strong>No-Go：</strong>没有 IWM 仍产生相同 action sequence；收益可由 graph/embedding heuristic 解释；imagined evidence 泄漏进答案；candidate recall 太低而无法暴露所需 clue；或只有 immediate-gain case 获益。</p>
+</section>
+
+<section class="card">
+  <h2>12. 当前实现状态</h2>
+  <table>
+    <thead><tr><th>部分</th><th>截至 2026-07-21 的状态</th></tr></thead>
+    <tbody>
+      <tr><td>L1 retained memory</td><td>已实现可插入 learned representation 的 surprise windows，以及真正 materialized fixed-capacity consolidation、lineage、embedding refresh invalidation、edge rewiring 和 temporal-chain rebuild</td></tr>
+      <tr><td>L1.5 correlations</td><td>已实现 Qwen embedding soft navigation correlation、semantic duplicate coalescing、recurrence chain 代替 clique、class-level standardized sparsemax、directional affinity，以及独立的可选 verified fact-relation layer</td></tr>
+      <tr><td>Full-graph IWM/planner</td><td>已在 <code>full_graph_iwm</code> 实现 virtual root、单一 active cursor、cursor-local temporal/correlation hops、不用 Top-K 选 winner、无泄漏 horizon-1/2 rollout、匿名 consequence preference、分批但不采样的完整 pair comparison、资源超限显式 abstention，以及真实读取后重新规划</td></tr>
+      <tr><td>Legacy IWM/planner workflows</td><td>现有 bounded-context navigator 继续作为 data/review/baseline 路径，不会被静默当作新主方法</td></tr>
+      <tr><td>GPT-OSS-120B</td><td>已实现 strict categorical adapter；仅 inference/data gathering；numeric output 会被拒绝</td></tr>
+      <tr><td>GTSAM</td><td>已实现 correction pilot 和 optional backup mode；不是默认研究方法</td></tr>
+      <tr><td>CG-Bench v2</td><td>256 cases、205 videos、672 条人工 clue transitions；当前 Qwen grounding/embedding validation 为 670/672，剩余 2 条失败</td></tr>
+      <tr><td>真实 L1/L1.5 candidates</td><td>8 个 question-independent 120 秒 smoke graphs 与 Qwen embedding sidecars 已存在。修复后的 builder 保留 15–64 nodes，生成 22–133 条 soft edges；原来的 dense climbing case 已降到 15 nodes/22 edges。仍需重新运行 matched pilot。</td></tr>
+      <tr><td>Matched closed loop</td><td>已实现 full IWM、no-WM、prediction shuffle、frozen WM、immediate-only 与 oracle ceiling；hidden clue 只做执行后评分，不回灌 planner belief</td></tr>
+      <tr><td>Learned IWM result</td><td>尚未训练，没有正式性能结论</td></tr>
+      <tr><td>Production readiness</td><td>尚未达到</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="card thesis">
+  <span class="label">近期门禁</span>
+  <h2>13. 下一步</h2>
+  <ol>
+    <li>在修复后的 soft-correlation graph fingerprint 上重跑 capacity=64 的 8-video compile gate；</li>
+    <li>检查 retained clue coverage、embedding checksum、correlation density/degree、hidden leakage 和 legal-action coverage；</li>
+    <li>运行 matched GPT-OSS horizon-one IWM、no-WM、shuffle、frozen、immediate-only 和 oracle arms；</li>
+    <li>分别报告 coverage、read efficiency、action divergence、abstention、delayed success 和 latency，不汇总为单一分数；</li>
+    <li>然后再构造固定 delayed two-hop subset，进行资源可承受的 exhaustive horizon-two 实验。</li>
+  </ol>
+  <p>修复后的图已经通过 structural gate；下一科学瓶颈是 GPT-OSS prediction 能否在 matched budget 下产生依赖 world model 的 action divergence，并改善真实 evidence acquisition。</p>
+</section>
+
+<footer class="small">实现细节见 <a href="implicit_world_model/full_graph_iwm/README.md">full_graph_iwm</a>、<a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>、<a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。</footer>
+</body>
+</html>

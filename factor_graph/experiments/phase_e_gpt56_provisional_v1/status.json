@@ -1,0 +1,261 @@
+{
+  "schema_version": "steam-factor-graph-phase-e-status/v0.1",
+  "experiment_id": "phase_e_gpt56_provisional_v1",
+  "created_on": "2026-07-20",
+  "runtime_pass": true,
+  "production_ready": false,
+  "formal_result": false,
+  "gtsam_backup_finalization": {
+    "runtime_ready": true,
+    "backup_engineering_complete": true,
+    "production_calibrated": false,
+    "navigation_benefit_proven": false,
+    "engineering_gates_passed": "5/5",
+    "runtime_modes": [
+      "iwm_belief_only",
+      "iwm_with_gtsam_backup",
+      "gtsam_always"
+    ],
+    "checkpoint_schema": "steam-gtsam-backup-checkpoint/v0.1",
+    "artifact": "../gtsam_backup_finalization_v1.json",
+    "artifact_sha256": "29b9a315dc8ec27823e62f3fd1716e5f7f8de3f577566c0d2ec50e3286ea6e5d"
+  },
+  "annotation_provenance": {
+    "annotator": "gpt-5.6-sol/current-session",
+    "labels_source": "model_provisional",
+    "remote_api_call_made": false,
+    "numeric_reward_or_confidence_emitted_by_llm": false,
+    "formal_gate_eligible": false
+  },
+  "locked_case_set": {
+    "status": "ai_provisional",
+    "draft_case_count": 30,
+    "accepted_case_count": 29,
+    "video_count": 8,
+    "split_counts": {"train": 16, "dev": 7, "test": 6},
+    "relation_tag_counts": {
+      "identity": 7,
+      "temporal": 8,
+      "state_transition": 1,
+      "verified_dependency": 1,
+      "delayed_bridge": 12
+    },
+    "file_sha256": "9ef2d2c329908367f88aef19942016f944346632d9a968505fa2ce4b788896c0"
+  },
+  "identity_state_audit": {
+    "scope": "single-video 45-relation provisional audit",
+    "identity": {"count": 34, "strict_precision": 0.5588235294117647, "decision_coverage": 0.7941176470588235},
+    "state_transition": {"count": 7, "strict_precision": 0.42857142857142855, "decision_coverage": 0.8571428571428571},
+    "target_strict_precision": 0.9,
+    "acceptance_passed": false,
+    "file_sha256": "7907b583acbcae0b1c693235ef8a6535af76e1729aa1ef4d9fdb778d74081262"
+  },
+  "categorical_confusion": {
+    "predictor": "native_l1_candidate_admission",
+    "semantics": "All audited rows were admitted candidates, so this baseline always predicts supports. It is not a post-read verifier.",
+    "all_accuracy": 0.4888888888888889,
+    "identity_accuracy": 0.5588235294117647,
+    "state_transition_accuracy": 0.42857142857142855,
+    "formal_post_read_verifier_matrix_complete": false,
+    "file_sha256": "9c6b31de6bff1e72772cbc366f8bfc229977f0d78cf7b08d48cdbd4c6cbb0523"
+  },
+  "categorical_preference": {
+    "comparison_count": 29,
+    "label_counts": {"prefer_left": 12, "prefer_right": 17, "tie": 0, "incomparable": 0},
+    "blinded_side_order": "deterministic_hash_randomized",
+    "training_record_count": 83,
+    "held_out_video_exact_accuracy": 0.6666666666666666,
+    "reward_model": false,
+    "file_sha256": "a93117dce1b438b8e4f92a70f2f19d8ba8ad5c834ea8f2f4d4dcb4ea880dac02"
+  },
+  "matched_budget_ablation": {
+    "case_count": 29,
+    "answer_accuracy": {
+      "semantic_only": 0.5517241379310345,
+      "event_only": 0.5862068965517241,
+      "native_l1_candidate": 0.5862068965517241,
+      "verified_dependency": 0.5862068965517241,
+      "factorized_direct_preference": 0.6896551724137931,
+      "factor_graph_direct_preference": 0.7586206896551724,
+      "factor_graph_rule_world_model_lookahead": 0.8275862068965517,
+      "factor_graph_frozen_posterior_lookahead": 0.8275862068965517,
+      "factor_graph_shuffled_relations": 0.7241379310344828,
+      "oracle": 1.0
+    },
+    "diagnostic_gates": {
+      "lookahead_beats_direct": true,
+      "relation_shuffling_hurts": true,
+      "posterior_correction_helps": false
+    },
+    "passed_gate_count": 2,
+    "total_gate_count": 3,
+    "file_sha256": "54faf6ef64425e0bfb813041f07d9c66baa41ce81046913885ca8f76d9594e32"
+  },
+  "executed_read_gtsam_followup_v1": {
+    "status": "superseded_after_strict_review",
+    "reason": "The apparent read-efficiency gain was not isolated from the categorical verifier direct update."
+  },
+  "executed_read_gtsam_followup_v2": {
+    "artifact": "matched_ablation_gtsam_closed_loop_v2.json",
+    "gtsam_closed_loop": true,
+    "journal_record_count": 38,
+    "active_factor_count": 14,
+    "categorical_change_count": 3,
+    "direct_change_count": 2,
+    "propagated_change_count": 1,
+    "verifier_outcome_counts": {
+      "supports": 14,
+      "inconclusive": 24,
+      "rejects": 0
+    },
+    "normal": {
+      "answer_accuracy_proxy": 0.7586206896551724,
+      "ready_evidence_accuracy": 0.5517241379310345,
+      "mean_graph_read_calls": 1.7241379310344827
+    },
+    "normal_vs_verifier_direct_only": {
+      "answer_accuracy_proxy_delta": 0.0,
+      "ready_evidence_accuracy_delta": 0.0,
+      "mean_graph_read_call_delta": 0.0,
+      "action_sequence_difference_count": 0
+    },
+    "aggregate_gate_removed": true,
+    "accuracy_improvement_demonstrated": false,
+    "gtsam_navigation_improvement_demonstrated": false,
+    "file_sha256": "9ad132fe1d4e233df43018a361cc277ff5dad45db1edf8c51a3f485e0321a4a6"
+  },
+  "correction_sensitive_mechanism_pilot": {
+    "artifact": "correction_sensitive_navigation.json",
+    "case_count": 3,
+    "support_propagated_belief_change": true,
+    "reject_propagated_belief_change": true,
+    "support_action_divergence": true,
+    "reject_action_divergence": false,
+    "inconclusive_is_negative_control": true,
+    "independent_gold": false,
+    "file_sha256": "f85be94468b6feefbf1bcfeb8c06db2fa077d421bf0ae373e923e89d2809ce3f"
+  },
+  "executed_transition_supervision_pilot": {
+    "artifact": "executed_transitions.unreviewed.json",
+    "source_case_annotation_status": "ai_provisional",
+    "transition_annotation_status": "unreviewed",
+    "execution_mode": "persisted_replay",
+    "formal_eligible": false,
+    "case_count": 29,
+    "video_count": 8,
+    "record_count": 609,
+    "grounded_record_count": 609,
+    "resolved_role_counts": {
+      "identity": 20,
+      "state_transition": 1,
+      "temporal": 78
+    },
+    "coverage_warning": "state-transition and counterevidence supervision remain severely underrepresented",
+    "verifier_outcome_counts": {
+      "supports": 52,
+      "inconclusive": 526,
+      "not_applicable": 31,
+      "rejects": 0
+    },
+    "post_read_verifier_count": 0,
+    "file_sha256": "c79f2ed98050952a52fd67db6381a486306e0ca3565661714b3a90238f48487b"
+  },
+  "balanced_case_mining_pilot": {
+    "case_artifact": "balanced_cases.draft.json",
+    "review_queue_artifact": "balanced_case_review.unreviewed.json",
+    "report_artifact": "balanced_case_mining_report.json",
+    "candidate_count": 54,
+    "annotation_status": "unreviewed",
+    "cross_category_backfill": false,
+    "selected_categories": {
+      "delayed_two_hop": 15,
+      "identity_support": 10,
+      "state_support": 1,
+      "state_reject": 4,
+      "counterevidence_empty": 10,
+      "blocked_path_recovery": 4,
+      "ambiguity_abstention": 10
+    },
+    "case_sha256": "413b5aec3e5ffc995fb76e847515429a34bdd21d6c2d1777bf2cdebf1907fe45",
+    "queue_sha256": "9926aff89f7862d255caeb70731eca76e915ddbc327da791ea40fa3e4a3025e9",
+    "report_sha256": "6f54efd7024f3ecbe8d295ba8df534a3e14c88474229477d10582507a69f462b"
+  },
+  "video_skills_runtime_verifier_availability": {
+    "artifact": "video_skills_runtime_verifier_availability.json",
+    "runtime_available": true,
+    "post_read_verifier_count": 236,
+    "post_read_support_count": 236,
+    "post_read_reject_count": 0,
+    "relation_verifier_validated": false,
+    "formal_eligible": false
+  },
+  "balanced_evidence_gathering_v1": {
+    "training_performed": false,
+    "evidence_packet_item_count": 54,
+    "evidence_packet_status": "ai_provisional",
+    "review_decision_counts": {"accept": 52, "reject": 2},
+    "verifier_outcome_counts": {
+      "supports": 18,
+      "rejects": 1,
+      "inconclusive": 17,
+      "not_applicable": 18
+    },
+    "reviewed_case_count": 52,
+    "executed_transition_status": "unreviewed",
+    "executed_transition_record_count": 994,
+    "grounded_transition_record_count": 978,
+    "resolved_role_counts": {"identity": 44},
+    "missing_executed_action_families": [
+      "inspect_state_change", "search_counterevidence", "find_bridge"
+    ],
+    "training_ready": false,
+    "formal_eligible": false,
+    "artifacts": {
+      "unreviewed_evidence_packet_sha256": "4b6b22e3e6251afb24c47f7b3a474378cf7c4f0a51b3f6ea25964614ceb027ff",
+      "hidden_key_sha256": "e79f645f3f1a64c51ffd188a2cb15a17802deef141731cadecfb2ea8481314ce",
+      "gpt56_review_sha256": "97d4db2da1b982812a5e83e0bd783205649c1d885239ae668366e973eb007f69",
+      "locked_evidence_packet_sha256": "45c9fceb9926f15803e5bb77411f246a4cc74d7724a145fbb053a907448750ef",
+      "locked_case_set_sha256": "5b047086ffbfb7b20d1296e6a5e2fb4ae3cecec8e594330561db6b9e3bf0e7d8",
+      "executed_transitions_sha256": "2ef9b30128d8fe0cb319667dae711a69ea78199efb4dd4a03b4b739711145ace",
+      "inspection_sha256": "93a2aaa383495f9ee0931d61d4b13292992bb86a623aff582bf52daeec48ff03"
+    }
+  },
+  "balanced_review_anchored_gathering_v2": {
+    "training_performed": false,
+    "source_case_annotation_status": "ai_provisional",
+    "executed_transition_status": "unreviewed",
+    "case_count": 52,
+    "record_count": 1025,
+    "grounded_record_count": 1009,
+    "reviewed_non_stop_exact_execution": "42/42",
+    "reviewed_non_stop_exact_grounding": "42/42",
+    "action_legality_counts": {
+      "native_legal": 994,
+      "review_restored": 27,
+      "offline_diagnostic": 4
+    },
+    "resolved_role_counts": {
+      "identity": 44,
+      "bridge": 13,
+      "counterevidence": 10,
+      "state_transition": 2
+    },
+    "graph_mutated": false,
+    "missing_required_action_families": [],
+    "optional_unrepresented_action_families": ["find_bridge"],
+    "training_ready": false,
+    "formal_eligible": false,
+    "remaining_blocker": "independent record-level human review and lock",
+    "artifacts": {
+      "executed_transitions_sha256": "c7e759cc9d02db1b3680e0a4a75c18258705f5eaf7baeb0bfcf3b83c98d22d0e",
+      "inspection_sha256": "1444bad4609183ea49e2865a2f1c7ccb77f7ba6e04d0e3a6fd6ce88e494110d1"
+    }
+  },
+  "remaining_formal_gates": [
+    "independent human identity/state annotation on a multi-video locked set",
+    "actual categorical post-read verifier predictions and confusion matrix",
+    "more non-empty state-transition, verified-dependency, and counter-evidence cases",
+    "independent review and locking of executed transition targets",
+    "a larger correction-sensitive gold set showing answer-accuracy benefit, not only read-efficiency benefit"
+  ]
+}

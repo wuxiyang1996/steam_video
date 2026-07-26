@@ -1,0 +1,36 @@
+{
+  "schema_version": "steam-multi-trajectory-runtime-contract/v1.0",
+  "runtime_contract_version": "steam-multi-trajectory-runtime/v1.0",
+  "status": "frozen",
+  "method_contract": {
+    "evidence_substrate": "question-independent L1 plus L1.5 temporal/correlation navigation graph",
+    "candidate_source": "all legal local graph actions from every expandable hypothesis trajectory",
+    "world_model": "action-conditioned categorical imagined observation and belief transition",
+    "planner": "categorical partial preference over complete multi-hypothesis reasoning chains",
+    "execution": "one selected legal real read shared across persistent trajectories",
+    "belief_update": "hypothesis-conditioned correction from executed real evidence followed by replan",
+    "planning_horizon": [1, 2]
+  },
+  "hard_invariants": {
+    "top_k_candidate_pruning": false,
+    "numeric_reward_score_probability_confidence_or_utility": false,
+    "imagined_evidence_enters_persistent_belief": false,
+    "hidden_clue_or_answer_feedback_to_planner": false,
+    "every_joint_chain_covers_every_expandable_hypothesis": true,
+    "real_reread_can_change_node_video_or_timestamp": false,
+    "gtsam_ranks_actions": false
+  },
+  "evaluation_dimensions": [
+    "localized_entry_reachability",
+    "evidence_sufficiency",
+    "transition_calibration",
+    "answer_accuracy",
+    "read_efficiency",
+    "action_divergence",
+    "delayed_planning_advantage"
+  ],
+  "training_status": {
+    "training_performed": false,
+    "runtime_audit_packets_trainable_without_independent_lock": false
+  }
+}

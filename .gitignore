@@ -8,3 +8,29 @@ __pycache__/
 *.npy
 .DS_Store
 .ipynb_checkpoints/
+*.hidden_key.json
+steam_video_new/implicit_world_model/datasets/**/blinded_visual_assets/
+steam_video_new/implicit_world_model/datasets/**/slurm_logs/
+steam_video_new/implicit_world_model/datasets/**/qwen_grounding_server.log
+steam_video_new/implicit_world_model/datasets/**/l15_graph_smoke_v1/
+
+# Reproducible experiment outputs and large local graph/model artifacts.
+memory_graph/outputs/
+dynamic_navigation/experiments/**/outputs/
+steam_video_new/implicit_world_model/datasets/streamingbench_ovo_l15_sft_v1/
+steam_video_new/implicit_world_model/datasets/**/l15_fixed_*/
+steam_video_new/implicit_world_model/datasets/**/l15_single_pass_*/
+steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/run/
+steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/*.responses.json
+steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/*.roles.json
+steam_video_new/implicit_world_model/datasets/**/multi_trajectory_v1/**/*.log
+
+# Local CG-Bench materializations; curated files already tracked by Git remain visible.
+steam_video_new/implicit_world_model/datasets/cgbench_grounded_navigation_pilot_v1/
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/multi_trajectory_v1/
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/navigation_dataset*.json
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/qwen3_vl_2b_descriptor_embeddings.*
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/qwen_grounding_report.json
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/gt_ablation.unexecuted.json
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_candidates.public.json
+steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/modality_coverage_summary.running.json

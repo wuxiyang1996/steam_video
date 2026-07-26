@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/executed_transition_dataset.schema.json",
+  "title": "ExecutedReadTransitionDataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "dataset_id", "annotation_status", "annotator",
+    "locked_sha256", "source_case_set", "belief_backend", "execution_mode",
+    "formal_eligible", "numeric_model_output", "summary", "checkpoints", "records"
+  ],
+  "properties": {
+    "schema_version": {"enum": ["steam-executed-transition-dataset/v0.1", "steam-executed-transition-dataset/v0.2"]},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "annotation_status": {
+      "enum": ["unreviewed", "ai_provisional", "human_locked"]
+    },
+    "annotator": {"type": ["string", "null"]},
+    "locked_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "source_case_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_set_id", "annotation_status", "locked_sha256"],
+      "properties": {
+        "case_set_id": {"type": "string", "minLength": 1},
+        "annotation_status": {"enum": ["ai_provisional", "human_locked"]},
+        "locked_sha256": {"type": ["string", "null"]}
+      }
+    },
+    "belief_backend": {"enum": ["factor_graph", "factorized"]},
+    "execution_mode": {"enum": ["persisted_replay", "video_skills_runtime"]},
+    "formal_eligible": {"type": "boolean"},
+    "numeric_model_output": {"const": false},
+    "summary": {
+      "type": "object",
+      "required": [
+        "case_count", "video_count", "record_count",
+        "grounded_record_count", "action_counts", "outcome_counts",
+        "answerability_counts", "recovery_counts", "resolved_role_counts",
+        "hypothesis_disposition_counts", "verifier_outcome_counts",
+        "verifier_source_counts", "post_read_verifier_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "video_count": {"type": "integer", "minimum": 1},
+        "record_count": {"type": "integer", "minimum": 0},
+        "grounded_record_count": {"type": "integer", "minimum": 0},
+        "action_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "outcome_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"answerability_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"recovery_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"resolved_role_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"hypothesis_disposition_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"verifier_outcome_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"verifier_source_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"post_read_verifier_count": {"type": "integer", "minimum": 0}
+        ,"grounded_empty_result_count": {"type": "integer", "minimum": 0}
+        ,"action_origin_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+        ,"action_legality_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "checkpoint_id", "checkpoint"],
+        "properties": {
+          "case_id": {"type": "string", "minLength": 1},
+          "checkpoint_id": {"type": "string", "minLength": 1},
+          "checkpoint": {"$ref": "#/$defs/belief"}
+        }
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/record"}
+    }
+  },
+  "$defs": {
+    "belief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "belief_id", "acquired_evidence", "frontier", "missing_roles",
+        "contradictions", "hypotheses", "blocked_edge_ids", "uncertainty",
+        "answerability", "read_budget_state"
+      ],
+      "properties": {
+        "belief_id": {"type": "string"},
+        "acquired_evidence": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "frontier": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "missing_roles": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "contradictions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["edge_id", "grounding"],
+            "properties": {
+              "edge_id": {"type": "string"},
+              "grounding": {"enum": ["unseen", "partial", "endpoints_observed", "verified", "contradicted"]}
+            }
+          }
+        },
+        "blocked_edge_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "uncertainty": {"enum": ["high", "medium", "low"]},
+        "answerability": {"enum": ["not_ready", "ready", "abstain"]},
+        "read_budget_state": {"enum": ["available", "exhausted"]}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_type", "source_id", "target_ids", "relation"],
+      "properties": {
+        "action_type": {"type": "string", "minLength": 1},
+        "source_id": {"type": ["string", "null"]},
+        "target_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "relation": {"type": ["string", "null"]}
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "relations"],
+      "properties": {
+        "nodes": {"type": "array", "items": {"type": "object"}},
+        "relations": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "target_ids", "node_kind", "predicted_only"],
+      "properties": {
+        "role": {"type": "string"},
+        "target_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "node_kind": {"type": "string"},
+        "predicted_only": {"const": false}
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resolved_roles", "relation_updates", "contradiction_updates",
+        "hypothesis_updates", "frontier_change", "contradiction_change",
+        "path_change", "recovery_status", "uncertainty_change",
+        "answerability_after", "predicted_only"
+      ],
+      "properties": {
+        "resolved_roles": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "relation_updates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "contradiction_updates": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "hypothesis_updates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["edge_id", "disposition"],
+            "properties": {
+              "edge_id": {"type": "string"},
+              "disposition": {"enum": ["accepted", "rejected", "unresolved"]}
+            }
+          }
+        },
+        "frontier_change": {"enum": ["opened", "closed", "unchanged"]},
+        "contradiction_change": {"enum": ["opened", "resolved", "unchanged"]},
+        "path_change": {"enum": ["opened", "blocked", "unchanged"]},
+        "recovery_status": {"enum": ["recovered", "stalled", "unchanged"]},
+        "uncertainty_change": {"enum": ["decrease", "unchanged", "increase"]},
+        "answerability_after": {"enum": ["not_ready", "ready", "abstain"]},
+        "predicted_only": {"const": false}
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id", "case_id", "video_id", "overlay_id", "overlay_sha256",
+        "question", "checkpoint_ref", "local_context", "action", "reasoning_hop",
+        "execution", "target", "review_decision", "review_rationale", "target_source"
+      ],
+      "properties": {
+        "record_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "video_id": {"type": "string", "minLength": 1},
+        "overlay_id": {"type": "string", "minLength": 1},
+        "overlay_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "question": {"type": "string", "minLength": 1},
+        "checkpoint_ref": {"type": "string", "minLength": 1},
+        "local_context": {"$ref": "#/$defs/context"},
+        "action": {"$ref": "#/$defs/action"},
+        "action_provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "legality", "native_candidate", "reviewed_accepted", "review_status", "edge_admitted", "graph_mutated"],
+          "properties": {
+            "origin": {"enum": ["native_candidate", "review_anchored", "review_anchored_and_native", "control"]},
+            "legality": {"enum": ["native_legal", "review_restored", "offline_diagnostic", "not_executable", "not_applicable"]},
+            "native_candidate": {"type": "boolean"},
+            "reviewed_accepted": {"type": "boolean"},
+            "review_status": {"type": ["string", "null"]},
+            "edge_admitted": {"type": "boolean"},
+            "graph_mutated": {"const": false}
+          }
+        },
+        "reasoning_hop": {"type": "string", "minLength": 1},
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["skill_id", "status", "real_observation_ids", "evidence_refs", "grounded", "belief_update_audit", "verifier_measurement"],
+          "properties": {
+            "skill_id": {"type": "string"},
+            "status": {"type": "string"},
+            "real_observation_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "evidence_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "grounded": {"type": "boolean"},
+            "observation_outcome": {"enum": ["observed", "empty_search_observed", "empty"]},
+            "grounded_empty_result": {"type": "boolean"},
+            "belief_update_audit": {"type": ["object", "null"]},
+            "verifier_measurement": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["applicability", "categorical_outcome", "source", "post_read", "evidence_refs", "reasons", "numeric_output_exposed"],
+              "properties": {
+                "applicability": {"enum": ["applicable", "not_applicable"]},
+                "categorical_outcome": {"enum": ["supports", "rejects", "inconclusive", "not_applicable"]},
+                "source": {"type": "string", "minLength": 1},
+                "post_read": {"type": "boolean"},
+                "evidence_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+                "reasons": {"type": "array", "items": {"type": "string"}},
+                "numeric_output_exposed": {"const": false}
+              }
+            }
+          }
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observation_descriptor", "belief_delta"],
+          "properties": {
+            "observation_descriptor": {"$ref": "#/$defs/observation"},
+            "belief_delta": {"$ref": "#/$defs/delta"}
+          }
+        },
+        "review_decision": {"enum": ["accept", "reject", null]},
+        "review_rationale": {"type": "string"},
+        "target_source": {"enum": ["executed_read_plus_backend_recompute", "executed_read_plus_backend_recompute_v2"]}
+      }
+    }
+  }
+}

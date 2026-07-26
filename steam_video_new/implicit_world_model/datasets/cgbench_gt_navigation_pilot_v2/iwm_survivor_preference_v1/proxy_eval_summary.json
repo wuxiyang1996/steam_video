@@ -1,0 +1,31 @@
+{
+  "schema_version": "steam-full-iwm-grounded-survivor-preference-eval-summary/v0.1",
+  "model": "openai/gpt-5-mini",
+  "pair_count": 44,
+  "original_orientation": {
+    "correct_count": 21,
+    "accuracy": 0.4772727272727273,
+    "prediction_counts": {
+      "prefer_left": 41,
+      "tie": 2,
+      "incomparable": 1
+    }
+  },
+  "side_swapped": {
+    "correct_count": 21,
+    "accuracy": 0.4772727272727273,
+    "prediction_counts": {
+      "prefer_right": 42,
+      "tie": 2
+    }
+  },
+  "orientation_normalized_consistency": {
+    "consistent_count": 43,
+    "rate": 0.9772727272727273
+  },
+  "interpretation": "The comparator follows the original IWM survivor after side swapping; upstream transition semantics are the primary failure.",
+  "pair_level_labels_present": false,
+  "hidden_clue_or_answer_present": false,
+  "numeric_reward_present": false,
+  "training_performed": false
+}

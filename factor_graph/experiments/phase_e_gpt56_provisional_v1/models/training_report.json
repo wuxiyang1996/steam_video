@@ -1,0 +1,101 @@
+{
+  "schema_version": "steam-preference-model-training/v0.1",
+  "output_contract": "categorical_transition_and_ordinal_preference_only",
+  "reward_model": false,
+  "transition": {
+    "record_count": 54,
+    "video_count": 8,
+    "heads": {
+      "observation_role": {
+        "classes": [
+          "dependency",
+          "identity",
+          "semantic",
+          "state_transition",
+          "temporal"
+        ],
+        "class_counts": {
+          "state_transition": 2,
+          "dependency": 6,
+          "identity": 8,
+          "temporal": 34,
+          "semantic": 4
+        }
+      },
+      "resolved_roles": {
+        "classes": [
+          "identity",
+          "none",
+          "state_transition",
+          "temporal"
+        ],
+        "class_counts": {
+          "state_transition": 1,
+          "none": 38,
+          "identity": 7,
+          "temporal": 8
+        }
+      },
+      "uncertainty_change": {
+        "classes": [
+          "decrease",
+          "unchanged"
+        ],
+        "class_counts": {
+          "decrease": 16,
+          "unchanged": 38
+        }
+      },
+      "answerability_after": {
+        "classes": [
+          "not_ready",
+          "ready"
+        ],
+        "class_counts": {
+          "ready": 16,
+          "not_ready": 38
+        }
+      },
+      "contradiction_change": {
+        "classes": [
+          "absent"
+        ],
+        "class_counts": {
+          "absent": 54
+        }
+      }
+    }
+  },
+  "preference": {
+    "record_count": 29,
+    "video_count": 8,
+    "classes": [
+      "prefer_left",
+      "prefer_right"
+    ],
+    "class_counts": {
+      "prefer_left": 12,
+      "prefer_right": 17
+    },
+    "held_out_videos": [
+      "mKqiGQrHtW8",
+      "-3l2KFTj7yY"
+    ],
+    "video_disjoint_evaluation": {
+      "status": "evaluated",
+      "train_count": 23,
+      "test_count": 6,
+      "exact_accuracy": 0.6666666666666666
+    }
+  },
+  "artifacts": {
+    "transition_model": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/experiments/phase_e_gpt56_provisional_v1/models/transition_model.joblib",
+    "preference_model": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/experiments/phase_e_gpt56_provisional_v1/models/preference_model.joblib"
+  },
+  "trust": {
+    "allow_ai_provisional": true,
+    "label_sources": [
+      "ai_provisional"
+    ]
+  }
+}

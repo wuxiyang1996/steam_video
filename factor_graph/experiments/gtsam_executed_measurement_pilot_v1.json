@@ -1,0 +1,62 @@
+{
+  "all_gates_pass": true,
+  "controlled_coupled_pilot": {
+    "belief_after": "accepted",
+    "belief_after_conflict": "uncertain",
+    "belief_before": "uncertain",
+    "direct_changed_count": 1,
+    "idempotent_replay": true,
+    "journal_size_after_conflict": 2,
+    "measurement_target": "relation::edge:identity::same_entity",
+    "no_loop_direct_changed_count": 1,
+    "no_loop_propagated_changed_count": 0,
+    "propagated_changed_count": 1,
+    "shuffled_disagreement_count": 1
+  },
+  "gates": {
+    "conflicting_measurements_are_retained": true,
+    "coupled_measurement_propagates": true,
+    "measurement_is_idempotent": true,
+    "no_loop_blocks_propagation": true,
+    "query_is_not_a_factor": true,
+    "real_measurement_changes_direct_target": true,
+    "real_read_has_grounded_l1_evidence": true,
+    "real_video_skills_read_executed": true,
+    "shuffled_target_changes_result": true
+  },
+  "interpretation": "The real arm exercises Video_Skills retrieval and grounded measurement construction using a persisted categorical verifier decision. The coupled arm tests propagation mechanics; neither arm constitutes calibrated accuracy.",
+  "real_video_skills_replay": {
+    "artifact": "memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+    "artifact_sha256": "2360cba16056586765b4223afa80e330a635baabbeab529b9283a7d35b574f80",
+    "belief_after_measurement": "accepted",
+    "belief_after_read_before_verifier": "uncertain",
+    "belief_before": "uncertain",
+    "direct_changed_count": 1,
+    "edge_id": "relation:event:atomic:video_skills_l1:00069->event:atomic:video_skills_l1:00081:gpt-oss-teacher",
+    "execution_status": "executed",
+    "factor_count_after_measurement": 390,
+    "factor_count_after_read_before_verifier": 389,
+    "factor_count_before_verifier": 389,
+    "grounded_evidence_ref_count": 1,
+    "journal_size": 1,
+    "measurement_id": "measurement:56553eb66346c08e03f16a26",
+    "measurement_outcome": "supports",
+    "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+    "propagated_changed_count": 0,
+    "real_observation_ids": [
+      "event:atomic:video_skills_l1:00081"
+    ],
+    "relation": "same_entity",
+    "relation_calibration_status": "uncalibrated_prior",
+    "skill_id": "retrieve_by_relation"
+  },
+  "runtime": {
+    "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+    "gtsam": "4.2.1",
+    "llm_numeric_output": false,
+    "python": "3.12.13",
+    "video_skills_runtime": true
+  },
+  "schema_version": "gtsam_executed_measurement_experiment/v0.1",
+  "status": "phase_c_integration_pilot_not_calibration_benchmark"
+}

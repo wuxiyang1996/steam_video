@@ -1,0 +1,44 @@
+{
+  "schema_version": "steam-cgbench-l15-fixed-heldout-selection/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "selection_policy": "shortest_available_video_per_heldout_split_with_subtitle_fallback",
+  "selection_uses_question_or_gt": false,
+  "observation_horizon_s": 830.933,
+  "videos": [
+    {
+      "video_id": "BV16A4m1F7Jc",
+      "video_ref": "cg_videos/BV16A4m1F7Jc.mp4",
+      "split": "test",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 623.466,
+      "observation_horizon_s": 623.466,
+      "selection_stratum": [
+        "test",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "BV1zJ41187BP",
+      "video_ref": "cg_videos/BV1zJ41187BP.mp4",
+      "split": "validation",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 830.933,
+      "observation_horizon_s": 830.933,
+      "selection_stratum": [
+        "validation",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    }
+  ],
+  "rejected": [],
+  "forbidden_worker_inputs": [
+    "answer",
+    "answer_key",
+    "answer_text",
+    "choices",
+    "clue_intervals",
+    "hop_alignment",
+    "question"
+  ],
+  "training_performed": false
+}

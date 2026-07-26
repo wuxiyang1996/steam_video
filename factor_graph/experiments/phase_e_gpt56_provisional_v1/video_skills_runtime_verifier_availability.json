@@ -1,0 +1,34 @@
+{
+  "schema_version": "steam-video-skills-verifier-availability/v0.1",
+  "status": "runtime_available_not_relation_verifier_validated",
+  "source_case_set": "cases.locked_ai_provisional.json",
+  "source_case_annotation_status": "ai_provisional",
+  "execution_mode": "video_skills_runtime",
+  "transition_annotation_status": "unreviewed",
+  "formal_eligible": false,
+  "artifact_retained": false,
+  "case_count": 29,
+  "video_count": 8,
+  "record_count": 609,
+  "grounded_record_count": 609,
+  "post_read_verifier_count": 236,
+  "verifier_outcome_counts": {
+    "supports": 288,
+    "inconclusive": 290,
+    "not_applicable": 31,
+    "rejects": 0
+  },
+  "verifier_source_counts": {
+    "video_skills_post_read_claim_verifier": 236,
+    "persisted_relation_verifier": 52,
+    "no_post_read_relation_verifier": 290,
+    "not_applicable": 31
+  },
+  "temporary_full_artifact_sha256": "fd4bcaddcc7f49eb5ea52a050c6ed1e2b2ba1feed98b088420a45e97ef591efb",
+  "conclusions": [
+    "Video_Skills runtime execution and categorical projection complete successfully.",
+    "All 236 runtime VERIFY calls produced supports; no negative verifier measurement was observed.",
+    "The generic claim-support verifier is not validated as a relation-level categorical verifier.",
+    "This is an availability smoke, not verifier accuracy or world-model supervision gold."
+  ]
+}

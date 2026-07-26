@@ -34,6 +34,10 @@ class StateAssertion:
     value: str
     confidence: float
     polarity: str = "positive"
+    contract_version: str | None = None
+    source_l1_node_id: str | None = None
+    subject_source_l1_node_id: str | None = None
+    subject_binding: str | None = None
 
     def __post_init__(self) -> None:
         if not self.mention_id or not self.attribute or not self.value:

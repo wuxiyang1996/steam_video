@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/navigation_case_set.schema.json",
+  "title": "FixedNavigationGoldCaseSet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_set_id", "annotation_status", "cases"],
+  "properties": {
+    "schema_version": {"const": "steam-navigation-gold-cases/v0.1"},
+    "case_set_id": {"type": "string", "minLength": 1},
+    "annotation_status": {
+      "enum": ["draft", "ai_provisional", "human_locked"]
+    },
+    "annotator": {"type": ["string", "null"]},
+    "locked_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/case"}
+    }
+  },
+  "$defs": {
+    "embedding_ref": {
+      "type": "object",
+      "required": ["path", "model", "dimension", "row_index"],
+      "additionalProperties": true,
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "model": {"const": "Qwen/Qwen3-VL-Embedding-2B"},
+        "dimension": {"const": 2048},
+        "row_index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_type"],
+      "properties": {
+        "action_type": {"type": "string", "minLength": 1},
+        "source_id": {"type": ["string", "null"]},
+        "target_ids": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "relation": {"type": ["string", "null"]}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id", "overlay_path", "overlay_id", "question",
+        "seed_event_ids", "missing_roles", "graph_read_budget",
+        "gold_event_ids", "acceptable_first_actions", "tags"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "overlay_path": {"type": "string", "minLength": 1},
+        "overlay_id": {"type": "string", "minLength": 1},
+        "question": {"type": "string", "minLength": 1},
+        "seed_event_ids": {
+          "type": "array", "items": {"type": "string"}, "uniqueItems": true
+        },
+        "missing_roles": {
+          "type": "array", "items": {"type": "string"}, "uniqueItems": true
+        },
+        "graph_read_budget": {"type": "integer", "minimum": 1},
+        "gold_event_ids": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "string"}, "uniqueItems": true
+        },
+        "acceptable_first_actions": {
+          "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/action"}
+        },
+        "required_relation_types": {
+          "type": "array", "items": {"type": "string"}, "uniqueItems": true
+        },
+        "query_embedding_ref": {"$ref": "#/$defs/embedding_ref"},
+        "tags": {
+          "type": "array", "items": {"type": "string"}, "uniqueItems": true
+        },
+        "split": {"enum": ["train", "dev", "test"]},
+        "notes": {"type": "string"}
+      }
+    }
+  }
+}

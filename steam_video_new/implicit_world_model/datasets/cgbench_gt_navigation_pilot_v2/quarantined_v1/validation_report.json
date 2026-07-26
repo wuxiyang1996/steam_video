@@ -1,0 +1,24 @@
+{
+  "schema_version": "steam-cgbench-grounded-artifact-validation/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "status": "pass",
+  "errors": [],
+  "case_count": 254,
+  "split_case_counts": {
+    "test": 26,
+    "train": 206,
+    "validation": 22
+  },
+  "transition_count": 662,
+  "grounded_transition_count": 662,
+  "failed_transition_count": 0,
+  "available_embedding_count": 662,
+  "embedding_model": "Qwen/Qwen3-VL-Embedding-2B",
+  "embedding_shape": [
+    662,
+    2048
+  ],
+  "embedding_checksum": "77a1e021b03dfa76693724733c2552d1a3c7885dfb69329e7970eb413723523f",
+  "human_review_required": false,
+  "training_performed": false
+}

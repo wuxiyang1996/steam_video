@@ -1,0 +1,3043 @@
+{
+  "schema_version": "steam-full-iwm-grounded-survivor-preference/v0.1",
+  "records": [
+    {
+      "pair_id": "survivor_pair:dd98e06960db72facba9",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "final_survivor_tie",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:c2d264827796e1fa0baa",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "holding | contact | agent human hands skin tone, fingers | patient dog head wet brown fur, black nose | patient dog head brown curly fur, wet"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [
+                "drenching_event"
+              ],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:060fa78149b860648f22",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "lying | state_change | agent dog table fluffy brown dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:8727df96564a386677ae",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "turning | motion | actor dog floor fluffy_light_brown_dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:8b9e6e2ae52f55a0a1de",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "standing | motion | actor dog floor fluffy, light-brown dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:3f312ca448f833c3e0ec",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "dog approaches camera | motion | agent dog floor fluffy light brown fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:d89da558c5273e2999d0",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "inconclusive",
+            "observation_descriptor": [
+              "person_petting_dog | contact | actor person hand white shirt, black apron, mask | recipient dog back light brown fluffy fur"
+            ],
+            "belief_delta": {
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:2ec422fda4ee8252aebe",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "sit | state_change | agent dog table fluffy light brown dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:a3e6af6a0a3212b7d358",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "state_change | subject dog bathtub fluffy brown dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event"
+              ],
+              "opened_roles": [
+                "post_drench_outcome"
+              ],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:9dbaaf27069f723894c9",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "dog lifts head | motion | patient dog head fluffy brown fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:4af414f695e65575d4cc",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "dog rests paws on tub rim | state_change | patient dog paws brown curly fur | surface tub rim white plastic edge | support none resting"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:44e8a0f409663943aec9",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person holds shower head | action | agent person hand hand | tool shower_head nozzle shower_head"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:6c539cdef6d3ed60ba0e",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person touches dog face | contact | agent person hand human hand holding a shower head | patient dog face brown fluffy dog head"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event"
+              ],
+              "opened_roles": [
+                "post_drench_outcome"
+              ],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:1282464733251b26656b",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "standing | motion | actor animal metal_grate brown_furry_dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:3b72d62600fad49c9400",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "showering | contact | actor human none hands | target animal none wet dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:2ad1d5253a428ba7278c",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person washing dog | contact | agent person hands human hands | patient dog head wet dog head"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:4a5908402ce363744dc3",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person holds dog head | contact | agent person hands human hands | patient dog head wet dog head"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:cc91d9e73a0d1bd10e9f",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person sprays dog | contact | agent person hand human hands holding a shower nozzle | patient dog body wet brown dog"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:c94cf30905a400ab8b94",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "looking | visible_response | patient dog eyes dark pupils"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:e37a4a87a76accd5c319",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "holding | contact | agent human hand skin-colored hands | patient dog head brown curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:cd1ddc996e7db090e6fd",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "blinking | motion | patient dog eye wet brown fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:0050f7adb0238eee1182",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands | patient dog fur wet, curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "human holding dog head | contact | agent human hand human hand | patient dog head wet dog head"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:f2a111ae09f5d509f18d",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands human hands applying water and soap | patient dog body wet, curly brown fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:24c05779ed1b535055ba",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "dog looking around | motion | patient dog head wet brown fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:d854a928cc7775d0717e",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "inconclusive",
+            "observation_descriptor": [
+              "head_turn | motion"
+            ],
+            "belief_delta": {
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:3cbc97a5af871ed4a7d1",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person washing dog | contact | agent person hands human hands | patient dog fur wet brown fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:9821b24e48a5560bbb21",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "support",
+            "observation_descriptor": [
+              "person washing dog | action | agent person hands hands | patient dog body wet_fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "drenching_event"
+              ],
+              "opened_roles": [
+                "post_drench_outcome"
+              ],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:3e4d6677c65aa08df54c",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person touching dog | contact | agent person hand human hands | patient dog head wet curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:274fbc8a860e9fb38c31",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person touching dog | contact | agent person hand human hands | patient dog head wet curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:9013379611ba071c3cea",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "dog blinking | motion | patient dog eye wet curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:dbf5c23a70ea391785d3",
+      "case_id": "cgcase:eb02b66d578a76006db2",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, what happened to the puppy after it was drenched in water?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "missing_roles": [
+          "patient_entity",
+          "drenching_event",
+          "temporal_relation_after_drench",
+          "post_drench_outcome"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog face | contact | agent person hands human hands with a gold ring on the left ring finger | patient dog face light brown curly fur, black nose, white muzzle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event",
+                "post_drench_outcome"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "person washing dog | contact | agent person hands human hands | patient dog head wet curly fur"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "patient_entity",
+                "drenching_event"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:2cf629c56f9252bdb6ee",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "person_enters | motion | driver person car_interior person wearing orange vest"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "person_with_orange_clothes"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:05b719bd3d6595a3d2df",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "identity_evidence",
+            "observation_descriptor": [
+              "person_sits | motion | driver person car_interior person wearing orange vest"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "person_with_orange_clothes"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:aac9998cc5983f3b3c3a",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "person_grabs | contact | driver person steering_wheel person in orange vest"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "person_with_orange_clothes",
+                "action_indicating_test_participation"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:9cc044a08120cbe738fd",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "pedal_state | state_change | pedals vehicle_component floor three metal pedals (accelerator, brake, clutch) visible in the bottom-right camera view"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context",
+                "action_indicating_test_participation"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:433419031594137d6231",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "vehicle_moving | motion | ego_vehicle vehicle road interior_dashboard_pedals"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:f13b135eeed5731ab629",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "foot_contact_pedal | contact | actor person foot_pedal white_shoe"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:b290111cd1f5ba8179d6",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "vehicle_approach | motion | target vehicle road white van"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:137f9ade3c8237d6f90c",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_display | state_change | system display dashboard_screen rectangular screen in the center console"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:d60901615a9b2af40dc6",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "vehicle_moving | motion | ego_vehicle vehicle road interior_cabin_pedals"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context",
+                "action_indicating_test_participation"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:f3876759c8389788e306",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "foot_release_pedal | contact | actor person foot_pedal foot_pedal"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context",
+                "action_indicating_test_participation"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:1a7173c17d94463d2c7d",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "inconclusive",
+            "observation_descriptor": [
+              "passenger_sitting | state_change | passenger person seat person wearing yellow shirt"
+            ],
+            "belief_delta": {
+              "progress": "unchanged",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:42d5ea2404c4d1870b51",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "pedal_static | state_change | pedals vehicle_component floor metallic footrests"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    },
+    {
+      "pair_id": "survivor_pair:4f3fb0a79d913d0b6d06",
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "arm": "world_model_guided",
+      "step_index": 0,
+      "pair_source": "executed_survivor_contrast",
+      "belief": {
+        "question": "In the video, which driving test did the man in orange clothes take?",
+        "answerability": "not_ready",
+        "required_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "missing_roles": [
+          "person_with_orange_clothes",
+          "action_indicating_test_participation",
+          "explicit_test_type_label_or_signage",
+          "vehicle_or_testing_equipment_context"
+        ],
+        "contradictions": []
+      },
+      "left": {
+        "transitions": [
+          {
+            "observation_outcome": "bridge_evidence",
+            "observation_descriptor": [
+              "text_appears | state_change | text_overlay text video_frame Chinese characters '夜间通过急弯坡路' in white font"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "explicit_test_type_label_or_signage"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "right": {
+        "transitions": [
+          {
+            "observation_outcome": "state_evidence",
+            "observation_descriptor": [
+              "vehicle_moving | motion | ego_vehicle vehicle road camera_mounted_vehicle"
+            ],
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "unchanged",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "vehicle_or_testing_equipment_context"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        ]
+      },
+      "label": null
+    }
+  ],
+  "record_count": 44,
+  "label_visibility": "separate_hidden_key",
+  "hidden_clue_or_answer_present": false,
+  "numeric_reward_present": false,
+  "training_performed": false
+}

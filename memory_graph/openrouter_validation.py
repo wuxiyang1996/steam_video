@@ -35,6 +35,7 @@ class GPTOSSGraphValidator:
         video_skills_root: str | Path,
         model: str = DEFAULT_MODEL,
         timeout_s: int = 240,
+        audit_max_tokens: int = 8000,
     ) -> None:
         client_class, key_loader = _load_openrouter_client(Path(video_skills_root))
         api_key = key_loader(keys_py_path=str(keys_py_path))
@@ -47,6 +48,7 @@ class GPTOSSGraphValidator:
             timeout_s=timeout_s,
         )
         self.model = model
+        self.audit_max_tokens = audit_max_tokens
         self.last_label_errors: list[dict[str, str]] = []
 
     def label_relations(
@@ -413,24 +415,45 @@ Return JSON:
 }}
 """.strip()
         last_error: Exception | None = None
-        for _ in range(3):
-            try:
-                result = self.client.chat_json(
-                    [
-                        {
-                            "role": "system",
-                            "content": (
-                                "Act as a strict graph-structure auditor and return "
-                                "one complete JSON object only."
-                            ),
-                        },
-                        {"role": "user", "content": prompt},
-                    ]
-                )
-                break
-            except Exception as exc:
-                last_error = exc
-        else:
+        result: dict[str, Any] | None = None
+        original_max_tokens = getattr(self.client, "max_tokens", None)
+        if hasattr(self.client, "max_tokens"):
+            self.client.max_tokens = max(
+                int(original_max_tokens or 0),
+                self.audit_max_tokens,
+            )
+        try:
+            for attempt in range(3):
+                retry_instruction = ""
+                if attempt:
+                    retry_instruction = (
+                        "\n\nThe previous response was not valid complete JSON. Return a "
+                        "smaller complete object now: keep every requested audit row, "
+                        "but limit each reason and issue to at most 12 words."
+                    )
+                try:
+                    result = self.client.chat_json(
+                        [
+                            {
+                                "role": "system",
+                                "content": (
+                                    "Act as a strict graph-structure auditor and return "
+                                    "one complete JSON object only."
+                                ),
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt + retry_instruction,
+                            },
+                        ]
+                    )
+                    break
+                except Exception as exc:
+                    last_error = exc
+        finally:
+            if hasattr(self.client, "max_tokens"):
+                self.client.max_tokens = original_max_tokens
+        if result is None:
             assert last_error is not None
             raise ValueError(f"graph audit failed after 3 attempts: {last_error}") from last_error
         result["audit_model"] = self.model

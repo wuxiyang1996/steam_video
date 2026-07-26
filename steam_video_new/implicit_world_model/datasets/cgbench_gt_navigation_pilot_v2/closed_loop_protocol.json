@@ -1,0 +1,37 @@
+{
+  "schema_version": "steam-cgbench-closed-loop-protocol/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "purpose": "matched-candidate closed-loop reasoning-navigation evaluation",
+  "shared_candidate_artifact_sha256": "a9c08b4d3c77b29981688441b0cb700691264cdc475390b881b0d51652b5b029",
+  "arms": [
+    {
+      "arm": "world_model_guided",
+      "transition_source": "action_conditioned_iwm",
+      "planning_horizon": "short_rollout_then_replan"
+    },
+    {
+      "arm": "no_world_model",
+      "transition_source": "none",
+      "planning_horizon": "reactive_current_belief_only"
+    },
+    {
+      "arm": "shuffled_world_model_prediction",
+      "transition_source": "case_internal_deterministic_permutation",
+      "planning_horizon": "short_rollout_then_replan"
+    },
+    {
+      "arm": "immediate_effect_only",
+      "transition_source": "action_conditioned_iwm",
+      "planning_horizon": "one_hop_no_delayed_effect"
+    },
+    {
+      "arm": "oracle_clue_ceiling",
+      "transition_source": "hidden_gt_alignment_evaluator_only",
+      "planning_horizon": "coverage_ceiling_not_a_method_result"
+    }
+  ],
+  "comparison_contract": "same candidate pool and read budget per case; answer accuracy, read efficiency, action divergence, and order sensitivity reported separately",
+  "model_output_contract": "observation descriptor, belief-delta descriptor, and pairwise preference only; no model-produced reward, probability, score, or utility",
+  "human_review_required": false,
+  "training_performed": false
+}

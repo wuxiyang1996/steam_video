@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STEAM Transition Blind Review</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">STEAM · OUTCOME-BLIND</p>
+      <h1 data-i18n="title">Executed Transition 人工审核</h1>
+    </div>
+    <div class="header-controls">
+      <div class="language-switch" role="group" aria-label="Language">
+        <button type="button" class="language-option" data-language="zh">中文</button>
+        <button type="button" class="language-option" data-language="en">English</button>
+      </div>
+      <div class="progress-block">
+        <span id="progressText" data-i18n="loading">载入中…</span>
+        <div class="progress-track"><div id="progressBar"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <label class="field-label" for="annotator" data-i18n="reviewer">审核者</label>
+      <input id="annotator" class="text-input" autocomplete="name" placeholder="姓名或 reviewer ID" data-i18n-placeholder="reviewerPlaceholder">
+
+      <div class="filter-row" role="group" aria-label="条目筛选" data-i18n-aria-label="itemFilters">
+        <button class="filter active" data-filter="all" data-i18n="filterAll">全部</button>
+        <button class="filter" data-filter="incomplete" data-i18n="filterIncomplete">未完成</button>
+        <button class="filter" data-filter="flagged" data-i18n="filterFlagged">待复核</button>
+      </div>
+      <div id="itemList" class="item-list" aria-label="审核条目" data-i18n-aria-label="reviewItems"></div>
+    </aside>
+
+    <section id="reviewPane" class="review-pane" hidden>
+      <details class="review-guide">
+        <summary data-i18n="guideTitle">标注任务与判断标准</summary>
+        <div class="guide-body">
+          <p class="guide-goal" data-i18n="guideGoal">你的任务不是给 planner 打分或提供 reward，而是判断执行这一步 reasoning action 后，真实证据是否支持它声称的 observation、relation 和 belief change。</p>
+
+          <section class="ground-truth-guide">
+            <h3 data-i18n="guideGroundTruthTitle">Ground truth 在这里如何使用</h3>
+            <div class="ground-truth-grid">
+              <article>
+                <strong data-i18n="guideGroundTruthAvailableTitle">已有的 terminal QA ground truth</strong>
+                <p data-i18n="guideGroundTruthAvailable">当前 9 个视频共有 58 条 Video-Holmes QA GT，包含 Question、Options、Answer 和 Explanation。它可用于判断完整 trajectory 最终是否答对，并产生非数字的 pairwise preference。</p>
+              </article>
+              <article>
+                <strong data-i18n="guideGroundTruthMissingTitle">缺少的 transition ground truth</strong>
+                <p data-i18n="guideGroundTruthMissing">QA GT 没有当前 node pair 的 identity、同属性 before/after state、action execution 或 belief delta 标签，因此不能自动填写本页五个字段。</p>
+              </article>
+              <article>
+                <strong data-i18n="guideGroundTruthReviewTitle">本次人工审核建立什么</strong>
+                <p data-i18n="guideGroundTruthReview">你的 blind video judgment 将建立独立的 transition-level GT；审核锁定后，才会与 terminal QA GT 联合分析。</p>
+              </article>
+            </div>
+            <div class="ground-truth-warning">
+              <strong data-i18n="guideGroundTruthLeakageTitle">防止 label leakage：</strong>
+              <span data-i18n="guideGroundTruthLeakage">审核期间不展示正确答案、GT explanation、stored verifier outcome 或 hidden target。最终答案正确也不能证明中间 relation 正确，因为模型可能猜对或使用 shortcut。</span>
+            </div>
+          </section>
+
+          <div class="guide-grid">
+            <section>
+              <h3 data-i18n="guideDecisionOrder">推荐判断顺序</h3>
+              <ol class="decision-order">
+                <li data-i18n="guideStepObservation">视频是否展示描述内容？→ Observation validity</li>
+                <li data-i18n="guideStepAction">系统是否正确完成搜索或验证？→ Action execution validity</li>
+                <li data-i18n="guideStepRelation">证据支持、反驳还是无法决定关系？→ Relation outcome</li>
+                <li data-i18n="guideStepBelief">证据是否足以改变当前 belief？→ Belief delta validity</li>
+                <li data-i18n="guideStepRecord">整条记录是否适合作为训练数据？→ Record admissibility</li>
+              </ol>
+            </section>
+            <section>
+              <h3 data-i18n="guideFiveFields">五个分类字段</h3>
+              <dl class="criteria-list">
+                <dt data-i18n="guideRecordName">Record admissibility</dt>
+                <dd data-i18n="guideRecordDefinition">Accept 表示整条记录证据充分且可用于训练；存在错误或关键证据不足时选 Reject。</dd>
+                <dt data-i18n="guideObservationName">Observation validity</dt>
+                <dd data-i18n="guideObservationDefinition">判断画面是否真的展示声称的人物、动作、物体或状态。</dd>
+                <dt data-i18n="guideActionName">Action execution validity</dt>
+                <dd data-i18n="guideActionDefinition">判断 reasoning operation 是否被正确执行；没有找到反证仍可能是一次有效搜索。</dd>
+                <dt data-i18n="guideBeliefName">Belief delta validity</dt>
+                <dd data-i18n="guideBeliefDefinition">判断证据是否足以补全、推翻、解决矛盾或合理地保持不确定。</dd>
+                <dt data-i18n="guideRelationName">Relation outcome</dt>
+                <dd data-i18n="guideRelationDefinition">Supports=明确支持；Rejects=明确反驳；Inconclusive=证据不足；Not applicable=没有具体待验证关系。</dd>
+              </dl>
+            </section>
+          </div>
+
+          <section class="strict-rules">
+            <h3 data-i18n="guideStrictRules">严格关系规则</h3>
+            <div class="rule-cards">
+              <article><strong data-i18n="guideIdentityTitle">Identity / same_entity</strong><p data-i18n="guideIdentityRule">只有外貌、服装、时空连续或同镜头跟踪等身份连续性证据才能选 Supports；仅仅都是“man/woman”不够。</p></article>
+              <article><strong data-i18n="guideStateTitle">State transition</strong><p data-i18n="guideStateRule">必须是同一实体、同一属性、明确 before/after value、顺序明确且确实发生变化。</p></article>
+              <article><strong data-i18n="guideCounterTitle">Counterevidence</strong><p data-i18n="guideCounterRule">只有直接反驳 hypothesis 才选 Rejects；相关内容或空搜索通常是 Inconclusive，不能自动算 Supports。</p></article>
+            </div>
+          </section>
+
+          <div class="guide-callout">
+            <strong data-i18n="guideImportant">重要：</strong>
+            <span data-i18n="guideImportantText">Relation outcome=Rejects 不等于拒绝记录。若系统正确找到了反证，整条记录仍可 Accept。证据不足时请选择 Inconclusive，不要猜测。</span>
+          </div>
+
+          <section>
+            <h3 data-i18n="guideMetricsTitle">完成后统计什么</h3>
+            <p data-i18n="guideMetricsText">我们会分别报告 observation/action/belief validity、relation confusion matrix、record acceptance rate、隐藏重复条目一致性，以及 identity/state strict precision；不会把它们压成单一数字 reward。</p>
+            <ul class="metric-list">
+              <li data-i18n="guideMetricValidity">Validity distribution：分别统计 Valid / Invalid / Inconclusive 的数量与比例，用于定位 evidence、executor 或 belief target 的问题。</li>
+              <li data-i18n="guideMetricConfusion">Relation confusion matrix：人工结论为行、现有 verifier 结论为列，观察 Supports / Rejects / Inconclusive 的具体混淆。</li>
+              <li data-i18n="guideMetricAcceptance">Record acceptance rate = Accept 条目数 / 53；表示可进入后续训练集的比例。</li>
+              <li data-i18n="guideMetricDuplicates">Duplicate consistency：隐藏重复条目的五个分类判断是否完全一致，用于检查 reviewer 稳定性。</li>
+              <li data-i18n="guideMetricPrecision">Identity/state strict precision = 系统 admitted 且人工确认 Supports 的关系数 / 系统 admitted 的关系数；identity 与 state 分开计算。</li>
+            </ul>
+          </section>
+        </div>
+      </details>
+
+      <div class="review-heading">
+        <div>
+          <p id="itemPosition" class="eyebrow"></p>
+          <h2 id="question"></h2>
+        </div>
+        <label class="flag-control"><input id="flagged" type="checkbox"> <span data-i18n="flagForReview">待复核</span></label>
+      </div>
+
+      <section class="card plain-context-card">
+        <p class="context-kicker" data-i18n="plainContextTitle">用简单语言理解这一条</p>
+        <h3 id="plainActionSummary"></h3>
+        <p id="plainCoreQuestion" class="core-question"></p>
+        <div class="context-columns">
+          <div class="context-node source-context">
+            <span class="context-role" data-i18n="plainSourceTitle">SOURCE：推理从哪里开始</span>
+            <p id="plainSource"></p>
+          </div>
+          <div class="context-node target-context">
+            <span class="context-role" data-i18n="plainTargetTitle">TARGET：action 想检查什么</span>
+            <div id="plainTargets"></div>
+          </div>
+          <div class="context-node observation-context">
+            <span class="context-role" data-i18n="plainObservationTitle">OBSERVATION：执行后实际返回什么</span>
+            <div id="plainObservations"></div>
+          </div>
+        </div>
+        <p class="role-overlap-note" data-i18n="plainRoleOverlap">同一个节点可以同时是 TARGET 和 OBSERVATION：这表示系统请求检查它，并且执行后确实返回了它。</p>
+      </section>
+
+      <details class="technical-context">
+        <summary data-i18n="technicalContextTitle">查看 technical graph context</summary>
+        <section class="card compact-grid">
+          <div><span class="label" data-i18n="action">Action</span><code id="actionType"></code></div>
+          <div><span class="label" data-i18n="relation">Relation</span><code id="relation"></code></div>
+          <div><span class="label" data-i18n="belief">Belief</span><span id="belief"></span></div>
+          <div><span class="label" data-i18n="execution">Execution</span><span id="execution"></span></div>
+        </section>
+      </details>
+
+      <section>
+        <div class="section-heading">
+          <h3 data-i18n="videoEvidence">真实视频证据</h3>
+          <span id="visualStatus" class="visual-status"></span>
+        </div>
+        <div id="visualEvidence" class="visual-grid"></div>
+      </section>
+
+      <section>
+        <h3 data-i18n="publicEvidence">公开证据</h3>
+        <p class="evidence-language-note" data-i18n="evidenceLanguageNote">证据描述保留源语言，避免翻译改变审核语义。</p>
+        <div id="evidenceCards" class="evidence-grid"></div>
+      </section>
+
+      <section class="card annotation-card">
+        <h3 data-i18n="categoricalJudgment">分类判断</h3>
+        <p class="annotation-order-note" data-i18n="annotationOrderNote">请按 1→5 顺序填写；前四项判断局部证据，最后一项决定整条记录是否接纳。</p>
+        <div id="categoricalFields" class="categorical-grid"></div>
+        <fieldset>
+          <legend data-i18n="citations">引用证据（至少一项）</legend>
+          <div id="citationChoices" class="citation-list"></div>
+        </fieldset>
+        <label class="field-label" for="rationale" data-i18n="rationale">理由</label>
+        <textarea id="rationale" rows="5" placeholder="只依据上方公开证据说明判断；不要给数字 reward、score、confidence、probability 或 utility。" data-i18n-placeholder="rationalePlaceholder"></textarea>
+      </section>
+
+      <div class="nav-actions">
+        <button id="previous" class="secondary" data-i18n="previous">上一条</button>
+        <button id="next">保存并下一条</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-actions">
+    <span id="saveState" data-i18n="draftStored">草稿自动保存在本浏览器</span>
+    <div>
+      <button id="resetDraft" class="danger secondary" data-i18n="resetDraft">清除本地草稿</button>
+      <button id="validate" class="secondary" data-i18n="validate">完整性校验</button>
+      <button id="exportReview" data-i18n="exportReview">导出人工审核 JSON</button>
+    </div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

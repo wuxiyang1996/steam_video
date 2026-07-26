@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass, replace
 from typing import Any
 
+from .identity_tracks import IdentityTrackReport, build_identity_tracks
+from .identity_verifier import IdentityVerificationReport, verify_identity_candidates
 from .types import MemoryNode
 
 
@@ -22,6 +24,8 @@ class L1StructuralizationReport:
     participant_count: int
     state_count: int
     unresolved_event_ids: tuple[str, ...]
+    identity_tracks: IdentityTrackReport
+    identity_verification: IdentityVerificationReport
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -41,6 +45,8 @@ class L1StructuralizationReport:
                 else None
             ),
             "unresolved_event_ids": list(self.unresolved_event_ids),
+            "identity_tracks": self.identity_tracks.to_dict(),
+            "identity_verification": self.identity_verification.to_dict(),
             "method": "deterministic_video_skills_l1_subgraph_projection",
         }
 
@@ -59,10 +65,21 @@ def structuralize_video_skills_l1(
         for value in raw_nodes
         if value.get("node_id")
     }
+    raw_by_mention_id = {
+        str(value.get("mention_id")): value
+        for value in raw_nodes
+        if value.get("mention_id")
+    }
     edges = [
         value for value in graph.get("edges") or [] if isinstance(value, dict)
     ]
-    components = _identity_components(raw_by_id, edges)
+    verified_edges, verification_report = verify_identity_candidates(raw_by_id, edges)
+    components, identity_report = build_identity_tracks(raw_by_id, verified_edges)
+    state_owner_by_id = _state_owners(
+        raw_by_id,
+        raw_by_mention_id=raw_by_mention_id,
+        edges=edges,
+    )
     component_members: dict[str, list[dict[str, Any]]] = {}
     for node_id, component_id in components.items():
         component_members.setdefault(component_id, []).append(raw_by_id[node_id])
@@ -105,6 +122,13 @@ def structuralize_video_skills_l1(
             for value in clip_nodes
             if str(value.get("node_type") or "") in ENTITY_NODE_TYPES
         ]
+        explicit_participants = _event_participant_candidates(
+            source,
+            raw_by_id=raw_by_id,
+            raw_by_mention_id=raw_by_mention_id,
+        )
+        if explicit_participants:
+            entity_candidates = explicit_participants
         if not entity_candidates:
             entity_candidates = identity_endpoints_by_clip.get(clip_id, [])
         participants = _participants_from_candidates(
@@ -113,10 +137,15 @@ def structuralize_video_skills_l1(
             component_members=component_members,
             event_ref=node.node_id,
             event_text=_text(source),
+            trust_explicit_refs=bool(explicit_participants),
         )
         states = _states_for_event(
             clip_nodes,
             participants=participants,
+            components=components,
+            raw_by_id=raw_by_id,
+            raw_by_mention_id=raw_by_mention_id,
+            state_owner_by_id=state_owner_by_id,
             event_ref=node.node_id,
             event_text=_text(source),
         )
@@ -153,61 +182,9 @@ def structuralize_video_skills_l1(
         participant_count=participant_total,
         state_count=state_total,
         unresolved_event_ids=tuple(unresolved),
+        identity_tracks=identity_report,
+        identity_verification=verification_report,
     )
-
-
-def _identity_components(
-    nodes: dict[str, dict[str, Any]],
-    edges: list[dict[str, Any]],
-) -> dict[str, str]:
-    parent = {node_id: node_id for node_id in nodes}
-
-    def root(node_id: str) -> str:
-        while parent[node_id] != node_id:
-            parent[node_id] = parent[parent[node_id]]
-            node_id = parent[node_id]
-        return node_id
-
-    def union(left: str, right: str) -> None:
-        left_root = root(left)
-        right_root = root(right)
-        if left_root == right_root:
-            return
-        keep, merge = sorted((left_root, right_root))
-        parent[merge] = keep
-
-    for edge in edges:
-        if str(edge.get("edge_type") or "") not in IDENTITY_EDGE_TYPES:
-            continue
-        src = str(edge.get("src") or "")
-        dst = str(edge.get("dst") or "")
-        if src in parent and dst in parent:
-            union(src, dst)
-    identity_endpoint_ids = {
-        str(edge.get(endpoint) or "")
-        for edge in edges
-        if str(edge.get("edge_type") or "") in IDENTITY_EDGE_TYPES
-        for endpoint in ("src", "dst")
-    }
-    endpoints_by_clip: dict[str, list[dict[str, Any]]] = {}
-    for node_id in identity_endpoint_ids:
-        node = nodes.get(node_id)
-        if node is not None and node.get("clip_id"):
-            endpoints_by_clip.setdefault(str(node["clip_id"]), []).append(node)
-    for entity in nodes.values():
-        if str(entity.get("node_type") or "") not in ENTITY_NODE_TYPES:
-            continue
-        entity_id = str(entity.get("node_id") or "")
-        clip_id = str(entity.get("clip_id") or "")
-        compatible = [
-            endpoint
-            for endpoint in endpoints_by_clip.get(clip_id, [])
-            if str(endpoint.get("node_id") or "") != entity_id
-            and _same_local_entity(_text(entity), _text(endpoint))
-        ]
-        if len(compatible) == 1:
-            union(entity_id, str(compatible[0]["node_id"]))
-    return {node_id: root(node_id) for node_id in nodes}
 
 
 def _participants_from_candidates(
@@ -217,6 +194,7 @@ def _participants_from_candidates(
     component_members: dict[str, list[dict[str, Any]]],
     event_ref: str,
     event_text: str,
+    trust_explicit_refs: bool = False,
 ) -> list[dict[str, Any]]:
     by_component: dict[str, dict[str, Any]] = {}
     for candidate in candidates:
@@ -238,7 +216,7 @@ def _participants_from_candidates(
         surface = _compact_surface(_text(surface_node))
         if not surface:
             continue
-        if not _entity_relevant_to_event(surface, event_text):
+        if not trust_explicit_refs and not _entity_relevant_to_event(surface, event_text):
             continue
         source_ids = sorted(
             {
@@ -255,7 +233,7 @@ def _participants_from_candidates(
         by_component.setdefault(
             component_id,
             {
-                "mention_id": f"l1-entity:{component_id}",
+                "mention_id": f"l1-{component_id}",
                 "role": "other",
                 "entity_type": _entity_type(surface),
                 "surface": surface,
@@ -263,9 +241,9 @@ def _participants_from_candidates(
                 "grounding_refs": [event_ref],
                 "source_l1_node_ids": source_ids,
                 "identity_basis": (
-                    "video_skills_identity_component"
+                    "accepted_conflict_aware_identity_track"
                     if len(source_ids) > 1
-                    else "same_clip_entity_mention"
+                    else "grounded_singleton_observation"
                 ),
             },
         )
@@ -276,30 +254,65 @@ def _states_for_event(
     clip_nodes: list[dict[str, Any]],
     *,
     participants: list[dict[str, Any]],
+    components: dict[str, str],
+    raw_by_id: dict[str, dict[str, Any]],
+    raw_by_mention_id: dict[str, dict[str, Any]],
+    state_owner_by_id: dict[str, str],
     event_ref: str,
     event_text: str,
 ) -> list[dict[str, Any]]:
-    if len(participants) != 1:
-        return []
-    mention_id = str(participants[0]["mention_id"])
+    participant_by_source = {
+        str(source_id): participant
+        for participant in participants
+        for source_id in participant.get("source_l1_node_ids") or []
+    }
     states: list[dict[str, Any]] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, str, str]] = set()
     for raw in clip_nodes:
         if str(raw.get("node_type") or "") != "state":
             continue
+        raw_id = str(raw.get("node_id") or "")
+        owner_id = state_owner_by_id.get(raw_id)
+        participant = participant_by_source.get(str(owner_id or ""))
+        explicit_owner = participant is not None
+        if participant is None and owner_id:
+            owner = raw_by_id.get(owner_id) or raw_by_mention_id.get(owner_id)
+            owner_node_id = str((owner or {}).get("node_id") or "")
+            component_id = components.get(owner_node_id, owner_node_id)
+            participant = next(
+                (
+                    value
+                    for value in participants
+                    if str(value.get("mention_id") or "")
+                    == f"l1-{component_id}"
+                ),
+                None,
+            )
+            explicit_owner = participant is not None
+        if participant is None:
+            if len(participants) != 1:
+                continue
+            participant = participants[0]
+        mention_id = str(participant["mention_id"])
         text = _text(raw)
-        attribute = _state_attribute(text)
-        value = _state_value(text)
-        key = (attribute, value)
+        attribute = str(raw.get("attribute") or "").strip() or _state_attribute(text)
+        value = str(raw.get("value") or "").strip() or _state_value(text)
+        structured_contract = bool(
+            explicit_owner and raw.get("attribute") and raw.get("value")
+        )
+        key = (mention_id, attribute, value)
         if (
             not attribute
             or not value
             or key in seen
-            or not _state_relevant_to_event(
-                text,
-                event_text=event_text,
-                participant_surface=str(participants[0].get("surface") or ""),
-                attribute=attribute,
+            or (
+                not explicit_owner
+                and not _state_relevant_to_event(
+                    text,
+                    event_text=event_text,
+                    participant_surface=str(participant.get("surface") or ""),
+                    attribute=attribute,
+                )
             )
         ):
             continue
@@ -317,10 +330,77 @@ def _states_for_event(
                     else 0.7
                 ),
                 "grounding_refs": [event_ref],
-                "source_l1_node_id": str(raw.get("node_id") or ""),
+                "source_l1_node_id": raw_id,
+                "subject_source_l1_node_id": owner_id,
+                "subject_binding": (
+                    "explicit_state_of" if explicit_owner else "singleton_fallback"
+                ),
+                "contract_version": (
+                    "grounded-state-assertion/v1" if structured_contract else None
+                ),
             }
         )
     return states[:3]
+
+
+def _event_participant_candidates(
+    event: dict[str, Any],
+    *,
+    raw_by_id: dict[str, dict[str, Any]],
+    raw_by_mention_id: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    raw_refs = list(event.get("participant_refs") or []) + list(
+        event.get("participant_mention_ids") or []
+    )
+    for raw_ref in raw_refs:
+        ref = str(raw_ref or "")
+        candidate = raw_by_id.get(ref) or raw_by_mention_id.get(ref)
+        node_id = str((candidate or {}).get("node_id") or "")
+        if (
+            candidate is None
+            or str(candidate.get("node_type") or "") not in ENTITY_NODE_TYPES
+            or not node_id
+            or node_id in seen
+        ):
+            continue
+        seen.add(node_id)
+        candidates.append(candidate)
+    return candidates
+
+
+def _state_owners(
+    raw_by_id: dict[str, dict[str, Any]],
+    *,
+    raw_by_mention_id: dict[str, dict[str, Any]],
+    edges: list[dict[str, Any]],
+) -> dict[str, str]:
+    owners: dict[str, str] = {}
+    for node_id, node in raw_by_id.items():
+        if str(node.get("node_type") or "") != "state":
+            continue
+        subject_ref = str(
+            node.get("subject_ref") or node.get("subject_mention_id") or ""
+        )
+        subject = raw_by_id.get(subject_ref) or raw_by_mention_id.get(subject_ref)
+        if subject and subject.get("node_id"):
+            owners[node_id] = str(subject["node_id"])
+    for edge in edges:
+        if str(edge.get("edge_type") or "") != "state_of":
+            continue
+        src = str(edge.get("src") or "")
+        dst = str(edge.get("dst") or "")
+        if str((raw_by_id.get(src) or {}).get("node_type") or "") == "state":
+            state_id, owner_id = src, dst
+        elif str((raw_by_id.get(dst) or {}).get("node_type") or "") == "state":
+            state_id, owner_id = dst, src
+        else:
+            continue
+        owner = raw_by_id.get(owner_id) or raw_by_mention_id.get(owner_id)
+        if owner and str(owner.get("node_type") or "") in ENTITY_NODE_TYPES:
+            owners[state_id] = str(owner.get("node_id") or owner_id)
+    return owners
 
 
 def _state_attribute(text: str) -> str:

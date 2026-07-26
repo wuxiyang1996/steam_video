@@ -1,0 +1,427 @@
+{
+  "schema_version": "steam-transition-failure-slices/v0.1",
+  "packet_id": "targeted-transition-review-v2",
+  "source_annotation_status": "ai_provisional",
+  "partition_contract": "exclusive_primary_slice_from_visible_categorical_evidence",
+  "inconclusive_item_count": 27,
+  "slice_counts": {
+    "identity_unconfirmed": 12,
+    "missing_same_attribute_before_after": 0,
+    "counterevidence_related_not_refuting": 9,
+    "relation_definition_unclear": 0,
+    "evidence_retrieval_insufficient": 6
+  },
+  "partition_complete": true,
+  "items": [
+    {
+      "item_id": "transition-review:c51f5dbb0d9cd56f16176367",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:evidence.state:a115c85b8e",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0001",
+        "memory:evidence.state:46adb1a343",
+        "memory:evidence.state:eec327078f",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:ece6cff10fafdf8e170d4241",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:evidence.observation:118dcec06c",
+        "memory:obs:fine:clip:TNYeYwYiAag:fine:0001",
+        "memory:evidence.observation:7ff6fb9a47",
+        "memory:obs:fine:clip:TNYeYwYiAag:fine:0002",
+        "memory:evidence.state:e1c18bb4fb"
+      ],
+      "rationale": "The public descriptions are visually grounded and the retrieval is relevant, but the evidence neither establishes nor directly refutes the proposed relation. Preserving the categorical uncertainty is the appropriate executed transition."
+    },
+    {
+      "item_id": "transition-review:9727e1e90a7873954f9d12bc",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "explicit common state attribute is visible",
+        "shared grounded identity is not established"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:39fac208aea2ebd50e9b7740",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_005",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:c04d6dbac6b7c2cf32bbaddb",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:48b7d4c35b2bd8a1709ce7b2",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "explicit common state attribute is visible",
+        "shared grounded identity is not established"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:7de143a0542954ce8fb0c743",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:8602420e533798d02d77846e",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The public descriptions are visually grounded and the retrieval is relevant, but the evidence neither establishes nor directly refutes the proposed relation. Preserving the categorical uncertainty is the appropriate executed transition."
+    },
+    {
+      "item_id": "transition-review:886bf2a38d76710b88bd7437",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "temporal_forward",
+      "relation": null,
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:627728a920",
+        "memory:evidence.event:8305f08eb9"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:41747a4fb247f132b7c34909",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:d7590011ebda6c4d0518ae3f",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:4c1bb885ed1ba81e7dd92ec7",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:20269fc5bafcb1ff425936d3",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:f0e756d34fc8e23ffc860cc4",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "track_entity",
+      "relation": null,
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:27492f2f6e45cbba4d70f229",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:c7a8a5e5a683d69b3bd19426",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:fe4b727322a4ebb348b75fe6",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003",
+        "memory:vh_seg_004",
+        "memory:vh_seg_005"
+      ],
+      "rationale": "The public descriptions are visually grounded and the retrieval is relevant, but the evidence neither establishes nor directly refutes the proposed relation. Preserving the categorical uncertainty is the appropriate executed transition."
+    },
+    {
+      "item_id": "transition-review:c45e314d252a3a9b744068c2",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002",
+        "memory:vh_seg_003",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:89508211fbaedeb56c0c8646",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "temporal_back",
+      "relation": "before",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:007868f845ad6770b6065af4",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "temporal_back",
+      "relation": "before",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:b5698c804b39badfd5cbac50",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:evidence.observation:a79fdb8fd3",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0001",
+        "memory:evidence.observation:86a2adfc64",
+        "memory:evidence.state:0b5886ddd0",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:9a135cca245d6ee52cac54b1",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:f11fc7c284d0d2eda4efa560",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:a85c94ae8f4ddf2ea4b6823e",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002",
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    },
+    {
+      "item_id": "transition-review:2761dcddc2738da6e16476be",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "temporal_forward",
+      "relation": null,
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The sampled video fails to ground one or more public atomic descriptions. Because the executed evidence is tied to the wrong or mislocalized visual event, it cannot safely determine the proposed relation or justify a belief update."
+    },
+    {
+      "item_id": "transition-review:99a110715c7e47bc29296719",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "explicit common state attribute is visible",
+        "shared grounded identity is not established"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:166e1dee94",
+        "memory:evidence.event:742efe558b"
+      ],
+      "rationale": "The individual clips match their public descriptions, but they do not satisfy the strict relation contract: temporal separation, shared identity, direct contradiction, or an explicit same-attribute before/after change is missing. The proposed belief update is therefore not admissible."
+    },
+    {
+      "item_id": "transition-review:ed28b418f8d705f15714b52d",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "temporal_back",
+      "relation": "before",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The scene is broadly relevant, but a key claimed action, state, or dialogue is not visually localized in the requested atomic window. The reasoning direction may be usable, but this record is not precise enough to admit as grounded training data."
+    }
+  ],
+  "next_collection_requirements": [
+    "same grounded identity plus explicit same-attribute changed values",
+    "different-person and stable-attribute-conflict identity hard negatives",
+    "directly supporting and directly refuting counterevidence outcomes",
+    "executed empty, reject, and inconclusive controls",
+    "delayed cases whose first read only opens a later decisive read"
+  ],
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false
+}

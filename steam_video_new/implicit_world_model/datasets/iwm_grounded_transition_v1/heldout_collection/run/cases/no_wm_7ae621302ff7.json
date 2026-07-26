@@ -1,0 +1,3334 @@
+{
+  "schema_version": "steam-multi-trajectory-iwm-cgbench-pilot/v0.2",
+  "runtime_contract_version": "steam-multi-trajectory-runtime/v1.0",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "model": "qwen/qwen3.6-flash",
+  "arms": [
+    "no_world_model"
+  ],
+  "selected_case_ids": [
+    "cgcase:b1164e579fdb03f5e4d9"
+  ],
+  "matched_contract": {
+    "same_frozen_graph": true,
+    "same_public_choice_hypotheses": true,
+    "same_real_read_budget": 2,
+    "hidden_feedback_to_planner": false,
+    "model_output_is_categorical_only": true,
+    "top_k_applied": false,
+    "complete_pair_budget": 4096,
+    "budget_overflow_policy": "explicit_abstain_not_candidate_pruning",
+    "belief_backend": "latent",
+    "gtsam_is_optional_and_never_ranks_actions": true,
+    "same_entry_localization_across_model_backed_arms": true,
+    "hidden_evidence_sufficiency_evaluator_is_uncached_and_posthoc": true,
+    "iwm_input_visibility": {
+      "regime": "semantic_address",
+      "question_independent_graph_required": true,
+      "hidden_clue_intervals_visible": false,
+      "hidden_answer_visible": false,
+      "post_read_vlm_observation_visible": false,
+      "full_l1_descriptor_visible_before_read": false,
+      "oracle_observation_is_posthoc_only": true,
+      "metadata_allowlist": [
+        "predicate",
+        "action_kind",
+        "participants",
+        "states",
+        "state_change",
+        "actor",
+        "target",
+        "objects",
+        "location",
+        "modality",
+        "source_type"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "schema_version": "steam-multi-trajectory-closed-loop-run/v0.2",
+      "runtime_contract_version": "steam-multi-trajectory-runtime/v1.0",
+      "case_id": "cgcase:b1164e579fdb03f5e4d9",
+      "arm": "no_world_model",
+      "graph_fingerprint": "f61a2711145247a5bb411f5b1f04f9809cd153f58754c502990b478903876c9f",
+      "hypothesis_source": "public_answer_choices",
+      "initial_hypothesis_count": 8,
+      "steps": [
+        {
+          "pool_before": {
+            "pool_id": "trajectory-pool:cgcase:b1164e579fdb03f5e4d9:no_world_model",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "hypothesis": "Didn't eat the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:0",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "hypothesis": "Feed yourself",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:1",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "hypothesis": "Saved the pudding for later",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:2",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "hypothesis": "Dropped the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:3",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "hypothesis": "Shared with someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:4",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "hypothesis": "Played with pudding instead of eating",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:5",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "hypothesis": "Fed by a child",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:6",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "hypothesis": "Feed by someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:7",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              }
+            ],
+            "top_k_applied": false
+          },
+          "decision": {
+            "selected_action": {
+              "action_id": "action:3006426cc1bb9e0e73c1",
+              "kind": "start_at",
+              "source_id": null,
+              "target_id": "visual_l1:BV1zJ41187BP:0121",
+              "edge_id": null,
+              "relation": null,
+              "reads_evidence": true
+            },
+            "planning_status": "reactive_scheduled_discriminating_first_hop",
+            "expansions": [
+              {
+                "expansion_id": "hypothesis-expansion:0bdbf5e4e76cd4b8d862",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:0c2a8d837af0a7feef4b",
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:156fe448826e7a3aa5f8",
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:1cbb8bc05b7d3fd59742",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:1e350e394491e3b7704f",
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:1fac2cec15660364f7af",
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:2aeaffbcd9b0813b646d",
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:37b5897aa424647eacb0",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:3a21d2694786594ecc7a",
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:438e297c5b2f91a0dc35",
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:47451de0e9e5a63df775",
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:4d0323562f5f353cb3fa",
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:4fa3c05126a68b65e4b3",
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:555a996c059fcc8daef4",
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:5a5bf4f9561d0b7a3ab3",
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:62a7ee52325c82868691",
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:935bf814d04bd24f5d86",
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:97890c1a2476b759068b",
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:98350c7518e11a4b22e9",
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:a7a18d20e161faab461b",
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:af8eef9a0461a1b01df9",
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:b1fdbf5a17f18dfb3db2",
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:b37253d11cdcd1fe58d3",
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:b8c8efac0625bb173e3d",
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "action": {
+                  "action_id": "action:a480f08f9f26ce0f30d0",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:befb9a9f731b493b68e4",
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:c12540127f339d734c35",
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "action": {
+                  "action_id": "action:3006426cc1bb9e0e73c1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0121",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:c2dae83403d39ee37142",
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:c2f80c2520f35db1f687",
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:cd699d9391a0371ad906",
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:d3cf1cf0b46d27ed8a6c",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:2c23c62698d08ddd0e6c",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0060",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:f5bac96c546e7f565681",
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:ffbcf85a30c42afa19b0",
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "action": {
+                  "action_id": "action:8758fa37ea823a1c4ff1",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              }
+            ],
+            "preferred_expansion_ids": [
+              "hypothesis-expansion:0bdbf5e4e76cd4b8d862",
+              "hypothesis-expansion:0c2a8d837af0a7feef4b",
+              "hypothesis-expansion:156fe448826e7a3aa5f8",
+              "hypothesis-expansion:1cbb8bc05b7d3fd59742",
+              "hypothesis-expansion:1e350e394491e3b7704f",
+              "hypothesis-expansion:1fac2cec15660364f7af",
+              "hypothesis-expansion:2aeaffbcd9b0813b646d",
+              "hypothesis-expansion:37b5897aa424647eacb0",
+              "hypothesis-expansion:3a21d2694786594ecc7a",
+              "hypothesis-expansion:438e297c5b2f91a0dc35",
+              "hypothesis-expansion:47451de0e9e5a63df775",
+              "hypothesis-expansion:4d0323562f5f353cb3fa",
+              "hypothesis-expansion:4fa3c05126a68b65e4b3",
+              "hypothesis-expansion:555a996c059fcc8daef4",
+              "hypothesis-expansion:5a5bf4f9561d0b7a3ab3",
+              "hypothesis-expansion:62a7ee52325c82868691",
+              "hypothesis-expansion:935bf814d04bd24f5d86",
+              "hypothesis-expansion:97890c1a2476b759068b",
+              "hypothesis-expansion:98350c7518e11a4b22e9",
+              "hypothesis-expansion:a7a18d20e161faab461b",
+              "hypothesis-expansion:af8eef9a0461a1b01df9",
+              "hypothesis-expansion:b1fdbf5a17f18dfb3db2",
+              "hypothesis-expansion:b37253d11cdcd1fe58d3",
+              "hypothesis-expansion:b8c8efac0625bb173e3d",
+              "hypothesis-expansion:befb9a9f731b493b68e4",
+              "hypothesis-expansion:c12540127f339d734c35",
+              "hypothesis-expansion:c2dae83403d39ee37142",
+              "hypothesis-expansion:c2f80c2520f35db1f687",
+              "hypothesis-expansion:cd699d9391a0371ad906",
+              "hypothesis-expansion:d3cf1cf0b46d27ed8a6c",
+              "hypothesis-expansion:f5bac96c546e7f565681",
+              "hypothesis-expansion:ffbcf85a30c42afa19b0"
+            ],
+            "lifecycle_predictions": [],
+            "legal_expansion_count": 32,
+            "top_k_applied": false,
+            "imagined_paths": [],
+            "preferred_path_ids": [
+              "joint-first-hop-tree:6999f3147aadfb2422f5",
+              "joint-first-hop-tree:92f1469ee9749a76203e",
+              "joint-first-hop-tree:cb35778a27aedd20cec9",
+              "joint-first-hop-tree:f81194dd46b063073bb9"
+            ],
+            "planning_horizon": 0,
+            "preference_audit": {
+              "horizon": 0,
+              "first_expansion_count": 32,
+              "imagined_path_count": 4,
+              "hypothesis_conditioned_outcome_count": 32,
+              "exhaustive_pair_count": 0,
+              "comparison_count": 1,
+              "complete_coverage": true,
+              "preference_mode": "setwise_full_frontier",
+              "top_k_applied": false,
+              "world_model_predictions_visible": false,
+              "evidence_scheduler_used": true,
+              "evidence_scheduler_status": "selected",
+              "surviving_trajectory_paths_preserved": true
+            }
+          },
+          "observation_id": "visual_l1:BV1zJ41187BP:0121",
+          "assessments": [
+            {
+              "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+              "effect": "counterevidence",
+              "rationale": "The observation explicitly records a person_eating action, directly contradicting the claim that she did not eat the pudding."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+              "effect": "counterevidence",
+              "rationale": "The presence of a server participant in the eating action indicates external feeding rather than self-feeding."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+              "effect": "counterevidence",
+              "rationale": "The observation confirms active consumption, ruling out the possibility of saving the pudding for later."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+              "effect": "counterevidence",
+              "rationale": "The recorded action is eating, which contradicts the hypothesis of dropping the pudding."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+              "effect": "counterevidence",
+              "rationale": "The observation documents a direct eating interaction with a server, not a sharing scenario."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+              "effect": "counterevidence",
+              "rationale": "The explicit person_eating action contradicts the claim that she only played with the pudding."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+              "effect": "counterevidence",
+              "rationale": "The server participant is identified by a white_shirt_bowtie visual signature, indicating an adult rather than a child."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+              "effect": "support",
+              "rationale": "The observation explicitly lists a server participant alongside the eater, confirming that she was fed by another person."
+            }
+          ],
+          "pool_after": {
+            "pool_id": "trajectory-pool:cgcase:b1164e579fdb03f5e4d9:no_world_model:step:1",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "hypothesis": "Didn't eat the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:0:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation explicitly records a person_eating action, directly contradicting the claim that she did not eat the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "hypothesis": "Feed yourself",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:1:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The presence of a server participant in the eating action indicates external feeding rather than self-feeding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "hypothesis": "Saved the pudding for later",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:2:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation confirms active consumption, ruling out the possibility of saving the pudding for later."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "hypothesis": "Dropped the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:3:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The recorded action is eating, which contradicts the hypothesis of dropping the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "hypothesis": "Shared with someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:4:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation documents a direct eating interaction with a server, not a sharing scenario."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "hypothesis": "Played with pudding instead of eating",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:5:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The explicit person_eating action contradicts the claim that she only played with the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "hypothesis": "Fed by a child",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:6:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The server participant is identified by a white_shirt_bowtie visual signature, indicating an adult rather than a child."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "hypothesis": "Feed by someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:7:step:1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "supported",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation explicitly lists a server participant alongside the eater, confirming that she was fed by another person."
+              }
+            ],
+            "top_k_applied": false
+          }
+        },
+        {
+          "pool_before": {
+            "pool_id": "trajectory-pool:cgcase:b1164e579fdb03f5e4d9:no_world_model:step:1",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "hypothesis": "Didn't eat the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:0:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation explicitly records a person_eating action, directly contradicting the claim that she did not eat the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "hypothesis": "Feed yourself",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:1:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The presence of a server participant in the eating action indicates external feeding rather than self-feeding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "hypothesis": "Saved the pudding for later",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:2:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation confirms active consumption, ruling out the possibility of saving the pudding for later."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "hypothesis": "Dropped the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:3:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The recorded action is eating, which contradicts the hypothesis of dropping the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "hypothesis": "Shared with someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:4:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation documents a direct eating interaction with a server, not a sharing scenario."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "hypothesis": "Played with pudding instead of eating",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:5:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The explicit person_eating action contradicts the claim that she only played with the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "hypothesis": "Fed by a child",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:6:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The server participant is identified by a white_shirt_bowtie visual signature, indicating an adult rather than a child."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "hypothesis": "Feed by someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:7:step:1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "supported",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation explicitly lists a server participant alongside the eater, confirming that she was fed by another person."
+              }
+            ],
+            "top_k_applied": false
+          },
+          "decision": {
+            "selected_action": {
+              "action_id": "action:3342bb26dd1e2d4a02ea",
+              "kind": "follow_correlation",
+              "source_id": "visual_l1:BV1zJ41187BP:0121",
+              "target_id": "visual_l1:BV1zJ41187BP:0087",
+              "edge_id": "soft-correlation:601c7b16cae89a4e6fba",
+              "relation": "semantic_recurrence",
+              "reads_evidence": true
+            },
+            "planning_status": "reactive_selected_unique_preferred_first_hop",
+            "expansions": [
+              {
+                "expansion_id": "hypothesis-expansion:17a61b2a1a9b156c70dc",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:bc40f710b78e2e088399",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1zJ41187BP:0121",
+                  "target_id": "visual_l1:BV1zJ41187BP:0122",
+                  "edge_id": "relation:retained-temporal:d3375f907a474e45:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:41cb781e0169e0774bfa",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:3342bb26dd1e2d4a02ea",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1zJ41187BP:0121",
+                  "target_id": "visual_l1:BV1zJ41187BP:0087",
+                  "edge_id": "soft-correlation:601c7b16cae89a4e6fba",
+                  "relation": "semantic_recurrence",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:dac3d699636cf9ab99b8",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:2253501fe8bfc25c63ba",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1zJ41187BP:0121",
+                  "target_id": "visual_l1:BV1zJ41187BP:0118",
+                  "edge_id": "soft-correlation:56cd5841e40565a1510e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:f0749a201357a5b04fe5",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:1297f0a8d08c63b73a49",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1zJ41187BP:0121",
+                  "target_id": "visual_l1:BV1zJ41187BP:0120",
+                  "edge_id": "relation:retained-temporal:0ee9aab909eddf32:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:f79fcc710b4c80307fa8",
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "action": {
+                  "action_id": "action:93eb9ebe96d1fdabfb85",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1zJ41187BP:0121",
+                  "target_id": "visual_l1:BV1zJ41187BP:0119",
+                  "edge_id": "soft-correlation:31502023ab817cfe900b",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              }
+            ],
+            "preferred_expansion_ids": [
+              "hypothesis-expansion:41cb781e0169e0774bfa"
+            ],
+            "lifecycle_predictions": [],
+            "legal_expansion_count": 5,
+            "top_k_applied": false,
+            "imagined_paths": [],
+            "preferred_path_ids": [
+              "joint-first-hop-tree:a987e45c9d40882f0196"
+            ],
+            "planning_horizon": 0,
+            "preference_audit": {
+              "horizon": 0,
+              "first_expansion_count": 5,
+              "imagined_path_count": 5,
+              "hypothesis_conditioned_outcome_count": 5,
+              "exhaustive_pair_count": 0,
+              "comparison_count": 1,
+              "complete_coverage": true,
+              "preference_mode": "setwise_full_frontier",
+              "top_k_applied": false,
+              "world_model_predictions_visible": false,
+              "evidence_scheduler_used": false,
+              "evidence_scheduler_status": "not_needed",
+              "surviving_trajectory_paths_preserved": true
+            }
+          },
+          "observation_id": "visual_l1:BV1zJ41187BP:0087",
+          "assessments": [
+            {
+              "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+              "effect": "counterevidence",
+              "rationale": "The observation explicitly records the action as person_eating, indicating independent consumption rather than being fed by another individual."
+            }
+          ],
+          "pool_after": {
+            "pool_id": "trajectory-pool:cgcase:b1164e579fdb03f5e4d9:no_world_model:step:1:step:0",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6d8a38f1a41c9589e677",
+                "hypothesis": "Didn't eat the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:0:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation explicitly records a person_eating action, directly contradicting the claim that she did not eat the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:1e32da3de9db34408a5f",
+                "hypothesis": "Feed yourself",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:1:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The presence of a server participant in the eating action indicates external feeding rather than self-feeding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:e8827c8787cc11d6dadf",
+                "hypothesis": "Saved the pudding for later",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:2:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation confirms active consumption, ruling out the possibility of saving the pudding for later."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:4f810292a70df3d47647",
+                "hypothesis": "Dropped the pudding",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:3:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The recorded action is eating, which contradicts the hypothesis of dropping the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:60f4115d935a4ed67618",
+                "hypothesis": "Shared with someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:4:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation documents a direct eating interaction with a server, not a sharing scenario."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:0c50e429877ebd9b4309",
+                "hypothesis": "Played with pudding instead of eating",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:5:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The explicit person_eating action contradicts the claim that she only played with the pudding."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:3a0c4060fe420be180c7",
+                "hypothesis": "Fed by a child",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:6:shared-read:action:3006426cc1bb9e0e73c1:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0121",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The server participant is identified by a white_shirt_bowtie visual signature, indicating an adult rather than a child."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:704918d6658f0a39995a",
+                "hypothesis": "Feed by someone else",
+                "belief": {
+                  "belief_id": "belief:cgcase:b1164e579fdb03f5e4d9:no_world_model:initial:hypothesis:7:step:1:real-correction:step:2:real-correction",
+                  "question": "In the video, when the heroine was chatting with other male actors, did she eat the pudding herself or was she fed by someone else?",
+                  "current_node_id": "visual_l1:BV1zJ41187BP:0087",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0118",
+                    "visual_l1:BV1zJ41187BP:0119",
+                    "visual_l1:BV1zJ41187BP:0060"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1zJ41187BP:0121",
+                    "visual_l1:BV1zJ41187BP:0087"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1zJ41187BP:0121"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "eating_agent",
+                    "eating_recipient",
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:3006426cc1bb9e0e73c1",
+                  "action:3342bb26dd1e2d4a02ea"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1zJ41187BP:0121",
+                  "visual_l1:BV1zJ41187BP:0087"
+                ],
+                "status": "contradicted",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation explicitly records the action as person_eating, indicating independent consumption rather than being fed by another individual."
+              }
+            ],
+            "top_k_applied": false
+          }
+        }
+      ],
+      "real_observations": [
+        {
+          "node_id": "visual_l1:BV1zJ41187BP:0121",
+          "video_id": "BV1zJ41187BP",
+          "time_span": {
+            "start_s": 416.25,
+            "end_s": 423.75
+          },
+          "provenance": {
+            "source_graph_id": "video_l1:BV1zJ41187BP",
+            "source_node_type": "raw_video_frame_window",
+            "adapter": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "producer": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "layer": "L1",
+            "uses_hidden_supervision": false
+          },
+          "node_type": "observation",
+          "text": "person_eating",
+          "source_node_id": "raw_video:BV1zJ41187BP:416.250-423.750",
+          "source_segments": [
+            "raw_video:BV1zJ41187BP:416.250-423.750"
+          ],
+          "embedding_ref": {
+            "path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1zJ41187BP/node_embeddings.npy",
+            "model": "Qwen/Qwen3-VL-Embedding-2B",
+            "dimension": 2048,
+            "dtype": "float32",
+            "normalized": true,
+            "row_index": 120,
+            "checksum": "1a19ba0575a0151a5d33212803f877e59dd6828beea26b582fb5c8c334e9e238"
+          },
+          "metadata": {
+            "predicate": "person_eating",
+            "confidence": 1.0,
+            "action_kind": "action",
+            "participants": [
+              {
+                "role": "eater",
+                "entity_type": "person",
+                "surface": "table",
+                "visual_signature": "white_shirt",
+                "confidence": 0.5,
+                "evidence_frames": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ],
+                "mention_id": "track:0091",
+                "track_status": "candidate_visual_signature",
+                "local_index": 0
+              },
+              {
+                "role": "server",
+                "entity_type": "person",
+                "surface": "table",
+                "visual_signature": "white_shirt_bowtie",
+                "confidence": 0.5,
+                "evidence_frames": [
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ],
+                "mention_id": "track:0092",
+                "track_status": "candidate_visual_signature",
+                "local_index": 1
+              }
+            ],
+            "states": [],
+            "state_change": null,
+            "entity_track_ids": [
+              "track:0091",
+              "track:0092"
+            ],
+            "localization": {
+              "method": "grounded_single_pass_sampled_frames",
+              "evidence_frames": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ],
+              "frame_records": [
+                {
+                  "frame_index": 0,
+                  "time_s": 416.25,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 1,
+                  "time_s": 417.321,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 2,
+                  "time_s": 418.393,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 3,
+                  "time_s": 419.464,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 4,
+                  "time_s": 420.536,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 5,
+                  "time_s": 421.607,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 6,
+                  "time_s": 422.679,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 7,
+                  "time_s": 423.75,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                }
+              ],
+              "coarse_window": {
+                "start_s": 416.25,
+                "end_s": 423.75,
+                "purpose": "surprise_adaptive_coarse_scan",
+                "boundary_reason": "representation_surprise",
+                "sample_count": 10
+              }
+            },
+            "visibility": {
+              "mode": "video_only",
+              "visible_to_agent": true,
+              "hidden_supervision": false
+            },
+            "source_type": "raw_video_visual_observation",
+            "layer": "L1"
+          }
+        },
+        {
+          "node_id": "visual_l1:BV1zJ41187BP:0087",
+          "video_id": "BV1zJ41187BP",
+          "time_span": {
+            "start_s": 338.393,
+            "end_s": 339.536
+          },
+          "provenance": {
+            "source_graph_id": "video_l1:BV1zJ41187BP",
+            "source_node_type": "raw_video_frame_window",
+            "adapter": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "producer": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "layer": "L1",
+            "uses_hidden_supervision": false
+          },
+          "node_type": "observation",
+          "text": "person_eating",
+          "source_node_id": "raw_video:BV1zJ41187BP:338.393-339.536",
+          "source_segments": [
+            "raw_video:BV1zJ41187BP:338.393-339.536"
+          ],
+          "embedding_ref": {
+            "path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1zJ41187BP/node_embeddings.npy",
+            "model": "Qwen/Qwen3-VL-Embedding-2B",
+            "dimension": 2048,
+            "dtype": "float32",
+            "normalized": true,
+            "row_index": 86,
+            "checksum": "1a19ba0575a0151a5d33212803f877e59dd6828beea26b582fb5c8c334e9e238"
+          },
+          "metadata": {
+            "predicate": "person_eating",
+            "confidence": 1.0,
+            "action_kind": "action",
+            "participants": [
+              {
+                "role": "actor",
+                "entity_type": "person",
+                "surface": "table",
+                "visual_signature": "white_shirt",
+                "confidence": 0.5,
+                "evidence_frames": [
+                  2,
+                  3,
+                  4
+                ],
+                "mention_id": "track:0069",
+                "track_status": "candidate_visual_signature",
+                "local_index": 0
+              }
+            ],
+            "states": [],
+            "state_change": null,
+            "entity_track_ids": [
+              "track:0069"
+            ],
+            "localization": {
+              "method": "grounded_single_pass_sampled_frames",
+              "evidence_frames": [
+                2,
+                3,
+                4
+              ],
+              "frame_records": [
+                {
+                  "frame_index": 0,
+                  "time_s": 337.25,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 1,
+                  "time_s": 337.821,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 2,
+                  "time_s": 338.393,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 3,
+                  "time_s": 338.964,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 4,
+                  "time_s": 339.536,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 5,
+                  "time_s": 340.107,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 6,
+                  "time_s": 340.679,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 7,
+                  "time_s": 341.25,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                }
+              ],
+              "coarse_window": {
+                "start_s": 337.25,
+                "end_s": 341.25,
+                "purpose": "surprise_adaptive_coarse_scan",
+                "boundary_reason": "representation_surprise",
+                "sample_count": 5
+              }
+            },
+            "visibility": {
+              "mode": "video_only",
+              "visible_to_agent": true,
+              "hidden_supervision": false
+            },
+            "source_type": "raw_video_visual_observation",
+            "layer": "L1"
+          }
+        }
+      ],
+      "realized_labels_evaluator_only": [
+        {
+          "observation_id": "visual_l1:BV1zJ41187BP:0121",
+          "observation_outcome": "support",
+          "belief_delta": {
+            "progress": "advanced",
+            "answerability_after": "ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "predicted_only": false
+          },
+          "newly_covered_clue_indices": [
+            0,
+            1
+          ],
+          "fed_back_to_planner": false
+        },
+        {
+          "observation_id": "visual_l1:BV1zJ41187BP:0087",
+          "observation_outcome": "inconclusive",
+          "belief_delta": {
+            "progress": "unchanged",
+            "answerability_after": "ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "predicted_only": false
+          },
+          "newly_covered_clue_indices": [],
+          "fed_back_to_planner": false
+        }
+      ],
+      "termination": "no_expandable_trajectories",
+      "terminal_answer": {
+        "status": "select",
+        "selected_choice": "Feed by someone else",
+        "rationale": "The acquired real evidence explicitly identifies two participants in the eating interaction: an 'eater' and a 'server'. This directly supports the hypothesis that the heroine was fed by another person rather than eating the pudding herself."
+      },
+      "evidence_sufficiency_evaluator_only": {
+        "status": "supports_alternative",
+        "rationale": "The acquired evidence identifies two distinct participants during the eating event: an 'eater' and a 'server'. The explicit detection of a server role indicates that the heroine was being fed by another person, which contradicts the reference answer ('Feed yourself') and directly supports the alternative choice of being fed by someone else.",
+        "evaluator_only": true,
+        "fed_back_to_planner": false
+      },
+      "final_trajectory_statuses": [
+        "contradicted",
+        "contradicted",
+        "contradicted",
+        "contradicted",
+        "contradicted",
+        "contradicted",
+        "contradicted",
+        "contradicted"
+      ],
+      "empirical_audit": {
+        "joint_chain_coverage": {
+          "steps": [
+            {
+              "step_index": 0,
+              "joint_chain_count": 0,
+              "expected_conditioned_outcome_count": 32,
+              "retained_conditioned_outcome_count": 0,
+              "lossless_joint_grouping": false,
+              "every_chain_covers_every_current_hypothesis": true,
+              "per_chain": []
+            },
+            {
+              "step_index": 1,
+              "joint_chain_count": 0,
+              "expected_conditioned_outcome_count": 5,
+              "retained_conditioned_outcome_count": 0,
+              "lossless_joint_grouping": false,
+              "every_chain_covers_every_current_hypothesis": true,
+              "per_chain": []
+            }
+          ],
+          "all_steps_lossless": false,
+          "outcome_retention_rate": 0.0,
+          "all_initial_chains_cover_every_hypothesis": true
+        },
+        "post_read_belief_divergence": {
+          "steps": [
+            {
+              "step_index": 0,
+              "observation_id": "visual_l1:BV1zJ41187BP:0121",
+              "hypothesis_count": 8,
+              "unique_belief_signature_count": 1,
+              "belief_diverged": false,
+              "belief_groups": [
+                {
+                  "hypotheses": [
+                    "Didn't eat the pudding",
+                    "Feed yourself",
+                    "Saved the pudding for later",
+                    "Dropped the pudding",
+                    "Shared with someone else",
+                    "Played with pudding instead of eating",
+                    "Fed by a child",
+                    "Feed by someone else"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "step_index": 1,
+              "observation_id": "visual_l1:BV1zJ41187BP:0087",
+              "hypothesis_count": 8,
+              "unique_belief_signature_count": 1,
+              "belief_diverged": false,
+              "belief_groups": [
+                {
+                  "hypotheses": [
+                    "Didn't eat the pudding",
+                    "Feed yourself",
+                    "Saved the pudding for later",
+                    "Dropped the pudding",
+                    "Shared with someone else",
+                    "Played with pudding instead of eating",
+                    "Fed by a child",
+                    "Feed by someone else"
+                  ],
+                  "missing_roles": [
+                    "consumed_object",
+                    "interaction_context"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "eating_agent",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ],
+                    [
+                      "eating_recipient",
+                      "visual_l1:BV1zJ41187BP:0121"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "divergence_rate": 0.0
+        },
+        "transition_calibration": {
+          "reference": "hidden_clue_overlap_evaluator_only",
+          "rows": [],
+          "observation_outcome_exact_accuracy": null,
+          "progress_exact_accuracy": null,
+          "answerability_exact_accuracy": null,
+          "observation_outcome_balanced_accuracy": null,
+          "progress_balanced_accuracy": null,
+          "answerability_balanced_accuracy": null,
+          "observation_outcome_over_credit_fdr": null,
+          "progress_over_credit_fdr": null,
+          "answerability_over_credit_fdr": null,
+          "observation_outcome_confusion": {},
+          "progress_confusion": {},
+          "answerability_confusion": {}
+        }
+      },
+      "metrics": {
+        "answer_correct": false,
+        "answer_abstained": false,
+        "clue_count": 2,
+        "covered_clue_count": 2,
+        "clue_recall": 1.0,
+        "clue_coverage_complete": true,
+        "real_read_count": 2,
+        "read_efficiency": 1.0,
+        "delayed_reasoning_success": true,
+        "delayed_recovery_success": false,
+        "delayed_completion_after_unproductive_first": false,
+        "correct_hypothesis_survived": false,
+        "false_correct_hypothesis_elimination": true,
+        "final_expandable_trajectory_count": 0,
+        "shared_action_selection_count": 1,
+        "complete_comparison_budget_failure": false,
+        "joint_chain_outcome_retention_rate": 0.0,
+        "post_read_belief_divergence_rate": 0.0,
+        "transition_outcome_calibration_accuracy": null,
+        "transition_progress_calibration_accuracy": null,
+        "transition_outcome_balanced_accuracy": null,
+        "transition_progress_balanced_accuracy": null,
+        "transition_answerability_balanced_accuracy": null,
+        "transition_outcome_over_credit_fdr": null,
+        "transition_progress_over_credit_fdr": null,
+        "transition_answerability_over_credit_fdr": null
+      },
+      "hidden_evaluator_feedback_to_planner": false,
+      "top_k_applied": false,
+      "training_performed": false,
+      "method_audit": {
+        "planner_type": "ReactiveMultiTrajectoryPlanner",
+        "world_model_type": "NoneType",
+        "complete_coverage": {
+          "horizon": 0,
+          "first_expansion_count": 5,
+          "imagined_path_count": 5,
+          "hypothesis_conditioned_outcome_count": 5,
+          "exhaustive_pair_count": 0,
+          "comparison_count": 1,
+          "complete_coverage": true,
+          "preference_mode": "setwise_full_frontier",
+          "top_k_applied": false,
+          "world_model_predictions_visible": false,
+          "evidence_scheduler_used": false,
+          "evidence_scheduler_status": "not_needed",
+          "surviving_trajectory_paths_preserved": true
+        },
+        "transport": [
+          {
+            "operation": "categorical_setwise_frontier",
+            "item_count": 4,
+            "batch_count": 1,
+            "complete_coverage": true,
+            "top_k_applied": false,
+            "imagined_transitions_visible": false
+          },
+          {
+            "operation": "categorical_evidence_scheduler",
+            "item_count": 4,
+            "batch_count": 1,
+            "complete_coverage": true,
+            "top_k_applied": false,
+            "surviving_paths_preserved": true,
+            "imagined_transitions_visible": false
+          },
+          {
+            "operation": "categorical_setwise_frontier",
+            "item_count": 5,
+            "batch_count": 1,
+            "complete_coverage": true,
+            "top_k_applied": false,
+            "imagined_transitions_visible": false
+          }
+        ],
+        "transition_contract": [],
+        "top_k_applied": false,
+        "belief_backend": "latent",
+        "gtsam_audit": [],
+        "real_evidence_reread": [],
+        "entry_localization": {
+          "candidate_address_count": 192,
+          "selected_anchor_count": 4,
+          "selected_node_ids": [
+            "visual_l1:BV1zJ41187BP:0121",
+            "visual_l1:BV1zJ41187BP:0118",
+            "visual_l1:BV1zJ41187BP:0119",
+            "visual_l1:BV1zJ41187BP:0060"
+          ],
+          "status": "located",
+          "top_k_applied": false,
+          "numeric_score_used": false,
+          "alias_prefix_normalization_count": 0,
+          "role_conditioned_output": true,
+          "role_key_normalization_count": 0,
+          "schema_repair_count": 0
+        },
+        "entry_localization_failure": null,
+        "initial_role_fingerprint": "e7e836cff0a1a4eabc80a6d32c0412e92054b115a9ab7bf59939a9f55b5123f6"
+      }
+    }
+  ],
+  "errors": [],
+  "method_failures": [],
+  "metrics_by_arm": {
+    "no_world_model": {
+      "case_count": 1,
+      "answer_accuracy": 0.0,
+      "mean_clue_recall": 1.0,
+      "mean_real_reads": 2.0,
+      "mean_read_efficiency": 1.0,
+      "answer_abstain_rate": 0.0,
+      "delayed_success_rate": 1.0,
+      "delayed_recovery_rate": 0.0,
+      "delayed_completion_after_unproductive_first_rate": 0.0,
+      "correct_hypothesis_survival_rate": 0.0,
+      "false_correct_hypothesis_elimination_rate": 1.0,
+      "complete_comparison_budget_failure_rate": 0.0,
+      "mean_joint_chain_outcome_retention": 0.0,
+      "post_read_belief_divergence_rate": 0.0,
+      "transition_outcome_calibration_accuracy": null,
+      "transition_progress_calibration_accuracy": null,
+      "pooled_transition_calibration": null
+    }
+  },
+  "metrics_by_arm_localized_frontier_complete": {
+    "no_world_model": {
+      "case_count": 0,
+      "answer_accuracy": null,
+      "mean_clue_recall": null,
+      "mean_real_reads": null,
+      "mean_read_efficiency": null,
+      "answer_abstain_rate": null,
+      "delayed_success_rate": null,
+      "delayed_recovery_rate": null,
+      "delayed_completion_after_unproductive_first_rate": null,
+      "correct_hypothesis_survival_rate": null,
+      "false_correct_hypothesis_elimination_rate": null,
+      "complete_comparison_budget_failure_rate": null,
+      "mean_joint_chain_outcome_retention": null,
+      "post_read_belief_divergence_rate": null,
+      "transition_outcome_calibration_accuracy": null,
+      "transition_progress_calibration_accuracy": null,
+      "pooled_transition_calibration": null
+    }
+  },
+  "localized_entry_preflight": [
+    {
+      "case_id": "cgcase:b1164e579fdb03f5e4d9",
+      "status": "insufficient_frontier",
+      "clue_recall_ceiling": null,
+      "clue_coverage_complete": false,
+      "evaluator_only": true,
+      "fed_back_to_planner": false
+    }
+  ],
+  "scientifically_evaluable_case_ids": [],
+  "localized_entry_preflight_contract": {
+    "uses_hidden_clues_for_evaluation_only": true,
+    "runs_after_model_entry_localization": true,
+    "same_read_budget_as_model_arms": true,
+    "fed_back_to_planner": false,
+    "purpose": "separate navigation quality from unreachable evidence"
+  },
+  "action_divergence": [],
+  "input_visibility_audits": [
+    {
+      "case_id": "cgcase:b1164e579fdb03f5e4d9",
+      "regime": "semantic_address",
+      "question_independent_graph_required": true,
+      "hidden_clue_intervals_visible": false,
+      "hidden_answer_visible": false,
+      "post_read_vlm_observation_visible": false,
+      "full_l1_descriptor_visible_before_read": false,
+      "oracle_observation_is_posthoc_only": true,
+      "metadata_allowlist": [
+        "predicate",
+        "action_kind",
+        "participants",
+        "states",
+        "state_change",
+        "actor",
+        "target",
+        "objects",
+        "location",
+        "modality",
+        "source_type"
+      ],
+      "graph_question_independent_contract": null,
+      "exposed_forbidden_fields": [],
+      "leakage_detected": false,
+      "node_count": 192
+    }
+  ],
+  "initial_role_fingerprints": [
+    {
+      "case_id": "cgcase:b1164e579fdb03f5e4d9",
+      "fingerprint": "e7e836cff0a1a4eabc80a6d32c0412e92054b115a9ab7bf59939a9f55b5123f6"
+    }
+  ],
+  "response_cache_audit": {
+    "available": true,
+    "hit_count": 1,
+    "miss_count": 15
+  },
+  "training_performed": false,
+  "compile_gate": {
+    "schema_version": "steam-full-graph-iwm-cgbench-gate/v0.1",
+    "dataset_id": "cgbench-gt-navigation-pilot-v2",
+    "selection_schema": "steam-cgbench-fixed-l15-cohort-selection/v0.1",
+    "graph_root": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8",
+    "capacity": 192,
+    "read_budget": 2,
+    "requested_video_count": 4,
+    "selected_case_count": 4,
+    "fixed_cohort_case_filter_applied": true,
+    "allowed_case_count": 4,
+    "runnable_case_ids": [
+      "cgcase:52e77f99db56a8ddfda3",
+      "cgcase:b1164e579fdb03f5e4d9",
+      "cgcase:3a80fe7762ad83424f3f",
+      "cgcase:daec71dbc4ef887b1f23"
+    ],
+    "scientifically_runnable_case_ids": [
+      "cgcase:52e77f99db56a8ddfda3",
+      "cgcase:b1164e579fdb03f5e4d9",
+      "cgcase:3a80fe7762ad83424f3f",
+      "cgcase:daec71dbc4ef887b1f23"
+    ],
+    "dataset_boundary": "whitelist_required_and_applied",
+    "checks": {
+      "all_requested_graphs_available": true,
+      "all_available_graphs_compile": true,
+      "all_graphs_question_independent": true,
+      "all_graphs_have_embedding_correlation_build": true,
+      "planner_input_has_no_hidden_keys": true,
+      "planner_input_has_no_unread_values": true,
+      "eligible_case_exists": true,
+      "every_horizon_eligible_case_retains_all_clues": true,
+      "scientifically_runnable_case_exists": true
+    },
+    "gate_passed": true,
+    "gate_contract": "structural, clue-retention, and exact oracle-at-read-budget preflight; navigation metrics remain separate and are never collapsed into this boolean",
+    "graphs": [
+      {
+        "video_id": "BV1Qt4y1f7zw",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1Qt4y1f7zw/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 408,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "6cc31f0aef81299d1ea224e49fa87e52ddf511d620dd7b1114db81892aee5cd2",
+        "observation_end_s": 1090.467
+      },
+      {
+        "video_id": "BV1zJ41187BP",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1zJ41187BP/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 377,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "f61a2711145247a5bb411f5b1f04f9809cd153f58754c502990b478903876c9f",
+        "observation_end_s": 830.933
+      },
+      {
+        "video_id": "W1X32VHJ7fM",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/W1X32VHJ7fM/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 387,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "e1eb9b0be02459b5d77854115741dcefc92cf83fd09431572a0750a005031f44",
+        "observation_end_s": 2046.561
+      },
+      {
+        "video_id": "w8j9zNp8hNI",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/w8j9zNp8hNI/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 365,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "c7b74ce1f53267854125a8c3fe6d292dc4c0026620cea6b855eb76ccc636dd99",
+        "observation_end_s": 2182.0
+      }
+    ],
+    "cases": [
+      {
+        "case_id": "cgcase:52e77f99db56a8ddfda3",
+        "video_id": "BV1Qt4y1f7zw",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "6cc31f0aef81299d1ea224e49fa87e52ddf511d620dd7b1114db81892aee5cd2",
+        "scientifically_runnable": true
+      },
+      {
+        "case_id": "cgcase:b1164e579fdb03f5e4d9",
+        "video_id": "BV1zJ41187BP",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "f61a2711145247a5bb411f5b1f04f9809cd153f58754c502990b478903876c9f",
+        "scientifically_runnable": true
+      },
+      {
+        "case_id": "cgcase:3a80fe7762ad83424f3f",
+        "video_id": "W1X32VHJ7fM",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "e1eb9b0be02459b5d77854115741dcefc92cf83fd09431572a0750a005031f44",
+        "scientifically_runnable": true
+      },
+      {
+        "case_id": "cgcase:daec71dbc4ef887b1f23",
+        "video_id": "w8j9zNp8hNI",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "c7b74ce1f53267854125a8c3fe6d292dc4c0026620cea6b855eb76ccc636dd99",
+        "scientifically_runnable": true
+      }
+    ],
+    "gpt_service_called": false,
+    "training_performed": false
+  }
+}

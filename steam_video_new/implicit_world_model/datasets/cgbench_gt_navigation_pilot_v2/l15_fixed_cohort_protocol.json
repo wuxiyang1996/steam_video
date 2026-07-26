@@ -1,0 +1,264 @@
+{
+  "schema_version": "steam-cgbench-fixed-l15-cohort-protocol/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "case_count": 49,
+  "video_count": 36,
+  "splits": [
+    "validation",
+    "test"
+  ],
+  "minimum_locked_cases": 30,
+  "maximum_locked_cases": 50,
+  "cases": [
+    {
+      "case_id": "cgcase:00fdcdce97e5c7478498",
+      "video_id": "BV1gbgWeBE92",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:03ae94a7899404983244",
+      "video_id": "BV1gbgWeBE92",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:0f486516bb7e3a6801ad",
+      "video_id": "BV1AC4y1V7CC",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:11293deeb988b218e337",
+      "video_id": "MpiHQUCT1Cc",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:165844a3a86959b47aee",
+      "video_id": "18vPWQD9VfI",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:37d9db5b0e2a83eb7f62",
+      "video_id": "YDR31_nh70Q",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:5022b0b1805910bbe891",
+      "video_id": "9POxIUAORH4",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:574f35fee5f0718ec5f2",
+      "video_id": "pXbYjxxSk1M",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:637297ef7ca5dbda1af9",
+      "video_id": "cPzVRd9J4dg",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:645fdcf88a3e455c205d",
+      "video_id": "BV1Qv411q7uo",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:66fd3c37b14dfe611d43",
+      "video_id": "18vPWQD9VfI",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:85bf9fc17ca9944b6af4",
+      "video_id": "BV1Qq4y1u7gc",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:8c0c9161f8659806dae9",
+      "video_id": "YDR31_nh70Q",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:9ca2eb9604559d0822d6",
+      "video_id": "18vPWQD9VfI",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:a0cdcb0160e378305814",
+      "video_id": "BV1nY4y197Qe",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:ad9c39b8577a9877d496",
+      "video_id": "BV1KK41157zV",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:b1bcca4b9e4293dc3032",
+      "video_id": "BV1um4y1j7zB",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:b54bf2f29a2825093457",
+      "video_id": "9POxIUAORH4",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:b8af16b7f3703ba597d0",
+      "video_id": "BV141421m7D4",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:bbfeea40df2475737898",
+      "video_id": "BV1xq4y1F7Yj",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:bd3ad3089265dbaf57c9",
+      "video_id": "cPzVRd9J4dg",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:bdb6857224c473dec7c3",
+      "video_id": "pXbYjxxSk1M",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:be04610b4c63a27fe6da",
+      "video_id": "BV16A4m1F7Jc",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:c74fd6186189895b3f05",
+      "video_id": "BV1Yy4y1L7jN",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:ceb1b3607655e032792a",
+      "video_id": "BV1Qv411q7uo",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:d371e59bdb2daa7c3fba",
+      "video_id": "BV16f4y157pi",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:e0d5c4becfe0bae5041d",
+      "video_id": "18vPWQD9VfI",
+      "split": "test"
+    },
+    {
+      "case_id": "cgcase:1106cae201192d9faea5",
+      "video_id": "BV1ft411Z7yp",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:24fc29d73e481ddf9527",
+      "video_id": "erCQKtuFu_0",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:28346e59ff1fbe1e21df",
+      "video_id": "T5PD8ofhiug",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:3a80fe7762ad83424f3f",
+      "video_id": "W1X32VHJ7fM",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:462520dd16b367b090bf",
+      "video_id": "3iOLbfYmgdQ",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:4b3610f3b09f0f834dea",
+      "video_id": "BV1NZ421q7Cb",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:4c16b8196f39594b8505",
+      "video_id": "W1X32VHJ7fM",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:52e77f99db56a8ddfda3",
+      "video_id": "BV1Qt4y1f7zw",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:58b35f8d3ae437df3f18",
+      "video_id": "iFbYFRWbVTQ",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:607cbc5599276e4adf83",
+      "video_id": "yZr5FOlKp30",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:676594dfc0e6faa7c6c0",
+      "video_id": "pF8rcouqqdI",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:7f28f100c7db648c1c5b",
+      "video_id": "PCSqrpAWq1s",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:7f9b5fb72c799e8696b2",
+      "video_id": "W1X32VHJ7fM",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:874bf4d05b938ea5ac50",
+      "video_id": "xyDoP5a_dvo",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:9d98d222d610d38c7a2e",
+      "video_id": "-tpms_BbjHA",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:ab87412b0a929fd09ecb",
+      "video_id": "BV1pM4m1174T",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:b1164e579fdb03f5e4d9",
+      "video_id": "BV1zJ41187BP",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:cca056b9915476704b35",
+      "video_id": "xtJeKSDD0ho",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:daec71dbc4ef887b1f23",
+      "video_id": "w8j9zNp8hNI",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:e1112c44e48be16668f6",
+      "video_id": "xtJeKSDD0ho",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:ea955c55a1dff1fae9ff",
+      "video_id": "q1adV0O7JmA",
+      "split": "validation"
+    },
+    {
+      "case_id": "cgcase:fb2b6df618af31255e52",
+      "video_id": "W1X32VHJ7fM",
+      "split": "validation"
+    }
+  ],
+  "case_selection_uses_question_text": false,
+  "case_selection_uses_clue_or_answer_gt": false,
+  "graph_builder_receives_case_protocol": false,
+  "delayed_case_contract": "structural candidates are identified only after graph freeze; actual delayed success requires an executed two-step rollout",
+  "training_performed": false
+}

@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="${REPO_ROOT:-/fs/gamma-projects/vlm-robot/steam_video}"
+VENV_ROOT="${VENV_ROOT:-/fs/gamma-projects/vlm-robot/Video_Skills/.venv-qwen35-serve}"
+VLLM_ROOT="${VLLM_ROOT:-/fs/gamma-projects/vlm-robot/Video_Skills/.venv-qwen35-vllm}"
+HF_CACHE_ROOT="${HF_CACHE_ROOT:-/fs/gamma-projects/vlm-robot/hf_cache}"
+DATASET_ROOT="${DATASET_ROOT:-/fs/gamma-projects/vlm-robot/datasets/CG-Bench}"
+ARTIFACT_ROOT="${ARTIFACT_ROOT:-${REPO_ROOT}/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2}"
+GRAPH_ROOT="${GRAPH_ROOT:-${ARTIFACT_ROOT}/l15_graph_smoke_v1}"
+SELECTION="${SELECTION:-${ARTIFACT_ROOT}/l15_graph_smoke_selection.json}"
+MODEL="${MODEL:-Qwen/Qwen3.5-9B}"
+SERVER_BACKEND="${SERVER_BACKEND:-transformers}"
+VLLM_MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-32768}"
+VLLM_GPU_MEMORY_UTILIZATION="${VLLM_GPU_MEMORY_UTILIZATION:-0.90}"
+VLLM_MAX_IMAGES_PER_PROMPT="${VLLM_MAX_IMAGES_PER_PROMPT:-16}"
+VLLM_USE_FLASHINFER_SAMPLER="${VLLM_USE_FLASHINFER_SAMPLER:-0}"
+VIDEO_LIMIT="${VIDEO_LIMIT:-8}"
+MEMORY_CAPACITY="${MEMORY_CAPACITY:-64}"
+L1_LOCALIZATION_MODE="${L1_LOCALIZATION_MODE:-coarse_to_fine}"
+L1_REQUEST_CONCURRENCY="${L1_REQUEST_CONCURRENCY:-1}"
+SURPRISE_SAMPLE_PERIOD_S="${SURPRISE_SAMPLE_PERIOD_S:-0.5}"
+SURPRISE_MIN_WINDOW_S="${SURPRISE_MIN_WINDOW_S:-2.0}"
+SURPRISE_MAX_WINDOW_S="${SURPRISE_MAX_WINDOW_S:-12.0}"
+SURPRISE_CALIBRATION_HISTORY="${SURPRISE_CALIBRATION_HISTORY:-8}"
+SURPRISE_QUANTILE="${SURPRISE_QUANTILE:-0.8}"
+RUN_STAGE="${RUN_STAGE:-all}"
+NUM_SHARDS="${NUM_SHARDS:-1}"
+COHORT_PROTOCOL="${COHORT_PROTOCOL:-}"
+COHORT_GATE_OUTPUT="${COHORT_GATE_OUTPUT:-}"
+COHORT_GATE_DETAILS="${COHORT_GATE_DETAILS:-}"
+SHARD_INDEX="${SHARD_INDEX:-${SLURM_ARRAY_TASK_ID:-}}"
+TASK_OFFSET="${SLURM_ARRAY_TASK_ID:-0}"
+PORT="${PORT:-$((20000 + ((${SLURM_JOB_ID:-0} % 1000) * 16) + TASK_OFFSET))}"
+
+export HF_HOME="${HF_CACHE_ROOT}"
+export TRANSFORMERS_CACHE="${HF_CACHE_ROOT}/hub"
+export TOKENIZERS_PARALLELISM=false
+export SETUPTOOLS_USE_DISTUTILS=stdlib
+
+mkdir -p "${GRAPH_ROOT}"
+cd "${REPO_ROOT}"
+if [[ "${RUN_STAGE}" != "all" && "${RUN_STAGE}" != "extract" && "${RUN_STAGE}" != "finalize" ]]; then
+  echo "RUN_STAGE must be one of: all, extract, finalize" >&2
+  exit 2
+fi
+
+if [[ "${RUN_STAGE}" == "all" || "${RUN_STAGE}" == "extract" ]]; then
+  SHARD_ARGS=()
+  SERVER_SUFFIX=""
+  REPORT_PATH="${GRAPH_ROOT}/build_report.json"
+  if [[ "${NUM_SHARDS}" -gt 1 ]]; then
+    if [[ -z "${SHARD_INDEX}" ]]; then
+      echo "SHARD_INDEX or SLURM_ARRAY_TASK_ID is required when NUM_SHARDS > 1" >&2
+      exit 2
+    fi
+    SHARD_ARGS+=(--shard-index "${SHARD_INDEX}" --num-shards "${NUM_SHARDS}")
+    SERVER_SUFFIX=".shard_${SHARD_INDEX}_of_${NUM_SHARDS}"
+    mkdir -p "${GRAPH_ROOT}/shard_reports"
+    REPORT_PATH="${GRAPH_ROOT}/shard_reports/build_report.shard_${SHARD_INDEX}_of_${NUM_SHARDS}.json"
+  fi
+  SERVER_LOG="${GRAPH_ROOT}/qwen_l15_server${SERVER_SUFFIX}.log"
+  case "${SERVER_BACKEND}" in
+    transformers)
+      SERVER_BACKEND_VERSION="$("${VENV_ROOT}/bin/python" -c 'import importlib.metadata as m; print(m.version("transformers"))')"
+      "${VENV_ROOT}/bin/transformers" serve "${MODEL}" --host 127.0.0.1 --port "${PORT}" \
+        --device cuda:0 --dtype bfloat16 --reasoning off --attn-implementation sdpa \
+        >"${SERVER_LOG}" 2>&1 &
+      ;;
+    vllm)
+      if [[ ! -x "${VLLM_ROOT}/bin/vllm" ]]; then
+        echo "Missing ${VLLM_ROOT}/bin/vllm; run setup_qwen35_vllm_env.sh first" >&2
+        exit 2
+      fi
+      SERVER_BACKEND_VERSION="$("${VLLM_ROOT}/bin/python" -c 'import importlib.metadata as m; print(m.version("vllm"))')"
+      SETUPTOOLS_USE_DISTUTILS=local \
+      VLLM_USE_FLASHINFER_SAMPLER="${VLLM_USE_FLASHINFER_SAMPLER}" \
+      "${VLLM_ROOT}/bin/vllm" serve "${MODEL}" --host 127.0.0.1 --port "${PORT}" \
+        --dtype bfloat16 \
+        --max-model-len "${VLLM_MAX_MODEL_LEN}" \
+        --gpu-memory-utilization "${VLLM_GPU_MEMORY_UTILIZATION}" \
+        --limit-mm-per-prompt "{\"image\":${VLLM_MAX_IMAGES_PER_PROMPT}}" \
+        --default-chat-template-kwargs '{"enable_thinking":false}' \
+        --generation-config vllm \
+        >"${SERVER_LOG}" 2>&1 &
+      ;;
+    *)
+      echo "SERVER_BACKEND must be one of: transformers, vllm" >&2
+      exit 2
+      ;;
+  esac
+  SERVER_PID=$!
+  cleanup() {
+    kill "${SERVER_PID}" 2>/dev/null || true
+    wait "${SERVER_PID}" 2>/dev/null || true
+  }
+  trap cleanup EXIT INT TERM
+
+  for _ in $(seq 1 180); do
+    if curl -sf "http://127.0.0.1:${PORT}/v1/models" >/dev/null; then break; fi
+    if ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+      tail -100 "${SERVER_LOG}" >&2
+      exit 1
+    fi
+    sleep 2
+  done
+  curl -sf "http://127.0.0.1:${PORT}/v1/models" >/dev/null
+
+  "${VENV_ROOT}/bin/python" -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker extract \
+    --selection "${SELECTION}" \
+    --dataset-root "${DATASET_ROOT}" \
+    --video-skills-root "/fs/gamma-projects/vlm-robot/Video_Skills" \
+    --output-root "${GRAPH_ROOT}" \
+    --report "${REPORT_PATH}" \
+    --video-limit "${VIDEO_LIMIT}" \
+    "${SHARD_ARGS[@]}" \
+    --model "${MODEL}" \
+    --server-backend "${SERVER_BACKEND}" \
+    --server-backend-version "${SERVER_BACKEND_VERSION}" \
+    --model-thinking-mode disabled \
+    --request-concurrency "${L1_REQUEST_CONCURRENCY}" \
+    --localization-mode "${L1_LOCALIZATION_MODE}" \
+    --surprise-sample-period-s "${SURPRISE_SAMPLE_PERIOD_S}" \
+    --surprise-min-window-s "${SURPRISE_MIN_WINDOW_S}" \
+    --surprise-max-window-s "${SURPRISE_MAX_WINDOW_S}" \
+    --surprise-calibration-history "${SURPRISE_CALIBRATION_HISTORY}" \
+    --surprise-quantile "${SURPRISE_QUANTILE}" \
+    --api-base "http://127.0.0.1:${PORT}/v1/chat/completions"
+
+  cleanup
+  trap - EXIT INT TERM
+fi
+
+if [[ "${RUN_STAGE}" == "all" || "${RUN_STAGE}" == "finalize" ]]; then
+  if [[ "${NUM_SHARDS}" -gt 1 ]]; then
+    "${VENV_ROOT}/bin/python" -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker merge-extract-reports \
+      --selection "${SELECTION}" \
+      --graph-root "${GRAPH_ROOT}" \
+      --shard-report-dir "${GRAPH_ROOT}/shard_reports" \
+      --report "${GRAPH_ROOT}/build_report.json" \
+      --num-shards "${NUM_SHARDS}" \
+      --video-limit "${VIDEO_LIMIT}"
+  fi
+
+  "${VENV_ROOT}/bin/python" -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker embed-evaluate \
+    --selection "${SELECTION}" \
+    --graph-root "${GRAPH_ROOT}" \
+    --dataset "${ARTIFACT_ROOT}/navigation_dataset.gt_only.json" \
+    --hidden-input "${ARTIFACT_ROOT}/terminal_targets.hidden_key.json" \
+    --coverage-report "${GRAPH_ROOT}/coverage_report.json" \
+    --coverage-details "${GRAPH_ROOT}/coverage_details.hidden_key.json" \
+    --memory-capacity "${MEMORY_CAPACITY}" \
+    --video-limit "${VIDEO_LIMIT}" \
+    --device cuda
+
+  "${VENV_ROOT}/bin/python" -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.l15_graph_worker audit-correlations \
+    --selection "${SELECTION}" \
+    --graph-root "${GRAPH_ROOT}" \
+    --dataset "${ARTIFACT_ROOT}/navigation_dataset.gt_only.json" \
+    --hidden-input "${ARTIFACT_ROOT}/terminal_targets.hidden_key.json" \
+    --report "${GRAPH_ROOT}/l15_correlation_evaluation.json" \
+    --details "${GRAPH_ROOT}/l15_correlation_evaluation.hidden_key.json" \
+    --memory-capacity "${MEMORY_CAPACITY}" \
+    --max-path-hops 8 \
+    --video-limit "${VIDEO_LIMIT}"
+
+  if [[ -n "${COHORT_PROTOCOL}" ]]; then
+    if [[ -z "${COHORT_GATE_OUTPUT}" || -z "${COHORT_GATE_DETAILS}" ]]; then
+      echo "COHORT_GATE_OUTPUT and COHORT_GATE_DETAILS are required with COHORT_PROTOCOL" >&2
+      exit 2
+    fi
+    "${VENV_ROOT}/bin/python" -m steam_video_new.implicit_world_model.cgbench_grounded_navigation.fixed_l15_cohort gate \
+      --dataset "${ARTIFACT_ROOT}/navigation_dataset.gt_only.json" \
+      --hidden-key "${ARTIFACT_ROOT}/terminal_targets.hidden_key.json" \
+      --selection "${SELECTION}" \
+      --protocol "${COHORT_PROTOCOL}" \
+      --graph-root "${GRAPH_ROOT}" \
+      --output "${COHORT_GATE_OUTPUT}" \
+      --details-output "${COHORT_GATE_DETAILS}" \
+      --maximum-path-hops 8
+  fi
+fi

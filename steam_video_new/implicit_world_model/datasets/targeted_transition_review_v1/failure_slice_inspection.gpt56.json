@@ -1,0 +1,370 @@
+{
+  "schema_version": "steam-transition-failure-slices/v0.1",
+  "packet_id": "transition-review-v1",
+  "source_annotation_status": "ai_provisional",
+  "partition_contract": "exclusive_primary_slice_from_visible_categorical_evidence",
+  "inconclusive_item_count": 23,
+  "slice_counts": {
+    "identity_unconfirmed": 4,
+    "missing_same_attribute_before_after": 3,
+    "counterevidence_related_not_refuting": 12,
+    "relation_definition_unclear": 1,
+    "evidence_retrieval_insufficient": 3
+  },
+  "partition_complete": true,
+  "items": [
+    {
+      "item_id": "transition-review:1970e8385a420fa6f7e03d90",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The search returned grounded views of the same episode, but they explain complementary perspectives rather than directly contradicting the source claim."
+    },
+    {
+      "item_id": "transition-review:50d03b36af006cbead78df04",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The search returned grounded views of the same episode, but they explain complementary perspectives rather than directly contradicting the source claim."
+    },
+    {
+      "item_id": "transition-review:3527e669c8f132d3b8db4bc5",
+      "primary_slice": "missing_same_attribute_before_after",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "no common explicit state attribute across endpoints"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001"
+      ],
+      "rationale": "The events share a described man and crumpled item, but no explicit same-attribute before and after values establish a strict state transition."
+    },
+    {
+      "item_id": "transition-review:ee56f3de112bcd9958f2ed02",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "track_entity",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_003"
+      ],
+      "rationale": "Both events mention a generic girl, but the visible evidence lacks a distinctive grounded identity link."
+    },
+    {
+      "item_id": "transition-review:1493257bc33c84390ffc1fbf",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003",
+        "memory:vh_seg_004"
+      ],
+      "rationale": "The returned scenes contain changing illumination across locations, but they do not directly contradict the source observation that its environment is dark."
+    },
+    {
+      "item_id": "transition-review:5cfc0b8635e39fb82d7d6f84",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The search is grounded and includes later non-response behavior, but it does not directly negate the earlier out-of-power state."
+    },
+    {
+      "item_id": "transition-review:7503b96edb700ef89abf4c39",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:evidence.state:a115c85b8e",
+        "memory:obs:fine:clip:mKqiGQrHtW8:fine:0002"
+      ],
+      "rationale": "The returned projector observations are grounded and consistent with a bright beam, so they do not establish the requested contradiction."
+    },
+    {
+      "item_id": "transition-review:ff839fb38eb441118476b5ad",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "track_entity",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:8521f3bf50"
+      ],
+      "rationale": "Both events describe a generic man handling related objects, but the public evidence does not uniquely establish identity across the two mentions."
+    },
+    {
+      "item_id": "transition-review:7eb9e7afde5ce303838f7c51",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The retrieved scenes add ominous later context but do not directly contradict the source description of the cottage as cozy."
+    },
+    {
+      "item_id": "transition-review:2c6f47563d62146e103f0ec3",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003",
+        "memory:vh_seg_004",
+        "memory:vh_seg_005"
+      ],
+      "rationale": "The search returned a grounded continuation involving the same man, but nothing visibly negates that he pushed open the door and entered."
+    },
+    {
+      "item_id": "transition-review:cd402525f7a9ea286b972eac",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "verify",
+      "relation": "same_entity",
+      "visible_signals": [
+        "identity relation remains unresolved after executed read"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:3f974fc3bd",
+        "memory:evidence.event:34542f829e"
+      ],
+      "rationale": "The descriptions are compatible and nearby in content, but a generic man and matching pose alone do not uniquely prove identity."
+    },
+    {
+      "item_id": "transition-review:dd973bbceb16984c1113ba73",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "explicit common state attribute is visible",
+        "shared grounded identity is not established"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:166e1dee94",
+        "memory:evidence.event:742efe558b"
+      ],
+      "rationale": "An explicit gaze value differs, but the public packet does not first establish that the two separately tracked generic-man mentions are the same grounded identity."
+    },
+    {
+      "item_id": "transition-review:1f1d00c35cc508c2bab0e9c2",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:evidence.observation:a79fdb8fd3",
+        "memory:evidence.observation:86a2adfc64"
+      ],
+      "rationale": "The returned projector details are grounded, but they do not contradict the source camera-pan observation."
+    },
+    {
+      "item_id": "transition-review:f6791c26ca7c55490ec4cc96",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "explicit common state attribute is visible",
+        "shared grounded identity is not established"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:faf09dbfa7",
+        "memory:evidence.event:47ecad373c"
+      ],
+      "rationale": "The expressions differ, but the generic-man mentions have separate tracks and the visible packet does not establish a shared identity required for strict state transition."
+    },
+    {
+      "item_id": "transition-review:cde800a0af4b703e8e2bf844",
+      "primary_slice": "relation_definition_unclear",
+      "action_type": "verify",
+      "relation": "transition_support",
+      "visible_signals": [
+        "transition_support has no strict same-attribute contract"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:9dcd234603",
+        "memory:evidence.event:edcdcdad2a"
+      ],
+      "rationale": "The events are compatible and grounded, but transition support is underspecified and no strict same-attribute state delta is visible."
+    },
+    {
+      "item_id": "transition-review:249e226f8fbffd1a138e041a",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The returned perspectives are grounded but do not negate the source event that the man enters the house."
+    },
+    {
+      "item_id": "transition-review:cda4944285e1c2e96e8a6671",
+      "primary_slice": "evidence_retrieval_insufficient",
+      "action_type": "track_entity",
+      "relation": "same_entity",
+      "visible_signals": [
+        "fewer than two executed evidence citations",
+        "identity relation remains unresolved"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:ed17660e06"
+      ],
+      "rationale": "The matching downward gaze is compatible, but the generic-man descriptions do not uniquely ground a same-entity conclusion."
+    },
+    {
+      "item_id": "transition-review:e0ca69c4222e3269e8a33121",
+      "primary_slice": "identity_unconfirmed",
+      "action_type": "verify",
+      "relation": "state_transition",
+      "visible_signals": [
+        "explicit common state attribute is visible",
+        "shared grounded identity is not established"
+      ],
+      "evidence_refs": [
+        "memory:evidence.event:9e903d4dc4",
+        "memory:evidence.event:78d4a97fd1"
+      ],
+      "rationale": "The possession descriptions differ, but the visible evidence does not first establish one accepted identity track or one explicit same-attribute before and after delta."
+    },
+    {
+      "item_id": "transition-review:7495a60aacfb8d803f8a4094",
+      "primary_slice": "missing_same_attribute_before_after",
+      "action_type": "verify",
+      "relation": "state_transition",
+      "visible_signals": [
+        "no common explicit state attribute across endpoints"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "Picking up and throwing the same paper are sequential actions, but no explicit same-attribute before and after values establish a strict state transition."
+    },
+    {
+      "item_id": "transition-review:38a0934a7336d9543b2e34cc",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The search reveals another differently dressed girl, but that is a separate participant rather than evidence contradicting the first girl's clothing color."
+    },
+    {
+      "item_id": "transition-review:ce090b128d77ad6d3f08f5bf",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_001",
+        "memory:vh_seg_002",
+        "memory:vh_seg_003"
+      ],
+      "rationale": "The retrieved scenes add ominous later context but do not directly contradict the source description of the cottage as cozy."
+    },
+    {
+      "item_id": "transition-review:64501985563eaa81423420f1",
+      "primary_slice": "missing_same_attribute_before_after",
+      "action_type": "inspect_state_change",
+      "relation": "state_transition",
+      "visible_signals": [
+        "no common explicit state attribute across endpoints"
+      ],
+      "evidence_refs": [
+        "memory:vh_seg_002"
+      ],
+      "rationale": "The events concern the same boy and paper, but no explicit same-attribute before and after values satisfy the strict state-transition rule."
+    },
+    {
+      "item_id": "transition-review:0d498393b28d658af562eda7",
+      "primary_slice": "counterevidence_related_not_refuting",
+      "action_type": "search_counterevidence",
+      "relation": "contradicts",
+      "visible_signals": [
+        "counterevidence operation executed",
+        "visible result does not directly negate source claim"
+      ],
+      "evidence_refs": [
+        "memory:evidence.observation:118dcec06c",
+        "memory:evidence.observation:7ff6fb9a47"
+      ],
+      "rationale": "The returned vehicle observations are grounded context, but they do not contradict the source event that the passenger leans forward and leaves the frame."
+    }
+  ],
+  "next_collection_requirements": [
+    "same grounded identity plus explicit same-attribute changed values",
+    "different-person and stable-attribute-conflict identity hard negatives",
+    "directly supporting and directly refuting counterevidence outcomes",
+    "executed empty, reject, and inconclusive controls",
+    "delayed cases whose first read only opens a later decisive read"
+  ],
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false
+}

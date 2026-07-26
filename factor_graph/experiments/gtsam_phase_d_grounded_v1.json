@@ -1,0 +1,171 @@
+{
+  "schema_version": "gtsam_phase_d_grounded_experiment/v0.1",
+  "status": "derived_grounded_integration_smoke_not_calibration_benchmark",
+  "production_ready": false,
+  "runtime": {
+    "gtsam": "4.2.1",
+    "python": "3.12.13",
+    "video_skills_runtime": true,
+    "post_read_verifier": "memory_graph.verify_relation/post-read-v1",
+    "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+    "llm_numeric_output": false
+  },
+  "source": {
+    "artifact": "factor_graph/fixtures/phase_d_coupled_overlay.json",
+    "artifact_sha256": "1b52d60789a76dc8c5b560099c6f917ebafaeb83e696eb2bfa035ff6c04bb81f",
+    "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+    "derived_from": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+    "embedding_models": [
+      "Qwen/Qwen3-VL-Embedding-2B"
+    ],
+    "embedding_ref_count": 2
+  },
+  "gates": {
+    "all_real_graph_reads_executed": true,
+    "post_read_verifiers_support": true,
+    "state_measurement_changes_direct_target": true,
+    "state_measurement_propagates_to_identity": true,
+    "frozen_has_no_measurement": true,
+    "no_loop_blocks_propagation": true,
+    "shuffled_target_changes_result": true,
+    "conflicting_measurements_are_retained": true,
+    "grounded_conflicting_measurement_is_retained": true,
+    "verified_dependency_is_nonempty": true,
+    "qwen_embedding_refs_are_retained": true
+  },
+  "all_gates_pass": true,
+  "arms": {
+    "frozen": {
+      "labels": {
+        "relation::phase-d:conflict::contradicts": "rejected",
+        "relation::phase-d:dependency::transition_support": "uncertain",
+        "relation::phase-d:identity::same_entity": "uncertain",
+        "relation::phase-d:state::state_transition": "rejected"
+      },
+      "measurement_count": 0
+    },
+    "normal": {
+      "decision": {
+        "edge_id": "phase-d:state",
+        "relation": "state_transition",
+        "outcome": "supports",
+        "verifier_name": "post_read_categorical_relation_verifier",
+        "verifier_version": "memory_graph.verify_relation/post-read-v1",
+        "evidence_refs": [
+          "memory:evidence.event:faf09dbfa7",
+          "memory:evidence.event:47ecad373c"
+        ],
+        "reasons": [
+          "same entity changes 'expression' from 'neutral' to 'focused'"
+        ]
+      },
+      "labels": {
+        "relation::phase-d:conflict::contradicts": "rejected",
+        "relation::phase-d:dependency::transition_support": "uncertain",
+        "relation::phase-d:identity::same_entity": "accepted",
+        "relation::phase-d:state::state_transition": "accepted"
+      },
+      "direct_changed": [
+        "relation::phase-d:state::state_transition"
+      ],
+      "propagated_changed": [
+        "relation::phase-d:identity::same_entity"
+      ]
+    },
+    "no_loop": {
+      "labels": {
+        "relation::phase-d:conflict::contradicts": "rejected",
+        "relation::phase-d:dependency::transition_support": "uncertain",
+        "relation::phase-d:identity::same_entity": "uncertain",
+        "relation::phase-d:state::state_transition": "accepted"
+      },
+      "changed": [
+        "relation::phase-d:state::state_transition"
+      ]
+    },
+    "shuffled": {
+      "labels": {
+        "relation::phase-d:conflict::contradicts": "rejected",
+        "relation::phase-d:dependency::transition_support": "uncertain",
+        "relation::phase-d:identity::same_entity": "accepted",
+        "relation::phase-d:state::state_transition": "rejected"
+      },
+      "disagreement_with_normal": [
+        "relation::phase-d:state::state_transition"
+      ]
+    },
+    "conflicting": {
+      "decision_outcome": "supports",
+      "labels": {
+        "relation::phase-d:conflict::contradicts": "rejected",
+        "relation::phase-d:dependency::transition_support": "uncertain",
+        "relation::phase-d:identity::same_entity": "accepted",
+        "relation::phase-d:state::state_transition": "accepted"
+      },
+      "journal": [
+        {
+          "measurement_id": "measurement:cec8000ca86effacf32777cb",
+          "action_id": "skill:2b5080927762",
+          "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+          "edge_id": "phase-d:state",
+          "relation": "state_transition",
+          "variable_id": "relation::phase-d:state::state_transition",
+          "outcome": "supports",
+          "observation_ids": [
+            "event:atomic:video_skills_l1:00258"
+          ],
+          "evidence_refs": [
+            "memory:evidence.event:faf09dbfa7",
+            "memory:evidence.event:47ecad373c"
+          ],
+          "verifier_name": "post_read_categorical_relation_verifier",
+          "verifier_version": "memory_graph.verify_relation/post-read-v1",
+          "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+          "reasons": [
+            "same entity changes 'expression' from 'neutral' to 'focused'"
+          ]
+        },
+        {
+          "measurement_id": "measurement:bda71fd2333a8fe9891e1d92",
+          "action_id": "skill:eebe6161a893",
+          "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+          "edge_id": "phase-d:conflict",
+          "relation": "contradicts",
+          "variable_id": "relation::phase-d:conflict::contradicts",
+          "outcome": "supports",
+          "observation_ids": [
+            "event:atomic:video_skills_l1:00258"
+          ],
+          "evidence_refs": [
+            "memory:evidence.event:faf09dbfa7",
+            "memory:evidence.event:47ecad373c"
+          ],
+          "verifier_name": "post_read_categorical_relation_verifier",
+          "verifier_version": "memory_graph.verify_relation/post-read-v1",
+          "calibration_version": "pilot_relation_measurement/v0.1-not-calibrated",
+          "reasons": [
+            "same-entity attribute 'expression' has incompatible values 'neutral' and 'focused'"
+          ]
+        }
+      ]
+    },
+    "verified_dependency": {
+      "decision_outcome": "supports",
+      "labels": {
+        "relation::phase-d:conflict::contradicts": "rejected",
+        "relation::phase-d:dependency::transition_support": "accepted",
+        "relation::phase-d:identity::same_entity": "uncertain",
+        "relation::phase-d:state::state_transition": "rejected"
+      },
+      "direct_changed": [
+        "relation::phase-d:dependency::transition_support"
+      ]
+    }
+  },
+  "limitations": [
+    "The accepted track remap is a transparent integration fixture, not an independent human gold label.",
+    "Pilot likelihoods exercise inference mechanics and are not calibrated accuracy estimates.",
+    "Equal-strength state and contradiction support may leave categorical labels unchanged; both measurements remain auditable.",
+    "Production still requires a fixed, independently annotated multi-video case set."
+  ]
+}

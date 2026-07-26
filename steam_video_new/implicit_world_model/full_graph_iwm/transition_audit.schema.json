@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/iwm_transition_audit.schema.json",
+  "title": "IWMTransitionAuditPacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "annotation_status",
+    "source_model",
+    "source_candidate_schema",
+    "source_candidates_sha256",
+    "allowed_review_decisions",
+    "contract",
+    "records",
+    "training_allowed",
+    "training_performed"
+  ],
+  "properties": {
+    "schema_version": {"const": "steam-iwm-transition-audit/v0.1"},
+    "packet_id": {"type": "string", "minLength": 1},
+    "annotation_status": {"enum": ["unreviewed", "human_locked"]},
+    "source_model": {"type": "string", "minLength": 1},
+    "source_candidate_schema": {"const": "steam-executed-iwm-trace-candidates/v0.2"},
+    "source_candidates_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "allowed_review_decisions": {
+      "type": "array",
+      "items": {"enum": ["over_crediting", "under_crediting", "consistent", "inconclusive"]},
+      "uniqueItems": true
+    },
+    "contract": {"type": "object"},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "record_id",
+          "case_id",
+          "video_id",
+          "split",
+          "step_index",
+          "trajectory_id",
+          "executed_real_observation_id",
+          "executed_real_observation",
+          "predicted_belief_delta",
+          "corrected_belief_before",
+          "corrected_belief_after",
+          "automatic_failure_slice",
+          "unsupported_predicted_resolved_roles",
+          "review",
+          "review_status",
+          "training_allowed"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "record_id": {"type": "string", "minLength": 1},
+          "case_id": {"type": "string", "minLength": 1},
+          "video_id": {"type": "string", "minLength": 1},
+          "split": {"enum": ["train", "validation", "test"]},
+          "step_index": {"type": "integer", "minimum": 0},
+          "trajectory_id": {"type": "string", "minLength": 1},
+          "executed_real_observation_id": {"type": "string", "minLength": 1},
+          "executed_real_observation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "node_id", "video_id", "time_span", "text", "predicate",
+              "action_kind", "participants", "states", "state_change",
+              "uses_hidden_supervision"
+            ],
+            "properties": {
+              "node_id": {"type": "string", "minLength": 1},
+              "video_id": {"type": "string", "minLength": 1},
+              "time_span": {"type": "object"},
+              "text": {"type": "string"},
+              "predicate": {"type": "string"},
+              "action_kind": {"type": "string"},
+              "participants": {"type": "array", "items": {"type": "object"}},
+              "states": {"type": "array"},
+              "state_change": {},
+              "uses_hidden_supervision": {"const": false}
+            }
+          },
+          "predicted_belief_delta": {"type": "object"},
+          "corrected_belief_before": {"type": "object"},
+          "corrected_belief_after": {"type": "object"},
+          "automatic_failure_slice": {
+            "enum": ["over_crediting", "under_crediting", "consistent", "inconclusive"]
+          },
+          "unsupported_predicted_resolved_roles": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": true
+          },
+          "review": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["decision", "rationale", "annotator"],
+            "properties": {
+              "decision": {
+                "type": ["string", "null"],
+                "enum": ["over_crediting", "under_crediting", "consistent", "inconclusive", null]
+              },
+              "rationale": {"type": ["string", "null"]},
+              "annotator": {"type": ["string", "null"]}
+            }
+          },
+          "review_status": {"enum": ["unreviewed", "human_locked"]},
+          "training_allowed": {"const": false}
+        }
+      }
+    },
+    "training_allowed": {"const": false},
+    "training_performed": {"const": false}
+  }
+}

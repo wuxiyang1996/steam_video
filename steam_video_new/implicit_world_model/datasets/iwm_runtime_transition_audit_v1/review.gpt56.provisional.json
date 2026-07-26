@@ -1,0 +1,194 @@
+{
+  "schema_version": "steam-iwm-transition-model-review/v0.1",
+  "packet_id": "cgbench-gpt5mini-runtime-transition-audit-v1",
+  "packet_sha256": "f3598511d17d61af3e71377ff7f7e116fce90127edb181a1dec06c7dba39ba05",
+  "labels_source": "model_provisional",
+  "annotator": "openai/gpt-5.6",
+  "automatic_failure_slice_visible_to_reviewer": false,
+  "hidden_clues_or_answers_visible_to_reviewer": false,
+  "decisions": [
+    {
+      "record_id": "transition_audit:011a9b81dca9c289d1bb",
+      "decision": "under_crediting",
+      "rationale": "visible_target_and_contact_progress_missed"
+    },
+    {
+      "record_id": "transition_audit:05cf5a1e0767574823c7",
+      "decision": "consistent",
+      "rationale": "readiness_transition_matches_correction"
+    },
+    {
+      "record_id": "transition_audit:0d0f1e7eeb9642654820",
+      "decision": "consistent",
+      "rationale": "visible_object_color_progress_captured"
+    },
+    {
+      "record_id": "transition_audit:0e23f0eea03139b72f0f",
+      "decision": "over_crediting",
+      "rationale": "premature_readiness_and_frontier_closure"
+    },
+    {
+      "record_id": "transition_audit:0f749dadd682c65c21d8",
+      "decision": "under_crediting",
+      "rationale": "visible_consequent_progress_and_readiness_missed"
+    },
+    {
+      "record_id": "transition_audit:20254a8c83a76ef83b52",
+      "decision": "over_crediting",
+      "rationale": "readiness_exceeds_post_read_correction"
+    },
+    {
+      "record_id": "transition_audit:2334d87e9f429bc6ca48",
+      "decision": "over_crediting",
+      "rationale": "unsupported_right_hand_color_resolution"
+    },
+    {
+      "record_id": "transition_audit:24c30cc3fec16163e9d7",
+      "decision": "over_crediting",
+      "rationale": "unsupported_full_resolution_and_readiness"
+    },
+    {
+      "record_id": "transition_audit:31bdc63333fe656dbae5",
+      "decision": "over_crediting",
+      "rationale": "unsupported_equipment_state_resolution"
+    },
+    {
+      "record_id": "transition_audit:41fd4190bbf8abe4d3b5",
+      "decision": "under_crediting",
+      "rationale": "missed_post_read_object_color_resolution"
+    },
+    {
+      "record_id": "transition_audit:422f08497430f871f25a",
+      "decision": "consistent",
+      "rationale": "no_justified_role_resolution"
+    },
+    {
+      "record_id": "transition_audit:42a907b6e1785bf32987",
+      "decision": "over_crediting",
+      "rationale": "unsupported_full_resolution_and_readiness"
+    },
+    {
+      "record_id": "transition_audit:4a1d7462f0b15ab1814e",
+      "decision": "under_crediting",
+      "rationale": "missed_visible_target_resolution"
+    },
+    {
+      "record_id": "transition_audit:4a6b1feddfaaa3e21e22",
+      "decision": "over_crediting",
+      "rationale": "unsupported_equipment_state_resolution"
+    },
+    {
+      "record_id": "transition_audit:5283004e174733dd1380",
+      "decision": "over_crediting",
+      "rationale": "unsupported_right_hand_attribution"
+    },
+    {
+      "record_id": "transition_audit:551bd8dd17b8cd08a15e",
+      "decision": "over_crediting",
+      "rationale": "unsupported_equipment_state_resolution"
+    },
+    {
+      "record_id": "transition_audit:5eb54d743f8779eb2e9c",
+      "decision": "over_crediting",
+      "rationale": "unsupported_agent_identity_resolution"
+    },
+    {
+      "record_id": "transition_audit:61536c0732a3c1bd5723",
+      "decision": "under_crediting",
+      "rationale": "missed_visible_target_resolution"
+    },
+    {
+      "record_id": "transition_audit:791b1de6de34e70b70b7",
+      "decision": "consistent",
+      "rationale": "unchanged_delta_supported"
+    },
+    {
+      "record_id": "transition_audit:7a13a3bd6348ac1c6da4",
+      "decision": "consistent",
+      "rationale": "answerability_transition_supported"
+    },
+    {
+      "record_id": "transition_audit:809f59a6562cf9e7531d",
+      "decision": "over_crediting",
+      "rationale": "question_roles_not_visibly_supported"
+    },
+    {
+      "record_id": "transition_audit:8af501f00f2707689fc5",
+      "decision": "over_crediting",
+      "rationale": "role_resolution_and_readiness_not_visibly_supported"
+    },
+    {
+      "record_id": "transition_audit:8f1568cadb4d2fa645c3",
+      "decision": "over_crediting",
+      "rationale": "role_resolution_and_readiness_not_visibly_supported"
+    },
+    {
+      "record_id": "transition_audit:90eb6aa3af5a69450152",
+      "decision": "over_crediting",
+      "rationale": "equipment_state_resolution_not_visibly_supported"
+    },
+    {
+      "record_id": "transition_audit:91b0d02fc777ab62d3eb",
+      "decision": "under_crediting",
+      "rationale": "missed_visible_role_resolutions"
+    },
+    {
+      "record_id": "transition_audit:a14463541436d79ac696",
+      "decision": "over_crediting",
+      "rationale": "unsupported_full_resolution_and_readiness"
+    },
+    {
+      "record_id": "transition_audit:a86033018d4430a09110",
+      "decision": "over_crediting",
+      "rationale": "unsupported_progress_from_irrelevant_scene_transition"
+    },
+    {
+      "record_id": "transition_audit:bff6dd123a9e34b48554",
+      "decision": "consistent",
+      "rationale": "readiness_supported_by_visible_followup_action_and_correction"
+    },
+    {
+      "record_id": "transition_audit:c062755a3f748a0edefd",
+      "decision": "over_crediting",
+      "rationale": "premature_readiness_with_unresolved_options"
+    },
+    {
+      "record_id": "transition_audit:c2c6f203fe57f91d529f",
+      "decision": "under_crediting",
+      "rationale": "missed_visible_role_resolutions_and_contradiction_change"
+    },
+    {
+      "record_id": "transition_audit:ca7f169d6c4bc9eb145e",
+      "decision": "consistent",
+      "rationale": "visible_evidence_matches_no_change"
+    },
+    {
+      "record_id": "transition_audit:d47cf68bb3526da29d5a",
+      "decision": "over_crediting",
+      "rationale": "predicted_resolution_exceeds_visible_support"
+    },
+    {
+      "record_id": "transition_audit:d68b4ab4f4a4f76ef412",
+      "decision": "under_crediting",
+      "rationale": "visible_evidence_supports_unpredicted_role_resolution"
+    },
+    {
+      "record_id": "transition_audit:d9e3867d1425273b0310",
+      "decision": "over_crediting",
+      "rationale": "predicted_resolution_exceeds_visible_support"
+    },
+    {
+      "record_id": "transition_audit:db1d602224eceb4666ee",
+      "decision": "over_crediting",
+      "rationale": "scene_transition_does_not_support_predicted_resolution"
+    },
+    {
+      "record_id": "transition_audit:eec8b0577cbaa7bb33a7",
+      "decision": "over_crediting",
+      "rationale": "scene_transition_does_not_support_predicted_resolution"
+    }
+  ],
+  "formal_gate_eligible": false,
+  "training_allowed": false,
+  "training_performed": false
+}

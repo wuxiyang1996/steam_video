@@ -1,0 +1,23 @@
+{
+  "schema_version": "steam-cgbench-source-integrity-exclusions/v0.1",
+  "dataset": "CG-Bench",
+  "policy": "exclude_only_exact_source_rows_with_auditable_grounded_defects",
+  "exclusions": [
+    {
+      "video_uid": "T5PD8ofhiug",
+      "qid": "10296",
+      "reason": "source record question asks for an edited image size but choices and answer are unrelated food-platter labels"
+    },
+    {
+      "video_uid": "3iOLbfYmgdQ",
+      "qid": "11866",
+      "reason": "source record asks which numbered statement is incorrect but does not include the referenced statements"
+    },
+    {
+      "video_uid": "xtJeKSDD0ho",
+      "qid": "4368",
+      "reason": "source record defines statements one through four but answer choices refer to an undefined statement five"
+    }
+  ],
+  "training_performed": false
+}

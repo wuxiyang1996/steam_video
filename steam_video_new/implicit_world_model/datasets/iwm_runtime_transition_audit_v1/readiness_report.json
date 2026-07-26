@@ -1,0 +1,38 @@
+{
+  "schema_version": "steam-iwm-transition-audit-readiness/v0.1",
+  "packet_id": "cgbench-gpt5mini-runtime-transition-audit-v1",
+  "counts": {
+    "record_count": 36,
+    "case_count": 3,
+    "video_count": 3,
+    "split_counts": {
+      "test": 36
+    },
+    "train_case_count": 0,
+    "train_video_count": 0,
+    "automatic_failure_slices": {
+      "consistent": 7,
+      "inconclusive": 3,
+      "over_crediting": 19,
+      "under_crediting": 7
+    },
+    "review_statuses": {
+      "unreviewed": 36
+    }
+  },
+  "readiness_dimensions": {
+    "train_split_present": false,
+    "at_least_thirty_train_cases": false,
+    "at_least_twenty_train_videos": false,
+    "all_four_failure_slices_present": true,
+    "at_least_twenty_over_crediting_candidates": false,
+    "all_records_independently_locked": false
+  },
+  "training_ready": false,
+  "training_blockers": [
+    "automatic slices are diagnostics, not independent labels",
+    "packet-level training_allowed remains false",
+    "SFT export requires a separate human-locked adapter and split audit"
+  ],
+  "training_performed": false
+}
