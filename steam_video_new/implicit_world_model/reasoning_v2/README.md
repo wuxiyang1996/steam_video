@@ -90,5 +90,82 @@ calibrated transitions, and a multi-video fixed cohort were not available.
 This failure must not be repaired with heuristic Top-K or forced tie-breaking.
 It identifies the next data/model requirement: supervision for delayed entry
 localization and grounded hypothesis-conditioned effects, with semantic-neighbor
-hard negatives. `training_export.blocked.json` records the failed gate; no 9B
-training export was produced.
+hard negatives. Each smoke writes a sibling
+`<artifact>.training_export.blocked.json`, so experiments cannot overwrite one
+another's failed gates; no 9B training export was produced.
+
+## Complete-graph dual-entry verification
+
+The model-backed evaluator now runs two protocols over the exact same complete,
+question-independent L1/L1.5 artifact:
+
+- `oracle_entry` changes only the initial `entry_node_ids` to the hidden
+  evaluator's first-clue nodes.  It is a downstream diagnostic: after the
+  common first real read, IWM/no-WM/shuffled-IWM/immediate-only/oracle each
+  correct belief and independently replan toward the next clue.
+- `learned_entry` obtains the initial frontier by inspecting every safe address,
+  then runs the same arms, horizon, two-read budget, correction, and replanning
+  loop.  It is the end-to-end diagnostic.
+
+All nodes and proposals remain present in both protocols.  An entry protocol
+does not dump the graph into one prompt and does not expose unread evidence
+values.  Legal actions are still compiled from entry nodes on round zero and
+from graph adjacency after a real read.  Hidden clue IDs and shortest-path next
+hops exist only in evaluator metrics and the evaluator-only oracle arm; they are
+never sent to the IWM, learned localizer, or learned planner.
+
+The output reports each arm's two round decisions, executed target sequence,
+remaining matched read budget, hypothesis divergence after real correction,
+and whether the replan selected a first hop on a shortest route to the later
+clue.  Infrastructure, localization, transition, planning, intervention, and
+answer metrics remain separate; they are not collapsed into a claimed model
+improvement.  Failed scientific gates continue to block training export.
+
+The first dual-entry result localized the evidence bottleneck more precisely.
+Even oracle entry at node `0021` produced no real belief change because its L1
+value was only `person holding object`; IWM then followed surface-color/package
+associations to `0176` instead of the evaluator route target `0034`. The
+substrate repair therefore adds time-aligned, question-independent subtitle
+content to both the bounded address key and hidden-until-read value, regenerates
+Qwen3-VL-2B embeddings, and adds a hidden evaluator audit requiring every clue
+group to have a materially enriched grounded value. Temporal overlap alone no
+longer passes this substrate gate.
+
+Each real read now also reports whether correction changed belief, separately
+from whether answer hypotheses diverged. A partial clue may legitimately
+advance a shared missing role without distinguishing answers, so these metrics
+must not be conflated. Delayed transition collection marks executed
+correlation reads with no realized clue gain as the categorical slice
+`surface_correlation_without_realized_clue_gain`; these are the required hard
+negatives for surface matches such as color or packaging recurrence.
+
+## Repaired complete-graph result and honest headroom
+
+After subtitle enrichment and Qwen3-VL-Embedding-2B regeneration, the same
+complete graph contains 256 nodes and 957 typed proposals, and all three hidden
+clue groups have non-placeholder grounded values and current embedding
+references. In the two-read GPT-5-mini replay, oracle entry now changes and
+diverges real beliefs, although its second IWM action still misses the shortest-
+path hop. Learned entry selects a more direct subtitle-bearing node and
+produces the correct unique answer after its first real read. This shows that
+the repaired substrate can support the closed loop; it does not yet show that
+IWM improves navigation.
+
+The evaluator prevents two false conclusions exposed by this replay:
+
+- Dataset interval/node-ID recall is a strict localization metric, separate
+  from grounded belief change and final answer accuracy. A direct evidence node
+  outside the annotated interval remains a strict miss, but its correct answer
+  is not described as an end-to-end failure.
+- Route headroom uses exact graph distance. For this case, the nearest node in
+  the first annotated clue group is two proposal edges from the next clue
+  group, so reaching it requires three real reads including entry. A two-read arm can test correction and
+  replanning but cannot pass the later-clue/answer oracle gate. Merely executing
+  two oracle reads is no longer called “route available.”
+
+This remains a single-case substrate diagnostic. IWM changes the oracle action
+sequence relative to no-WM and shuffled-IWM but does not turn that divergence
+into clue reach or a correct answer; learned-entry IWM and immediate-only both
+obtain the same answer in one read. Training stays blocked until a fixed multi-video cohort has
+budget-feasible oracle paths, independent transition calibration, and matched-
+arm evidence that intact IWM predictions improve accuracy or read efficiency.

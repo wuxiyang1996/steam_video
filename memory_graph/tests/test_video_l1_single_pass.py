@@ -48,6 +48,10 @@ class _GroundedClient:
                     "coarse_end_s": 2.0,
                     "grounding_status": "observed",
                     "action_kind": "action",
+                    "grounded_caption": "A woman opens a box labeled blueberry.",
+                    "visible_text": [
+                        {"text": "blueberry", "evidence_frames": [0]}
+                    ],
                     "evidence_frames": [0, 1],
                     "participants": [
                         {
@@ -99,11 +103,16 @@ def test_grounded_single_pass_uses_one_model_call_per_window(
     result = extractor.extract(video_path=video, video_id="video-a")
 
     assert client.calls == 1
-    assert result.protocol_version == "video-only-l1/v0.2-grounded-single-pass"
+    assert result.protocol_version == (
+        "video-only-l1/v0.3-rich-grounded-single-pass"
+    )
     assert result.coarse_window_count == 1
     assert result.model_call_count == 1
     assert result.fine_localized_count == 1
-    assert result.nodes[0].text == "opens box"
+    assert result.nodes[0].text == "A woman opens a box labeled blueberry."
+    assert result.nodes[0].metadata["visible_text"] == [
+        {"text": "blueberry", "evidence_frames": [0]}
+    ]
     assert result.nodes[0].metadata["localization"]["evidence_frames"] == [0, 1]
 
 

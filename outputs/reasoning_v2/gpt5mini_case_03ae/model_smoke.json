@@ -1,105 +1,1459 @@
 {
-  "schema_version": "steam-reasoning-v2-model-smoke/v0.1",
+  "schema_version": "steam-reasoning-v2-complete-graph-smoke/v0.2",
   "case_id": "cgcase:03ae94a7899404983244",
   "video_id": "BV1gbgWeBE92",
   "model": "openai/gpt-5-mini",
-  "scope": "single_case_infrastructure_smoke_not_training_evidence",
-  "entry_localization": {
-    "candidate_address_count": 192,
-    "selected_anchor_count": 2,
-    "selected_node_ids": [
-      "visual_l1:BV1gbgWeBE92:0045",
-      "visual_l1:BV1gbgWeBE92:0060"
-    ],
-    "status": "located",
-    "all_addresses_inspected": true,
-    "top_k_applied": false,
-    "numeric_score_used": false,
-    "unread_evidence_value_exposed": false,
-    "schema_repair_count": 0
+  "scope": "dual-entry-complete-graph-smoke_not_training_evidence",
+  "complete_graph": {
+    "node_count": 192,
+    "proposal_count": 628,
+    "question_independent": true,
+    "unread_evidence_values_exposed": false
   },
   "expected_first_clue_node_ids_hidden_evaluator_only": [
     "visual_l1:BV1gbgWeBE92:0021"
   ],
-  "arms": {
-    "iwm": {
-      "status": "select",
-      "selected_target_id": "visual_l1:BV1gbgWeBE92:0045",
-      "matches_expected_first_clue": false,
-      "candidate_tree_count": 2,
-      "observation_prediction_count": 12,
-      "effect_prediction_count": 72,
-      "joint_hypothesis_coverage": true,
-      "top_k_applied": false,
-      "rationale": "tree_1 more consistently advances answerability to ready across hypotheses while tree_0 shows more regressions"
+  "later_clue_node_ids_hidden_evaluator_only": [
+    "visual_l1:BV1gbgWeBE92:0034",
+    "visual_l1:BV1gbgWeBE92:0035"
+  ],
+  "protocols": {
+    "oracle_entry": {
+      "entry": {
+        "status": "located",
+        "source": "hidden_evaluator_only",
+        "selected_node_ids": [
+          "visual_l1:BV1gbgWeBE92:0021"
+        ],
+        "selected_anchor_count": 1,
+        "candidate_address_count": 192,
+        "all_addresses_available": true,
+        "hidden_clue_exposed_to_model": false,
+        "top_k_applied": false,
+        "numeric_score_used": false
+      },
+      "complete_graph": {
+        "node_count": 192,
+        "proposal_count": 628,
+        "preserved": true,
+        "only_entry_frontier_changed": true
+      },
+      "arms": {
+        "iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "complete_coverage"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0176",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "resolves_roles_consistently"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0176"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "no_wm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "all_futures_equivalent"
+            },
+            {
+              "status": "incomparable",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "no_clear_preference"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021"
+          ],
+          "executed_read_count": 1,
+          "remaining_read_budget": 1,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "shuffled_iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "unique_coverage"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0072",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "most_consistent_role_resolution_and_answerability"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0072"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": {
+            "kind": "within_batch_effect_rotation_preserving_marginals",
+            "batch_count": 4,
+            "changed_effect_count": 158,
+            "effective": true
+          }
+        },
+        "immediate_only": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0 is preferred — it uniquely advances at least one hypothesis to ready (resolving required roles for 1 and 4) while other hypothesis-conditioned futures only regress and remain abstain."
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0176",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "most-informative: resolves required roles and yields ready answerability across the largest set of hypotheses (consistent advanced/entity_attribute observations, closed frontiers)"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0176"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "oracle": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "hidden evaluator shortest-route oracle for headroom only"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0034",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "hidden evaluator shortest-route oracle for headroom only"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0034"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        }
+      },
+      "gates": {
+        "entry_contains_first_clue": true,
+        "iwm_first_action_matches_first_clue": true,
+        "iwm_two_round_closed_loop_executed": true,
+        "iwm_replan_moves_toward_later_clue": false,
+        "iwm_real_beliefs_diverged": false,
+        "iwm_action_sequence_diverges_from_no_wm": true,
+        "shuffling_changes_action_sequence": true,
+        "delayed_changes_action_sequence": false,
+        "oracle_two_round_route_available": true
+      }
     },
-    "no_wm": {
-      "status": "select",
-      "selected_target_id": "visual_l1:BV1gbgWeBE92:0045",
-      "matches_expected_first_clue": false,
-      "candidate_tree_count": 2,
-      "observation_prediction_count": 12,
-      "effect_prediction_count": 72,
-      "joint_hypothesis_coverage": true,
-      "top_k_applied": false,
-      "rationale": "more_informative"
-    },
-    "shuffled_iwm": {
-      "status": "select",
-      "selected_target_id": "visual_l1:BV1gbgWeBE92:0045",
-      "matches_expected_first_clue": false,
-      "candidate_tree_count": 2,
-      "observation_prediction_count": 12,
-      "effect_prediction_count": 72,
-      "joint_hypothesis_coverage": true,
-      "top_k_applied": false,
-      "rationale": "more_consistent_ready_outcomes"
-    },
-    "immediate_only": {
-      "status": "tie",
-      "selected_target_id": null,
-      "matches_expected_first_clue": false,
-      "candidate_tree_count": 2,
-      "observation_prediction_count": 12,
-      "effect_prediction_count": 72,
-      "joint_hypothesis_coverage": true,
-      "top_k_applied": false,
-      "rationale": "Both trees produce ready outcomes for the same hypothesis subset (1 and 3, 1 and 4, 3 and 4) and regression for the others, yielding equivalent coverage and resolution effects."
-    },
-    "oracle": {
-      "status": "abstain",
-      "selected_target_id": null,
-      "matches_expected_first_clue": false,
-      "candidate_tree_count": 2,
-      "observation_prediction_count": 12,
-      "effect_prediction_count": 72,
-      "joint_hypothesis_coverage": true,
-      "top_k_applied": false,
-      "rationale": "expected clue is absent from the matched localized frontier"
+    "learned_entry": {
+      "entry": {
+        "candidate_address_count": 192,
+        "selected_anchor_count": 2,
+        "selected_node_ids": [
+          "visual_l1:BV1gbgWeBE92:0045",
+          "visual_l1:BV1gbgWeBE92:0060"
+        ],
+        "status": "located",
+        "all_addresses_inspected": true,
+        "top_k_applied": false,
+        "numeric_score_used": false,
+        "unread_evidence_value_exposed": false,
+        "schema_repair_count": 0
+      },
+      "complete_graph": {
+        "node_count": 192,
+        "proposal_count": 628,
+        "preserved": true,
+        "only_entry_frontier_changed": true
+      },
+      "arms": {
+        "iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0060",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_1 preferred — more consistent advancement to ready/closed frontiers across hypotheses; tree_0 induces more regressions and opened contradictions"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0050",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0050"
+              ],
+              "candidate_tree_count": 7,
+              "observation_prediction_count": 51,
+              "effect_prediction_count": 306,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "preferred: more hypothesis-conditioned futures reach ready answerability with closed frontiers and resolved roles (dominant information gain)"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0060",
+            "visual_l1:BV1gbgWeBE92:0050"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "no_wm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0060",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefer_tree_1_due_to_more_diverse_informative_successors"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0046",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0050"
+              ],
+              "candidate_tree_count": 7,
+              "observation_prediction_count": 51,
+              "effect_prediction_count": 306,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "highest_discriminative_coverage"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0060",
+            "visual_l1:BV1gbgWeBE92:0046"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "shuffled_iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0045",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "more_frontier_closure_fewer_contradiction_opens"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0085",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0044",
+                "visual_l1:BV1gbgWeBE92:0085"
+              ],
+              "candidate_tree_count": 3,
+              "observation_prediction_count": 18,
+              "effect_prediction_count": 108,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefer-tree-with-most-advanced-progress-and-frontier-shifts-with-minimal-contradiction-opening"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0045",
+            "visual_l1:BV1gbgWeBE92:0085"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": {
+            "kind": "within_batch_effect_rotation_preserving_marginals",
+            "batch_count": 4,
+            "changed_effect_count": 43,
+            "effective": true
+          }
+        },
+        "immediate_only": {
+          "rounds": [
+            {
+              "status": "tie",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "Both trees provide equivalent hypothesis coverage and similar resolution outcomes (same hypotheses become ready/closed and the same remain not_ready); no clear preference."
+            },
+            {
+              "status": "not_executed",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [],
+              "candidate_tree_count": 0,
+              "observation_prediction_count": 0,
+              "effect_prediction_count": 0,
+              "joint_hypothesis_coverage": false,
+              "top_k_applied": false,
+              "rationale": "previous round did not select an executable action"
+            }
+          ],
+          "executed_target_ids": [],
+          "executed_read_count": 0,
+          "remaining_read_budget": 2,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "oracle": {
+          "rounds": [
+            {
+              "status": "abstain",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "evaluator route target is absent from the legal frontier"
+            },
+            {
+              "status": "not_executed",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [],
+              "candidate_tree_count": 0,
+              "observation_prediction_count": 0,
+              "effect_prediction_count": 0,
+              "joint_hypothesis_coverage": false,
+              "top_k_applied": false,
+              "rationale": "previous round did not select an executable action"
+            }
+          ],
+          "executed_target_ids": [],
+          "executed_read_count": 0,
+          "remaining_read_budget": 2,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [],
+          "top_k_applied": false,
+          "intervention_audit": null
+        }
+      },
+      "gates": {
+        "entry_contains_first_clue": false,
+        "iwm_first_action_matches_first_clue": false,
+        "iwm_two_round_closed_loop_executed": true,
+        "iwm_replan_moves_toward_later_clue": true,
+        "iwm_real_beliefs_diverged": false,
+        "iwm_action_sequence_diverges_from_no_wm": true,
+        "shuffling_changes_action_sequence": true,
+        "delayed_changes_action_sequence": true,
+        "oracle_two_round_route_available": false
+      }
     }
   },
-  "replan": {
-    "status": "select",
-    "selected_target_id": "visual_l1:BV1gbgWeBE92:0044",
-    "matches_expected_first_clue": false,
-    "candidate_tree_count": 3,
-    "observation_prediction_count": 18,
-    "effect_prediction_count": 108,
-    "joint_hypothesis_coverage": true,
-    "top_k_applied": false,
-    "rationale": "prefer_tree_2_due_to_higher_answerability_progress"
-  },
   "gates": {
-    "model_closed_loop_executed": true,
-    "replan_produced_candidates": true,
-    "joint_hypothesis_coverage": true,
-    "real_belief_hypotheses_diverged": false,
-    "localized_entry_contains_first_clue": false,
-    "iwm_first_action_matches_first_clue": false,
-    "action_diverges_from_no_wm": false,
-    "shuffling_changes_action": false,
-    "delayed_advantage_over_immediate": false,
-    "oracle_headroom_available": false,
+    "complete_graph_preserved_both_protocols": true,
+    "oracle_entry_closed_loop_executed": true,
+    "oracle_entry_replan_moves_toward_later_clue": false,
+    "oracle_entry_real_beliefs_diverged": false,
+    "learned_entry_contains_first_clue": false,
+    "learned_entry_closed_loop_executed": true,
+    "learned_entry_iwm_first_action_matches_first_clue": false,
     "answer_accuracy_available": false,
     "transition_calibration_available": false,
     "multi_video_fixed_cohort": false
@@ -111,124 +1465,19 @@
       "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 675,
-      "completion_tokens": 455,
-      "total_tokens": 1130,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1839,
-      "completion_tokens": 1198,
-      "total_tokens": 3037,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1037,
-      "completion_tokens": 890,
-      "total_tokens": 1927,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2663,
-      "completion_tokens": 819,
-      "total_tokens": 3482,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 817,
-      "completion_tokens": 358,
-      "total_tokens": 1175,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1751,
-      "completion_tokens": 872,
-      "total_tokens": 2623,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1823,
-      "completion_tokens": 919,
-      "total_tokens": 2742,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1847,
-      "completion_tokens": 1243,
-      "total_tokens": 3090,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1845,
-      "completion_tokens": 1484,
-      "total_tokens": 3329,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1839,
-      "completion_tokens": 1211,
-      "total_tokens": 3050,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1775,
-      "completion_tokens": 940,
-      "total_tokens": 2715,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1769,
-      "completion_tokens": 1098,
-      "total_tokens": 2867,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 999,
-      "completion_tokens": 618,
-      "total_tokens": 1617,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 13236,
-      "completion_tokens": 326,
-      "total_tokens": 13562,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 12760,
-      "completion_tokens": 267,
-      "total_tokens": 13027,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
       "cache_hit": true
@@ -246,36 +1495,6 @@
       "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1796,
-      "completion_tokens": 945,
-      "total_tokens": 2741,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1841,
-      "completion_tokens": 973,
-      "total_tokens": 2814,
-      "transport_attempt_count": 1
-    },
-    {
-      "cache_hit": true
-    },
-    {
-      "cache_hit": true
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1776,
-      "completion_tokens": 1196,
-      "total_tokens": 2972,
-      "transport_attempt_count": 1
-    },
-    {
       "cache_hit": true
     },
     {
@@ -283,14 +1502,6 @@
     },
     {
       "cache_hit": true
-    },
-    {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 13267,
-      "completion_tokens": 293,
-      "total_tokens": 13560,
-      "transport_attempt_count": 1
     },
     {
       "cache_hit": true
@@ -332,172 +1543,1444 @@
       "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 8144,
-      "completion_tokens": 411,
-      "total_tokens": 8555,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1435,
-      "completion_tokens": 1145,
-      "total_tokens": 2580,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1125,
-      "completion_tokens": 637,
-      "total_tokens": 1762,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1944,
-      "completion_tokens": 1428,
-      "total_tokens": 3372,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1940,
-      "completion_tokens": 1248,
-      "total_tokens": 3188,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 655,
-      "completion_tokens": 568,
-      "total_tokens": 1223,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 3233,
-      "completion_tokens": 1375,
-      "total_tokens": 4608,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2803,
-      "completion_tokens": 967,
-      "total_tokens": 3770,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2204,
-      "completion_tokens": 1325,
-      "total_tokens": 3529,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1973,
-      "completion_tokens": 1230,
-      "total_tokens": 3203,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2151,
-      "completion_tokens": 1071,
-      "total_tokens": 3222,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 1979,
-      "completion_tokens": 757,
-      "total_tokens": 2736,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2114,
-      "completion_tokens": 1019,
-      "total_tokens": 3133,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2025,
-      "completion_tokens": 1293,
-      "total_tokens": 3318,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2093,
-      "completion_tokens": 1337,
-      "total_tokens": 3430,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2075,
-      "completion_tokens": 1207,
-      "total_tokens": 3282,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2071,
-      "completion_tokens": 1098,
-      "total_tokens": 3169,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2115,
-      "completion_tokens": 1044,
-      "total_tokens": 3159,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 2043,
-      "completion_tokens": 1051,
-      "total_tokens": 3094,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 651,
-      "completion_tokens": 648,
-      "total_tokens": 1299,
-      "transport_attempt_count": 1
+      "cache_hit": true
     },
     {
-      "cache_hit": false,
-      "finish_reason": "stop",
-      "prompt_tokens": 19397,
-      "completion_tokens": 229,
-      "total_tokens": 19626,
-      "transport_attempt_count": 1
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
     }
   ]
 }

@@ -73,6 +73,16 @@ class ModelBackedObservationWorldModel:
             "required_output_schema": {
                 "only_top_level_key": "predictions",
                 "each_prediction_must_copy": "request_id",
+                "prediction_fields_are_flat": [
+                    "request_id",
+                    "kind",
+                    "event_family",
+                    "entity_facts",
+                    "state_facts",
+                    "state_delta",
+                    "rationale",
+                ],
+                "forbidden_wrapper_key": "prediction",
             },
             "allowed_output": {
                 "kind": [value.value for value in ObservationKind],
@@ -103,7 +113,9 @@ class ModelBackedObservationWorldModel:
             except ValueError as exc:
                 if attempt == 2:
                     raise
-                request_payload = _repair_payload(payload, result, exc)
+                request_payload = _repair_payload(
+                    payload, result, exc, repair_attempt=attempt + 1
+                )
         raise RuntimeError("unreachable observation schema repair")
 
 
@@ -181,7 +193,9 @@ class ModelBackedHypothesisEffectModel:
             except ValueError as exc:
                 if attempt == 2:
                     raise
-                request_payload = _repair_payload(payload, result, exc)
+                request_payload = _repair_payload(
+                    payload, result, exc, repair_attempt=attempt + 1
+                )
         raise RuntimeError("unreachable hypothesis-effect schema repair")
 
 
@@ -278,7 +292,9 @@ class ModelBackedRealEffectCorrector:
             except ValueError as exc:
                 if attempt == 2:
                     raise
-                request_payload = _repair_payload(payload, result, exc)
+                request_payload = _repair_payload(
+                    payload, result, exc, repair_attempt=attempt + 1
+                )
         assert result is not None and by_id is not None
         effects = []
         alias_by_path = {path_id: alias for alias, path_id in aliases.items()}
@@ -525,10 +541,13 @@ def _repair_payload(
     payload: dict[str, Any],
     invalid_response: dict[str, Any],
     error: ValueError,
+    *,
+    repair_attempt: int,
 ) -> dict[str, Any]:
     return {
         **payload,
         "repair_feedback": {
+            "repair_attempt": repair_attempt,
             "validation_error": str(error),
             "invalid_response": invalid_response,
             "instruction": (

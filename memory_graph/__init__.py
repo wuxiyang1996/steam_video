@@ -107,6 +107,12 @@ from .video_l1 import (
     VideoL1Config,
     VideoL1ExtractionResult,
 )
+from .subtitle_l1 import (
+    SUBTITLE_ENRICHMENT_SCHEMA,
+    SubtitleCue,
+    enrich_video_l1_payload_with_subtitles,
+    parse_srt,
+)
 from .video_l1_evaluation import (
     build_video_l1_annotation_packet,
     evaluate_video_l1_human_audit,
@@ -160,6 +166,8 @@ __all__ = [
     "PayloadVideoL1Provider",
     "PredictedReadTransition",
     "QwenVideoL1Extractor",
+    "SUBTITLE_ENRICHMENT_SCHEMA",
+    "SubtitleCue",
     "ReliabilityThresholds",
     "RelationBelief",
     "RelationStatus",
@@ -180,6 +188,8 @@ __all__ = [
     "TimeSpan",
     "VisualVerification",
     "VideoL1AtomicEventExtractor",
+    "enrich_video_l1_payload_with_subtitles",
+    "parse_srt",
     "VideoL1Config",
     "VideoL1ExtractionResult",
     "VideoSkillsL1AtomicEventExtractor",

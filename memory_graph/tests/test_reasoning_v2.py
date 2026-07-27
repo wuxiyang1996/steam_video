@@ -4,8 +4,13 @@ from __future__ import annotations
 import pytest
 
 from steam_video_new.implicit_world_model.reasoning_v2.evaluation import (
+    EntryProtocol,
     FrozenReasoningCase,
+    build_entry_frontiers,
     evaluate_frozen_cohort,
+    shortest_path_distance,
+    shortest_path_next_hops,
+    with_entry_frontier,
 )
 from steam_video_new.implicit_world_model.reasoning_v2.evidence import (
     EvidenceAddress,
@@ -85,6 +90,83 @@ def test_evidence_address_does_not_leak_unread_grounded_value() -> None:
     assert views[1]["address"].event_family == "action"
     assert views[1]["address"].semantic_key == "safe semantic key b"
     assert "predicate_b" not in repr(views[1]["address"])
+
+
+class _FixedEntryLocalizer:
+    def __init__(self, selected: tuple[str, ...]) -> None:
+        self.selected = selected
+        self.audits = []
+
+    def localize(self, *, question, missing_roles, memory):
+        del question, missing_roles
+        self.audits.append(
+            {
+                "candidate_address_count": len(memory.records),
+                "selected_node_ids": list(self.selected),
+                "all_addresses_inspected": True,
+                "top_k_applied": False,
+            }
+        )
+        return self.selected
+
+
+def test_complete_graph_entry_protocols_only_change_the_frontier() -> None:
+    memory = _memory("a", "b", "c")
+    graph = NavigationGraph(
+        "graph",
+        ("a", "b", "c"),
+        (_proposal("a", "b", suffix="ab"), _proposal("b", "c", suffix="bc")),
+    )
+    oracle, learned = build_entry_frontiers(
+        question="question",
+        missing_roles=("answer",),
+        memory=memory,
+        expected_first_clue_ids=("a",),
+        localizer=_FixedEntryLocalizer(("c",)),
+    )
+
+    assert oracle.protocol is EntryProtocol.ORACLE
+    assert oracle.node_ids == ("a",)
+    assert learned.protocol is EntryProtocol.LEARNED
+    assert learned.node_ids == ("c",)
+    for frontier in (oracle, learned):
+        updated = with_entry_frontier(graph, frontier)
+        assert updated.entry_node_ids == frontier.node_ids
+        assert updated.node_ids == graph.node_ids
+        assert updated.proposals == graph.proposals
+        assert updated.metadata["complete_graph_preserved"] is True
+
+
+def test_shortest_path_next_hops_are_evaluator_only_route_targets() -> None:
+    graph = NavigationGraph(
+        "graph",
+        ("a", "b", "c", "d"),
+        (
+            _proposal("a", "b", suffix="ab"),
+            _proposal("b", "c", suffix="bc"),
+            _proposal("a", "d", suffix="ad"),
+            _proposal("d", "c", suffix="dc"),
+        ),
+    )
+
+    assert shortest_path_next_hops(
+        graph, source_ids=("a",), goal_ids=("c",)
+    ) == ("b", "d")
+
+
+def test_shortest_path_distance_reports_budget_relevant_edge_count() -> None:
+    graph = NavigationGraph(
+        "graph",
+        ("a", "b", "c", "d"),
+        (
+            _proposal("a", "b", suffix="ab"),
+            _proposal("b", "c", suffix="bc"),
+        ),
+    )
+
+    assert shortest_path_distance(graph, source_ids=("a",), goal_ids=("c",)) == 2
+    assert shortest_path_distance(graph, source_ids=("a",), goal_ids=("a",)) == 0
+    assert shortest_path_distance(graph, source_ids=("a",), goal_ids=("d",)) is None
 
 
 def test_proposal_calibration_requires_trusted_hard_negatives() -> None:
@@ -365,10 +447,35 @@ def test_delayed_gate_requires_a_real_second_graph_hop() -> None:
     report = evaluate_frozen_cohort(
         memory,
         navigation,
-        (FrozenReasoningCase("case", ("a",), (("c",),), 2),),
+        (FrozenReasoningCase("case", ("a",), (("c",),), 3),),
         minimum_case_count=1,
         minimum_delayed_cases=1,
     )
     assert report.passed
     assert report.cases[0].shortest_clue_hops == (2,)
     assert report.cases[0].delayed_candidate is True
+
+
+def test_cohort_gate_counts_entry_as_a_real_read() -> None:
+    memory = _memory("a", "b", "c")
+    navigation = NavigationGraph(
+        "graph",
+        ("a", "b", "c"),
+        (
+            _proposal("a", "b", suffix="ab"),
+            _proposal("b", "c", suffix="bc"),
+        ),
+        entry_node_ids=("a",),
+    )
+
+    report = evaluate_frozen_cohort(
+        memory,
+        navigation,
+        (FrozenReasoningCase("case", ("a",), (("c",),), 2),),
+        minimum_case_count=1,
+        minimum_delayed_cases=0,
+    )
+
+    assert report.cases[0].shortest_clue_hops == (None,)
+    assert report.cases[0].all_clues_reachable is False
+    assert "legal_navigation_reachability_incomplete" in report.blockers

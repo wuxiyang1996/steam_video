@@ -336,6 +336,9 @@ def _transition_records(
             semantic_hard_negative = bool(
                 not newly_covered
                 and (
+                    label.get("control_type")
+                    == "surface_correlation_hard_negative"
+                    or
                     action.get("kind") == "follow_correlation"
                     or "correlation" in str(action.get("relation") or "")
                 )
@@ -423,6 +426,11 @@ def _transition_records(
                     "data_slices": {
                         "delayed_positive": delayed,
                         "semantic_neighbor_hard_negative": semantic_hard_negative,
+                        "hard_negative_reason": (
+                            "surface_correlation_without_realized_clue_gain"
+                            if semantic_hard_negative
+                            else None
+                        ),
                         "executed_inconclusive_control": not newly_covered,
                     },
                     "audit": {

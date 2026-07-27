@@ -102,6 +102,7 @@ def collect_targeted_delayed_paths(
     for row in sorted(
         candidates,
         key=lambda value: (
+            not value["surface_correlation_hard_negative"],
             value["case_id"],
             value["first_action"]["action_id"],
             value["second_action"]["action_id"],
@@ -243,6 +244,10 @@ def _case_candidates(
                     "belief_before": asdict(initial),
                     "belief_after_first": asdict(first_execution.updated_belief),
                     "belief_after_second": asdict(second_execution.updated_belief),
+                    "surface_correlation_hard_negative": (
+                        first.kind == "follow_correlation"
+                        or "correlation" in str(first.relation or "")
+                    ),
                 }
             )
     return candidates
@@ -264,10 +269,19 @@ def _selected_path_to_run(row: Mapping[str, Any]) -> dict[str, Any]:
         "graph_fingerprint": row["graph_fingerprint"],
         "real_observations": [row["first_observation"], row["second_observation"]],
         "realized_labels_evaluator_only": [
-            {"observation_id": first_id, "newly_covered_clue_indices": []},
+            {
+                "observation_id": first_id,
+                "newly_covered_clue_indices": [],
+                "control_type": (
+                    "surface_correlation_hard_negative"
+                    if row["surface_correlation_hard_negative"]
+                    else "executed_no_clue_control"
+                ),
+            },
             {
                 "observation_id": second_id,
                 "newly_covered_clue_indices": list(row["newly_covered"]),
+                "control_type": "delayed_positive",
             },
         ],
         "steps": [

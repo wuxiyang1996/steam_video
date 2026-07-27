@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -231,6 +232,21 @@ def test_categorical_response_cache_replays_without_storing_prompt(tmp_path: Pat
     assert replay.response_audits[-1]["cache_hit"] is True
     with pytest.raises(RuntimeError, match="response cache miss"):
         replay.complete_json(task="compare", payload={"question": "changed"})
+
+
+def test_categorical_response_cache_merges_concurrent_client_snapshots(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "responses.json"
+    first = PersistentCategoricalResponseCacheClient(_CategoricalClient(), path)
+    second = PersistentCategoricalResponseCacheClient(_CategoricalClient(), path)
+
+    first.complete_json(task="first", payload={"choice": "a"})
+    second.complete_json(task="second", payload={"choice": "b"})
+
+    persisted = json.loads(path.read_text(encoding="utf-8"))
+    assert persisted["entry_count"] == 2
+    assert len(persisted["entries"]) == 2
 
 
 def test_grounded_transition_corpus_is_video_split_safe() -> None:

@@ -320,6 +320,21 @@ replacement. Its replacement path is disabled. Qwen frame rereads remain
 available only as targeted repair/verification for a specific accepted node,
 state transition, or candidate-causal witness.
 
+For the CG-Bench question-independent substrate, `subtitle_l1.py` provides a
+separate multimodal L1 enrichment path. It aligns dataset-provided SRT cues to
+already frozen surprise-window nodes by timestamp overlap only. A bounded
+subtitle-bearing semantic key is available for routing; the complete aligned
+transcript remains part of the grounded value revealed by a real read. The
+enrichment records source path/checksum and explicitly invalidates the old
+embedding reference before L1.5 recompilation. It never receives a question,
+answer, clue interval, relevance label, or numeric score.
+
+The visual extractor's `v0.3-rich-grounded-single-pass` contract also requests
+a concise frame-grounded factual caption and evidence-indexed visible text for
+videos without usable subtitles. The atomic predicate remains separate from
+this richer descriptor. OCR/caption output is perceptual evidence subject to
+the L1 reliability gate, not an identity, causal, or relevance assertion.
+
 GPU execution remains staged: run Video_Skills
 `dataset_clip_wrapper.run_staged_llm_pipeline --skip-l2-planner`, unload the
 9B server, then pass its `examples.jsonl` to

@@ -1,0 +1,27 @@
+{
+  "schema_version": "steam-cgbench-fixed-l15-cohort-selection/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "selection_policy": "single_video_substrate_repair_diagnostic",
+  "selection_uses_question_or_gt": false,
+  "full_video_required": true,
+  "videos": [
+    {
+      "video_id": "BV1gbgWeBE92",
+      "video_ref": "cg_videos/BV1gbgWeBE92.mp4",
+      "split": "test",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 2005.8,
+      "observation_horizon_s": 2005.8
+    }
+  ],
+  "forbidden_worker_inputs": [
+    "answer",
+    "answer_key",
+    "answer_text",
+    "choices",
+    "clue_intervals",
+    "hop_alignment",
+    "question"
+  ],
+  "training_performed": false
+}

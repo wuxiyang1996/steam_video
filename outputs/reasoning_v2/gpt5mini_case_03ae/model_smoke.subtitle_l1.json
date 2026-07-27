@@ -1,0 +1,2282 @@
+{
+  "schema_version": "steam-reasoning-v2-complete-graph-smoke/v0.3",
+  "case_id": "cgcase:03ae94a7899404983244",
+  "video_id": "BV1gbgWeBE92",
+  "model": "openai/gpt-5-mini",
+  "model_batch_size": 24,
+  "matched_read_budget": 2,
+  "scope": "dual-entry-complete-graph-smoke_not_training_evidence",
+  "complete_graph": {
+    "node_count": 256,
+    "proposal_count": 957,
+    "question_independent": true,
+    "unread_evidence_values_exposed": false
+  },
+  "expected_first_clue_node_ids_hidden_evaluator_only": [
+    "visual_l1:BV1gbgWeBE92:0020",
+    "visual_l1:BV1gbgWeBE92:0021"
+  ],
+  "later_clue_node_ids_hidden_evaluator_only": [
+    "visual_l1:BV1gbgWeBE92:0034",
+    "visual_l1:BV1gbgWeBE92:0035"
+  ],
+  "expected_answer_hidden_evaluator_only": "1 and 3",
+  "clue_value_audit_hidden_evaluator_only": {
+    "hidden_evaluator_only": true,
+    "clue_group_count": 3,
+    "all_clue_groups_have_enriched_value": true,
+    "groups": [
+      {
+        "clue_index": 0,
+        "retained_node_count": 2,
+        "grounded_value_enriched": true,
+        "nodes": [
+          {
+            "node_id": "visual_l1:BV1gbgWeBE92:0020",
+            "descriptor_char_count": 64,
+            "descriptor_differs_from_predicate": true,
+            "time_aligned_subtitle_present": true,
+            "embedding_present": true
+          },
+          {
+            "node_id": "visual_l1:BV1gbgWeBE92:0021",
+            "descriptor_char_count": 96,
+            "descriptor_differs_from_predicate": true,
+            "time_aligned_subtitle_present": true,
+            "embedding_present": true
+          }
+        ]
+      },
+      {
+        "clue_index": 1,
+        "retained_node_count": 2,
+        "grounded_value_enriched": true,
+        "nodes": [
+          {
+            "node_id": "visual_l1:BV1gbgWeBE92:0034",
+            "descriptor_char_count": 73,
+            "descriptor_differs_from_predicate": true,
+            "time_aligned_subtitle_present": true,
+            "embedding_present": true
+          },
+          {
+            "node_id": "visual_l1:BV1gbgWeBE92:0035",
+            "descriptor_char_count": 94,
+            "descriptor_differs_from_predicate": true,
+            "time_aligned_subtitle_present": true,
+            "embedding_present": true
+          }
+        ]
+      },
+      {
+        "clue_index": 2,
+        "retained_node_count": 1,
+        "grounded_value_enriched": true,
+        "nodes": [
+          {
+            "node_id": "visual_l1:BV1gbgWeBE92:0047",
+            "descriptor_char_count": 51,
+            "descriptor_differs_from_predicate": true,
+            "time_aligned_subtitle_present": true,
+            "embedding_present": true
+          }
+        ]
+      }
+    ]
+  },
+  "protocols": {
+    "oracle_entry": {
+      "entry": {
+        "status": "located",
+        "source": "hidden_evaluator_only",
+        "selected_node_ids": [
+          "visual_l1:BV1gbgWeBE92:0020",
+          "visual_l1:BV1gbgWeBE92:0021"
+        ],
+        "selected_anchor_count": 2,
+        "candidate_address_count": 256,
+        "all_addresses_available": true,
+        "hidden_clue_exposed_to_model": false,
+        "top_k_applied": false,
+        "numeric_score_used": false
+      },
+      "complete_graph": {
+        "node_count": 256,
+        "proposal_count": 957,
+        "preserved": true,
+        "only_entry_frontier_changed": true
+      },
+      "arms": {
+        "iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0020",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 15,
+              "effect_prediction_count": 90,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0 preferred: more hypothesis-conditioned futures advance to ready and resolve required roles than tree_1"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0246",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0199"
+              ],
+              "candidate_tree_count": 8,
+              "observation_prediction_count": 75,
+              "effect_prediction_count": 450,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0 most uniformly advances to ready with first_item_identity resolved and closes frontiers across multiple hypotheses"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0020",
+            "visual_l1:BV1gbgWeBE92:0246"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            false
+          ],
+          "answer_candidates_after_each_real_read": [
+            [],
+            []
+          ],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        },
+        "no_wm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 15,
+              "effect_prediction_count": 90,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "select tree_1 — its shared first read is a contact event and spawns more diverse subsequent event families, making it more informative than tree_0's motion-first read."
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0015",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0015",
+                "visual_l1:BV1gbgWeBE92:0020"
+              ],
+              "candidate_tree_count": 5,
+              "observation_prediction_count": 35,
+              "effect_prediction_count": 210,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefers semantic_neighbor (tree_1) because its shared read yields varied action events across hypotheses, offering more discriminative evidence potential than other trees"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0015"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "abstain"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "abstain"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 4"
+                  ],
+                  "answerability": "abstain"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "abstain"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            false,
+            true
+          ],
+          "answer_candidates_after_each_real_read": [
+            [],
+            [
+              "1 and 3",
+              "1 and 4"
+            ]
+          ],
+          "final_answer_candidates": [
+            "1 and 3",
+            "1 and 4"
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        },
+        "shuffled_iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0020",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 15,
+              "effect_prediction_count": 90,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0 dominates on advancing frontier to ready state and resolving required roles across more hypothesis-conditioned futures"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0019",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0199"
+              ],
+              "candidate_tree_count": 8,
+              "observation_prediction_count": 75,
+              "effect_prediction_count": 450,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "maximizes-ready-resolutions-and-frontier-closures"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0020",
+            "visual_l1:BV1gbgWeBE92:0019"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            false
+          ],
+          "answer_candidates_after_each_real_read": [
+            [],
+            []
+          ],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": {
+            "kind": "within_batch_effect_rotation_preserving_marginals",
+            "batch_count": 4,
+            "changed_effect_count": 47,
+            "effective": true
+          },
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        },
+        "immediate_only": {
+          "rounds": [
+            {
+              "status": "tie",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 15,
+              "effect_prediction_count": 90,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "both trees cover the same hypotheses and produce the same mix of opened versus shifted frontiers; neither strictly dominates the other"
+            },
+            {
+              "status": "not_executed",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [],
+              "candidate_tree_count": 0,
+              "observation_prediction_count": 0,
+              "effect_prediction_count": 0,
+              "joint_hypothesis_coverage": false,
+              "top_k_applied": false,
+              "rationale": "previous round did not select an executable action"
+            }
+          ],
+          "executed_target_ids": [],
+          "executed_read_count": 0,
+          "remaining_read_budget": 2,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [],
+          "belief_changed_after_each_real_read": [],
+          "answer_candidates_after_each_real_read": [],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        },
+        "oracle": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0020",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 15,
+              "effect_prediction_count": 90,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "hidden evaluator shortest-route oracle for headroom only"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0199",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0199"
+              ],
+              "candidate_tree_count": 8,
+              "observation_prediction_count": 75,
+              "effect_prediction_count": 450,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "hidden evaluator shortest-route oracle for headroom only"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0020",
+            "visual_l1:BV1gbgWeBE92:0199"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            false
+          ],
+          "answer_candidates_after_each_real_read": [
+            [],
+            []
+          ],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        }
+      },
+      "route_budget_audit_hidden_evaluator_only": {
+        "entry_to_later_clue_edge_distance": 2,
+        "minimum_reads_including_entry": 3,
+        "matched_read_budget": 2,
+        "budget_feasible": false
+      },
+      "gates": {
+        "entry_contains_first_clue_strict_interval": true,
+        "iwm_first_action_matches_first_clue_strict_interval": true,
+        "iwm_matched_budget_closed_loop_executed": true,
+        "iwm_replan_moves_toward_later_clue_shortest_path": false,
+        "iwm_later_clue_reached_strict_interval": false,
+        "iwm_real_beliefs_diverged": true,
+        "iwm_first_real_read_changes_belief": true,
+        "iwm_answer_available": false,
+        "iwm_answer_correct": false,
+        "iwm_action_sequence_diverges_from_no_wm": true,
+        "shuffling_changes_action_sequence": true,
+        "delayed_changes_action_sequence": true,
+        "oracle_route_budget_feasible": false,
+        "oracle_later_clue_reached_strict_interval": false
+      }
+    },
+    "learned_entry": {
+      "entry": {
+        "candidate_address_count": 256,
+        "selected_anchor_count": 2,
+        "selected_node_ids": [
+          "visual_l1:BV1gbgWeBE92:0015",
+          "visual_l1:BV1gbgWeBE92:0046"
+        ],
+        "status": "located",
+        "all_addresses_inspected": true,
+        "top_k_applied": false,
+        "numeric_score_used": false,
+        "unread_evidence_value_exposed": false,
+        "schema_repair_count": 0
+      },
+      "complete_graph": {
+        "node_count": 256,
+        "proposal_count": 957,
+        "preserved": true,
+        "only_entry_frontier_changed": true
+      },
+      "arms": {
+        "iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0015",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 17,
+              "effect_prediction_count": 102,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0_preferred: yields more ready answerability and resolves key roles across hypotheses while tree_1 has more regressions/abstains"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0016",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0031"
+              ],
+              "candidate_tree_count": 9,
+              "observation_prediction_count": 63,
+              "effect_prediction_count": 378,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "best_role_resolution"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0015",
+            "visual_l1:BV1gbgWeBE92:0016"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            false
+          ],
+          "answer_candidates_after_each_real_read": [
+            [
+              "1 and 3"
+            ],
+            [
+              "1 and 3"
+            ]
+          ],
+          "final_answer_candidates": [
+            "1 and 3"
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": 1,
+          "first_correct_answer_read_hidden_evaluator_only": 1
+        },
+        "no_wm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0046",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 17,
+              "effect_prediction_count": 102,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefer_tree_1: shared first read is visible_response (more likely to resolve first_item_identity) whereas tree_0's first read is action (less directly informative)"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0047",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0155"
+              ],
+              "candidate_tree_count": 6,
+              "observation_prediction_count": 42,
+              "effect_prediction_count": 252,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefer-event-continuation-with-diverse-downstream-observations"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0046",
+            "visual_l1:BV1gbgWeBE92:0047"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            true
+          ],
+          "answer_candidates_after_each_real_read": [
+            [],
+            []
+          ],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        },
+        "shuffled_iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0046",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 17,
+              "effect_prediction_count": 102,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "Prefer tree_1 — its shared read more reliably closes the frontier and resolves required roles (including both first_item_identity and answer_attributes) across hypotheses, whereas tree_0 frequently produces regressions and opened contradictions."
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0041",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0155"
+              ],
+              "candidate_tree_count": 6,
+              "observation_prediction_count": 42,
+              "effect_prediction_count": 252,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "more_consistently_resolves_first_item_identity_across_hypotheses"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0046",
+            "visual_l1:BV1gbgWeBE92:0041"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            false
+          ],
+          "answer_candidates_after_each_real_read": [
+            [],
+            []
+          ],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": {
+            "kind": "within_batch_effect_rotation_preserving_marginals",
+            "batch_count": 4,
+            "changed_effect_count": 53,
+            "effective": true
+          },
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        },
+        "immediate_only": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0015",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 17,
+              "effect_prediction_count": 102,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0 strictly better: advances to ready and resolves required roles for at least one hypothesis while tree_1 leaves answerability not_ready and mainly regresses/opens contradictions"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0016",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0031"
+              ],
+              "candidate_tree_count": 9,
+              "observation_prediction_count": 63,
+              "effect_prediction_count": 378,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "select: tree_2 advances and opens answer roles for the largest set of hypotheses (many advanced steps that open first_item_identity and answer_attributes), whereas other trees have more regressed or unchanged futures"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0015",
+            "visual_l1:BV1gbgWeBE92:0016"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": true,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 2"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [],
+                  "answerability": "ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:1 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 3"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:2 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [],
+                  "contradictions": [
+                    "hypothesis_counterevidence:3 and 4"
+                  ],
+                  "answerability": "ready"
+                }
+              ]
+            }
+          ],
+          "belief_changed_after_each_real_read": [
+            true,
+            false
+          ],
+          "answer_candidates_after_each_real_read": [
+            [
+              "1 and 3"
+            ],
+            [
+              "1 and 3"
+            ]
+          ],
+          "final_answer_candidates": [
+            "1 and 3"
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": 1,
+          "first_correct_answer_read_hidden_evaluator_only": 1
+        },
+        "oracle": {
+          "rounds": [
+            {
+              "status": "abstain",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0020",
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 17,
+              "effect_prediction_count": 102,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "evaluator route target is absent from the legal frontier"
+            },
+            {
+              "status": "not_executed",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [],
+              "candidate_tree_count": 0,
+              "observation_prediction_count": 0,
+              "effect_prediction_count": 0,
+              "joint_hypothesis_coverage": false,
+              "top_k_applied": false,
+              "rationale": "previous round did not select an executable action"
+            }
+          ],
+          "executed_target_ids": [],
+          "executed_read_count": 0,
+          "remaining_read_budget": 2,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [],
+          "belief_changed_after_each_real_read": [],
+          "answer_candidates_after_each_real_read": [],
+          "final_answer_candidates": [],
+          "top_k_applied": false,
+          "intervention_audit": null,
+          "first_unique_answer_read": null,
+          "first_correct_answer_read_hidden_evaluator_only": null
+        }
+      },
+      "route_budget_audit_hidden_evaluator_only": {
+        "entry_to_later_clue_edge_distance": 2,
+        "minimum_reads_including_entry": 3,
+        "matched_read_budget": 2,
+        "budget_feasible": false
+      },
+      "gates": {
+        "entry_contains_first_clue_strict_interval": false,
+        "iwm_first_action_matches_first_clue_strict_interval": false,
+        "iwm_matched_budget_closed_loop_executed": true,
+        "iwm_replan_moves_toward_later_clue_shortest_path": false,
+        "iwm_later_clue_reached_strict_interval": false,
+        "iwm_real_beliefs_diverged": true,
+        "iwm_first_real_read_changes_belief": true,
+        "iwm_answer_available": true,
+        "iwm_answer_correct": true,
+        "iwm_action_sequence_diverges_from_no_wm": true,
+        "shuffling_changes_action_sequence": true,
+        "delayed_changes_action_sequence": false,
+        "oracle_route_budget_feasible": false,
+        "oracle_later_clue_reached_strict_interval": false
+      }
+    }
+  },
+  "metrics": {
+    "complete_graph_preserved_both_protocols": true,
+    "clue_grounded_values_enriched": true,
+    "oracle_entry_closed_loop_executed": true,
+    "oracle_entry_replan_moves_toward_later_clue_shortest_path": false,
+    "oracle_entry_route_budget_feasible": false,
+    "oracle_entry_later_clue_reached_strict_interval": false,
+    "oracle_entry_real_beliefs_diverged": true,
+    "learned_entry_contains_first_clue_strict_interval": false,
+    "learned_entry_closed_loop_executed": true,
+    "learned_entry_iwm_first_action_matches_first_clue_strict_interval": false,
+    "oracle_entry_iwm_answer_correct": false,
+    "learned_entry_iwm_answer_correct": true,
+    "answer_accuracy_available": true,
+    "transition_calibration_available": false,
+    "multi_video_fixed_cohort": false
+  },
+  "metric_families": {
+    "answer_accuracy": {
+      "available": true,
+      "oracle_entry_iwm_correct": false,
+      "learned_entry_iwm_correct": true
+    },
+    "read_efficiency": {
+      "matched_read_budget": 2,
+      "oracle_entry_iwm_first_correct_answer_read": null,
+      "learned_entry_iwm_first_correct_answer_read": 1
+    },
+    "action_divergence": {
+      "oracle_entry": {
+        "no_wm": true,
+        "shuffled_iwm": true,
+        "immediate_only": true
+      },
+      "learned_entry": {
+        "no_wm": true,
+        "shuffled_iwm": true,
+        "immediate_only": false
+      }
+    },
+    "strict_localization": {
+      "oracle_entry_contains_first_interval": true,
+      "learned_entry_contains_first_interval": false
+    }
+  },
+  "gates": {
+    "complete_graph_preserved_both_protocols": true,
+    "clue_grounded_values_enriched": true,
+    "oracle_entry_closed_loop_executed": true,
+    "oracle_entry_route_budget_feasible": false,
+    "oracle_entry_later_clue_reached_strict_interval": false,
+    "oracle_entry_iwm_answer_correct": false,
+    "learned_entry_closed_loop_executed": true,
+    "learned_entry_iwm_answer_correct": true,
+    "answer_accuracy_available": true,
+    "transition_calibration_available": false,
+    "multi_video_fixed_cohort": false
+  },
+  "training_export_eligible": false,
+  "training_performed": false,
+  "response_audits": [
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    }
+  ]
+}

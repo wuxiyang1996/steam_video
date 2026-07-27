@@ -30,6 +30,38 @@ support 和 inconclusive controls，并以原始 video 做 train/validation 隔�
    preference SFT；
 4. 小规模 matched IWM/no-WM 上出现稳定增益后，才运行完整 frozen cohort。
 
+### Complete-graph 双协议诊断
+
+在扩大 cohort 或启动 9B SFT 前，先在同一完整 L1/L1.5 substrate 上运行两个
+matched-budget 协议：
+
+1. `oracle_entry`：evaluator 只指定首 clue 作为共同第一读；真实 correction 后，
+   五个 arms 分别进行第二轮 IWM/Planner replan。这隔离 downstream IWM 与 Planner。
+2. `learned_entry`：模型检查全部 safe semantic addresses 产生入口，再执行完全相同
+   的两轮闭环。这验证真实端到端链路。
+
+两协议不得裁剪节点或 edges，不得把 unread grounded values 暴露给模型，也不得加入
+heuristic Top-K。Oracle clue IDs 和通向下一 clue 的 shortest-path next-hop 只用于隐藏
+evaluator 与 oracle arm。需要分别报告 entry recall、route next-hop、真实 belief
+divergence、action-sequence divergence、read budget、transition calibration 和最终 QA；
+oracle-entry 成功而 learned-entry 失败表示 L1/localizer 瓶颈，两者都失败才归因于
+IWM/Planner 或 substrate reachability。
+
+### L1 grounded-value repair
+
+完整图验证暴露出旧 clue-retention gate 只证明“时间区间内有节点”，没有证明执行 read
+能取得有用内容。CG-Bench 修订路径因此在冻结 surprise windows 后，按 timestamp overlap
+融合数据集自带 SRT；不读取 question、choice、answer 或 clue interval。路由阶段只看到
+bounded semantic key，real read 才取得完整 aligned transcript。任何 descriptor 改动都
+必须清除旧 embedding reference，并重新生成 Qwen3-VL-2B embedding 与 L1.5 graph。
+
+新增门禁分别检查：clue group 是否有 enriched grounded value、real read 是否改变 belief、
+hypotheses 是否分化、以及 replan 是否选择通往后续 clue 的 evaluator-only next hop。
+这些条件分别报告，不能用一条总 accuracy 掩盖。Executed correlation read 若只有颜色、
+包装或实体表面相似而没有 realized clue gain，标为
+`surface_correlation_without_realized_clue_gain` hard negative；不增加 numeric reward 或
+手工 action score。
+
 模型依旧只输出 categorical transition/preference，不输出数字。accuracy、FDR 等数字由
 离线 evaluator 计算，不作为模型 reward。GTSAM 继续只作为可选 persistent-belief
 maintenance backup，不参与 action ranking。
@@ -1025,3 +1057,26 @@ prompt”的路线。新实现位于
 
 在 learned L1 windowing、完整 clue retention、L1.5 hard-negative precision、明确
 two-hop delayed cases 和 oracle decomposition 通过之前，不启动 9B training。
+
+### Complete-graph 修复结果与门禁修正
+
+修复后单视频 artifact 包含 256 个 L1 nodes、957 个 L1.5 proposals；7/7 标注 clue
+intervals 被保留，三个 clue groups 均有非 placeholder grounded value 和新生成的
+Qwen3-VL-Embedding-2B reference。GPT-5-mini 已能执行
+`IWM -> Planner -> real read -> correction -> replan`，并让不同 hypothesis belief
+产生分化。learned entry 虽未命中数据集指定 node ID，却读取了更直接的字幕证据并给出
+正确答案；因此 strict interval recall 与 answer correctness 必须同时保留、分别报告。
+
+图距离审计也发现：oracle first clue group 中最近节点到下一标注 clue group 相距 2 条
+L1.5 edges，连同 entry read 至少需要 3 reads，而当前 matched smoke budget 只有 2。
+Evaluator 现在分别报告
+`entry_to_later_clue_edge_distance`、`minimum_reads_including_entry`、
+`budget_feasible`、实际 later-clue reach 和 closed-loop execution，不再把“完成两次
+oracle read”误称为 route available。
+
+这些修复证明 evidence substrate 和闭环接口能够工作，但尚未证明 IWM 带来导航收益：
+oracle 下 IWM 虽改变了相对 no-WM/shuffled 的 action sequence，却未到达 clue 或得到正确
+答案；learned-entry 的 IWM 与 immediate-only 都在第一读得到相同正确答案。下一步必须
+冻结 oracle 路径符合预算的多视频 cohort，独立校准 executed
+transitions，并将 answer accuracy、read efficiency、action divergence 分开报告；在此
+之前继续禁止 9B training。

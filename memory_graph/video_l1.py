@@ -137,6 +137,7 @@ class PayloadVideoL1Provider:
 @dataclass
 class _LocalizedEvent:
     predicate: str
+    grounded_caption: str
     time_span: TimeSpan
     confidence: float
     action_kind: str
@@ -145,6 +146,7 @@ class _LocalizedEvent:
     participants: list[dict[str, Any]]
     states: list[dict[str, Any]]
     state_change: dict[str, Any] | None
+    visible_text: list[dict[str, Any]]
     coarse_window: dict[str, Any]
     localization_method: str
 
@@ -300,7 +302,7 @@ class QwenVideoL1Extractor:
             rejected=tuple(rejected),
             model=self.model,
             protocol_version=(
-                "video-only-l1/v0.2-grounded-single-pass"
+                "video-only-l1/v0.3-rich-grounded-single-pass"
                 if self.config.localization_mode == "grounded_single_pass"
                 else "video-only-l1/v0.1"
             ),
@@ -463,7 +465,10 @@ def _coarse_prompt(
         "visible_start_frame, visible_end_frame, evidence_frames (all integer "
         "indices from frame_records), participants "
         "[{role, entity_type, surface, visual_signature, evidence_frames}], and "
-        "visible states [{participant_index, attribute, value, polarity, "
+        "grounded_caption (one concise factual sentence describing only visible "
+        "content), visible_text [{text, evidence_frames}] for legible packaging, "
+        "sign, or burned-in subtitle text, visible states "
+        "[{participant_index, attribute, value, polarity, "
         "evidence_frames}]. An optional state_change has participant_index, "
         "attribute, before, after, and evidence_frames. Every observed event and "
         "participant must cite directly visible frame indices. Do not output confidence, "
@@ -482,7 +487,8 @@ def _fine_prompt(
         "Verify and localize this coarse event using the labeled frames. If it is "
         "not directly visible, set observed=false. Otherwise return observed=true, "
         "predicate, visible_start_frame, visible_end_frame, "
-        "evidence_frames, action_kind, participants with role/entity_type/surface/"
+        "evidence_frames, action_kind, grounded_caption, visible_text with text/"
+        "evidence_frames, participants with role/entity_type/surface/"
         "visual_signature/evidence_frames, visible states with participant_index/attribute/value/"
         "polarity/evidence_frames, and optional state_change with participant_index/"
         "attribute/before/after/evidence_frames. Do not infer causes or intent. "
@@ -593,8 +599,10 @@ def _parse_fine_response(
         participants,
         by_index,
     )
+    visible_text = _parse_visible_text(payload.get("visible_text"), by_index)
     return _LocalizedEvent(
         predicate=predicate,
+        grounded_caption=_grounded_caption(payload, predicate),
         time_span=TimeSpan(start_s, end_s),
         confidence=confidence,
         action_kind=str(
@@ -605,6 +613,7 @@ def _parse_fine_response(
         participants=participants,
         states=states,
         state_change=state_change,
+        visible_text=visible_text,
         coarse_window=dict(candidate.get("coarse_window") or {}),
         localization_method="coarse_to_fine_frame_grounding",
     )
@@ -637,6 +646,7 @@ def _parse_single_pass_candidate(
         participants,
         by_index,
     )
+    visible_text = _parse_visible_text(candidate.get("visible_text"), by_index)
     grounded_start_s = (
         float(by_index[start_index]["time_s"])
         if start_index in by_index
@@ -655,6 +665,7 @@ def _parse_single_pass_candidate(
         raise ValueError("single-pass grounded endpoints are empty or reversed")
     return _LocalizedEvent(
         predicate=str(candidate["predicate"]),
+        grounded_caption=_grounded_caption(candidate, str(candidate["predicate"])),
         time_span=TimeSpan(grounded_start_s, grounded_end_s),
         confidence=1.0,
         action_kind=str(candidate.get("action_kind") or "other"),
@@ -663,6 +674,7 @@ def _parse_single_pass_candidate(
         participants=participants,
         states=states,
         state_change=state_change,
+        visible_text=visible_text,
         coarse_window=dict(candidate.get("coarse_window") or {}),
         localization_method="grounded_single_pass_sampled_frames",
     )
@@ -795,6 +807,29 @@ def _parse_state_change(
     }
 
 
+def _parse_visible_text(
+    value: Any,
+    by_index: dict[int, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    result = []
+    for raw in value[:8]:
+        if not isinstance(raw, dict):
+            continue
+        text = " ".join(str(raw.get("text") or "").split())
+        evidence = _frame_indices(raw.get("evidence_frames"), by_index)
+        if not text or not evidence:
+            continue
+        result.append({"text": text[:240], "evidence_frames": list(evidence)})
+    return result
+
+
+def _grounded_caption(payload: dict[str, Any], predicate: str) -> str:
+    caption = " ".join(str(payload.get("grounded_caption") or "").split())
+    return caption[:600] if caption else predicate
+
+
 def _assign_track_ids(events: list[_LocalizedEvent], *, max_gap_s: float) -> int:
     tracks: dict[tuple[str, str], list[tuple[float, str]]] = {}
     next_track = 1
@@ -853,16 +888,19 @@ def _event_to_l1_node(
             "uses_hidden_supervision": False,
         },
         node_type="observation",
-        text=event.predicate,
+        text=event.grounded_caption,
         source_node_id=segment_ref,
         source_segments=[segment_ref],
         metadata={
             "predicate": event.predicate,
+            "grounded_descriptor": event.grounded_caption,
             "confidence": event.confidence,
             "action_kind": event.action_kind,
             "participants": event.participants,
             "states": event.states,
             "state_change": event.state_change,
+            "visible_text": event.visible_text,
+            "observed_modalities": ["visual"],
             "entity_track_ids": sorted(
                 {str(participant["mention_id"]) for participant in event.participants}
             ),

@@ -61,7 +61,13 @@ def evaluate_frozen_cohort(
     rows: list[CaseReachability] = []
     for case in cases:
         clue_retained = all(bool(set(group) & known) for group in case.clue_node_groups)
-        distances = _distances(navigation, case.entry_node_ids, case.read_budget)
+        # The entry itself is a grounded read.  Runtime therefore has only
+        # read_budget - 1 graph traversals left after acquiring it.
+        distances = _distances(
+            navigation,
+            case.entry_node_ids,
+            max(0, case.read_budget - 1),
+        )
         shortest = tuple(
             min(
                 (distances[node_id] for node_id in group if node_id in distances),

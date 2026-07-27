@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass, replace
 from enum import Enum
+import fcntl
 import hashlib
 import json
 import os
@@ -92,22 +93,33 @@ class PersistentCategoricalResponseCacheClient:
 
     def _persist(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        value = {
-            "schema_version": RESPONSE_CACHE_SCHEMA,
-            "model": self.model,
-            "request_payload_stored": False,
-            "hidden_clue_or_answer_used": False,
-            "numeric_reward_present": False,
-            "training_performed": False,
-            "entry_count": len(self._entries),
-            "entries": {key: self._entries[key] for key in sorted(self._entries)},
-        }
-        temporary = self.path.with_suffix(self.path.suffix + ".tmp")
-        temporary.write_text(
-            json.dumps(value, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        os.replace(temporary, self.path)
+        lock_path = self.path.with_suffix(self.path.suffix + ".lock")
+        with lock_path.open("a+", encoding="utf-8") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            # Another process may have committed since this client loaded.
+            # Merge under the lock so atomic replace cannot lose its keys.
+            persisted = self._load() if self.path.exists() else {}
+            self._entries = {**persisted, **self._entries}
+            value = {
+                "schema_version": RESPONSE_CACHE_SCHEMA,
+                "model": self.model,
+                "request_payload_stored": False,
+                "hidden_clue_or_answer_used": False,
+                "numeric_reward_present": False,
+                "training_performed": False,
+                "entry_count": len(self._entries),
+                "entries": {
+                    key: self._entries[key] for key in sorted(self._entries)
+                },
+            }
+            temporary = self.path.with_suffix(
+                f"{self.path.suffix}.{os.getpid()}.tmp"
+            )
+            temporary.write_text(
+                json.dumps(value, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary, self.path)
 
 
 class PersistentQuestionRoleCache:

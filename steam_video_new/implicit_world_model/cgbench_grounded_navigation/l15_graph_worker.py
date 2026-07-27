@@ -20,6 +20,10 @@ from memory_graph.soft_correlation import (
     SoftCorrelationAdmissionPolicy,
     calibrate_soft_correlation_admission,
 )
+from memory_graph.subtitle_l1 import (
+    SUBTITLE_ENRICHMENT_SCHEMA,
+    enrich_video_l1_payload_with_subtitles,
+)
 from memory_graph.video_l1 import (
     PayloadVideoL1Provider,
     QwenVideoL1Extractor,
@@ -144,12 +148,22 @@ def build_question_independent_graph(
         raise ValueError(f"video unavailable: {video_path}")
     declared_duration = float(entry.get("duration_s") or observation_horizon_s)
     full_video = observation_horizon_s >= declared_duration - 1e-3
+    subtitle_enriched = (
+        (video_l1_payload.get("descriptor_enrichment") or {}).get("schema_version")
+        == SUBTITLE_ENRICHMENT_SCHEMA
+    )
     canonical = {
         "schema_version": "steam-cgbench-question-independent-video/v0.1",
         "example_id": f"cgbench-memory:{video_id}",
         "dataset": "CG-Bench",
         "video": {"video_id": video_id, "primary_path": str(video_path)},
-        "available_inputs": {"mode": "video_only"},
+        "available_inputs": {
+            "mode": (
+                "video_with_time_aligned_subtitle"
+                if subtitle_enriched
+                else "video_only"
+            )
+        },
         "evidence_index": {
             "index_id": f"cgbench-video-index:{video_id}",
             "nodes": [],
@@ -178,7 +192,11 @@ def build_question_independent_graph(
     payload["metadata"].update(
         {
             "question_independent_contract": True,
-            "builder_inputs": ["raw_video_frames"],
+            "builder_inputs": (
+                ["raw_video_frames", "time_aligned_subtitles"]
+                if subtitle_enriched
+                else ["raw_video_frames"]
+            ),
             "forbidden_inputs_absent": sorted(FORBIDDEN_GRAPH_INPUTS),
             "l1_windowing": video_l1_payload.get("windowing")
             or {"mode": "legacy_unspecified"},
@@ -192,6 +210,67 @@ def build_question_independent_graph(
     sample_dir = output_root / video_id
     _write_json(sample_dir / "causal_temporal_overlay.json", payload)
     return payload
+
+
+def enrich_frozen_l1_with_subtitles(
+    selection: dict[str, Any],
+    *,
+    dataset_root: Path,
+    graph_root: Path,
+    subtitle_root: Path,
+    video_ids: set[str] | None = None,
+) -> dict[str, Any]:
+    """Upgrade persisted L1 descriptors without rerunning visual extraction."""
+
+    completed: list[dict[str, Any]] = []
+    skipped: list[dict[str, str]] = []
+    for entry in selection.get("videos") or ():
+        video_id = str(entry["video_id"])
+        if video_ids is not None and video_id not in video_ids:
+            continue
+        sample_dir = graph_root / video_id
+        l1_path = sample_dir / "video_l1.json"
+        subtitle_path = subtitle_root / f"{video_id}.srt"
+        if not l1_path.is_file():
+            skipped.append({"video_id": video_id, "reason": "video_l1_missing"})
+            continue
+        if not subtitle_path.is_file():
+            skipped.append({"video_id": video_id, "reason": "subtitle_missing"})
+            continue
+        l1_payload = enrich_video_l1_payload_with_subtitles(
+            json.loads(l1_path.read_text(encoding="utf-8")), subtitle_path
+        )
+        _write_json(l1_path, l1_payload)
+        horizon = float(
+            entry.get("observation_horizon_s")
+            or entry.get("duration_s")
+            or l1_payload.get("duration_s")
+        )
+        graph = build_question_independent_graph(
+            entry,
+            dataset_root=dataset_root,
+            output_root=graph_root,
+            video_l1_payload=l1_payload,
+            observation_horizon_s=horizon,
+        )
+        completed.append(
+            {
+                "video_id": video_id,
+                "aligned_node_count": (
+                    l1_payload["descriptor_enrichment"]["aligned_node_count"]
+                ),
+                "cue_count": l1_payload["descriptor_enrichment"]["cue_count"],
+                "overlay_l1_node_count": len(graph.get("l1_observations") or ()),
+            }
+        )
+    return {
+        "schema_version": "steam-cgbench-subtitle-l1-enrichment/v0.1",
+        "descriptor_schema": SUBTITLE_ENRICHMENT_SCHEMA,
+        "question_or_gt_used": False,
+        "completed": completed,
+        "skipped": skipped,
+        "training_performed": False,
+    }
 
 
 def evaluate_frozen_graph_coverage(
@@ -1300,6 +1379,13 @@ def _build_parser() -> argparse.ArgumentParser:
     extract.add_argument("--video-limit", type=int)
     extract.add_argument("--shard-index", type=int)
     extract.add_argument("--num-shards", type=int)
+    enrich = sub.add_parser("enrich-subtitles")
+    enrich.add_argument("--selection", required=True, type=Path)
+    enrich.add_argument("--dataset-root", required=True, type=Path)
+    enrich.add_argument("--graph-root", required=True, type=Path)
+    enrich.add_argument("--subtitle-root", required=True, type=Path)
+    enrich.add_argument("--report", required=True, type=Path)
+    enrich.add_argument("--video-id", action="append")
     merge = sub.add_parser("merge-extract-reports")
     merge.add_argument("--selection", required=True, type=Path)
     merge.add_argument("--graph-root", required=True, type=Path)
@@ -1347,6 +1433,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "extract":
         return _extract_command(args)
+    if args.command == "enrich-subtitles":
+        report = enrich_frozen_l1_with_subtitles(
+            json.loads(args.selection.read_text(encoding="utf-8")),
+            dataset_root=args.dataset_root.expanduser().resolve(),
+            graph_root=args.graph_root.expanduser().resolve(),
+            subtitle_root=args.subtitle_root.expanduser().resolve(),
+            video_ids=set(args.video_id) if args.video_id else None,
+        )
+        _write_json(args.report, report)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
     if args.command == "merge-extract-reports":
         return _merge_extract_reports_command(args)
     if args.command == "audit-correlations":
