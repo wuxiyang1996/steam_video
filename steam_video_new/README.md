@@ -18,7 +18,10 @@ human `clue_intervals`. Video-Holmes is historical engineering only and is not
 the current evaluation protocol.
 
 Detailed formulations: [English](problem-formulation-en.html) ·
-[中文](problem-formulation-zh.html)
+[中文](problem-formulation-zh.html). Those pages also merge related
+SelectStream memory notes (§2.4) and the verified OVO-Bench /
+StreamingBench future-question discussion (§8.1); CG-Bench remains the
+primary testbed.
 
 ## 1. Current research thesis
 

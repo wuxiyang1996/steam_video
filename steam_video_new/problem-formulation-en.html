@@ -10,7 +10,7 @@
 <header>
   <h1>World-Model-Guided Multi-Hop Reasoning over Grounded Video Memory</h1>
   <p class="subtitle">Predict which reasoning hop will change future belief, execute one real evidence read, correct, and replan.</p>
-  <p class="meta">Current problem formulation · 2026-07-30 · <a href="problem-formulation-zh.html">中文</a> · <a href="README.md">Repository overview</a></p>
+  <p class="meta">Current problem formulation · 2026-07-30 · <a href="problem-formulation-zh.html">中文</a> · <a href="README.md">Repository overview</a> · includes SelectStream + OVO/StreamingBench notes</p>
 </header>
 
 <section class="card thesis">
@@ -74,6 +74,47 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
 → planner: choose the next hop from those predictions</div>
   <p>This boundary is mandatory. Correlation constructs question-independent graph topology; it does not choose a winner for a question. The IWM/planner may consume fixed correlation edges but may not invent, verify, or reclassify them during action selection. Measured embedding similarity, directional affinity, calibration, and provenance may be numeric graph features. The no-numeric-model-output rule applies to invented reward, utility, Q-value, probability, or confidence used for planning, not to measured graph-construction features. Edge affinity must never directly rank the winning action.</p>
   <p>L1/L1.5 never stores the correct answer, hidden clue identity, question-conditioned belief, IWM imagination, predicted belief delta, planner trajectory, reward/utility/Q-value, GTSAM posterior, or final claim. These belong to hidden evaluation, latent belief, or the executed L2 trace.</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Related discussion · SelectStream</span>
+  <h2>2.4 SelectStream: budgeted online latent evidence</h2>
+  <p><strong>Core idea.</strong> SelectStream (arXiv:2606.16353v1) is not about “how to store more video.” Under a fixed memory and context budget, it decides online <em>when to write</em>, <em>what to keep</em>, <em>what to read at query time</em>, and <em>how much historical evidence to expose to the VLM</em>.</p>
+  <p>Prior methods usually sit at two extremes:</p>
+  <ul>
+    <li><strong>Recent-window:</strong> only the latest video — sharp current perception, but early critical events are easy to forget.</li>
+    <li><strong>Large memory / replay:</strong> store and inject lots of history — longer coverage, but irrelevant past dilutes the current scene and raises compute.</li>
+  </ul>
+  <p>SelectStream’s fix: the current frame always goes straight into the VLM; history is compressed into a fixed-capacity latent evidence graph; only a small, query-relevant slice of historical evidence is retrieved and injected as a few latent tokens.</p>
+  <div class="equation">Streaming video
+     ↓
+1. SAW — Surprise-driven Adaptive Windowing     (when to write?)
+     ↓
+2. LVM — Latent Visual Memory Graph             (what to write / keep under capacity N?)
+     ↓
+3. GAR — Query-conditioned Graph Reasoning      (which historical evidence? budget B)
+     ↓
+4. Latent Evidence Injection                    (expose M calibrated tokens to frozen VLM)
+     ↓
+Answer
+
+Budgets (paper defaults): N=256 memory nodes · B=64 routed subgraph · M=8 evidence tokens</div>
+  <h3>Modules</h3>
+  <table>
+    <thead><tr><th>Module</th><th>Decision</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>SAW</td><td>When to write</td><td>Surprise <span class="math">s_t = λ s_t^attn + (1−λ) s_t^feat</span> closes variable-length segments (coarse on stable intervals, fine near changes)</td></tr>
+      <tr><td>LVM + merge</td><td>What to preserve</td><td>Gated write or new node; priority-aware consolidation keeps capacity at N (not FIFO / last-N only)</td></tr>
+      <tr><td>Route + GAR</td><td>What to retrieve</td><td>Top seeds expand over temporal/semantic edges into B≤64, then graph attention — an evidence chain, not independent top-k clips</td></tr>
+      <tr><td>Calibrate / inject</td><td>How much to expose</td><td><span class="math">X = [prompt; current; e₁…e_M]</span>; history context does not grow with stream length T</td></tr>
+    </tbody>
+  </table>
+  <p>What is stored is neither raw frames nor text summaries, but latent embeddings already passed through a frozen VLM visual encoder and multimodal projector. As of 2026-07-26, SelectStream.github.io returns 404 and no official code/weights were found—paper-level reimplementation only; published LR 2e-4 vs 2e-5 conflict.</p>
+  <div class="equation">One-liner:
+SelectStream uses surprise to set storage granularity, a fixed-capacity latent graph
+to merge/keep evidence, retrieves a small multi-hop evidence subgraph for the query,
+and compresses it into latent tokens injected into a frozen VLM.</div>
+  <p class="boundary" style="border-left:5px solid var(--red);padding-left:12px;margin-top:12px"><strong>Boundary vs. this IWM work:</strong> SelectStream navigates <em>where</em> evidence lives (addressable nodes + graph edges) and how much history a frozen decoder may see. This project keeps a grounded L1/L1.5 evidence substrate, then asks whether an IWM can predict how a legal hop changes future <em>belief</em> and whether a planner should execute that hop. Fixed-capacity surprise-written L1 is compatible infrastructure; latent-token injection into a frozen VLM is not our main claim. Historical “operation-conditioned soft read over continuous memory without nodes/edges” (dynamic-navigation text proxy) was a separate No-Go path—not the active CG-Bench IWM protocol.</p>
 </section>
 
 <section class="card">
@@ -157,6 +198,44 @@ baseline/ablation:     gtsam_always</div>
   <p>Sibling branches executed from the same immutable checkpoint supervise action-conditioned observation and belief-delta prediction, and give pairwise trajectory comparisons without assigning absolute utility.</p>
 </section>
 
+<section class="card benchmark">
+  <span class="label">Related discussion · Streaming benches</span>
+  <h2>8.1 OVO-Bench / StreamingBench — who has future questions?</h2>
+  <p>Active training/eval for this project remains <strong>CG-Bench</strong>. The notes below record a verified read of streaming VLM benches used by SelectStream-style work and <code>steam_video-streaming-3bench</code>, so protocol claims stay honest.</p>
+  <p>Verified on local annotations under <code>/fs/gamma-projects/vlm-robot/datasets</code> (2026-07-27). “Future” means the instruction is issued <em>before</em> the answer event appears—so the model must wait or decide when evidence is enough—not merely wording like “what will happen next.”</p>
+  <p><strong>Verdict:</strong> OVO-Bench has explicit wait-for-evidence (FAR). StreamingBench also has an analogue (Proactive Output). VideoMME does not.</p>
+  <table>
+    <thead><tr><th>Benchmark</th><th>Future / wait?</th><th>How it appears</th><th>Share</th></tr></thead>
+    <tbody>
+      <tr><td><strong>OVO-Bench FAR</strong></td><td>Yes</td><td><code>REC</code>/<code>SSR</code>/<code>CRR</code> via <code>test_info</code>; CRR also <code>ask_time</code>/<code>clue_time</code></td><td>172 / 1640 videos (~10.5%); expands to <strong>1567 / 3035</strong> timed queries (~51.6% of eval mass)</td></tr>
+      <tr><td><strong>StreamingBench Proactive</strong></td><td>Yes</td><td><code>time_stamp</code> &lt; <code>ground_truth_time_stamp</code>; adapter: <code>future_trigger_instruction</code> / <code>proactive_polling</code></td><td><strong>250 / ~4495</strong> (~5.6%); 246/250 emit after instruct (Δ 1–43s, median 7s)</td></tr>
+      <tr><td>StreamingBench RT / Omni / Contextual</td><td>No</td><td>Only <code>time_stamp</code> — answer from visible prefix</td><td>Majority of the bench</td></tr>
+      <tr><td>OVO RT / BT</td><td>No*</td><td>Known <code>realtime</code>; *FPD / Prospective Reasoning ask “what next” but lack wait-for-event fields</td><td>RT 837 + BT 631 source rows</td></tr>
+      <tr><td>VideoMME</td><td>No</td><td>No ask / trigger timestamps in 2700 rows</td><td>Whole-video MCQ only</td></tr>
+      <tr><td><strong>CG-Bench (this project)</strong></td><td>N/A (clue navigation)</td><td>Human <code>clue_intervals</code> + terminal answer; multi-hop evidence path under read budget</td><td>Primary testbed: 256 cases / 205 videos / 672 clue transitions</td></tr>
+    </tbody>
+  </table>
+  <h3>Examples (from disk)</h3>
+  <ul>
+    <li><strong>OVO CRR id 1468:</strong> ask at 297s, clue at 308s; polls 297/302 insufficient (<code>type=0</code>), 310+ sufficient (<code>type=1</code>). All 48/48 CRR have <code>ask_time &lt; clue_time</code>.</li>
+    <li><strong>OVO REC id 1559:</strong> event counting over the stream (e.g. 5s→1, 13s→2, 18s→3).</li>
+    <li><strong>OVO SSR:</strong> “is this tutorial step happening now?” Yes/No along the timeline.</li>
+    <li><strong>StreamingBench Proactive <code>sample_1_1</code>:</strong> instruct @ 00:00:26 “When the number 20 appears… output 20” → emit @ 00:01:01; all 250 marked <code>temporal_clue_type=Subsequent</code>.</li>
+    <li><strong>StreamingBench Real-Time:</strong> timestamped prefix QA (e.g. logos at 00:00:04) — <em>not</em> future-trigger.</li>
+  </ul>
+  <div class="equation">Portion takeaway:
+OVO FAR = major slice of OVO eval mass after test_info expand (~half of timed queries)
+StreamingBench Proactive = minor slice (~5.6%)
+Same “wait for future evidence” family, different schemas
+(trigger-emit timing vs readiness / counting polls)
+
+For SelectStream-inspired memory work: evaluate OVO RT/BT → StreamingBench
+single-turn → VideoMME final-query before FAR / Proactive.
+Paper FAR is not reconstructible from the method section alone (no readiness/defer head).</div>
+  <p><strong>Runner caveat:</strong> flat known-timestamp 3-bench accuracy often scores RT-style single-turn subsets and leaves SQA / Proactive out of ordinary accuracy (<code>official_protocol_compatible: false</code> for Proactive). Full free-running proactive still needs an activation / polling loop—not just prefix QA.</p>
+  <p class="small">Sibling write-ups: <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/baselines.html#timing">baselines Timing</a> · <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/selectstream-method.html#timing">SelectStream method · Benches</a> · <a href="../../steam_video-streaming-3bench/dynamic_navigation/dynamic-navigation-en.html">dynamic_navigation notes</a>.</p>
+</section>
+
 <section class="card">
   <h2>9. Post-training strategy</h2>
   <ol>
@@ -223,6 +302,6 @@ baseline/ablation:     gtsam_always</div>
   <p>The code and repaired evidence substrate now work end to end. Training remains blocked because transition calibration and a fixed multi-video, budget-feasible matched experiment are still missing, and the current correct learned-entry answer is also obtained by the immediate-only arm.</p>
 </section>
 
-<footer class="small">Canonical implementation notes live in <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>, <a href="../memory_graph/README.md">memory_graph</a>, <a href="../plan/README.md">plan</a>, and <a href="../factor_graph/README.md">factor_graph</a>. The complete-graph GPT-5-mini artifact is under <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>.</footer>
+<footer class="small">Canonical implementation notes live in <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>, <a href="../memory_graph/README.md">memory_graph</a>, <a href="../plan/README.md">plan</a>, and <a href="../factor_graph/README.md">factor_graph</a>. Related SelectStream / OVO–StreamingBench discussion is merged above (§2.4, §8.1). The complete-graph GPT-5-mini artifact is under <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>.</footer>
 </body>
 </html>

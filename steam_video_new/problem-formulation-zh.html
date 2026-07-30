@@ -10,7 +10,7 @@
 <header>
   <h1>基于真实视频证据记忆的世界模型引导多跳推理</h1>
   <p class="subtitle">预测下一跳推理会如何改变未来 belief，执行一次真实证据读取，修正并重新规划。</p>
-  <p class="meta">当前问题定义 · 2026-07-30 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a></p>
+  <p class="meta">当前问题定义 · 2026-07-30 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a> · 已合并 SelectStream + OVO/StreamingBench 讨论</p>
 </header>
 
 <section class="card thesis">
@@ -74,6 +74,46 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
 → planner：根据这些预测选择下一跳</div>
   <p>这条边界是强制的。Correlation 负责构建 question-independent graph topology，不负责针对问题选出 winner。IWM/planner 可以消费固定 correlation edges，但不能在 action selection 时创建、验证或重分类这些 edges。来自测量的 embedding similarity、directional affinity、calibration 和 provenance 可以是数值 graph features。“模型不输出数字”的规则限制的是用于 planning 的虚构 reward、utility、Q-value、probability 或 confidence，不是这些可测量的建图特征。Edge affinity 绝不能直接排序并决定获胜 action。</p>
   <p>L1/L1.5 永不保存 correct answer、hidden clue identity、question-conditioned belief、IWM imagination、predicted belief delta、planner trajectory、reward/utility/Q-value、GTSAM posterior 或 final claim。这些分别属于 hidden evaluation、latent belief 或 executed L2 trace。</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">相关讨论 · SelectStream</span>
+  <h2>2.4 SelectStream：有预算的在线潜在证据分配</h2>
+  <p><strong>核心想法。</strong>SelectStream（arXiv:2606.16353v1）的核心不是“如何保存更多视频”，而是：在固定的 memory 和 context budget 下，在线决定<em>何时写入</em>、<em>保留什么</em>、<em>查询时读取什么</em>，以及<em>最终向 VLM 暴露多少历史证据</em>。</p>
+  <p>传统方法通常走两个极端：</p>
+  <ul>
+    <li><strong>Recent-window：</strong>只看最近的视频，当前感知清晰，但容易忘掉早期关键事件。</li>
+    <li><strong>Large memory / replay：</strong>保存并注入大量历史，虽然覆盖更长，但无关历史会稀释当前场景，并增加计算量。</li>
+  </ul>
+  <p>SelectStream 的解法：当前画面始终直接输入 VLM；历史压缩成固定容量 latent evidence graph；只有与当前问题相关的一小部分历史证据被取出，并以少量 latent tokens 注入。</p>
+  <div class="equation">Streaming video
+     ↓
+1. SAW — Surprise-driven Adaptive Windowing     （何时写入？）
+     ↓
+2. LVM — Latent Visual Memory Graph             （写什么 / 容量 N 下保留什么？）
+     ↓
+3. GAR — Query-conditioned Graph Reasoning      （读哪些历史证据？预算 B）
+     ↓
+4. Latent Evidence Injection                    （向冻结 VLM 暴露 M 个校准 token）
+     ↓
+Answer
+
+论文默认预算：N=256 memory nodes · B=64 routed subgraph · M=8 evidence tokens</div>
+  <h3>模块</h3>
+  <table>
+    <thead><tr><th>模块</th><th>决策</th><th>作用</th></tr></thead>
+    <tbody>
+      <tr><td>SAW</td><td>When to write</td><td>Surprise <span class="math">s_t = λ s_t^attn + (1−λ) s_t^feat</span> 关闭可变长度片段（稳定区间粗、变化附近细）</td></tr>
+      <tr><td>LVM + merge</td><td>What to preserve</td><td>门控更新或新建；优先级合并把容量锁在 N（不是 FIFO / 仅最近 N 段）</td></tr>
+      <tr><td>Route + GAR</td><td>What to retrieve</td><td>seeds 沿时间/语义边扩展到 B≤64，再做图注意力——要证据链，不是独立 top-k 片段</td></tr>
+      <tr><td>Calibrate / inject</td><td>How much to expose</td><td><span class="math">X = [prompt; current; e₁…e_M]</span>；历史上下文不随流长度 T 增长</td></tr>
+    </tbody>
+  </table>
+  <p>存储的既不是原始帧，也不是文本摘要，而是已经过冻结 VLM visual encoder 与 multimodal projector 的 latent embeddings。截至 2026-07-26，SelectStream.github.io 返回 404，未找到官方代码/权重——只能做论文级重实现；论文学习率存在 2e-4 / 2e-5 冲突。</p>
+  <div class="equation">一句话：
+SelectStream 用 surprise 决定视频历史的存储粒度，用固定容量 latent graph 动态合并和保留证据，
+再根据问题检索一个小型多跳证据子图，并将其压缩成 latent tokens 注入冻结 VLM。</div>
+  <p class="boundary" style="border-left:5px solid var(--red);padding-left:12px;margin-top:12px"><strong>与本 IWM 工作的边界：</strong>SelectStream 导航的是证据<em>存在哪里</em>（可寻址 nodes + graph edges），以及冻结 decoder 能看到多少历史。本项目保留 grounded L1/L1.5 作为证据底物，进一步问：IWM 能否预测合法 hop 如何改变未来 <em>belief</em>，以及 planner 是否应执行该 hop。固定容量、surprise 写入的 L1 是兼容基础设施；把 latent tokens 注入冻结 VLM 不是我们的主 claim。历史的“无 nodes/edges、对连续语义状态做 operation-conditioned soft read”（dynamic-navigation 文本 proxy）是另一条已 No-Go 的路径，不是当前 CG-Bench IWM 协议。</p>
 </section>
 
 <section class="card">
@@ -157,6 +197,44 @@ baseline/ablation：gtsam_always</div>
   <p>从同一 immutable checkpoint 执行 sibling branches，可以监督 action-conditioned observation、belief-delta prediction 和 pairwise trajectory comparison，而不必给任何轨迹赋绝对 utility。</p>
 </section>
 
+<section class="card benchmark">
+  <span class="label">相关讨论 · 流式评测基准</span>
+  <h2>8.1 OVO-Bench / StreamingBench —— 谁有“未来问题”？</h2>
+  <p>本项目主动训练/评测仍以 <strong>CG-Bench</strong> 为主。以下记录对 SelectStream 类工作与 <code>steam_video-streaming-3bench</code> 所用流式 VLM 基准的核实，避免协议表述失真。</p>
+  <p>基于本地标注核实（<code>/fs/gamma-projects/vlm-robot/datasets</code>，2026-07-27）。这里的“未来”指<strong>指令先于答案事件出现</strong>，模型必须等待或判断证据是否足够；不是仅含“接下来会发生什么”这类措辞。</p>
+  <p><strong>结论：</strong>OVO-Bench 有明确的等待证据协议（FAR）；StreamingBench 也有对应项（Proactive Output）；VideoMME 没有。</p>
+  <table>
+    <thead><tr><th>基准</th><th>未来 / 等待？</th><th>数据中如何体现</th><th>占比</th></tr></thead>
+    <tbody>
+      <tr><td><strong>OVO-Bench FAR</strong></td><td>有</td><td><code>REC</code>/<code>SSR</code>/<code>CRR</code> 经 <code>test_info</code> 展开；CRR 另有 <code>ask_time</code>/<code>clue_time</code></td><td>172 / 1640 视频（~10.5%）；展开后 <strong>1567 / 3035</strong> 定时查询（约占评测质量 ~51.6%）</td></tr>
+      <tr><td><strong>StreamingBench Proactive</strong></td><td>有</td><td><code>time_stamp</code> &lt; <code>ground_truth_time_stamp</code>；适配器：<code>future_trigger_instruction</code> / <code>proactive_polling</code></td><td><strong>250 / ~4495</strong>（~5.6%）；246/250 输出晚于指令（Δ 1–43s，中位 7s）</td></tr>
+      <tr><td>StreamingBench RT / Omni / Contextual</td><td>无</td><td>仅 <code>time_stamp</code>——用可见前缀作答</td><td>基准主体</td></tr>
+      <tr><td>OVO RT / BT</td><td>无*</td><td>已知 <code>realtime</code>；*FPD / Prospective Reasoning 虽问“接下来”，仍无 wait-for-event 字段</td><td>RT 837 + BT 631 源样本</td></tr>
+      <tr><td>VideoMME</td><td>无</td><td>2700 条无 ask / trigger 时间戳</td><td>仅整段视频选择题</td></tr>
+      <tr><td><strong>CG-Bench（本项目）</strong></td><td>不适用（线索导航）</td><td>人工 <code>clue_intervals</code> + 终局答案；有界 read budget 下的多跳证据路径</td><td>主测试床：256 cases / 205 videos / 672 clue transitions</td></tr>
+    </tbody>
+  </table>
+  <h3>磁盘上的例子</h3>
+  <ul>
+    <li><strong>OVO CRR id 1468：</strong>ask 297s，clue 308s；297/302 证据不足（<code>type=0</code>），310+ 足够（<code>type=1</code>）。全部 48/48 CRR 满足 <code>ask_time &lt; clue_time</code>。</li>
+    <li><strong>OVO REC id 1559：</strong>流上事件计数（如 5s→1、13s→2、18s→3）。</li>
+    <li><strong>OVO SSR：</strong>沿时间线问“该教程步骤现在是否正在发生？”Yes/No。</li>
+    <li><strong>StreamingBench Proactive <code>sample_1_1</code>：</strong>指令 @ 00:00:26 “太阳中间出现数字 20 时输出 20” → 输出 @ 00:01:01；全部 250 条 <code>temporal_clue_type=Subsequent</code>。</li>
+    <li><strong>StreamingBench Real-Time：</strong>有时间戳的前缀 QA（如 00:00:04 问 logo）——<strong>不是</strong>未来触发。</li>
+  </ul>
+  <div class="equation">占比结论：
+OVO FAR 经 test_info 展开后占 OVO 评测质量的大半（约一半定时查询）
+StreamingBench Proactive 只是小切片（~5.6%）
+同属“等待未来证据”家族，但 schema 不同
+（触发-输出时刻 vs 就绪/计数轮询）
+
+SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench 单轮
+→ VideoMME final-query，最后才是 FAR / Proactive。
+论文 FAR 无法仅从 method 节复现（无 readiness/defer 头）。</div>
+  <p><strong>Runner 注意：</strong>扁平已知时间戳的 3-bench 准确率往往只评 RT 风格单轮子集，把 SQA / Proactive 排除在普通 accuracy 外（Proactive 常为 <code>official_protocol_compatible: false</code>）。完整 free-running proactive 仍需要 activation / 轮询环，而不是前缀 QA。</p>
+  <p class="small">姊妹文档：<a href="../../steam_video-streaming-3bench/streaming_3bench/docs/baselines.html#timing">baselines Timing</a> · <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/selectstream-method.html#timing">SelectStream method · Benches</a> · <a href="../../steam_video-streaming-3bench/dynamic_navigation/dynamic-navigation-zh.html">dynamic_navigation 笔记</a>。</p>
+</section>
+
 <section class="card">
   <h2>9. Post-training 策略</h2>
   <ol>
@@ -223,6 +301,6 @@ baseline/ablation：gtsam_always</div>
   <p>代码与修复后的 evidence substrate 已经端到端工作。训练仍被阻止，因为缺少 independent transition calibration 和固定的多视频预算可行 matched experiment；当前 learned-entry 的正确答案也能由 immediate-only 获得。</p>
 </section>
 
-<footer class="small">实现细节见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="../memory_graph/README.md">memory_graph</a>、<a href="../plan/README.md">plan</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。Complete-graph GPT-5-mini artifact 位于 <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>。</footer>
+<footer class="small">实现细节见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="../memory_graph/README.md">memory_graph</a>、<a href="../plan/README.md">plan</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。SelectStream / OVO–StreamingBench 相关讨论已合并于上文（§2.4、§8.1）。Complete-graph GPT-5-mini artifact 位于 <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>。</footer>
 </body>
 </html>
