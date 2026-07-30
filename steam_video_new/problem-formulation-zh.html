@@ -29,12 +29,27 @@
 
 <section class="card">
   <h2>1. 问题设定</h2>
-  <p>给定问题 <span class="math">q</span>、问题无关的真实视频记忆 <span class="math">M</span>、已读取证据 <span class="math">E_{1:t}</span> 和有限读取预算，选择最可能使最终证据轨迹更优的下一步 reasoning action。</p>
-  <div class="equation">z_t = Enc(q, E_{1:t}, missing_t, alternatives_t, contradictions_t, budget_t)
-a_t ∈ A(M, z_t)
+  <p><strong>在线流与有限记忆。</strong>视频片段 <span class="math">x_1,x_2,…</span> 按时间顺序到达，系统无法保留全部历史。Agent 只有固定容量的 memory buffer <span class="math">M_t</span>（最多 <span class="math">K</span> 个条目），因此在尚不知道问题时，就必须持续决定<em>何时写入</em>和<em>写入什么</em>。一次写入可以新建 grounded entry，更新或合并已有 entry，以更细时间粒度保留显著事件，或淘汰/压缩较低价值的旧证据；跳过重复片段也是一种显式决策。所有这些决策必须 question-independent，并且只能使用当时已经可见的视频前缀 <span class="math">x_{1:t}</span>。</p>
+  <div class="equation">M_t = Write(M_{t-1}, x_t, w_t),   |M_t| ≤ K
+w_t ∈ {skip, append, update/merge, consolidate/evict}</div>
+  <p><strong>问题到达与证据路由。</strong>问题 <span class="math">q</span> 可能在时刻 <span class="math">t_q</span> 到达，而相关事件可能已经发生在过去、正出现在当前片段，或尚未在未来出现。Agent 必须先判断问题需要什么证据，再在三个时间位置不同的来源之间选择：（1）查询有限 memory 中的过去证据；（2）检查当前视频片段；（3）暂缓作答并等待未来片段。它可以组合多个来源，并在 memory 上执行 multi-hop query；但不能偷看尚未到达的视频，也不能把预测结果当成已观察证据。</p>
+  <table>
+    <thead><tr><th>问题到达时证据所在位置</th><th>Agent 应执行的行为</th><th>主要失败模式</th></tr></thead>
+    <tbody>
+      <tr><td>过去：事件早于 <span class="math">t_q</span></td><td>根据问题构造 memory query，导航到已保留的证据</td><td>关键事件从未写入、被过度压缩或已被淘汰</td></tr>
+      <tr><td>当前：证据位于 <span class="math">x_{t_q}</span></td><td>检查 live clip，必要时与相关历史记忆结合</td><td>无关历史检索干扰直接可见的当前证据</td></tr>
+      <tr><td>未来：决定性证据晚于 <span class="math">t_q</span></td><td>输出 <code>WAIT/DEFER</code>，继续监测后续片段，证据充分后再回答</td><td>过早猜测、无限等待或漏掉触发事件</td></tr>
+    </tbody>
+  </table>
+  <p>因此，该任务联合了两个 policy：<strong>问题到达前的 memory policy</strong> 在看不到未来问题的情况下分配稀缺存储；<strong>问题到达后的 reasoning policy</strong> 决定查询什么、去哪里查询、证据是否充分以及何时回答。系统同时受 memory capacity、evidence-read/context budget 约束；允许等待时，还受 response latency / wait budget 约束。</p>
+  <div class="equation">s_t = (q, M_t, x_t, E_{1:t}, missing_t, alternatives_t,
+       contradictions_t, read_budget_t, wait_budget_t)
+a_t ∈ {QUERY_MEMORY(node/relation), INSPECT_CURRENT,
+       WAIT_FOR_FUTURE, ANSWER, ABSTAIN}
+z_t = Enc(s_t)
 T_θ(z_t,a_t) → (ô_{t+1}, Δẑ_{t+1})
 Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
-  <p><span class="math">z_t</span> 是 multi-token latent belief state，不必等同于显式 graph posterior。IWM 预测 observation descriptor 和 belief change，不预测下一句 reasoning text，也不能生成直接进入最终答案的想象证据。</p>
+  <p><span class="math">z_t</span> 是 multi-token latent belief state，不必等同于显式 graph posterior。对于合法 evidence action，IWM 预测 observation descriptor 和 belief change，不预测下一句 reasoning text，也不能生成直接进入最终答案的想象证据。只有来自已观察历史片段的 grounded memory，或对当前/未来片段的真实读取，才能作为答案依据。</p>
 </section>
 
 <section class="card">
@@ -120,11 +135,14 @@ SelectStream 用 surprise 决定视频历史的存储粒度，用固定容量 la
   <h2>3. Reasoning actions</h2>
   <p>Action 表示 reasoning/evidence query，不是机器人在物理世界中的动作：</p>
   <div class="equation">A = {start_at, temporal_before, temporal_after,
-     follow_soft_correlation, backtrack, stop, answer, abstain}</div>
+     follow_soft_correlation, backtrack, inspect_current,
+     wait_for_future, stop, answer, abstain}</div>
+  <p>只有存在 live clip 时，<code>INSPECT_CURRENT</code> 才是合法 action。只有 future-evidence/proactive protocol 才允许 <code>WAIT_FOR_FUTURE</code>；它会消耗 latency 或 wait budget，并推进 visible stream，绝不能提前暴露未来片段。当前 CG-Bench clue-navigation protocol 不模拟 free-running query arrival，因此只使用上述 action space 的 graph-navigation 子集。</p>
   <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回，不能把全部 frontier sources 与全部 targets 做笛卡尔积展开。</p>
   <div class="equation">A_t = outgoing_temporal(current)
     ∪ positive_direction_soft_correlation(current)
     ∪ backtrack(acquired frontier history)
+    ∪ protocol_enabled{inspect_current, wait_for_future}
     ∪ {stop, answer, abstain}</div>
   <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。由于 L1 容量固定，Full-IWM arm 不使用 embedding Top-K；Top-K 只作为显式 retrieval baseline。</p>
 </section>

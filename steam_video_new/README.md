@@ -12,6 +12,16 @@ store video facts. It is whether an implicit world model (IWM) can predict how a
 candidate reasoning hop will change future belief, and whether a planner can use
 that prediction to choose better multi-hop evidence trajectories.
 
+The broader setting is online streaming video with a fixed-capacity memory
+buffer. Before a question arrives, the agent must decide question-independently
+when to write, what grounded content to retain or merge, and what to evict. Once
+a question arrives, it must infer the needed evidence and route the query to one
+or more of three sources: retained evidence from past clips, the current live
+clip, or future clips that have not arrived yet. The last case requires an
+explicit wait/defer decision rather than a premature answer. The task therefore
+couples bounded online memory management with question-conditioned retrieval,
+evidence-sufficiency judgment, and answer timing.
+
 **Primary testbed: CG-Bench.** All active supervision, frozen L1/L1.5 cohorts,
 matched IWM/planner arms, and held-out gates use CG-Bench multi-clue cases with
 human `clue_intervals`. Video-Holmes is historical engineering only and is not
@@ -180,7 +190,14 @@ An action is a reasoning/evidence-acquisition hop, not a physical robot action:
 - temporal before/after expansion;
 - follow a positive-direction soft L1.5 correlation;
 - backtrack to an acquired node without rereading it;
+- inspect the current live clip when the streaming protocol exposes one;
+- wait/defer when the question precedes its decisive future evidence;
 - stop/answer/abstain.
+
+`INSPECT_CURRENT` and `WAIT_FOR_FUTURE` belong to the broader streaming
+envelope. The latter advances only through real arriving clips and consumes a
+declared latency/wait budget. The active CG-Bench protocol uses the graph-
+navigation subset because it does not simulate free-running query arrival.
 
 The main method maintains **multiple persistent reasoning paths, each with one
 active current-node cursor**. Ordinary move/follow actions for a path always

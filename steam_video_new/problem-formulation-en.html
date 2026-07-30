@@ -29,12 +29,27 @@
 
 <section class="card">
   <h2>1. Problem setting</h2>
-  <p>Given a question <span class="math">q</span>, a question-independent grounded video memory <span class="math">M</span>, acquired evidence <span class="math">E_{1:t}</span>, and a bounded read budget, choose the next reasoning action that is most likely to make the eventual evidence path preferable.</p>
-  <div class="equation">z_t = Enc(q, E_{1:t}, missing_t, alternatives_t, contradictions_t, budget_t)
-a_t ∈ A(M, z_t)
+  <p><strong>Online stream, bounded memory.</strong> Video clips <span class="math">x_1,x_2,…</span> arrive sequentially and cannot all be retained. The agent has a fixed-capacity memory buffer <span class="math">M_t</span> (at most <span class="math">K</span> entries), so before any question is known it must continually decide <em>when to write</em> and <em>what to write</em>. A write may create a grounded entry, update or merge an existing entry, preserve a salient event at finer temporal resolution, or evict/consolidate less useful evidence; skipping a redundant clip is also an explicit decision. These decisions must be question-independent and may use only the visible prefix <span class="math">x_{1:t}</span>.</p>
+  <div class="equation">M_t = Write(M_{t-1}, x_t, w_t),   |M_t| ≤ K
+w_t ∈ {skip, append, update/merge, consolidate/evict}</div>
+  <p><strong>Question arrival and evidence routing.</strong> A question <span class="math">q</span> may arrive at time <span class="math">t_q</span>, after some relevant event has already passed, while the relevant event is visible in the current clip, or before the decisive event occurs. The agent must infer what evidence the question requires and choose among three temporally distinct sources: (1) query the bounded memory for past evidence, (2) inspect the current clip, or (3) defer the answer and wait for future clips. It may combine evidence from multiple sources and perform multi-hop queries over memory, but it may not inspect unseen future video or treat a prediction as observed evidence.</p>
+  <table>
+    <thead><tr><th>Evidence location at query time</th><th>Required behavior</th><th>Main failure</th></tr></thead>
+    <tbody>
+      <tr><td>Past: event occurred before <span class="math">t_q</span></td><td>Form a question-conditioned memory query and navigate to retained evidence</td><td>The needed event was never written, was over-compressed, or was evicted</td></tr>
+      <tr><td>Current: evidence is in <span class="math">x_{t_q}</span></td><td>Inspect the live clip and combine it with relevant memory when necessary</td><td>Historical retrieval distracts from direct current evidence</td></tr>
+      <tr><td>Future: decisive evidence occurs after <span class="math">t_q</span></td><td>Return <code>WAIT/DEFER</code>, monitor subsequent clips, and answer only when evidence is sufficient</td><td>Premature guessing, indefinite waiting, or missing the trigger event</td></tr>
+    </tbody>
+  </table>
+  <p>Thus the problem couples two policies: a <strong>pre-query memory policy</strong> that allocates scarce storage without seeing the future question, and a <strong>post-query reasoning policy</strong> that decides what and where to query, whether the evidence is sufficient, and when to answer. Performance is constrained jointly by memory capacity, evidence-read/context budget, and—when waiting is legal—response latency.</p>
+  <div class="equation">s_t = (q, M_t, x_t, E_{1:t}, missing_t, alternatives_t,
+       contradictions_t, read_budget_t, wait_budget_t)
+a_t ∈ {QUERY_MEMORY(node/relation), INSPECT_CURRENT,
+       WAIT_FOR_FUTURE, ANSWER, ABSTAIN}
+z_t = Enc(s_t)
 T_θ(z_t,a_t) → (ô_{t+1}, Δẑ_{t+1})
 Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
-  <p><span class="math">z_t</span> is a latent, multi-token belief state. It need not be an explicit graph posterior. The IWM predicts an observation descriptor and belief change—not the next reasoning sentence and not evidence that may be used directly in the final answer.</p>
+  <p><span class="math">z_t</span> is a latent, multi-token belief state. It need not be an explicit graph posterior. For a legal evidence action, the IWM predicts an observation descriptor and belief change—not the next reasoning sentence and not evidence that may be used directly in the final answer. Only retrieved memory grounded in previously observed clips or a real current/future read can support the answer.</p>
 </section>
 
 <section class="card">
@@ -121,11 +136,14 @@ and compresses it into latent tokens injected into a frozen VLM.</div>
   <h2>3. Reasoning actions</h2>
   <p>An action is a reasoning/evidence query, not a physical action:</p>
   <div class="equation">A = {start_at, temporal_before, temporal_after,
-     follow_soft_correlation, backtrack, stop, answer, abstain}</div>
+     follow_soft_correlation, backtrack, inspect_current,
+     wait_for_future, stop, answer, abstain}</div>
+  <p><code>INSPECT_CURRENT</code> is legal only when a live clip is available. <code>WAIT_FOR_FUTURE</code> is legal only in a future-evidence/proactive protocol, consumes latency or wait budget, advances the visible stream, and never reveals a future clip early. The active CG-Bench clue-navigation protocol uses the graph-navigation subset because it does not model free-running query arrival.</p>
   <p>The main method has one active current-node cursor. Ordinary navigation actions use that cursor as their only source; acquired nodes remain in belief/frontier history and can be revisited through an explicit <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> operation. This avoids expanding all frontier sources against all graph targets.</p>
   <div class="equation">A_t = outgoing_temporal(current)
     ∪ positive_direction_soft_correlation(current)
     ∪ backtrack(acquired frontier history)
+    ∪ protocol_enabled{inspect_current, wait_for_future}
     ∪ {stop, answer, abstain}</div>
   <p>A deterministic Graph Action Compiler enumerates actions from endpoint validity, streaming visibility, relation status, provenance, executor availability, and budget. It never filters by question relevance. A virtual query root exposes <code>START_AT(node)</code> for every retained node at the first step. Fixed-capacity L1 keeps this set bounded, so the Full-IWM arm uses no embedding Top-K; Top-K is an explicit retrieval baseline only.</p>
 </section>
