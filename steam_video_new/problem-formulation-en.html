@@ -10,7 +10,7 @@
 <header>
   <h1>World-Model-Guided Multi-Hop Reasoning over Grounded Video Memory</h1>
   <p class="subtitle">Predict which reasoning hop will change future belief, execute one real evidence read, correct, and replan.</p>
-  <p class="meta">Current problem formulation · 2026-07-22 · <a href="problem-formulation-zh.html">中文</a> · <a href="README.md">Repository overview</a></p>
+  <p class="meta">Current problem formulation · 2026-07-30 · <a href="problem-formulation-zh.html">中文</a> · <a href="README.md">Repository overview</a></p>
 </header>
 
 <section class="card thesis">
@@ -64,6 +64,7 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     </tbody>
   </table>
   <p>The main L1 navigation structure is a deterministic <code>temporal_next/before/overlaps/during</code> backbone over grounded semantic nodes. Composition links such as <code>derived_from</code>, <code>entity_mention</code>, <code>state_of</code>, and <code>located_in</code> remain provenance/audit structure. Native <code>same_entity</code>, <code>state_change</code>, and <code>causal_hint</code> labels belong to an optional strict-relation path and never become navigation facts without their specific verifier.</p>
+  <p>The current repair enriches persisted visual L1 nodes with question-independent, time-aligned subtitles when available. The bounded address key supports routing, while the complete descriptor remains a grounded value revealed by a real read. Future visual extraction also requests a concise grounded caption and evidence-indexed visible text. Any descriptor change invalidates the old embedding reference; <code>Qwen/Qwen3-VL-Embedding-2B</code> embeddings must then be regenerated before rebuilding L1.5.</p>
   <h3>2.2 L1.5 correlation overlay</h3>
   <p>L1.5 reuses the same L1 node IDs and adds question-independent soft nonlocal navigation correlations from <code>Qwen/Qwen3-VL-Embedding-2B</code>. Every non-temporal pair is scored; adjacent near-duplicate semantics are coalesced, remaining near-identical occurrences form a temporal recurrence chain rather than a clique, and class-level standardized sparsemax emits directional affinities without fixed Top-K. Similarity/affinity is not probability, confidence, identity, state transition, support, or causality. Independently verified categorical fact relations are stored separately.</p>
   <h3>2.3 Correlation is not action preference</h3>
@@ -103,6 +104,7 @@ o_{t+1} = Execute(M,a_t*)
 z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <p>The world model is useful when a low-immediate-gain bridge hop unlocks a decisive second hop. This delayed effect is the principal distinction from reactive retrieval or immediate information-gain ranking.</p>
   <p>The learned IWM predicts all legal first hops in one batched graph/tensor forward. Horizon two may remove only strictly dominated first hops before expanding every second hop from the remaining partial-order set; it does not use fixed-K beam pruning.</p>
+  <p>The current <code>reasoning_v2</code> planner retains a forest of competing hypothesis-conditioned reasoning histories. A joint action tree must cover every surviving answer hypothesis under one shared physical first read. The planner schedules one real read, keeps unselected alternatives suspended rather than deleting them, applies the grounded correction separately to every path, and then replans from the corrected forest.</p>
 </section>
 
 <section class="card boundary">
@@ -190,18 +192,19 @@ baseline/ablation:     gtsam_always</div>
 <section class="card">
   <h2>12. Current implementation status</h2>
   <table>
-    <thead><tr><th>Area</th><th>Status on 2026-07-21</th></tr></thead>
+    <thead><tr><th>Area</th><th>Status on 2026-07-30</th></tr></thead>
     <tbody>
-      <tr><td>L1 retained memory</td><td>Implemented: pluggable representation-surprise windows plus materialized fixed-capacity consolidation, lineage, embedding refresh invalidation, edge rewiring, and temporal-chain rebuild</td></tr>
-      <tr><td>L1.5 correlations</td><td>Implemented: Qwen embedding soft navigation correlations, semantic duplicate coalescing, recurrence chains instead of cliques, class-level standardized sparsemax, directional affinity, and a separate optional verified fact-relation layer</td></tr>
-      <tr><td>Full-graph IWM/planner</td><td>Implemented in <code>full_graph_iwm</code>: virtual root, one active cursor, cursor-local temporal/correlation hops, no Top-K winner selection, leakage-safe horizon-1/2 rollout, anonymous consequence preferences, request-batched exhaustive pair comparison, explicit resource abstention, and replanning after real reads</td></tr>
+      <tr><td>L1 retained memory</td><td>Implemented: pluggable representation-surprise windows, materialized fixed-capacity consolidation, lineage, time-aligned subtitle enrichment, richer grounded visual descriptors, embedding invalidation, edge rewiring, and temporal-chain rebuild</td></tr>
+      <tr><td>L1.5 correlations</td><td>Implemented: regenerated Qwen embedding soft navigation correlations, semantic duplicate coalescing, recurrence chains instead of cliques, class-level standardized sparsemax, directional affinity, and a separate optional verified fact-relation layer. Correlation remains a proposal, not factual confidence or action preference.</td></tr>
+      <tr><td>Reasoning-v2 IWM/planner</td><td>Implemented: complete-graph oracle/learned entry protocols, persistent multi-hypothesis path forests, shared physical reads, categorical observation/effect prediction, real correction, replanning, no heuristic Top-K, and matched IWM/no-WM/shuffled/immediate/oracle arms</td></tr>
       <tr><td>Legacy IWM/planner workflows</td><td>Existing bounded-context navigator remains the data/review/baseline path and is not silently used as the new main arm</td></tr>
-      <tr><td>GPT-OSS-120B</td><td>Strict categorical adapters implemented; inference/data gathering only; numeric output rejected</td></tr>
+      <tr><td>Model adapters</td><td>Strict categorical GPT-OSS/Qwen/OpenRouter adapters implemented; numeric planning output rejected. Schema-repair attempts now use distinct cache keys, and concurrent cache writers merge under a file lock.</td></tr>
       <tr><td>GTSAM</td><td>Correction pilot and optional backup modes implemented; not the default research method</td></tr>
       <tr><td>CG-Bench v2</td><td>256 cases, 205 videos, 672 human-clue transitions; the current Qwen grounding/embedding validation is 670/672 with two failed reads</td></tr>
-      <tr><td>Real L1/L1.5 candidates</td><td>Eight 120-second question-independent smoke graphs and Qwen embedding sidecars are present. The repaired builder retains 15–64 nodes and emits 22–133 soft edges; the former dense climbing case is reduced to 15 nodes and 22 edges. A fresh matched pilot is still required.</td></tr>
-      <tr><td>Matched closed loop</td><td>Implemented full IWM, no-WM, prediction shuffle, frozen WM, immediate-only, and oracle-ceiling arms; hidden clue overlap scores reads after execution and never updates planner belief</td></tr>
-      <tr><td>Learned IWM result</td><td>Not trained; no formal performance claim yet</td></tr>
+      <tr><td>Repaired complete graph</td><td>The frozen diagnostic graph has 256 L1 nodes and 957 typed proposals. All 7/7 annotated clue intervals are retained, and every hidden clue group has a non-placeholder grounded value plus a refreshed Qwen embedding reference.</td></tr>
+      <tr><td>GPT-5-mini closed loop</td><td>A real record run and a 3.6-second cache-only replay both completed. Learned-entry IWM produced the correct answer after one read, but immediate-only produced the same answer. Oracle-entry beliefs changed and diverged, yet IWM missed the next shortest-path hop and did not answer.</td></tr>
+      <tr><td>Budget audit</td><td>The nearest first-clue node is two graph edges from the next clue group, requiring at least 3 reads including entry; the matched smoke budget is 2. Closed-loop execution therefore passes while oracle route feasibility and later-clue reach correctly fail.</td></tr>
+      <tr><td>Learned IWM result</td><td>Not trained. The one-case result validates infrastructure and substrate repair, not an IWM navigation advantage.</td></tr>
       <tr><td>Production readiness</td><td>Not reached</td></tr>
     </tbody>
   </table>
@@ -211,15 +214,15 @@ baseline/ablation:     gtsam_always</div>
   <span class="label">Immediate gate</span>
   <h2>13. What happens next</h2>
   <ol>
-    <li>Rerun the capacity-64, 8-video compile gate on the repaired soft-correlation graph fingerprint.</li>
-    <li>Inspect retained clue coverage, embedding checksums, correlation density/degree, hidden leakage, and legal-action coverage.</li>
-    <li>Run matched GPT-OSS horizon-one IWM, no-WM, shuffle, frozen, immediate-only, and oracle arms.</li>
-    <li>Report coverage, read efficiency, action divergence, abstention, delayed success, and latency separately, without a single aggregate score.</li>
-    <li>Only then construct a fixed delayed two-hop subset for a resource-feasible exhaustive horizon-two experiment.</li>
+    <li>Freeze a multi-video cohort whose exact complete-graph oracle paths fit the declared matched read budget; entry itself counts as one read.</li>
+    <li>Independently calibrate executed observation transitions and hypothesis-conditioned belief effects, including surface-correlation hard negatives.</li>
+    <li>Run matched IWM, no-WM, shuffled-IWM, immediate-only, and oracle arms over that fixed cohort.</li>
+    <li>Report answer accuracy, read efficiency, action divergence, strict interval localization, abstention, delayed success, and latency as separate metric families.</li>
+    <li>Train or distill a 9B IWM only after intact predictions outperform no-WM and shuffled-IWM on delayed, budget-feasible cases.</li>
   </ol>
-  <p>The structural gate now passes on the repaired graphs; the next scientific bottleneck is whether GPT-OSS predictions produce world-model-dependent action divergence and better realized evidence acquisition under matched budgets.</p>
+  <p>The code and repaired evidence substrate now work end to end. Training remains blocked because transition calibration and a fixed multi-video, budget-feasible matched experiment are still missing, and the current correct learned-entry answer is also obtained by the immediate-only arm.</p>
 </section>
 
-<footer class="small">Canonical implementation notes live in <a href="implicit_world_model/full_graph_iwm/README.md">full_graph_iwm</a>, <a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>, <a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a>, and <a href="../factor_graph/README.md">factor_graph</a>.</footer>
+<footer class="small">Canonical implementation notes live in <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>, <a href="../memory_graph/README.md">memory_graph</a>, <a href="../plan/README.md">plan</a>, and <a href="../factor_graph/README.md">factor_graph</a>. The complete-graph GPT-5-mini artifact is under <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>.</footer>
 </body>
 </html>

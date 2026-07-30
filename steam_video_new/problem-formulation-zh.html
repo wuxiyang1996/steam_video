@@ -10,7 +10,7 @@
 <header>
   <h1>基于真实视频证据记忆的世界模型引导多跳推理</h1>
   <p class="subtitle">预测下一跳推理会如何改变未来 belief，执行一次真实证据读取，修正并重新规划。</p>
-  <p class="meta">当前问题定义 · 2026-07-22 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a></p>
+  <p class="meta">当前问题定义 · 2026-07-30 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a></p>
 </header>
 
 <section class="card thesis">
@@ -64,6 +64,7 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     </tbody>
   </table>
   <p>L1 的主导航结构是 grounded semantic nodes 上确定性的 <code>temporal_next/before/overlaps/during</code> backbone。<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code>、<code>located_in</code> 等 composition links 只保留为 provenance/audit structure。Native <code>same_entity</code>、<code>state_change</code>、<code>causal_hint</code> 属于可选 strict-relation 路径，未通过各自 verifier 绝不成为 navigation fact。</p>
+  <p>当前修复会在存在字幕时，用 question-independent、time-aligned subtitle 丰富已持久化的 visual L1 node。有限长度的 address key 用于导航，完整 descriptor 仍是执行真实 read 后才获得的 grounded value。未来 visual extraction 还会请求简洁 grounded caption 和带 evidence frame 的 visible text。Descriptor 一旦变化，旧 embedding reference 必须失效；重建 L1.5 前必须重新生成 <code>Qwen/Qwen3-VL-Embedding-2B</code> embedding。</p>
   <h3>2.2 L1.5 correlation overlay</h3>
   <p>L1.5 复用同一批 L1 node IDs，使用 <code>Qwen/Qwen3-VL-Embedding-2B</code> 生成 question-independent soft nonlocal navigation correlations。所有非 temporal pairs 都会被打分；相邻近重复语义先合并，剩余近相同 occurrences 用时间 recurrence chain 连接而不是形成 clique，再在 semantic equivalence classes 之间用 standardized sparsemax 产生 directional affinity，不使用固定 Top-K。Similarity/affinity 不是 probability、confidence、identity、state transition、support 或 causality；独立验证过的 categorical fact relations 单独保存。</p>
   <h3>2.3 Correlation 不是 action preference</h3>
@@ -103,6 +104,7 @@ o_{t+1} = Execute(M,a_t*)
 z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <p>World model 的价值体现在 delayed effect：第一跳可能几乎没有即时收益，却能打开一个 bridge，让第二跳补全关键证据。这是它区别于 reactive retrieval 或 immediate information-gain ranking 的核心。</p>
   <p>Learned IWM 在一次 batched graph/tensor forward 中预测全部合法 first hops。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。</p>
+  <p>当前 <code>reasoning_v2</code> planner 保留由不同 hypothesis 与 action history 构成的竞争路径森林。一个 joint action tree 必须在同一个 shared physical first read 下覆盖所有仍存活的 answer hypotheses。Planner 每轮只调度一次真实 read，未选路径保持 suspended 而不是被删除；grounded correction 分别作用于每条路径，然后从修正后的森林重新规划。</p>
 </section>
 
 <section class="card boundary">
@@ -190,18 +192,19 @@ baseline/ablation：gtsam_always</div>
 <section class="card">
   <h2>12. 当前实现状态</h2>
   <table>
-    <thead><tr><th>部分</th><th>截至 2026-07-21 的状态</th></tr></thead>
+    <thead><tr><th>部分</th><th>截至 2026-07-30 的状态</th></tr></thead>
     <tbody>
-      <tr><td>L1 retained memory</td><td>已实现可插入 learned representation 的 surprise windows，以及真正 materialized fixed-capacity consolidation、lineage、embedding refresh invalidation、edge rewiring 和 temporal-chain rebuild</td></tr>
-      <tr><td>L1.5 correlations</td><td>已实现 Qwen embedding soft navigation correlation、semantic duplicate coalescing、recurrence chain 代替 clique、class-level standardized sparsemax、directional affinity，以及独立的可选 verified fact-relation layer</td></tr>
-      <tr><td>Full-graph IWM/planner</td><td>已在 <code>full_graph_iwm</code> 实现 virtual root、单一 active cursor、cursor-local temporal/correlation hops、不用 Top-K 选 winner、无泄漏 horizon-1/2 rollout、匿名 consequence preference、分批但不采样的完整 pair comparison、资源超限显式 abstention，以及真实读取后重新规划</td></tr>
+      <tr><td>L1 retained memory</td><td>已实现可插入 learned representation 的 surprise windows、materialized fixed-capacity consolidation、lineage、time-aligned subtitle enrichment、更丰富的 grounded visual descriptor、embedding invalidation、edge rewiring 和 temporal-chain rebuild</td></tr>
+      <tr><td>L1.5 correlations</td><td>已实现重新生成的 Qwen embedding soft navigation correlation、semantic duplicate coalescing、recurrence chain 代替 clique、class-level standardized sparsemax、directional affinity，以及独立的可选 verified fact-relation layer。Correlation 仍只是 proposal，不是事实置信度或 action preference。</td></tr>
+      <tr><td>Reasoning-v2 IWM/planner</td><td>已实现 complete-graph oracle/learned entry 双协议、persistent multi-hypothesis path forest、shared physical read、categorical observation/effect prediction、真实 correction、replanning、无 heuristic Top-K，以及 matched IWM/no-WM/shuffled/immediate/oracle arms</td></tr>
       <tr><td>Legacy IWM/planner workflows</td><td>现有 bounded-context navigator 继续作为 data/review/baseline 路径，不会被静默当作新主方法</td></tr>
-      <tr><td>GPT-OSS-120B</td><td>已实现 strict categorical adapter；仅 inference/data gathering；numeric output 会被拒绝</td></tr>
+      <tr><td>Model adapters</td><td>已实现 strict categorical GPT-OSS/Qwen/OpenRouter adapters，拒绝 numeric planning output。Schema repair 的每次尝试使用不同 cache key，并发 cache writer 使用文件锁合并。</td></tr>
       <tr><td>GTSAM</td><td>已实现 correction pilot 和 optional backup mode；不是默认研究方法</td></tr>
       <tr><td>CG-Bench v2</td><td>256 cases、205 videos、672 条人工 clue transitions；当前 Qwen grounding/embedding validation 为 670/672，剩余 2 条失败</td></tr>
-      <tr><td>真实 L1/L1.5 candidates</td><td>8 个 question-independent 120 秒 smoke graphs 与 Qwen embedding sidecars 已存在。修复后的 builder 保留 15–64 nodes，生成 22–133 条 soft edges；原来的 dense climbing case 已降到 15 nodes/22 edges。仍需重新运行 matched pilot。</td></tr>
-      <tr><td>Matched closed loop</td><td>已实现 full IWM、no-WM、prediction shuffle、frozen WM、immediate-only 与 oracle ceiling；hidden clue 只做执行后评分，不回灌 planner belief</td></tr>
-      <tr><td>Learned IWM result</td><td>尚未训练，没有正式性能结论</td></tr>
+      <tr><td>修复后的 complete graph</td><td>冻结的诊断图包含 256 个 L1 nodes 和 957 条 typed proposals；7/7 标注 clue intervals 全部保留，每个 hidden clue group 都有非 placeholder grounded value 和新生成的 Qwen embedding reference。</td></tr>
+      <tr><td>GPT-5-mini closed loop</td><td>真实 record run 与 3.6 秒纯 cache replay 均已完成。Learned-entry IWM 第一读得到正确答案，但 immediate-only 得到相同答案。Oracle-entry belief 已变化并分化，但 IWM 未命中下一 shortest-path hop，也未得到答案。</td></tr>
+      <tr><td>Budget audit</td><td>First-clue group 最近节点到下一 clue group 相距 2 条 graph edges，连同 entry 至少需要 3 reads；matched smoke budget 为 2。因此 closed-loop execution 通过，而 oracle route feasibility 和 later-clue reach 正确失败。</td></tr>
+      <tr><td>Learned IWM result</td><td>尚未训练。当前单例只验证 infrastructure 与 substrate repair，不能证明 IWM navigation advantage。</td></tr>
       <tr><td>Production readiness</td><td>尚未达到</td></tr>
     </tbody>
   </table>
@@ -211,15 +214,15 @@ baseline/ablation：gtsam_always</div>
   <span class="label">近期门禁</span>
   <h2>13. 下一步</h2>
   <ol>
-    <li>在修复后的 soft-correlation graph fingerprint 上重跑 capacity=64 的 8-video compile gate；</li>
-    <li>检查 retained clue coverage、embedding checksum、correlation density/degree、hidden leakage 和 legal-action coverage；</li>
-    <li>运行 matched GPT-OSS horizon-one IWM、no-WM、shuffle、frozen、immediate-only 和 oracle arms；</li>
-    <li>分别报告 coverage、read efficiency、action divergence、abstention、delayed success 和 latency，不汇总为单一分数；</li>
-    <li>然后再构造固定 delayed two-hop subset，进行资源可承受的 exhaustive horizon-two 实验。</li>
+    <li>冻结多视频 cohort，要求 complete-graph oracle 的精确路径符合声明的 matched read budget；entry 本身计作一次 read；</li>
+    <li>独立校准 executed observation transition 与 hypothesis-conditioned belief effect，并包含 surface-correlation hard negatives；</li>
+    <li>在固定 cohort 上运行 matched IWM、no-WM、shuffled-IWM、immediate-only 和 oracle arms；</li>
+    <li>将 answer accuracy、read efficiency、action divergence、strict interval localization、abstention、delayed success 和 latency 分开报告；</li>
+    <li>只有 intact IWM prediction 在 delayed、预算可行 cases 上超过 no-WM 与 shuffled-IWM 后，才训练或蒸馏 9B IWM。</li>
   </ol>
-  <p>修复后的图已经通过 structural gate；下一科学瓶颈是 GPT-OSS prediction 能否在 matched budget 下产生依赖 world model 的 action divergence，并改善真实 evidence acquisition。</p>
+  <p>代码与修复后的 evidence substrate 已经端到端工作。训练仍被阻止，因为缺少 independent transition calibration 和固定的多视频预算可行 matched experiment；当前 learned-entry 的正确答案也能由 immediate-only 获得。</p>
 </section>
 
-<footer class="small">实现细节见 <a href="implicit_world_model/full_graph_iwm/README.md">full_graph_iwm</a>、<a href="implicit_world_model/l15_graph_navigator/README.md">l15_graph_navigator</a>、<a href="implicit_world_model/cgbench_grounded_navigation/README.md">cgbench_grounded_navigation</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。</footer>
+<footer class="small">实现细节见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="../memory_graph/README.md">memory_graph</a>、<a href="../plan/README.md">plan</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。Complete-graph GPT-5-mini artifact 位于 <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>。</footer>
 </body>
 </html>
