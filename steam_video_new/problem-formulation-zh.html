@@ -10,7 +10,7 @@
 <header>
   <h1>基于真实视频证据记忆的世界模型引导多跳推理</h1>
   <p class="subtitle">预测下一跳推理会如何改变未来 belief，执行一次真实证据读取，修正并重新规划。</p>
-  <p class="meta">当前问题定义 · 2026-07-30 · <a href="problem-formulation-en.html">English</a> · <a href="README.md">仓库总览</a> · 已合并 SelectStream + OVO/StreamingBench 讨论</p>
+  <p class="meta">当前问题定义 · 2026-07-30 · <a href="problem-formulation-en.html">English</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">仓库总览</a> · 已合并 SelectStream + OVO/StreamingBench 讨论</p>
 </header>
 
 <section class="card thesis">
@@ -78,10 +78,44 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
       <tr><td><code>dialogue_span</code>/OCR</td><td>带真实 modality 的 time-aligned text；字幕不能冒充直接 audio observation</td></tr>
     </tbody>
   </table>
+  <h3>2.1.1 从视频到 L1 的构建流程</h3>
+  <div class="equation">可见视频前缀 → question-independent 分窗 → 抽帧后的 Qwen clip schema
+→ 冻结的 evidence-construction atomic skills → neighbor-aware graph compose
+→ integrity/trust gate → 有界 keep/merge/evict → temporal rebuild → embedding refresh</div>
+  <p>Writer 不接收 question、answer、clue interval 或 relevance label。当前 surprise-window 默认每 0.5 s 采样视觉 representation，将相邻样本的 cosine change 与最近 8 个 change 的 0.8 经验分位数比较。High-surprise 在满足 2 s 最短窗口后切分；稳定内容到 12 s 最长窗口或 stream end 切分。也可使用 fixed/hierarchical windows。Qwen 随后生成 grounded clip schema：scene facts、atomic events、objects、clip-local entity mentions 及可见属性、states、places、OCR、dialogue/subtitle spans、evidence frames 和 timestamps。该 perception pass 不得推断 motive、跨 clip identity、state transition、causality 或 question relevance。</p>
+  <p>Graph composer 使用有界的 previous/current/next-clip context，并且只能调用以下 9 个冻结的 Video_Skills 建图 atomic skills。这 9 个 skill 是完整的 L1 construction ontology；reasoning-graph skills 不用于制造 L1 evidence。Atomic-planner 路径记录每次 invocation 和 dependency，当前 neighbor-aware composer 则用 <code>neighbor_vlm_l1_*</code> trace ID 记录等价的 typed create/link/skip operation：</p>
+  <table>
+    <thead><tr><th>Atomic skill</th><th>构建效果</th></tr></thead>
+    <tbody>
+      <tr><td><code>segment_video_or_select_clip</code></td><td>按策略创建带 timestamp 的 clip/window anchor。</td></tr>
+      <tr><td><code>extract_observation</code></td><td>创建保留 modality 的 grounded observation 及其 <code>derived_from</code> source link。</td></tr>
+      <tr><td><code>extract_dialogue_span</code></td><td>创建带 timestamp 的 subtitle/ASR/dialogue evidence，speaker 只能是观测到或已提供的 hint。</td></tr>
+      <tr><td><code>detect_entity_mention</code></td><td>创建 clip-local person/object/place/speaker mention，不声称跨 clip identity。</td></tr>
+      <tr><td><code>resolve_entity_coreference</code></td><td>只在有足够兼容上下文时候选 canonical entity 和 <code>same_entity</code> links；仍需独立 identity gate。</td></tr>
+      <tr><td><code>create_event_node</code></td><td>将 supporting observations/dialogue 转为一个带 timestamp 的 atomic action/occurrence。</td></tr>
+      <tr><td><code>create_state_node</code></td><td>有直接证据时存储带 temporal scope 的 subject–attribute–value–polarity，不自动声称 change。</td></tr>
+      <tr><td><code>link_graph_relation</code></td><td>仅在两个 endpoint 存在后添加 allowed typed edge；unknown type 或 missing endpoint 直接 fail closed。</td></tr>
+      <tr><td><code>assign_provenance_trust</code></td><td>记录 producer、source、trust tier、visibility 和 hidden-supervision status。</td></tr>
+    </tbody>
+  </table>
+  <p>正常 trace 是 segmentation → observation/dialogue extraction → local mentions → event/state creation → relation linking → provenance。State、dialogue 和 coreference 只在证据存在时调用；缺失就保持缺失，不构造 node。每次 invocation、dependency、evidence reference 和 failure 都记录在 <code>metadata.graph_compose.execution_trace</code>。</p>
+  <h3>2.1.2 Node context 和 temporal 判定</h3>
+  <p>Node 的 routing key 包含 type、短 grounded descriptor、modality 和 interval。真实 read 返回的 grounded value 还包含完整 caption/predicate/utterance/OCR/state tuple、clip/local IDs、local participants 和 visible attributes、state subject/attribute/value/polarity/temporal scope、evidence-frame 或 subtitle/ASR references、provenance/trust/visibility、incident composition links 和 consolidation lineage。Previous/current/next clip digest 只是 construction-time composer context，不会被复制到 node value；它们的影响只体现在 grounded candidate edges 和 compose audit 中。这些 context 用于 audit 和后续 read，不得包含 answer、motive、跨 clip identity 或 causal conclusion。</p>
+  <p>Temporal relation 来自确定性 interval test。Node 按 <code>(start_s,end_s,node_id)</code> 排序，相邻 retained nodes 连 <code>temporal_next</code>；若 <code>end(u) ≤ start(v)+10⁻³ s</code> 则为 <code>before(u,v)</code>；<code>during</code> 使用同一 tolerance 的 interval containment；其他相交 interval 为 <code>overlaps</code>。<code>before</code> 只在有界 forward neighborhood 内保存，不建 dense transitive closure。Consolidation 会删除 orphan、rewire 存活非 temporal edges，并按 retained intervals 重建 backbone。时间顺序不证明 identity、change、support 或 causality。</p>
   <p>L1 的主导航结构是 grounded semantic nodes 上确定性的 <code>temporal_next/before/overlaps/during</code> backbone。<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code>、<code>located_in</code> 等 composition links 只保留为 provenance/audit structure。Native <code>same_entity</code>、<code>state_change</code>、<code>causal_hint</code> 属于可选 strict-relation 路径，未通过各自 verifier 绝不成为 navigation fact。</p>
   <p>当前修复会在存在字幕时，用 question-independent、time-aligned subtitle 丰富已持久化的 visual L1 node。有限长度的 address key 用于导航，完整 descriptor 仍是执行真实 read 后才获得的 grounded value。未来 visual extraction 还会请求简洁 grounded caption 和带 evidence frame 的 visible text。Descriptor 一旦变化，旧 embedding reference 必须失效；重建 L1.5 前必须重新生成 <code>Qwen/Qwen3-VL-Embedding-2B</code> embedding。</p>
   <h3>2.2 L1.5 correlation overlay</h3>
-  <p>L1.5 复用同一批 L1 node IDs，使用 <code>Qwen/Qwen3-VL-Embedding-2B</code> 生成 question-independent soft nonlocal navigation correlations。所有非 temporal pairs 都会被打分；相邻近重复语义先合并，剩余近相同 occurrences 用时间 recurrence chain 连接而不是形成 clique，再在 semantic equivalence classes 之间用 standardized sparsemax 产生 directional affinity，不使用固定 Top-K。Similarity/affinity 不是 probability、confidence、identity、state transition、support 或 causality；独立验证过的 categorical fact relations 单独保存。</p>
+  <p><strong>设计变更：</strong>早期 L1.5 是 atomic-event causal-temporal belief overlay，尝试接纳 typed <code>explains</code>/<code>enables</code> edges。它容易把 narrative succession 误标为 causality，candidate-causal edges 也未能稳定通过独立 grounding gates。该路径现只作为历史/可选 strict-relation evaluation。<strong>当前 L1.5 是 correlation，不是 causality</strong>：它在 retained L1 IDs 上建立 question-independent soft navigation overlay。Identity、state transition 和 causality 属于独立 typed layers，不会因为两个 node 相关就进入 L1.5。</p>
+  <ol>
+    <li>冻结 enriched/consolidated L1 descriptor；descriptor 一旦改变，旧 embedding 立即失效。</li>
+    <li>用 <code>Qwen/Qwen3-VL-Embedding-2B</code> 编码所有 node，L2 normalize，并对每个 unordered pair 计算 cosine <code>s(i,j)=eᵢ·eⱼ</code>。</li>
+    <li>已被 temporal backbone 覆盖的 pair 不再作为 nonlocal correlation 接纳，但仍保留完整 audit row。</li>
+    <li>Cosine ≥ 0.999 的 nodes 归并为 semantic-equivalence class。不合并的不同时刻 recurrence 只按时间连下一次 occurrence，不建 clique。</li>
+    <li>对 class 内 embedding 求均值后重新 normalize。对每个 source class，将全部 positive class cosine 按该 source 在当前视频内的 mean/variance standardize，再应用 sparsemax；zero-mass pair 不输出，全程没有 fixed Top-K。</li>
+    <li>对 admitted class pair，先选 raw cosine 最高的 endpoint pair，再以最小 temporal separation 和 stable ID 破同分。Sparsemax 会从两个 source direction 产生 proposal，但 cosine 是 symmetric signal，当前 edge 取两个 proposal mass 的最大值作为相同的双向 navigation affinity，不伪造 directional semantic fact。</li>
+    <li>应用一个冻结的 global channel/cosine/positive-affinity policy，并记录每个 pair 的 admission/exclusion reason、model/checksum、policy fingerprint 和 frozen-L1 fingerprint。</li>
+  </ol>
+  <p>Temporal edge 是精确 interval constraint；correlation edge 是有 representation 支持的稀疏候选导航路径。Temporal proximity 不会单独创建 correlation，cosine 也不能单独保证 admission，因为还要经过 temporal exclusion、equivalence-chain、sparsemax 和 global-policy gates。Similarity/affinity 不是 probability、confidence、identity、state transition、support、causality、relevance 或 action utility；独立验证过的 categorical facts 单独保存。</p>
   <h3>2.3 Correlation 不是 action preference</h3>
   <div class="equation">L1.5 correlation：确定有支持的 node-to-node 可导航邻接
 → legal-action compiler：暴露可执行的 cursor-incident hops

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Streaming 3-Bench Baseline Results</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <span class="label">Baseline results</span>
+  <h1>Streaming 3-Bench baseline comparison</h1>
+  <p class="subtitle">OVO-Bench · VideoMME · StreamingBench</p>
+  <p class="meta">Accuracy = correct / all examples; failed or unparsed outputs count as incorrect. · <a href="problem-formulation-en.html">IWM formulation</a> · <a href="problem-formulation-zh.html">中文</a></p>
+</header>
+
+<section class="card benchmark">
+  <h2>Results</h2>
+  <table>
+    <thead>
+      <tr><th>Baseline</th><th>OVO</th><th>VideoMME</th><th>StreamingBench</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Caption IterRAG 2B</strong></td><td>32.3%</td><td>39.1%</td><td>44.5%</td></tr>
+      <tr><td><strong>Caption-FAISS 9B</strong></td><td>38.9%</td><td>47.5%</td><td>50.4%</td></tr>
+      <tr><td><strong>Visual-FAISS 9B</strong></td><td><strong>44.0%</strong></td><td><strong>58.5%</strong></td><td><strong>58.8%</strong></td></tr>
+      <tr><td><strong>Dispider — official weights</strong></td><td>38.5%</td><td>53.4%</td><td>54.6%</td></tr>
+      <tr><td><span class="status provisional">PROXY</span><strong>M3-Agent + Qwen3.5-9B</strong></td><td>61.4%</td><td>50.7%</td><td>62.1%</td></tr>
+      <tr><td><span class="status provisional">PROXY</span><strong>StreamBridge + Qwen3.5-9B</strong></td><td>58.1%</td><td>48.2%</td><td>76.7%</td></tr>
+    </tbody>
+  </table>
+  <p class="small">Visual-FAISS is the strongest non-proxy retrieval row. M3-Agent and StreamBridge must retain the proxy label because their official paper checkpoint stacks were not used.</p>
+</section>
+
+<section class="card">
+  <h2>Brief implementation</h2>
+  <table>
+    <thead><tr><th>Baseline</th><th>What we implemented</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Caption IterRAG 2B</strong></td><td>Split video into 30 s clips, generate grounded captions with Qwen3-VL-2B, embed captions/questions with Qwen3-VL-Embedding-2B, retrieve from FAISS for at most three query-rewrite rounds, then answer from caption text with Qwen3-VL-2B.</td></tr>
+      <tr><td><strong>Caption-FAISS 9B</strong></td><td>Use the same caption index and iterative retrieval loop, but answer from the retrieved caption strings with Qwen3.5-9B and thinking disabled.</td></tr>
+      <tr><td><strong>Visual-FAISS 9B</strong></td><td>Encode video clips directly with Qwen3-VL-Embedding-2B, retrieve the top visible clips under the timestamp cutoff, and let Qwen3.5-9B answer from the retrieved video pixels rather than captions.</td></tr>
+      <tr><td><strong>Dispider</strong></td><td>Materialize only the visible-prefix video, then run the released Dispider checkpoint end to end with its official streaming compressor and CLIP vision tower.</td></tr>
+      <tr><td><span class="status provisional">PROXY</span><strong>M3-Agent</strong></td><td>Build a causal bank of visible clips, select a small top-k clip set with the local retrieval proxy, and answer with stock Qwen3.5-9B. We do not use the official M3 Memorization or Control checkpoints.</td></tr>
+      <tr><td><span class="status provisional">PROXY</span><strong>StreamBridge</strong></td><td>Apply StreamBridge's released round-decayed embedding-buffer policy, which compresses older visual rounds while retaining text memory, then answer at known timestamps with stock Qwen3.5-9B. We do not use activation or Stream-IT weights.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<p class="small">All runners enforce the visible-time cutoff before retrieval or inference. The flat StreamingBench aggregate includes SQA/Proactive rows and is not a full free-running proactive reproduction.</p>
+</body>
+</html>

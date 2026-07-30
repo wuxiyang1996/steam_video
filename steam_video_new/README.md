@@ -28,7 +28,9 @@ human `clue_intervals`. Video-Holmes is historical engineering only and is not
 the current evaluation protocol.
 
 Detailed formulations: [English](problem-formulation-en.html) ·
-[中文](problem-formulation-zh.html). Those pages also merge related
+[中文](problem-formulation-zh.html) ·
+[Streaming 3-Bench baseline results](baseline-results.html). The formulation
+pages also merge related
 SelectStream memory notes (§2.4) and the verified OVO-Bench /
 StreamingBench future-question discussion (§8.1); CG-Bench remains the
 primary testbed.
@@ -128,6 +130,101 @@ visibility / hidden-supervision flag
 optional Qwen3-VL-Embedding-2B sidecar reference
 ```
 
+#### From a video stream to L1
+
+Graph construction is an auditable sequence, not one unconstrained model call:
+
+```text
+visible video prefix
+  → question-independent surprise/fixed-window segmentation
+  → frame sampling and Qwen clip-schema perception
+  → frozen evidence-construction atomic skills
+  → neighbor-aware graph composition
+  → schema, provenance, visibility, and endpoint-integrity gates
+  → fixed-capacity keep / merge / evict materialization
+  → deterministic temporal-backbone rebuild
+  → descriptor embedding refresh
+  → L1.5 soft-correlation build
+```
+
+The streaming writer sees only the video prefix. With surprise-adaptive
+windowing it samples visual representations every 0.5 s, measures cosine
+distance from the previous sample, and compares the new change with the 0.8
+empirical quantile of the latest eight changes. A surprising change closes a
+window after the 2 s minimum; otherwise a window closes at the 12 s maximum or
+at stream end. These are current defaults, not semantic labels. A fixed or
+hierarchical clip policy is also legal. Neither policy receives the downstream
+question, answer, clue interval, or relevance label.
+
+For each selected window, sampled frames are converted to a clip schema:
+grounded scene description, observable facts, atomic events, salient objects,
+local entity mentions and visible attributes, state assertions, place cues,
+OCR/visible text, dialogue/subtitle spans, and exact source time spans. The
+clip-schema producer is the upstream perception pass; it is not allowed to
+claim motive, cross-clip identity, state transition, or causality. The graph
+composer receives the current schema plus bounded previous/current/next-clip
+context so it can preserve local continuity without seeing the future question.
+
+#### Complete L1 construction atomic-skill inventory
+
+The composer may select only the following nine frozen Video_Skills evidence
+construction skills. These nine are the complete L1 construction ontology;
+reasoning-graph skills are not used to manufacture L1 evidence. In the atomic
+planner path, each invocation records arguments, evidence references,
+success/failure, and dependencies. The active neighbor-aware composer performs
+the same typed create/link/skip operations and records them in
+`metadata.graph_compose.execution_trace` with `neighbor_vlm_l1_*` trace IDs.
+
+| Atomic skill | When it runs | L1 effect and grounding rule |
+|---|---|---|
+| `segment_video_or_select_clip` | Once per visible video/prefix under the selected clip policy | Creates `clip` nodes with `[start_s,end_s]`, policy, granularity, and video provenance. |
+| `extract_observation` | For scene descriptions, observable facts, objects, places, searchable phrases, cross-clip cues, OCR, or other perceptual outputs | Creates a modality-preserving `observation` and a `derived_from` link to its clip/source. Empty or ungrounded text is rejected. |
+| `extract_dialogue_span` | When subtitle, ASR, or dialogue evidence exists | Creates a timestamped `dialogue_span`, preserving utterance, source, and only an observed/supplied speaker hint. |
+| `detect_entity_mention` | After an observation exposes a person, object, place, or speaker surface | Creates clip-local `entity_mention` nodes and `entity_mention` links. It does not establish cross-clip identity. |
+| `resolve_entity_coreference` | Conditionally, only when multiple grounded mentions have enough compatible context | Creates a canonical entity and candidate `same_entity` links. The result remains non-authoritative until the identity gate passes. |
+| `create_event_node` | When one or more observations/dialogue spans ground one atomic action or occurrence | Creates a timestamped `event` with its source evidence. Compound actions must be split or rejected by the atomicity gate. |
+| `create_state_node` | Conditionally, when an entity/object attribute and value are directly supported | Creates a time-scoped `state` with subject, predicate, value, polarity, and evidence; it does not itself assert change. |
+| `link_graph_relation` | After both endpoints exist | Adds an allowed typed edge such as `temporal_next`, `derived_from`, `entity_mention`, `state_of`, or a candidate strict relation. Missing endpoints and unknown edge types fail closed. |
+| `assign_provenance_trust` | For every retained semantic node/edge | Attaches source, producer, trust tier, visibility mode, and hidden-supervision status; hidden or question-derived content is excluded from L1. |
+
+The normal per-clip path is `segment → extract observation/dialogue →
+detect mentions → create event/state → link relations → assign
+provenance`. Not every clip legitimately invokes every skill: absence of a
+state, dialogue span, or defensible coreference is represented as absence, not
+as a fabricated node. A deterministic fallback may help debugging, but the
+accepted video-only build requires the neighbor-aware composer, successful
+clip schemas, no failed trace steps, and a high structural/perception grade.
+
+#### What context a node carries
+
+The bounded key used to route to a node is intentionally smaller than the
+grounded value revealed by reading it. A semantic node carries enough local
+context to audit what was observed and where, without smuggling in an answer:
+
+```text
+address key:  node type + short grounded descriptor + modality + time span
+grounded value:
+  full caption / atomic predicate / utterance / OCR text / state tuple
+  clip_id and local_node_id
+  participants as local mention IDs and visible attributes
+  state subject, attribute, value, polarity, and temporal scope
+  sampled/evidence frame IDs or subtitle/ASR source references
+  producer, source type, trust/visibility flags, and complete provenance
+  incident composition links and consolidation lineage
+```
+
+Previous/current/next clip digests are construction-time context for the
+composer, not evidence copied into a node's value. Their effects are visible
+only through grounded cross-clip candidate edges and the graph-compose audit;
+the target node remains locally sourced.
+
+For example, an event node may say *a red cup is placed on the table* over
+`[12.4,13.1]`, cite frames 248/255 and the source observation, link `red cup`
+and `table` as local mentions, and carry the state `cup.location=table` if
+visually supported. It may not say *the person prepares to drink*, equate that
+cup with an earlier cup, or assert that the placement caused a later action
+without the corresponding independent gates.
+
 The main node types are `clip`, `observation`, `event`, `entity_mention`,
 `state`, and `dialogue_span`/OCR. Entity mentions are local observations; they
 do not assert cross-clip identity. A state should identify its subject,
@@ -142,6 +239,18 @@ backbone:
 temporal_next / before / overlaps / during
 ```
 
+Temporal edges are computed from node intervals, not semantic similarity or an
+LLM guess. Nodes are ordered by `(start_s, end_s, node_id)`.
+`temporal_next(u,v)` joins adjacent retained nodes in that order;
+`before(u,v)` holds when `end(u) ≤ start(v) + 10⁻³ s`; `during(u,v)` holds
+when `u` is interval-contained by `v` within that tolerance; and `overlaps`
+holds when intervals intersect without satisfying `before` or containment.
+`before` is stored sparsely over a bounded forward neighborhood rather than as
+a dense transitive closure. After keep/merge/evict consolidation, orphaned
+edges are removed, surviving non-temporal edges are rewired, and this temporal
+backbone is rebuilt from the retained intervals. Timestamp order never proves
+identity, state change, support, or causality.
+
 Native composition links (`derived_from`, `entity_mention`, `state_of`,
 `located_in`) remain provenance/audit structure, not L1.5 correlation.
 Video_Skills labels such as `same_entity`, `same_object`,
@@ -153,9 +262,17 @@ transition, and `causal_hint` is not causality.
 
 ### 2.2 What the L1.5 overlay adds
 
-L1.5 does not duplicate evidence nodes or try to name every relation. It adds
-question-independent, embedding-derived **soft nonlocal navigation
-correlations** over existing L1 node IDs. An edge records:
+The earlier design treated L1.5 as an atomic-event causal-temporal belief
+overlay and attempted to admit typed `explains`/`enables` relations. That path
+over-labeled narrative succession, and candidate-causal edges could not pass
+the required independent grounding gates reliably. It is retained only as a
+historical/optional strict-relation evaluation path. **The active L1.5
+definition is now correlation, not causality:** it reuses the retained L1 node
+IDs and adds question-independent, embedding-derived soft nonlocal navigation
+adjacency. Causality, identity, and state transition live in separate typed
+layers and never enter L1.5 merely because two nodes correlate.
+
+An L1.5 edge records:
 
 ```text
 src / dst
@@ -165,13 +282,44 @@ embedding model/checksum provenance
 semantic or semantic_recurrence channel
 ```
 
-All non-temporal pairs are scored. Adjacent near-duplicate semantic nodes are
-coalesced during L1 consolidation; remaining near-identical embeddings form a
-time-ordered recurrence chain rather than a clique. Correlations between
-semantic equivalence classes use standardized sparsemax, not fixed Top-K.
-Directional affinity controls hop legality. Similarity and affinity are learned
-representation features, not calibrated probability, confidence, identity,
-state transition, support, or causality.
+Correlation is constructed as follows:
+
+1. Freeze the retained L1 nodes and their full question-independent
+   descriptors. Any merge or subtitle/caption/OCR enrichment invalidates the
+   old embedding sidecar.
+2. Encode every descriptor with `Qwen/Qwen3-VL-Embedding-2B`, store the model
+   and checksum, L2-normalize each vector, and compute cosine similarity
+   `s(i,j)=e_i·e_j` for every unordered node pair.
+3. Exclude pairs already covered by the deterministic temporal backbone from
+   nonlocal correlation admission, while retaining a complete pair-audit row.
+4. Union nodes with cosine at least `0.999` into semantic-equivalence classes.
+   Adjacent duplicates may already have been merged in L1; distinct recurring
+   occurrences are preserved and linked only to the next occurrence in time,
+   producing a recurrence chain instead of a quadratic clique.
+5. Average and renormalize member embeddings to form each class vector. For
+   every source class, keep all positive class-to-class cosines, standardize
+   them against that source class's within-video mean and variance, and apply
+   sparsemax. Zero-mass pairs are not emitted. This is global structural
+   sparsification—there is no per-node fixed Top-K.
+6. For an admitted class pair, choose one endpoint pair by highest raw cosine,
+   then smallest temporal separation, then stable ID. Although sparsemax is
+   evaluated from each source class, cosine is a symmetric signal, so the
+   current emitted edge uses the maximum of the two directional proposal
+   masses as the same legal affinity in both directions; it does not fabricate
+   a directional semantic fact.
+7. Apply one frozen global admission policy (allowed channel, minimum cosine,
+   and minimum positive affinity), record why every pair was admitted,
+   excluded, or rejected, and fingerprint both the policy and frozen L1.
+
+Thus temporal and correlation edges answer different questions. Temporal
+edges are exact interval constraints. Correlation edges are sparse,
+representation-supported proposals for where another useful description may
+reside. Temporal distance is recorded for audit and tie-free endpoint
+selection, but proximity alone does not create a correlation; cosine alone
+also does not guarantee an edge because equivalence-chain, sparsemax, temporal
+exclusion, and global-admission rules still apply. Similarity and affinity are
+measured graph features, not calibrated probability, confidence, identity,
+state transition, evidential support, causality, relevance, or action utility.
 
 Strict categorical identity/state/causal relations are a separate optional
 layer. Only independently verified relations enter it; categorical candidates
@@ -598,6 +746,7 @@ data-only and are not committed as scientific results.
 ```text
 steam_video_new/
 ├── README.md
+├── baseline-results.html           # concise three-benchmark baseline table
 ├── problem-formulation-en.html
 ├── problem-formulation-zh.html
 └── implicit_world_model/

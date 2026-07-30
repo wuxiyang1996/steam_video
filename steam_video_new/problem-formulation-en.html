@@ -10,7 +10,7 @@
 <header>
   <h1>World-Model-Guided Multi-Hop Reasoning over Grounded Video Memory</h1>
   <p class="subtitle">Predict which reasoning hop will change future belief, execute one real evidence read, correct, and replan.</p>
-  <p class="meta">Current problem formulation · 2026-07-30 · <a href="problem-formulation-zh.html">中文</a> · <a href="README.md">Repository overview</a> · includes SelectStream + OVO/StreamingBench notes</p>
+  <p class="meta">Current problem formulation · 2026-07-30 · <a href="problem-formulation-zh.html">中文</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">Repository overview</a> · includes SelectStream + OVO/StreamingBench notes</p>
 </header>
 
 <section class="card thesis">
@@ -78,10 +78,44 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
       <tr><td><code>dialogue_span</code>/OCR</td><td>Time-aligned text with its true modality; subtitles do not claim direct audio observation</td></tr>
     </tbody>
   </table>
+  <h3>2.1.1 Video-to-L1 construction</h3>
+  <div class="equation">visible video prefix → question-independent windowing → sampled-frame Qwen clip schemas
+→ frozen evidence-construction atomic skills → neighbor-aware graph compose
+→ integrity/trust gate → bounded keep/merge/evict → temporal rebuild → embedding refresh</div>
+  <p>The writer never receives the question, answer, clue interval, or relevance label. Under the current surprise-window defaults, visual representations are sampled every 0.5 s; cosine change is compared with the 0.8 empirical quantile of the previous eight changes. A high-surprise sample closes a window after the 2 s minimum, while stable content closes at the 12 s maximum or stream end. Fixed/hierarchical windows are also legal. Qwen then produces a grounded clip schema containing scene facts, atomic events, objects, local entity mentions and visible attributes, states, places, OCR, dialogue/subtitle spans, sampled evidence frames, and timestamps. This perception pass may not infer motive, cross-clip identity, state transition, causality, or question relevance.</p>
+  <p>The graph composer uses bounded previous/current/next-clip context and may invoke only the following nine frozen Video_Skills construction skills. They are the complete L1 construction ontology; reasoning-graph skills do not manufacture L1 evidence. The atomic-planner path logs each invocation and dependency, while the active neighbor-aware composer logs equivalent typed create/link/skip operations with <code>neighbor_vlm_l1_*</code> trace IDs:</p>
+  <table>
+    <thead><tr><th>Atomic skill</th><th>Construction effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>segment_video_or_select_clip</code></td><td>Create timestamped clip/window anchors under the selected policy.</td></tr>
+      <tr><td><code>extract_observation</code></td><td>Create a modality-preserving grounded observation and its <code>derived_from</code> source link.</td></tr>
+      <tr><td><code>extract_dialogue_span</code></td><td>Create timestamped subtitle/ASR/dialogue evidence with only an observed or supplied speaker hint.</td></tr>
+      <tr><td><code>detect_entity_mention</code></td><td>Create clip-local person/object/place/speaker mentions; no cross-clip identity claim.</td></tr>
+      <tr><td><code>resolve_entity_coreference</code></td><td>Conditionally propose a canonical entity and candidate <code>same_entity</code> links; a separate identity gate is still required.</td></tr>
+      <tr><td><code>create_event_node</code></td><td>Convert supporting observations/dialogue into one timestamped atomic action or occurrence.</td></tr>
+      <tr><td><code>create_state_node</code></td><td>Conditionally store a grounded subject–attribute–value–polarity tuple over a time scope; no automatic change claim.</td></tr>
+      <tr><td><code>link_graph_relation</code></td><td>Add an allowed typed edge only after both endpoints exist; unknown types and missing endpoints fail closed.</td></tr>
+      <tr><td><code>assign_provenance_trust</code></td><td>Attach producer, source, trust tier, visibility, and hidden-supervision status.</td></tr>
+    </tbody>
+  </table>
+  <p>The normal trace is segmentation → observation/dialogue extraction → local mentions → event/state creation → relation linking → provenance. State, dialogue, and coreference skills are invoked only when evidence exists; absence is never filled with a fabricated node. Each invocation, dependency, evidence reference, and failure is recorded in <code>metadata.graph_compose.execution_trace</code>.</p>
+  <h3>2.1.2 Node context and temporal determination</h3>
+  <p>A node's routing key contains its type, short grounded descriptor, modality, and interval. Its read-time grounded value contains the full caption/predicate/utterance/OCR/state tuple; clip and local IDs; local participants and visible attributes; state subject, attribute, value, polarity, and temporal scope; evidence-frame or subtitle/ASR references; provenance/trust/visibility; incident composition links; and consolidation lineage. Previous/current/next clip digests are construction-time composer context, not evidence copied into the node value; their effects appear only as grounded candidate edges and in the compose audit. This context supports audit and later reads but may not include an answer, motive, cross-clip identity, or causal conclusion.</p>
+  <p>Temporal relations are deterministic interval tests after sorting nodes by <code>(start_s,end_s,node_id)</code>. Adjacent retained nodes receive <code>temporal_next</code>. <code>before(u,v)</code> holds when <code>end(u) ≤ start(v)+10⁻³ s</code>; <code>during</code> uses interval containment within the same tolerance; otherwise intersecting intervals receive <code>overlaps</code>. <code>before</code> is sparse over a bounded forward neighborhood, not a transitive closure. Consolidation removes orphans, rewires surviving non-temporal edges, and rebuilds this backbone from retained intervals. Time order never establishes identity, change, support, or causality.</p>
   <p>The main L1 navigation structure is a deterministic <code>temporal_next/before/overlaps/during</code> backbone over grounded semantic nodes. Composition links such as <code>derived_from</code>, <code>entity_mention</code>, <code>state_of</code>, and <code>located_in</code> remain provenance/audit structure. Native <code>same_entity</code>, <code>state_change</code>, and <code>causal_hint</code> labels belong to an optional strict-relation path and never become navigation facts without their specific verifier.</p>
   <p>The current repair enriches persisted visual L1 nodes with question-independent, time-aligned subtitles when available. The bounded address key supports routing, while the complete descriptor remains a grounded value revealed by a real read. Future visual extraction also requests a concise grounded caption and evidence-indexed visible text. Any descriptor change invalidates the old embedding reference; <code>Qwen/Qwen3-VL-Embedding-2B</code> embeddings must then be regenerated before rebuilding L1.5.</p>
   <h3>2.2 L1.5 correlation overlay</h3>
-  <p>L1.5 reuses the same L1 node IDs and adds question-independent soft nonlocal navigation correlations from <code>Qwen/Qwen3-VL-Embedding-2B</code>. Every non-temporal pair is scored; adjacent near-duplicate semantics are coalesced, remaining near-identical occurrences form a temporal recurrence chain rather than a clique, and class-level standardized sparsemax emits directional affinities without fixed Top-K. Similarity/affinity is not probability, confidence, identity, state transition, support, or causality. Independently verified categorical fact relations are stored separately.</p>
+  <p><strong>Design change:</strong> the earlier L1.5 design was an atomic-event causal-temporal belief overlay that attempted to admit typed <code>explains</code>/<code>enables</code> edges. It over-labeled narrative succession and its candidate-causal edges did not reliably pass independent grounding gates. That path is historical/optional strict-relation evaluation. The active L1.5 is now a question-independent <em>correlation</em> overlay over retained L1 IDs. Identity, state transition, and causality are separate typed layers and never enter L1.5 merely because two nodes correlate.</p>
+  <ol>
+    <li>Freeze enriched/consolidated L1 descriptors; every descriptor change invalidates its old embedding.</li>
+    <li>Encode every node with <code>Qwen/Qwen3-VL-Embedding-2B</code>, L2-normalize, and compute cosine <code>s(i,j)=eᵢ·eⱼ</code> for every unordered pair.</li>
+    <li>Exclude pairs already covered by the temporal backbone from nonlocal admission, but retain their audit rows.</li>
+    <li>Union nodes with cosine ≥ 0.999 into semantic-equivalence classes. Preserve distinct recurrences as a time-ordered next-occurrence chain rather than a clique.</li>
+    <li>Average and renormalize each class embedding. For every source class, standardize all positive class cosines by its within-video mean/variance and apply sparsemax; zero-mass pairs disappear without fixed Top-K.</li>
+    <li>For each admitted class pair choose the endpoint pair with highest raw cosine, then smallest temporal separation, then stable ID. Sparsemax produces directional proposals, but because cosine is symmetric, the current emitted edge uses the maximum proposal mass as equal two-way navigation affinity rather than claiming a directional fact.</li>
+    <li>Apply one frozen global channel/cosine/positive-affinity policy and record every pair's admission/exclusion reason, model/checksum, policy fingerprint, and frozen-L1 fingerprint.</li>
+  </ol>
+  <p>Temporal edges are exact interval constraints. Correlation edges are sparse representation-supported proposals for where related evidence may reside. Temporal proximity alone does not create correlation, and cosine alone does not guarantee admission because temporal exclusion, equivalence-chain, sparsemax, and global policy gates still apply. Similarity/affinity is not probability, confidence, identity, state transition, support, causality, relevance, or action utility. Independently verified categorical facts are stored separately.</p>
   <h3>2.3 Correlation is not action preference</h3>
   <div class="equation">L1.5 correlation: determine supported node-to-node navigable adjacency
 → legal-action compiler: expose executable cursor-incident hops
