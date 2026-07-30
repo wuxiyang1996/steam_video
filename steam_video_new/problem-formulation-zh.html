@@ -53,19 +53,258 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
 </section>
 
 <section class="card">
-  <h2>2. Evidence memory：保留 L1/L1.5</h2>
-  <p>当前 memory graph 继续作为 evidence substrate，因为它能提供可寻址、可追溯来源的视频 observation；构建时不能读取未来问题或答案。</p>
+  <span class="label">建模假设 · Active perception</span>
+  <h2>1.1 将复杂多跳 Video QA 建模为部分可观测环境中的导航</h2>
+  <p>我们把复杂 video question answering 建模为<strong>在初始未知、部分可观测 evidence environment 中进行目标驱动导航</strong>。其类比来自 POMDP、SLAM 和 probabilistic robotics：question 定义目标，structured video memory 是不完整且可能有损的地图，合法 read 是 sensing/navigation action，读到的视频片段是 observation，持续变化的 latent belief 则概括答案可能位于何处以及仍缺少哪些事实。这是一种 reasoning abstraction，并不声称视频本身是物理机器人环境，也不把 memory graph 当作度量精确的地图。</p>
+  <div class="equation">POMDP-QA = ⟨S, A, O, T, Ω, q, B⟩
+初始信息：query q + structured memory M
+action：navigate / retrieve / inspect current / wait / backtrack
+observation：一条真实、可追溯来源的视频证据
+belief update：b_{t+1} = Update(b_t, a_t, o_{t+1})
+终止状态：high-confidence answer | low-confidence answer | abstain</div>
+  <p>Agent 开始时并不知道完整 evidence route。它从 query 和 structured memory 暴露的地址出发，选择一次交互，接收真实 observation，更新 competing answer hypotheses 与 missing-evidence requirements，然后重新规划。随着一致线索不断累积，有效 reasoning paths 应逐步收缩并汇聚到 evidence-supported answer；如果 observation 相互矛盾或仍不充分，则应保留多个候选、触发 backtracking 或额外 sensing，并最终允许 abstain。只有当评测协议强制要求在残余不确定性下作答时，low-confidence answer 才是合理终点；否则 calibrated abstention 更安全。</p>
+  <table>
+    <thead><tr><th>Probabilistic robotics 概念</th><th>Video QA 中的对应项</th></tr></thead>
+    <tbody>
+      <tr><td>Unknown environment</td><td>问题到达时，相关证据的位置和 multi-clue dependency chain 都未知</td></tr>
+      <tr><td>Map / SLAM state</td><td>带 temporal 与 soft semantic links 的有界 structured memory；可用于导航，但不完整且可能有损</td></tr>
+      <tr><td>Sensor action</td><td>读取 memory node、沿 relation 跳转、检查 live clip、等待未来 observation 或 backtrack</td></tr>
+      <tr><td>Observation model</td><td>先预测合法 read 可能揭示什么，再用真实 grounded read 替换预测</td></tr>
+      <tr><td>Belief / localization</td><td>Question-conditioned hypotheses、已获得的 support/counterevidence、missing links 和 answerability</td></tr>
+      <tr><td>Goal / stopping rule</td><td>获得足够证据后输出 calibrated answer；路径仍无法确定时 abstain</td></tr>
+    </tbody>
+  </table>
+  <p><strong>该假设尤其适用于三类场景：</strong></p>
+  <ol>
+    <li><strong>长视频中的 evidence loss 或 context loss：</strong>相关历史只被部分保留，因此 agent 必须在不完美地图上导航、补齐互补线索，并识别证据缺失是否已使答案不可辨识。</li>
+    <li><strong>带未来证据的 streaming video：</strong>question 可能早于决定性事件到达，因此等待本身是 information-gathering action，过早回答则是一种 planning failure。</li>
+    <li><strong>复杂 multi-hop、multi-clue reasoning：</strong>任何单个 clip 都不足以回答问题；agent 必须组合时间或语义上分离的 observations，同时保留 alternative paths，并在每次真实 read 后修正 belief。</li>
+  </ol>
+  <p>因此，我们希望得到的是<em>由证据驱动，而不是由分数驱动的 convergence</em>：confidence 可以作为经过校准的 categorical outcome 报告，但 imagined observation、embedding similarity 或模型虚构的 numeric utility 都不能单独为最终答案提供依据。</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Benchmark 范围 · Streaming + multiple clues</span>
+  <h2>1.2 我们聚焦 multi-evidence streaming Video QA——并非每个 benchmark 样本都是 multi-hop</h2>
+  <p><strong>任务范围。</strong>我们的目标是 streaming video QA：答案可能依赖多个彼此分离的 evidence moments，agent 必须在有限 memory 下保存、检索、观察或等待这些证据。当一个样本需要多个 frame/interval 时，我们称其为 <em>multi-clue</em> 或 <em>multi-evidence</em>；只有当这些线索构成相互依赖的 reasoning chain 时，才称为 <em>multi-hop</em>。多个线索本身不能证明存在有序 hop：两个 interval 可以只提供互补事实，而 annotation 并未规定必须先推理 clue A，再推理 clue B。</p>
+  <div class="equation">multiple clues ≠ necessarily multiple reasoning hops
+
+multi-evidence supervision：获得 clue A + 获得 clue B → 证据充分
+explicit multi-hop supervision：clue A → intermediate dependency → clue B → answer</div>
+  <table>
+    <thead><tr><th>Benchmark / 选定子集</th><th>是否真正 multi-hop？</th><th>对本项目最合适的监督</th></tr></thead>
+    <tbody>
+      <tr><td><strong>完整 CG-Bench</strong></td><td>否。它覆盖 perception、reasoning 和 hallucination QA；benchmark 提供 clue intervals，但单个样本可能只有一个 clue。</td><td>通用 clue grounding 与 long-video QA</td></tr>
+      <tr><td><strong>本项目 CG-Bench 子集</strong><br><code>min_clues ≥ 2</code></td><td>显式 multi-clue，通常具有 multi-hop-like 特征，但 intervals 并不保证标注了 reasoning order。</td><td>核心 clue acquisition、belief progress、clue coverage 与 hypothesis-effect supervision</td></tr>
+      <tr><td><strong>StreamingBench Multiple-Clues</strong></td><td>属于 multi-evidence，但不是统一的显式 graph-hop reasoning。论文在 4,300 个分析样本中标出 2,778 个 Multiple-Clues 和 1,522 个 Single-Clue，multi-clue 约占 64.6%。</td><td>扩展 streaming multi-evidence QA 的最大候选；clue decomposition/localization 可能需要重建</td></tr>
+      <tr><td><strong>StreamingBench SQA / Proactive Output</strong></td><td>SQA 是 cross-turn multi-step；Proactive Output 是 temporal control，二者都不自动等同于 clue-to-clue reasoning path。</td><td>Persistent belief/entity context、cross-turn update 与 proactive trigger timing</td></tr>
+      <tr><td><strong>OVO-Bench</strong></td><td>大多是 temporally extended 或 action-sequential，而非通用 multi-hop；其 task taxonomy 没有为每个 QA 统一暴露 CG-Bench 式 clue interval 集合。</td><td>Past retrieval、current observation、temporal state 与 <code>WAIT → READY → ANSWER</code> control；CRR 是最明确的 accumulated-clue 子集</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Benchmark 分工。</strong>这些数据集监督 IWM/planner 的不同部分，应使用 dataset-specific masks 组合，而不是强迫它们提供同一种标签：</p>
+  <div class="equation">CG-Bench filtered multi-clue subset
+    → 主要 hypothesis-effect 与 clue-progress supervision
+StreamingBench Multiple-Clues + SQA
+    → multi-evidence streaming QA + persistent belief/context
+OVO-Bench，特别是 CRR / SSR / REC
+    → temporal readiness、state transition 与 planner control</div>
+  <p><strong>结论。</strong>带 <code>min_clues ≥ 2</code> 过滤的 CG-Bench 仍是最干净的显式 clue-acquisition supervision 来源。StreamingBench 的 2,778 个 Multiple-Clues 样本是向 streaming multi-evidence QA 扩展的首选。OVO-Bench 则更适合补充 <code>RETRIEVE_PAST</code>、<code>OBSERVE_CURRENT</code>、<code>WAIT</code> 与 <code>ANSWER</code> 的 planner supervision，尤其是 readiness transition，而不应被当作主要的通用 multi-hop corpus。</p>
+  <h3>Future-question 与 wait-for-evidence 协议</h3>
+  <p>本项目主动训练/评测仍以 <strong>CG-Bench</strong> 为主。以下记录对 SelectStream 类工作与 <code>steam_video-streaming-3bench</code> 所用流式 VLM 基准的核实，避免协议表述失真。</p>
+  <p>基于本地标注核实（<code>/fs/gamma-projects/vlm-robot/datasets</code>，2026-07-27）。这里的“未来”指<strong>指令先于答案事件出现</strong>，模型必须等待或判断证据是否足够；不是仅含“接下来会发生什么”这类措辞。</p>
+  <p><strong>结论：</strong>OVO-Bench 有明确的等待证据协议（FAR）；StreamingBench 也有对应项（Proactive Output）；VideoMME 没有。</p>
+  <table>
+    <thead><tr><th>基准</th><th>未来 / 等待？</th><th>数据中如何体现</th><th>占比</th></tr></thead>
+    <tbody>
+      <tr><td><strong>OVO-Bench FAR</strong></td><td>有</td><td><code>REC</code>/<code>SSR</code>/<code>CRR</code> 经 <code>test_info</code> 展开；CRR 另有 <code>ask_time</code>/<code>clue_time</code></td><td>172 / 1640 视频（~10.5%）；展开后 <strong>1567 / 3035</strong> 定时查询（约占评测质量 ~51.6%）</td></tr>
+      <tr><td><strong>StreamingBench Proactive</strong></td><td>有</td><td><code>time_stamp</code> &lt; <code>ground_truth_time_stamp</code>；适配器：<code>future_trigger_instruction</code> / <code>proactive_polling</code></td><td><strong>250 / ~4495</strong>（~5.6%）；246/250 输出晚于指令（Δ 1–43s，中位 7s）</td></tr>
+      <tr><td>StreamingBench RT / Omni / Contextual</td><td>无</td><td>仅 <code>time_stamp</code>——用可见前缀作答</td><td>基准主体</td></tr>
+      <tr><td>OVO RT / BT</td><td>无*</td><td>已知 <code>realtime</code>；*FPD / Prospective Reasoning 虽问“接下来”，仍无 wait-for-event 字段</td><td>RT 837 + BT 631 源样本</td></tr>
+      <tr><td>VideoMME</td><td>无</td><td>2700 条无 ask / trigger 时间戳</td><td>仅整段视频选择题</td></tr>
+      <tr><td><strong>CG-Bench（本项目）</strong></td><td>不适用（线索导航）</td><td>人工 <code>clue_intervals</code> + 终局答案；有界 read budget 下的多跳证据路径</td><td>主测试床：256 cases / 205 videos / 672 clue transitions</td></tr>
+    </tbody>
+  </table>
+  <h3>已核实的例子</h3>
+  <ul>
+    <li><strong>OVO CRR id 1468：</strong>ask 297s，clue 308s；297/302 证据不足（<code>type=0</code>），310+ 足够（<code>type=1</code>）。全部 48/48 CRR 满足 <code>ask_time &lt; clue_time</code>。</li>
+    <li><strong>OVO REC id 1559：</strong>流上事件计数（如 5s→1、13s→2、18s→3）。</li>
+    <li><strong>OVO SSR：</strong>沿时间线问“该教程步骤现在是否正在发生？”Yes/No。</li>
+    <li><strong>StreamingBench Proactive <code>sample_1_1</code>：</strong>指令 @ 00:00:26 “太阳中间出现数字 20 时输出 20” → 输出 @ 00:01:01；全部 250 条 <code>temporal_clue_type=Subsequent</code>。</li>
+    <li><strong>StreamingBench Real-Time：</strong>有时间戳的前缀 QA（如 00:00:04 问 logo）——<strong>不是</strong>未来触发。</li>
+  </ul>
+  <div class="equation">占比结论：
+OVO FAR 经 test_info 展开后占 OVO 评测质量的大半（约一半定时查询）
+StreamingBench Proactive 只是小切片（~5.6%）
+同属“等待未来证据”家族，但 schema 不同
+（触发-输出时刻 vs 就绪/计数轮询）
+
+SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench 单轮
+→ VideoMME final-query，最后才是 FAR / Proactive。
+论文 FAR 无法仅从 method 节复现（无 readiness/defer 头）。</div>
+  <p><strong>Runner 注意：</strong>扁平已知时间戳的 3-bench 准确率往往只评 RT 风格单轮子集，把 SQA / Proactive 排除在普通 accuracy 外。完整 free-running proactive 仍需要 activation/轮询环，而不是前缀 QA。</p>
+  <p class="small">姊妹文档：<a href="../../steam_video-streaming-3bench/streaming_3bench/docs/baselines.html#timing">baselines Timing</a> · <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/selectstream-method.html#timing">SelectStream method · Benches</a> · <a href="../../steam_video-streaming-3bench/dynamic_navigation/dynamic-navigation-zh.html">dynamic_navigation 笔记</a>。</p>
+  <p class="small">原始来源：<a href="https://cg-bench.github.io/leaderboard/">CG-Bench 项目页</a> · <a href="https://arxiv.org/html/2411.03628">StreamingBench 论文</a> · <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Niu_OVO-Bench_How_Far_is_Your_Video-LLMs_from_Real-World_Online_Video_CVPR_2025_paper.html">OVO-Bench CVPR 论文</a>。仓库选择协议：<code>implicit_world_model/cgbench_grounded_navigation/builder.py</code> 默认 <code>min_clues=2</code>。</p>
+</section>
+
+<section class="card">
+  <span class="label">术语说明 · Annotation vs. reasoning</span>
+  <h2>1.3 Multi-clue 与 multi-evidence 相关，但并不等同</h2>
+  <p><strong>Multi-clue 是 annotation-level property：</strong>一个 QA 样本具有两个或更多由 benchmark 标注的相关 frames、timestamps 或 temporal intervals。<strong>Multi-evidence 是 reasoning-level property：</strong>一个有充分依据的答案需要 agent 获取并共同使用至少两条不同的 grounded facts，与这些事实分布在多少个标注 interval 中无关。</p>
+  <table>
+    <thead><tr><th>术语</th><th>可操作定义</th><th>所属层级</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Clue</strong></td><td>Benchmark 标注的相关 frame、timestamp 或 temporal interval</td><td>Dataset annotation</td></tr>
+      <tr><td><strong>Evidence</strong></td><td>Agent 真实读取、具有来源依据并用于更新 belief 的事实</td><td>Reasoning/runtime</td></tr>
+      <tr><td><strong>Multi-clue</strong></td><td>至少存在两个不同的 annotated clue regions</td><td>Dataset selection property</td></tr>
+      <tr><td><strong>Multi-evidence</strong></td><td>至少两条不同 evidence items 必须共同出现，才能为答案提供充分依据</td><td>Reasoning requirement</td></tr>
+      <tr><td><strong>Multi-hop</strong></td><td>一条 evidence 支持某个 intermediate conclusion 或 dependency，并影响下一步 reasoning/evidence-acquisition action</td><td>Reasoning-chain structure</td></tr>
+    </tbody>
+  </table>
+  <p>一个 annotated clue interval 可以包含多条 evidence facts。例如，同一个 clip 同时展示人物拿起钥匙，随后用它打开门；该样本可能是 <em>single-clue but multi-evidence</em>。反过来，一个样本可能包含两个 annotated clue intervals，但对于某个具体问题或某次 model execution，其中一个 clue 已经足够；此时它是 <em>multi-clue</em>，但尚不能证明存在 multi-evidence necessity。</p>
+  <div class="equation">本项目约定：
+使用 multi-clue instances 作为 multi-evidence QA 的可观测 proxy，
+但 multi-clue 不保证每个 clue 都是答案所必需，
+也不保证 annotation 中存在显式 multi-hop reasoning chain。</div>
+</section>
+
+<section class="card thesis">
+  <span class="label">核心方法 · 两个预测模型 + 一个决策模型</span>
+  <h2>2. 面向 Streaming Video QA 的 Frontier-guided Implicit World Model</h2>
+  <p>我们把 question answering 表述为反复执行的 active-evidence loop。首先将 question 转换为 answer hypotheses、required evidence roles、temporal constraints 和初始 missing-evidence state。每一步中，<strong>Frontier Model</strong> 从当前合法 graph actions 中提出可能包含下一条 clue 的位置；<strong>Hypothesis-Effect IWM</strong> 想象每个候选 read 可能揭示什么，以及立即或延迟使用它会怎样改变所有 active answer hypotheses；<strong>QA Planner</strong> 选择一次真实交互，只累积执行后得到的 grounded evidence，并决定继续、回答、等待或 abstain。</p>
+  <div class="equation">Question → missing-evidence belief
+→ Frontier Model：识别可能的 next clue reads
+→ Hypothesis-Effect IWM：想象 observation + 即时/延迟 belief effect
+→ QA Planner：选择一次真实 read / wait / answer / abstain
+→ 观察 grounded clue → 修正 belief → repeat</div>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Related-work map</span>
+  <h3>2.1 Related work：究竟在建模哪个“世界”？</h3>
+  <p>现有工作可压缩为三个相邻方向：结构化 research memory（<a href="https://arxiv.org/abs/2603.24402">AutoProf</a>）、可执行 research/science environment（<a href="https://arxiv.org/html/2602.15112">ResearchGym</a>、<a href="https://arxiv.org/abs/2406.06769">DiscoveryWorld</a>），以及 learned action-consequence knowledge（<a href="https://arxiv.org/abs/2606.30639">WorldEvolver</a>、<a href="https://arxiv.org/abs/2405.14205">WKM</a>）。<a href="https://arxiv.org/abs/2602.10090">AWM</a>/<a href="https://arxiv.org/abs/2604.18292">Agent-World</a> 等 environment generators 与 <a href="https://arxiv.org/abs/2607.12474">mechanistic world models</a> 则分别构造外部世界或解释被研究系统。</p>
+  <p><strong>我们的目标是 problem-solving world：</strong></p>
+  <div class="equation">(B_t, H_t, E_t, A_t) —a_t→
+(ô_{t+1}, ΔB_t, ΔH_t, answerability_{t+1}, frontier_{t+1})</div>
+  <p>IWM 在真实 evidence read 前预测该 action 对 answer hypotheses、missing evidence、answerability 和 future search 的影响，再用真实 observation 修正预测。</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">问题求解中的既有 Frontier Exploration</span>
+  <h3>2.2 IWM 之前的显式问题空间导航</h3>
+  <p>近期 problem-solving agents 已明显吸收导航思想，但通常显式表示这些结构，而不是学习完整的局部 dynamics：</p>
+  <table>
+    <thead><tr><th>机制</th><th>代表工作</th><th>主要贡献</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Persistent map + frontier</strong></td><td><a href="https://arxiv.org/abs/2606.11926">Arbor</a>、<a href="https://arxiv.org/abs/2601.20539">PathWise</a>、<a href="https://arxiv.org/abs/2604.14116">TREX</a></td><td>用 hypothesis/evidence graph 或 search tree 显式记录当前状态，并选择下一个可扩展节点。</td></tr>
+      <tr><td><strong>Belief-guided exploration</strong></td><td><a href="https://arxiv.org/abs/2606.30335">BayesEvolve</a>、<a href="https://arxiv.org/abs/2606.29182">Evidence-Informed Beliefs</a></td><td>用 uncertainty-aware belief update 聚焦探索并减少重复发现。</td></tr>
+      <tr><td><strong>Search、feedback 与 repair</strong></td><td><a href="https://arxiv.org/abs/2310.04406">LATS</a>、<a href="https://arxiv.org/abs/2607.08894">GATS</a>、<a href="https://arxiv.org/abs/2603.02772">SERP</a></td><td>引入 tree/graph search、environment feedback、backtracking 与 failure-aware replanning。</td></tr>
+    </tbody>
+  </table>
+  <div class="equation">显式 navigator = problem map + localization/belief + frontier + history/repair
+Implicit world model = learned local dynamics p(z_{t+1}, o_{t+1} | z_t, a_t)
+本文视角 = mismatch-aware belief-space navigator 内部的 IWM</div>
+  <p>二者互补：显式 graph 避免重复探索，并支持可审计的局部修复；IWM 则跨 latent states 泛化，并想象一次 read 的长期效果。在 streaming Video QA 中，L1/L1.5 与 hypothesis/evidence graph 构成 map，Frontier Model 选择可到达边界，真实 read 后再依据 prediction–observation mismatch 修复 belief。据我们所知，既有工作尚未在 multi-clue streaming Video QA 中统一这套完整导航栈。</p>
+</section>
+
+<section class="card">
+  <span class="label">Module 0 · 合法交互接口</span>
+  <h3>2.3 Reasoning actions 与 Graph Action Compiler</h3>
+  <p>Action 表示 reasoning/evidence query，不是机器人在物理世界中的动作：</p>
+  <div class="equation">A = {start_at, temporal_before, temporal_after,
+     follow_soft_correlation, backtrack, inspect_current,
+     wait_for_future, stop, answer, abstain}</div>
+  <p>只有存在 live clip 时，<code>INSPECT_CURRENT</code> 才是合法 action。只有 future-evidence/proactive protocol 才允许 <code>WAIT_FOR_FUTURE</code>；它会消耗 latency 或 wait budget，并推进 visible stream，绝不能提前暴露未来片段。当前 CG-Bench clue-navigation protocol 不模拟 free-running query arrival，因此只使用 graph-navigation 子集。</p>
+  <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回。</p>
+  <div class="equation">A_t = outgoing_temporal(current)
+    ∪ positive_direction_soft_correlation(current)
+    ∪ backtrack(acquired frontier history)
+    ∪ protocol_enabled{inspect_current, wait_for_future}
+    ∪ {stop, answer, abstain}</div>
+  <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。</p>
+  <div class="equation"><strong>输出契约——完整合法动作表：</strong>
+A_t = [{action_id, action_type, source_id, target_safe_address,
+        relation/provenance, executor, protocol_gate, budget_cost}]</div>
+  <p>Frontier Model 必须接收这个完整集合。Full-IWM control 评估全部 <span class="math">A_t</span>；embedding Top-K 仍是独立 retrieval baseline。</p>
+</section>
+
+<section class="card">
+  <span class="label">Component 1 · Candidate proposal</span>
+  <h3>2.4 Frontier Model：下一条有用 clue 可能在哪里？</h3>
+  <p>Structural action compiler 首先根据 streaming visibility、graph topology、acquired state 和 budget 枚举全部可执行 actions。Learned Frontier Model 再使用 question、missing evidence roles、已经获得的 clues/evidence、current cursor，以及安全的 temporal/correlation/semantic graph context，从中识别一个有界的 plausible next-clue read 集合。初始步骤可以提出 <code>START_AT(node)</code> anchors；后续则提出合法的 temporal、correlation、backtrack、current-clip 或 wait actions。</p>
+  <p><strong>Graph input encoding。</strong>对 learned model 而言，temporal 和 correlation context 通过可见 node embeddings 之间的 attention scores 编码。Relation type 与 relative time 是 pairwise attention 的输入；legal graph 与 streaming mask 决定哪些 node pairs 可以互相 attention。因此，attention 表示 navigational connectivity，但不能创建非法 edge，也不能暴露 hidden/future node value。</p>
+  <div class="equation">e_i = NodeEmbed(safe_descriptor_i)
+α_{ij} = Attn(e_i, e_j, TimeEmbed(Δt_{ij}), RelationEmbed(r_{ij}))
+g_i = Σ_{j ∈ legal_visible_neighbors(i)} α_{ij}[e_j; Δt_{ij}; r_{ij}]</div>
+  <div class="equation">A_t = CompileLegal(M_t, graph, cursor_t, acquired_t, budget_t)
+C_t = Frontier_ψ(q, B_t, E_t, {e_i, g_i, α_{ij}}, A_t),   C_t ⊆ A_t</div>
+  <div class="equation"><strong>输出契约——显式 candidate subset：</strong>
+C_t = [{action_id, proposed_missing_role, proposal_rationale,
+        optional_continuation_hint}],   C_t ⊆ A_t</div>
+  <p>该模型回答的是<em>下一步可能值得去哪里看</em>，而不是哪个 candidate 已知就是 clue，也不决定最终获胜 action。它可以读取 safe node addresses、question-independent semantic captions/keys、timestamps 和 typed temporal/correlation proposals；不能读取未执行 node 的 hidden grounded value、未来 frames、answer labels 或 clue annotations。Compiler 仍是确定性的；Frontier Model 是显式 learned proposal stage，其 recall 及其对 planner 的影响必须单独评测。</p>
+</section>
+
+<section class="card thesis">
+  <span class="label">Component 2 · Predictive dynamics</span>
+  <h3>2.5 Hypothesis-Effect IWM：在 reasoning 中使用这条 clue 会改变什么？</h3>
+  <p>对每个 candidate physical read <span class="math">a ∈ C_t</span>，IWM 做两个相互耦合的预测。Observation head 根据 question、current belief、已获得的真实 evidence、target safe address 以及局部 temporal/correlation/semantic graph context，预测该 read 可能揭示的 categorical descriptor。Effect head 再投影这一可能 observation 将如何改变每个 active answer hypothesis：support/counterevidence/inconclusive status、resolved/opened evidence roles、contradiction change、frontier change 和 answerability。Horizon-two rollout 用于识别立即作用不完整、但下一跳 continuation 可能有用的 clue。</p>
+  <p>IWM 使用同一组由 attention 得到的 node/edge embeddings <span class="math">{e_i,g_i,α_{ij}}</span>。这里的 temporal/correlation attention pattern 只是描述证据可能如何连接的输入，本身不是 evidence、relevance 或 action utility。</p>
+  <div class="equation">ô_{t+1}^{a} = ObsIWM_θ(q, B_t^{shared}, E_t, a,
+                                  safe_address(a), {e_i,g_i,α_{ij}})
+Δẑ_{t+1}^{a,h} = EffectIWM_θ(B_t^h, h, ô_{t+1}^{a})
+τ_t^a = [a, ô^{a}, Δẑ^{a,*}, optional_second_hop]</div>
+  <div class="equation"><strong>输出契约——每个 candidate 对应一个 predicted-only joint future：</strong>
+τ_t^a = {action_id, predicted_observation_descriptor,
+         per_hypothesis{support|contradict|inconclusive,
+                        roles_resolved, roles_opened, contradiction_change,
+                        answerability_transition}, frontier_effect,
+         optional_second_hop}</div>
+  <p>一次 physical read 必须生成覆盖<strong>所有 hypotheses 的 joint future</strong>；planner 不能拿某个 answer choice 的 trajectory 与另一个 choice 的无关 physical trajectory 比较。执行前，任何 visual clue 或完整 caption 都只能是 predicted-only；执行后，真实 visual/text observation 与 grounded caption 通过 correction 替换 imagination。Imagined evidence 永不持久化，也不能直接用于回答。</p>
+</section>
+
+<section class="card boundary">
+  <span class="label">Component 3 · Action and stopping</span>
+  <h3>2.6 QA Planner：测试一个未来，再判断证据是否充分</h3>
+  <p>QA Planner 接收 question、累积的 grounded evidence、current belief、remaining budget 和 IWM 产生的 joint candidate futures。它对完整短轨迹做 categorical comparison，最多选择一个真实 evidence-acquisition action，并丢弃所有未执行的 imagined observations。用真实 clue 修正 belief 后，它只在少量已获得证据上 reasoning，并输出一个 terminal/control decision：</p>
+  <div class="equation">Planner_φ(q, B_t, E_t, {τ_t^a}_{a∈C_t}, budget_t)
+∈ {READ(a), INSPECT_CURRENT, WAIT_FOR_FUTURE,
+   ANSWER_HIGH_CONFIDENCE, ANSWER_LOW_CONFIDENCE, ABSTAIN}</div>
+  <div class="equation"><strong>输出契约——严格输出一个 decision：</strong>
+d_t = READ(action_id) | INSPECT_CURRENT | WAIT_FOR_FUTURE
+    | ANSWER(answer, confidence_tier, grounded_evidence_refs)
+    | ABSTAIN(reason)</div>
+  <p><code>ANSWER_HIGH_CONFIDENCE</code> 要求 grounded 且足够完整的 evidence chain。<code>ANSWER_LOW_CONFIDENCE</code> 只用于评测协议强制在残余不确定性下作答的情况；否则优先 <code>ABSTAIN</code>。只有允许 future evidence 的 streaming protocol 才能使用 <code>WAIT_FOR_FUTURE</code>，并且它会消耗 wait/latency budget。</p>
+</section>
+
+<section class="card">
+  <span class="label">Closed-loop dynamics</span>
+  <h3>2.7 Dynamic interpretation</h3>
+  <p>同一个 candidate 在不同步骤可能产生不同 effect，因为 missing roles、hypothesis states、acquired clues、cursor、reachable frontier 和 remaining budget 已经变化。因此，IWM 建模的是 reasoning state transition，而不是静态 question–clip similarity。Planner 通过一次真实 read 测试预测中最有价值的 transition，修正状态，再重新运行两个模型。</p>
+  <div class="equation">B_0 + read(search clue) → resolve search_event；open object_found
+B_1 + read(object clue) → resolve object_found；open object_use
+B_2 + read(door clue) → resolve instrument_identity；answer ready
+B_2 + reread(search clue) → redundant / unchanged</div>
+  <p><strong>核心边界：</strong>Frontier Model 提出去哪里检查；IWM 预测该检查可能改变什么；Planner 决定实际执行什么，以及真实累积证据是否充分。三者都不能把 imagined clue 转换成事实。</p>
+</section>
+
+<section class="card">
+  <span class="label">开放问题 · Memory 与 Navigability</span>
+  <h2>3. Evidence memory：L1/L1.5 是一个开放设计问题</h2>
+  <p>这一层必须决定<strong>存什么、以什么粒度存，以及哪些保留项之间应该建立可导航连接</strong>。当前 memory graph 是不读取未来 question/answer、可寻址且可追溯来源的 evidence substrate，但其 representation 和 connectivity 尚不视为已解决。</p>
   <table>
     <thead><tr><th>层级</th><th>职责</th><th>研究定位</th></tr></thead>
     <tbody>
-      <tr><td>L1</td><td>真实 visual/text observations、时间戳、provenance、embedding</td><td>基础设施</td></tr>
-      <tr><td>L1.5</td><td>L1 node IDs 之间 question-independent 的 soft navigation correlation；已验证 typed relations 单独保存</td><td>导航拓扑和候选生成</td></tr>
+      <tr><td>L1</td><td>真实 visual/text observations、时间戳、provenance、embedding</td><td>开放的 storage design；当前 implementation baseline</td></tr>
+      <tr><td>L1.5</td><td>L1 node IDs 之间 question-independent 的 soft navigation correlation；已验证 typed relations 单独保存</td><td>开放的 connectivity design；当前 navigation baseline</td></tr>
       <tr><td>Latent belief</td><td>问题条件下的 competing interpretations、missing links 和 answerability</td><td>主方法状态</td></tr>
       <tr><td>L2</td><td>已执行 action、真实 observation、realized delta 和决策审计</td><td>轨迹记录，不是 world model</td></tr>
     </tbody>
   </table>
-  <p>Identity、state 和 candidate-causal relation 属于可选 strict layer，在通过相应 evidence gate 前只是 candidate。它们不是通用 L1.5 correlation overlay 的定义，也不能因为被提出就当成事实。</p>
-  <h3>2.1 L1 存储协议</h3>
+  <p>当前 baseline 主要沿用两种已有思路：以 <strong>Video_Skills-style atomic skills</strong> 构建 grounded、可审计的 memory；以 <strong>SelectStream-style bounded online selection</strong> 决定何时写入、保留什么以及查询什么。核心开放问题是：这些选择能否为后续 frontier exploration 和 IWM planning 产生合适的 nodes 与 edges。</p>
+</section>
+
+<section class="card">
+  <span class="label">开放问题 · Storage unit</span>
+  <h3>3.1 L1 存储协议</h3>
   <p>L1 是 question-independent、兼容 Video_Skills 的 <code>ClueMemoryGraph</code>。每个 node 存一条局部、有时间范围的 observation，而不是 reasoning conclusion。</p>
   <table>
     <thead><tr><th>Node/字段</th><th>存储内容</th></tr></thead>
@@ -78,7 +317,11 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
       <tr><td><code>dialogue_span</code>/OCR</td><td>带真实 modality 的 time-aligned text；字幕不能冒充直接 audio observation</td></tr>
     </tbody>
   </table>
-  <h3>2.1.1 从视频到 L1 的构建流程</h3>
+</section>
+
+<section class="card">
+  <span class="label">Implementation baseline · Atomic skills</span>
+  <h3>3.1.1 从视频到 L1 的构建流程</h3>
   <div class="equation">可见视频前缀 → question-independent 分窗 → 抽帧后的 Qwen clip schema
 → 冻结的 evidence-construction atomic skills → neighbor-aware graph compose
 → integrity/trust gate → 有界 keep/merge/evict → temporal rebuild → embedding refresh</div>
@@ -99,12 +342,20 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     </tbody>
   </table>
   <p>正常 trace 是 segmentation → observation/dialogue extraction → local mentions → event/state creation → relation linking → provenance。State、dialogue 和 coreference 只在证据存在时调用；缺失就保持缺失，不构造 node。每次 invocation、dependency、evidence reference 和 failure 都记录在 <code>metadata.graph_compose.execution_trace</code>。</p>
-  <h3>2.1.2 Node context 和 temporal 判定</h3>
+</section>
+
+<section class="card">
+  <span class="label">开放问题 · Connectivity</span>
+  <h3>3.1.2 Node context 和 temporal 判定</h3>
   <p>Node 的 routing key 包含 type、短 grounded descriptor、modality 和 interval。真实 read 返回的 grounded value 还包含完整 caption/predicate/utterance/OCR/state tuple、clip/local IDs、local participants 和 visible attributes、state subject/attribute/value/polarity/temporal scope、evidence-frame 或 subtitle/ASR references、provenance/trust/visibility、incident composition links 和 consolidation lineage。Previous/current/next clip digest 只是 construction-time composer context，不会被复制到 node value；它们的影响只体现在 grounded candidate edges 和 compose audit 中。这些 context 用于 audit 和后续 read，不得包含 answer、motive、跨 clip identity 或 causal conclusion。</p>
   <p>Temporal relation 来自确定性 interval test。Node 按 <code>(start_s,end_s,node_id)</code> 排序，相邻 retained nodes 连 <code>temporal_next</code>；若 <code>end(u) ≤ start(v)+10⁻³ s</code> 则为 <code>before(u,v)</code>；<code>during</code> 使用同一 tolerance 的 interval containment；其他相交 interval 为 <code>overlaps</code>。<code>before</code> 只在有界 forward neighborhood 内保存，不建 dense transitive closure。Consolidation 会删除 orphan、rewire 存活非 temporal edges，并按 retained intervals 重建 backbone。时间顺序不证明 identity、change、support 或 causality。</p>
   <p>L1 的主导航结构是 grounded semantic nodes 上确定性的 <code>temporal_next/before/overlaps/during</code> backbone。<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code>、<code>located_in</code> 等 composition links 只保留为 provenance/audit structure。Native <code>same_entity</code>、<code>state_change</code>、<code>causal_hint</code> 属于可选 strict-relation 路径，未通过各自 verifier 绝不成为 navigation fact。</p>
   <p>当前修复会在存在字幕时，用 question-independent、time-aligned subtitle 丰富已持久化的 visual L1 node。有限长度的 address key 用于导航，完整 descriptor 仍是执行真实 read 后才获得的 grounded value。未来 visual extraction 还会请求简洁 grounded caption 和带 evidence frame 的 visible text。Descriptor 一旦变化，旧 embedding reference 必须失效；重建 L1.5 前必须重新生成 <code>Qwen/Qwen3-VL-Embedding-2B</code> embedding。</p>
-  <h3>2.2 L1.5 correlation overlay</h3>
+</section>
+
+<section class="card">
+  <span class="label">Implementation baseline · Soft navigation graph</span>
+  <h3>3.2 L1.5 correlation overlay</h3>
   <p><strong>设计变更：</strong>早期 L1.5 是 atomic-event causal-temporal belief overlay，尝试接纳 typed <code>explains</code>/<code>enables</code> edges。它容易把 narrative succession 误标为 causality，candidate-causal edges 也未能稳定通过独立 grounding gates。该路径现只作为历史/可选 strict-relation evaluation。<strong>当前 L1.5 是 correlation，不是 causality</strong>：它在 retained L1 IDs 上建立 question-independent soft navigation overlay。Identity、state transition 和 causality 属于独立 typed layers，不会因为两个 node 相关就进入 L1.5。</p>
   <ol>
     <li>冻结 enriched/consolidated L1 descriptor；descriptor 一旦改变，旧 embedding 立即失效。</li>
@@ -116,7 +367,11 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
     <li>应用一个冻结的 global channel/cosine/positive-affinity policy，并记录每个 pair 的 admission/exclusion reason、model/checksum、policy fingerprint 和 frozen-L1 fingerprint。</li>
   </ol>
   <p>Temporal edge 是精确 interval constraint；correlation edge 是有 representation 支持的稀疏候选导航路径。Temporal proximity 不会单独创建 correlation，cosine 也不能单独保证 admission，因为还要经过 temporal exclusion、equivalence-chain、sparsemax 和 global-policy gates。Similarity/affinity 不是 probability、confidence、identity、state transition、support、causality、relevance 或 action utility；独立验证过的 categorical facts 单独保存。</p>
-  <h3>2.3 Correlation 不是 action preference</h3>
+</section>
+
+<section class="card boundary">
+  <span class="label">边界 · Topology 不是 Policy</span>
+  <h3>3.3 Correlation 不是 action preference</h3>
   <div class="equation">L1.5 correlation：确定有支持的 node-to-node 可导航邻接
 → legal-action compiler：暴露可执行的 cursor-incident hops
 → IWM：预测每一跳的 categorical observation 和 belief effect
@@ -126,8 +381,8 @@ Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
 </section>
 
 <section class="card benchmark">
-  <span class="label">相关讨论 · SelectStream</span>
-  <h2>2.4 SelectStream：有预算的在线潜在证据分配</h2>
+  <span class="label">Implementation baseline · SelectStream</span>
+  <h3>3.4 SelectStream：有预算的在线潜在证据分配</h3>
   <p><strong>核心想法。</strong>SelectStream（arXiv:2606.16353v1）的核心不是“如何保存更多视频”，而是：在固定的 memory 和 context budget 下，在线决定<em>何时写入</em>、<em>保留什么</em>、<em>查询时读取什么</em>，以及<em>最终向 VLM 暴露多少历史证据</em>。</p>
   <p>传统方法通常走两个极端：</p>
   <ul>
@@ -166,26 +421,11 @@ SelectStream 用 surprise 决定视频历史的存储粒度，用固定容量 la
 </section>
 
 <section class="card">
-  <h2>3. Reasoning actions</h2>
-  <p>Action 表示 reasoning/evidence query，不是机器人在物理世界中的动作：</p>
-  <div class="equation">A = {start_at, temporal_before, temporal_after,
-     follow_soft_correlation, backtrack, inspect_current,
-     wait_for_future, stop, answer, abstain}</div>
-  <p>只有存在 live clip 时，<code>INSPECT_CURRENT</code> 才是合法 action。只有 future-evidence/proactive protocol 才允许 <code>WAIT_FOR_FUTURE</code>；它会消耗 latency 或 wait budget，并推进 visible stream，绝不能提前暴露未来片段。当前 CG-Bench clue-navigation protocol 不模拟 free-running query arrival，因此只使用上述 action space 的 graph-navigation 子集。</p>
-  <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回，不能把全部 frontier sources 与全部 targets 做笛卡尔积展开。</p>
-  <div class="equation">A_t = outgoing_temporal(current)
-    ∪ positive_direction_soft_correlation(current)
-    ∪ backtrack(acquired frontier history)
-    ∪ protocol_enabled{inspect_current, wait_for_future}
-    ∪ {stop, answer, abstain}</div>
-  <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。由于 L1 容量固定，Full-IWM arm 不使用 embedding Top-K；Top-K 只作为显式 retrieval baseline。</p>
-</section>
-
-<section class="card">
   <h2>4. 短视界 model-predictive reasoning</h2>
   <ol>
     <li>从单一 current-node cursor 和固定 L1.5 graph 枚举全部合法 actions；</li>
-    <li>为每个 action 想象 horizon-one 或 horizon-two categorical transition；</li>
+    <li>Frontier Model 从完整合法集合中提出 plausible candidates；</li>
+    <li>为每个 frontier candidate 想象 horizon-one 或 horizon-two categorical transition；</li>
     <li>对完整候选轨迹做 pairwise comparison；</li>
     <li>只执行唯一获偏好轨迹的第一跳；</li>
     <li>丢弃 imagined observation，读取真实证据，更新 belief，再规划。</li>
@@ -195,7 +435,7 @@ a_t* = First(τ*)
 o_{t+1} = Execute(M,a_t*)
 z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <p>World model 的价值体现在 delayed effect：第一跳可能几乎没有即时收益，却能打开一个 bridge，让第二跳补全关键证据。这是它区别于 reactive retrieval 或 immediate information-gain ranking 的核心。</p>
-  <p>Learned IWM 在一次 batched graph/tensor forward 中预测全部合法 first hops。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。</p>
+  <p>Learned IWM 在一次 batched graph/tensor forward 中预测全部 frontier first hops；Full-IWM control 则预测全部合法 first hops。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。</p>
   <p>当前 <code>reasoning_v2</code> planner 保留由不同 hypothesis 与 action history 构成的竞争路径森林。一个 joint action tree 必须在同一个 shared physical first read 下覆盖所有仍存活的 answer hypotheses。Planner 每轮只调度一次真实 read，未选路径保持 suspended 而不是被删除；grounded correction 分别作用于每条路径，然后从修正后的森林重新规划。</p>
 </section>
 
@@ -205,6 +445,7 @@ z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <table>
     <thead><tr><th>允许的职责</th><th>主实验中禁止的职责</th></tr></thead>
     <tbody>
+      <tr><td>Frontier Model 提出显式有界 subset，并测量 clue/action recall</td><td>Frontier 暗中选择 winner、读取 hidden values，或在没有可审计 recall gate 时丢弃 candidates</td></tr>
       <tr><td>Embedding similarity 提出候选</td><td>相似度最高者自动获胜</td></tr>
       <tr><td>Graph/factor constraint 排除 illegal 或 unsupported hop</td><td>Factor posterior 或 edge priority 排序 winner</td></tr>
       <tr><td>Lexical/temporal rule 作为显式 baseline</td><td>在 IWM arm 中隐式用于 tie-break</td></tr>
@@ -216,12 +457,13 @@ z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
 
 <section class="card">
   <h2>6. 控制模型输入大小</h2>
-  <p>IWM/planner 不接收整个视频、raw embedding matrix、hidden answer 或未 consolidation 的全部历史。由于 L1 memory 容量固定，它可以在不做 Top-K truncation 的情况下消费完整 retained graph：question/belief tokens、current cursor node 的 key 与已读取 value、全部 retained node keys、所有 temporal/correlation edges、全部合法 cursor actions、recent history 和 budget status。</p>
+  <p>任何模型都不接收整个视频、raw embedding matrix、hidden answer 或未 consolidation 的全部历史。由于 L1 memory 容量固定，Frontier Model 可以在不做 Top-K truncation 的情况下检查完整 retained safe graph：question/belief tokens、全部 retained node keys、temporal/correlation edges、全部合法 actions、recent history 和 budget status。IWM/planner 随后只接收显式有界 frontier、已获得的真实 evidence，以及想象和比较这些 actions 所需的局部 graph context。Full-IWM control 则把全部合法 actions 传给下游。</p>
   <div class="equation">surprise-written、fixed-capacity L1 nodes
 + 完整 retained temporal/correlation graph
 + 单一 current-node cursor
 → 一次 batched IWM forward 预测全部合法 actions
 → partial-order planner</div>
+  <p>上图展示的是 Full-IWM control。在可扩展的 frontier-guided path 中，完整 retained graph 先进入 <code>Frontier_ψ</code>，只有通过审计的 candidate subset 才进入 batched IWM/planner。</p>
   <p>未读取 target node 只暴露 compact key/address representation，完整 evidence value 只有执行后才能读取。<code>Qwen/Qwen3-VL-Embedding-2B</code> 向量保存在 sidecar，作为 semantic action feature，而不是主方法 ranking gate、reward 或 supervision。</p>
 </section>
 
@@ -236,9 +478,13 @@ baseline/ablation：gtsam_always</div>
 </section>
 
 <section class="card benchmark">
-  <span class="label">监督来源</span>
-  <h2>8. Learning signal 从哪里来</h2>
-  <p>CG-Bench 提供人工 clue intervals 和 terminal answers。执行一个 clue read 可以得到 <code>advances_required_clue_coverage</code>、<code>partial</code> 或 <code>complete</code> 等 categorical progress；完整 clue 轨迹与 leave-one-clue-out 轨迹提供 ordinal preference。</p>
+  <span class="label">监督与训练 · 当前 Frontier + IWM；Planner + Perception TBD</span>
+  <h2>8. Learning signal 与 Post-training 策略</h2>
+  <p>我们将从同时提供 question、answer 与可定位或可重建 evidence 的 Video QA datasets 中构造训练数据。CG-Bench 提供最干净的人工 clue intervals 与 terminal answers；其他 streaming benchmarks 的 multi-clue/readiness subsets 只有在 evidence provenance 可无泄漏重建时才加入。执行一个 clue read 可以得到 <code>advances_required_clue_coverage</code>、<code>partial</code> 或 <code>complete</code> 等 categorical progress；完整 clue 轨迹与 leave-one-clue-out 轨迹提供 ordinal preference。</p>
+  <div class="equation">Crafted record = {question, visible memory state, legal actions,
+                  evidence-linked next clue/action, real observation,
+                  realized per-hypothesis effect, future usefulness,
+                  grounded terminal answer or abstention}</div>
   <ul>
     <li>未匹配的 L1.5 candidate 保持 unlabeled，不能伪造成 semantic negative；</li>
     <li>Qwen-VL 生成 grounded observation descriptor，不冒充 GT relation label；</li>
@@ -247,59 +493,27 @@ baseline/ablation：gtsam_always</div>
     <li>Validation/test 视频永不参与训练。</li>
   </ul>
   <p>从同一 immutable checkpoint 执行 sibling branches，可以监督 action-conditioned observation、belief-delta prediction 和 pairwise trajectory comparison，而不必给任何轨迹赋绝对 utility。</p>
-</section>
-
-<section class="card benchmark">
-  <span class="label">相关讨论 · 流式评测基准</span>
-  <h2>8.1 OVO-Bench / StreamingBench —— 谁有“未来问题”？</h2>
-  <p>本项目主动训练/评测仍以 <strong>CG-Bench</strong> 为主。以下记录对 SelectStream 类工作与 <code>steam_video-streaming-3bench</code> 所用流式 VLM 基准的核实，避免协议表述失真。</p>
-  <p>基于本地标注核实（<code>/fs/gamma-projects/vlm-robot/datasets</code>，2026-07-27）。这里的“未来”指<strong>指令先于答案事件出现</strong>，模型必须等待或判断证据是否足够；不是仅含“接下来会发生什么”这类措辞。</p>
-  <p><strong>结论：</strong>OVO-Bench 有明确的等待证据协议（FAR）；StreamingBench 也有对应项（Proactive Output）；VideoMME 没有。</p>
+  <h3>Training route</h3>
+  <ol>
+    <li><strong>对 Frontier Model 做 SFT</strong>：使用从 evidence-annotated Video QA 构造的 evidence-linked next-action/candidate targets 与 proposal rationales。</li>
+    <li><strong>对 IWM 做 SFT</strong>：学习真实 action-conditioned observation descriptor、逐 hypothesis belief effect，以及 delayed/future usefulness。</li>
+    <li><strong>对 Frontier + IWM 做 GRPO</strong>：SFT 后，从同一 immutable state 组成 legal candidate action 或 sibling-trajectory groups，并根据 grounded evidence coverage、transition correctness 与 terminal QA outcome 计算 group-relative advantage。</li>
+  </ol>
   <table>
-    <thead><tr><th>基准</th><th>未来 / 等待？</th><th>数据中如何体现</th><th>占比</th></tr></thead>
+    <thead><tr><th>模块</th><th>计划训练方式</th><th>状态</th></tr></thead>
     <tbody>
-      <tr><td><strong>OVO-Bench FAR</strong></td><td>有</td><td><code>REC</code>/<code>SSR</code>/<code>CRR</code> 经 <code>test_info</code> 展开；CRR 另有 <code>ask_time</code>/<code>clue_time</code></td><td>172 / 1640 视频（~10.5%）；展开后 <strong>1567 / 3035</strong> 定时查询（约占评测质量 ~51.6%）</td></tr>
-      <tr><td><strong>StreamingBench Proactive</strong></td><td>有</td><td><code>time_stamp</code> &lt; <code>ground_truth_time_stamp</code>；适配器：<code>future_trigger_instruction</code> / <code>proactive_polling</code></td><td><strong>250 / ~4495</strong>（~5.6%）；246/250 输出晚于指令（Δ 1–43s，中位 7s）</td></tr>
-      <tr><td>StreamingBench RT / Omni / Contextual</td><td>无</td><td>仅 <code>time_stamp</code>——用可见前缀作答</td><td>基准主体</td></tr>
-      <tr><td>OVO RT / BT</td><td>无*</td><td>已知 <code>realtime</code>；*FPD / Prospective Reasoning 虽问“接下来”，仍无 wait-for-event 字段</td><td>RT 837 + BT 631 源样本</td></tr>
-      <tr><td>VideoMME</td><td>无</td><td>2700 条无 ask / trigger 时间戳</td><td>仅整段视频选择题</td></tr>
-      <tr><td><strong>CG-Bench（本项目）</strong></td><td>不适用（线索导航）</td><td>人工 <code>clue_intervals</code> + 终局答案；有界 read budget 下的多跳证据路径</td><td>主测试床：256 cases / 205 videos / 672 clue transitions</td></tr>
+      <tr><td>Frontier Model</td><td>Evidence-grounded SFT → GRPO</td><td>已定义下一步实验</td></tr>
+      <tr><td>Hypothesis-Effect IWM</td><td>Evidence/effect SFT → GRPO</td><td>已定义下一步实验</td></tr>
+      <tr><td>QA Planner / Reasoner</td><td>单独训练、联合训练，或先作为 prompted/frozen QA model</td><td><strong>TBD</strong></td></tr>
+      <tr><td>Memory Crafter / Perception Model</td><td>是否及如何训练 writing、segmentation、node construction 与 connectivity</td><td><strong>TBD</strong></td></tr>
     </tbody>
   </table>
-  <h3>磁盘上的例子</h3>
-  <ul>
-    <li><strong>OVO CRR id 1468：</strong>ask 297s，clue 308s；297/302 证据不足（<code>type=0</code>），310+ 足够（<code>type=1</code>）。全部 48/48 CRR 满足 <code>ask_time &lt; clue_time</code>。</li>
-    <li><strong>OVO REC id 1559：</strong>流上事件计数（如 5s→1、13s→2、18s→3）。</li>
-    <li><strong>OVO SSR：</strong>沿时间线问“该教程步骤现在是否正在发生？”Yes/No。</li>
-    <li><strong>StreamingBench Proactive <code>sample_1_1</code>：</strong>指令 @ 00:00:26 “太阳中间出现数字 20 时输出 20” → 输出 @ 00:01:01；全部 250 条 <code>temporal_clue_type=Subsequent</code>。</li>
-    <li><strong>StreamingBench Real-Time：</strong>有时间戳的前缀 QA（如 00:00:04 问 logo）——<strong>不是</strong>未来触发。</li>
-  </ul>
-  <div class="equation">占比结论：
-OVO FAR 经 test_info 展开后占 OVO 评测质量的大半（约一半定时查询）
-StreamingBench Proactive 只是小切片（~5.6%）
-同属“等待未来证据”家族，但 schema 不同
-（触发-输出时刻 vs 就绪/计数轮询）
-
-SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench 单轮
-→ VideoMME final-query，最后才是 FAR / Proactive。
-论文 FAR 无法仅从 method 节复现（无 readiness/defer 头）。</div>
-  <p><strong>Runner 注意：</strong>扁平已知时间戳的 3-bench 准确率往往只评 RT 风格单轮子集，把 SQA / Proactive 排除在普通 accuracy 外（Proactive 常为 <code>official_protocol_compatible: false</code>）。完整 free-running proactive 仍需要 activation / 轮询环，而不是前缀 QA。</p>
-  <p class="small">姊妹文档：<a href="../../steam_video-streaming-3bench/streaming_3bench/docs/baselines.html#timing">baselines Timing</a> · <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/selectstream-method.html#timing">SelectStream method · Benches</a> · <a href="../../steam_video-streaming-3bench/dynamic_navigation/dynamic-navigation-zh.html">dynamic_navigation 笔记</a>。</p>
-</section>
-
-<section class="card">
-  <h2>9. Post-training 策略</h2>
-  <ol>
-    <li>用审核后的 categorical observation descriptor 与 realized belief delta 做 SFT；</li>
-    <li>用 locked sibling trajectories 做 pairwise preference optimization；</li>
-    <li>只有在标签质量成立后，才可选做 group-relative ordinal optimization。</li>
-  </ol>
-  <p>LLM/VLM 不产生数字 reward。未来的 GRPO-style optimizer 可以从 categorical group ordering 内部计算 optimization advantage，但数据协议没有加权 heuristic reward，也没有 model-generated score。当前 GPT-OSS-120B 只用于 inference/data gathering，训练被明确暂停。</p>
+  <p>GRPO reward 必须来自 dataset-grounded evidence/action outcomes，不能使用 LLM/VLM 虚构的 utility score。GPT-OSS-120B 仍是 inference/data-crafting baseline；Frontier/IWM training 已列入计划，但尚未开始。</p>
 </section>
 
 <section class="card benchmark">
   <span class="label">决定性实验</span>
-  <h2>10. 证明 planner 因果性依赖 IWM</h2>
+  <h2>9. 证明 planner 因果性依赖 IWM</h2>
   <p>固定 question、evidence memory、candidate set、planner 和 read budget，只改变 world-model condition：</p>
   <ol>
     <li>完整 delayed-belief IWM；</li>
@@ -314,13 +528,13 @@ SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench �
 
 <section class="card warning">
   <span class="label">Go / No-Go</span>
-  <h2>11. 支撑研究结论所需证据</h2>
+  <h2>10. 支撑研究结论所需证据</h2>
   <p><strong>Go：</strong>在 matched budget 下，完整 IWM 提升 delayed multi-hop success；移除、冻结或打乱预测会改变 action 并降低结果；prediction error 与 navigation failure 相关；收益在 candidate-order permutation 下仍存在。</p>
   <p><strong>No-Go：</strong>没有 IWM 仍产生相同 action sequence；收益可由 graph/embedding heuristic 解释；imagined evidence 泄漏进答案；candidate recall 太低而无法暴露所需 clue；或只有 immediate-gain case 获益。</p>
 </section>
 
 <section class="card">
-  <h2>12. 当前实现状态</h2>
+  <h2>11. 当前实现状态</h2>
   <table>
     <thead><tr><th>部分</th><th>截至 2026-07-30 的状态</th></tr></thead>
     <tbody>
@@ -342,7 +556,7 @@ SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench �
 
 <section class="card thesis">
   <span class="label">近期门禁</span>
-  <h2>13. 下一步</h2>
+  <h2>12. 下一步</h2>
   <ol>
     <li>冻结多视频 cohort，要求 complete-graph oracle 的精确路径符合声明的 matched read budget；entry 本身计作一次 read；</li>
     <li>独立校准 executed observation transition 与 hypothesis-conditioned belief effect，并包含 surface-correlation hard negatives；</li>
@@ -353,6 +567,48 @@ SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench �
   <p>代码与修复后的 evidence substrate 已经端到端工作。训练仍被阻止，因为缺少 independent transition calibration 和固定的多视频预算可行 matched experiment；当前 learned-entry 的正确答案也能由 immediate-only 获得。</p>
 </section>
 
-<footer class="small">实现细节见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="../memory_graph/README.md">memory_graph</a>、<a href="../plan/README.md">plan</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。SelectStream / OVO–StreamingBench 相关讨论已合并于上文（§2.4、§8.1）。Complete-graph GPT-5-mini artifact 位于 <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>。</footer>
+<footer class="small">
+  <details>
+    <summary><strong>文档脚注 · 从创建至今的完整编辑历史</strong></summary>
+    <p><strong>历史范围：</strong><time datetime="2026-07-14">2026 年 7 月 14 日</time>至 <time datetime="2026-07-30">2026 年 7 月 30 日</time>。已于 <time datetime="2026-07-30">2026 年 7 月 30 日</time>对照 <a href="https://github.com/wuxiyang1996/steam_video/tree/agent/iwm-v2-rearchitecture"><code>origin/agent/iwm-v2-rearchitecture</code></a> 核实 GitHub 历史。</p>
+    <h4>GitHub commit 时间线</h4>
+    <ol>
+      <li><time datetime="2026-07-14">2026-07-14</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/d4ae200e2751a63a6aa68c203bd75bd69ddb9641"><code>d4ae200</code></a> · EN+ZH · Add steam video problem formulations and legacy docs. <strong>文档创建。</strong></li>
+      <li><time datetime="2026-07-14">2026-07-14</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/7ad3201ed98ac2eda37592029a4c5484e87a01a8"><code>7ad3201</code></a> · EN+ZH · Add causality-aware latent memory track to problem formulations.</li>
+      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/bfacb98a40ba312da3ded62ad4483d3e22f52c3e"><code>bfacb98</code></a> · EN+ZH · Sync factor-graph world-model framing into problem formulations.</li>
+      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1c4e003624736aab1fa1468d1316e28f842bbfd0"><code>1c4e003</code></a> · EN+ZH · docs: refine causal-temporal world model formulation.</li>
+      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/d72c51a80532634ad81e0ad0f090734809a76e0b"><code>d72c51a</code></a> · EN+ZH · docs: scope world model work around Video Skills.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1ee8f5ff307c0cb08056d79175dee78269b64602"><code>1ee8f5f</code></a> · EN · Document preference-only world model contract.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/abb33a76bcd041ce18969f3358153dcaf94414fc"><code>abb33a7</code></a> · EN · Add factor-graph exploration belief backend.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1555764c7de873b4286e0df0025f9730bb7935ae"><code>1555764</code></a> · EN · Add locked preference navigation workflow.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/09852fab70e736b7386d2897c41af1e759ebbf48"><code>09852fa</code></a> · EN · Add diagnostic case mining and model baselines.</li>
+      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/aa882fb3493fbf5009075eb8b46183a3db1bb306"><code>aa882fb</code></a> · EN+ZH · Document world-model-guided reasoning design.</li>
+      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/61aa49232cb5c47e24cc611a4402261f9cac4f76"><code>61aa492</code></a> · EN+ZH · Define cursor-based full-graph IWM navigation.</li>
+      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/0ff7f0990e84e7eb9ea53f9094869441af6cd57e"><code>0ff7f09</code></a> · EN+ZH · Implement full-graph IWM navigation.</li>
+      <li><time datetime="2026-07-22">2026-07-22</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/0fddc76145d1835949f1145748ad246d0f659bcf"><code>0fddc76</code></a> · EN+ZH · Add grounded IWM navigation evaluation.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/a8805102429fe1e70ce7946896947341bad479e0"><code>a880510</code></a> · EN+ZH · update IWM problem formulation pages.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/cef755838aef6712ef311b5685b779a5a0d399c4"><code>cef7558</code></a> · EN+ZH · Merge SelectStream and OVO/StreamingBench notes into IWM formulation pages.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/f6855e484ea4ec7ccfbc367cd882ce4917759861"><code>f6855e4</code></a> · EN+ZH · Expand streaming video problem setting.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/2bf7a07a63b59da7029a2d9fa5687113bcc0ecf6"><code>2bf7a07</code></a> · EN+ZH · Document graph construction and baseline results.</li>
+    </ol>
+    <h4>当前 working-tree 编辑记忆（尚未提交）</h4>
+    <ol>
+      <li>扩展 streaming problem setting：有限 memory 要求 agent 决定何时写、写什么；question 到来后，还要在 past memory、current clip 与等待 future clips 之间选择。</li>
+      <li>加入复杂 multi-hop Video QA 的导航假设：将 reasoning 建模为未知 POMDP/SLAM-like environment 中的 belief-space navigation，最终收敛到 high-confidence answer、low-confidence answer 或 abstention。</li>
+      <li>将 benchmark scope 定位为 streaming multi-evidence QA；区分完整 benchmark 与 CG-Bench <code>min_clues ≥ 2</code> 子集，并明确 StreamingBench 和 OVO-Bench 的不同监督作用。</li>
+      <li>澄清 <em>multi-clue</em> 是 annotation property，<em>multi-evidence</em> 是 reasoning requirement；二者都不自动保证存在显式 multi-hop dependency chain。</li>
+      <li>提出 Frontier-guided IWM loop，并拆成 related work、既有 frontier exploration、合法 action/compiler、Frontier Model、Hypothesis-Effect IWM、QA Planner 与 closed-loop dynamics 多张卡片。</li>
+      <li>补充与 research memory、可执行 scientific environment、action-consequence model、显式 hypothesis/search map、belief-guided exploration、backtracking 和 failure-aware replanning 的关系。</li>
+      <li>明确模块输出契约：compiler 输出完整合法动作表；Frontier 输出 candidate subset；IWM 为每个 candidate 输出 predicted-only joint future；Planner 严格输出一个可执行或终局 decision。</li>
+      <li>将原 Section 4 的 reasoning actions 移入 Section 2，并同步顺延后续章节与交叉引用。</li>
+      <li>将 L1/L1.5 evidence memory 重定位为 storage/connectivity/navigation 的开放问题，拆分为多张卡片，并将 atomic-skill construction 与 SelectStream-style bounded write/keep/retrieve 标为当前 implementation baseline。</li>
+      <li>明确 Frontier 与 IWM 的 temporal/correlation graph context 来自可见 node embeddings 之间的 attention scores；relative time 与 relation type 参与计算，legal-graph/streaming mask 限制可 attention 的节点对。</li>
+      <li>将计划训练范围限定为 Frontier + IWM：使用带 evidence 的 Video QA 构造数据，先 SFT、再 GRPO；QA Planner/Reasoner 与 Memory Crafter/Perception Model 的训练仍为 TBD。</li>
+      <li>将 learning signal 与 post-training 合并到 Section 8，并将原 OVO/StreamingBench future-question 卡片合并到 §1.2 benchmark 卡片。</li>
+    </ol>
+    <p>第一部分是已核实的 GitHub 历史；第二部分记录当前尚未提交的设计修改。二者都不能替代实验 provenance。</p>
+  </details>
+  <p>实现细节见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="../memory_graph/README.md">memory_graph</a>、<a href="../plan/README.md">plan</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。SelectStream / OVO–StreamingBench 相关讨论已合并于上文（§3.4、§1.2）。Complete-graph GPT-5-mini artifact 位于 <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>。</p>
+</footer>
 </body>
 </html>

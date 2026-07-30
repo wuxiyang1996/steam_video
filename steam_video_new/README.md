@@ -31,8 +31,8 @@ Detailed formulations: [English](problem-formulation-en.html) ·
 [中文](problem-formulation-zh.html) ·
 [Streaming 3-Bench baseline results](baseline-results.html). The formulation
 pages also merge related
-SelectStream memory notes (§2.4) and the verified OVO-Bench /
-StreamingBench future-question discussion (§8.1); CG-Bench remains the
+SelectStream memory notes (§3.4) and the verified OVO-Bench /
+StreamingBench future-question discussion (§1.2); CG-Bench remains the
 primary testbed.
 
 ## 1. Current research thesis
@@ -43,6 +43,8 @@ question-independent L1 evidence memory
         └─ hidden-until-executed grounded value
         ↓
 typed L1.5 local navigation proposals
+        ↓
+learned Frontier Model over the complete legal action set
         ↓
 hypothesis-independent IWM observation prediction
         ↓
@@ -61,14 +63,18 @@ suspended instead of being rewritten to contain the selected action.
 The novelty is the middle of this loop: **action-conditioned prediction of
 reasoning dynamics in belief space and model-predictive selection of the next
 reasoning hop**. L1/L1.5 memory is the grounded evidence substrate. It is useful
-infrastructure, but not the main novelty.
+infrastructure, but its storage granularity and navigation connectivity remain
+open design questions rather than the main novelty. The current implementation
+is mainly a Video_Skills atomic-construction and SelectStream-inspired bounded
+write/keep/retrieve baseline.
 
 ## 2. Responsibilities and boundaries
 
 | Component | Responsibility | It must not do |
 |---|---|---|
-| L1/L1.5 evidence memory | Store question-independent semantic observations, temporal edges, soft navigation correlations, provenance, and embedding references | Read the future question/answer; present similarity as probability or verified fact |
+| L1/L1.5 evidence memory (open design) | Decide what to store and which retained items are navigably connected; the current baseline stores question-independent semantic observations, temporal edges, soft correlations, provenance, and embedding references | Read the future question/answer; present similarity as probability or verified fact; claim the current node/edge design is uniquely optimal |
 | Legal-action compiler | Expose executable root, temporal, correlation, backtrack, and terminal actions | Rank actions by a hand-written score or silently apply Top-K |
+| Frontier Model | Propose an explicit bounded set of plausible next clue reads from the complete legal action set using the question, missing roles, acquired evidence, and safe graph context | Read hidden values, decide the winning action, or drop candidates without measured clue/action recall |
 | Latent belief state | Summarize acquired evidence, competing interpretations, missing links, contradictions, answerability, and budget | Be confused with the explicit L1.5 graph or imagined evidence |
 | Implicit world model | Predict categorical outcome and belief-delta descriptors for target-bound actions; imagine one- or two-hop futures | Rewrite the selected target identity; emit reward, utility, Q-value, probability, confidence, or evidence used directly in the answer |
 | Preference planner | Compare complete candidate trajectories ordinally and execute the first hop of a uniquely preferred trajectory | Sum model-generated scores; silently break ties by candidate order |
@@ -83,9 +89,11 @@ explicit backup/baseline modes; it is not silently enabled.
 
 Learned navigation must not be replaced by accumulated routing rules. Structural
 code may enforce only executability, leakage isolation, graph direction,
-already-read state, and budget. Question relevance, expected belief change, and
-trajectory preference remain learned categorical decisions. In particular,
-role count, keyword overlap, cosine value, edge density, timestamp proximity,
+already-read state, and budget. Question-conditioned frontier proposal,
+expected belief change, and trajectory preference remain separate learned
+categorical decisions. The Frontier Model may reduce the legal set only through
+an explicit, recall-audited proposal contract; a Full-IWM control bypasses it.
+Role count, keyword overlap, cosine value, edge density, timestamp proximity,
 compiler order, and fixed-K membership are not action utilities.
 
 ### Architecture invariant: correlation is not preference
@@ -113,6 +121,12 @@ does not ask the IWM or planner to discover correlations. Conversely, the IWM
 and planner may consume correlation edges as navigation context but may not
 create, verify, or reclassify those edges during action selection. Optional
 strict identity/state/causal relations remain a separately admitted layer.
+
+Inside the learned Frontier Model and IWM, the admitted temporal/correlation
+context is encoded through attention scores among visible node embeddings.
+Relative time and relation type enter pairwise attention; the legal graph and
+streaming mask restrict which pairs may attend. These attention-derived graph
+embeddings are model inputs, not evidence, relevance labels, or action utility.
 
 ### 2.1 What the L1 graph stores
 
@@ -493,7 +507,9 @@ supervision.
 
 ## 6. Supervision and post-training
 
-The primary and only active supervision/evaluation source is CG-Bench:
+The initial active supervision/evaluation source is CG-Bench. The planned
+Frontier/IWM corpus may expand to other evidence-bearing Video QA datasets only
+when their clue/evidence provenance can be reconstructed without leakage:
 
 - human `clue_intervals` supervise whether a real read acquires a new required clue;
 - partial/complete clue coverage supplies categorical belief progress;
@@ -544,19 +560,22 @@ observation and belief-delta targets. Identity, state-transition, causal, and
 counterevidence labels require their own trusted source; clue relevance must not
 be promoted into those stronger relations.
 
-The staged training plan is:
+The staged training plan is scoped to the **Frontier Model and IWM**:
 
-1. collect and validate grounded executed transitions;
-2. supervised learning for categorical observation/belief-delta prediction;
-3. pairwise preference optimization on locked sibling trajectories;
-4. optionally study group-relative preference optimization only after the
-   categorical ordering is reliable.
+1. craft and validate evidence-linked legal-action, observation, belief-effect,
+   future-usefulness, and terminal-QA records from evidence-annotated Video QA;
+2. SFT the Frontier Model on next-candidate/action supervision;
+3. SFT the IWM on action-conditioned observation and per-hypothesis effects;
+4. apply GRPO to Frontier/IWM candidate or sibling-trajectory groups after SFT,
+   using dataset-grounded evidence coverage, transition correctness, and QA
+   outcomes.
 
-There is no model-produced scalar reward. A future GRPO-style experiment may
-compute optimization advantages internally from group ordering, but it must not
-invent weighted heuristic rewards or expose numeric reward targets. At the
-current stop point GPT-OSS-120B is used only for inference/data gathering; it is
-not being trained.
+GRPO may compute internal group-relative advantages, but its reward must come
+from grounded dataset outcomes rather than an LLM/VLM-invented utility score.
+Training the **QA Planner / Reasoner**—separately, jointly, or not initially—and
+the **Memory Crafter / Perception Model**—writing, segmentation, node creation,
+and connectivity—are both **TBD**. GPT-OSS-120B remains an inference/data-crafting
+baseline; Frontier/IWM training is planned but has not yet started.
 
 ## 7. Evaluation that can support the claim
 
