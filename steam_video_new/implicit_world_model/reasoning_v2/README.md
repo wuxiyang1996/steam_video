@@ -3,6 +3,62 @@
 This package is the clean implementation path for world-model-guided reasoning.
 It does not modify frozen v1 artifacts and it does not train a model.
 
+## Planned Qwen-LoRA all-node reader (not yet implemented)
+
+The current research plan keeps the persisted L1 schema and adaptive
+segmentation, but uses a listwise Qwen-LoRA IWM over bounded memory-visible node
+descriptors rather than two standalone Q-Formers:
+
+```text
+retained node descriptors for all N nodes
+  -> frozen L1.5 A_corr/A_temp [N,N]
+  -> take G_corr/G_temp [N,1] rows from each path's active cursor
+  -> compile outgoing/backtrack/terminal legal actions
+  -> one Qwen-LoRA listwise pass; no relevance Top-K or mandatory Frontier
+  -> categorical belief effect for every legal path-node action
+  -> Planner selects one next hop while retaining unselected paths
+```
+
+The all-node input contains the question, acquired grounded evidence, current
+hypothesis/missing roles, bounded target descriptors, and the path-local L1.5
+navigation rows. These rows are question-independent structural affordances, not
+probabilities, reward, utility, or question-node relevance. Original frames, dense visual detail, OCR/audio,
+and provenance verification remain hidden until the selected source clip is
+read. Frontier selection remains an open efficiency design matched against the
+all-node path.
+
+In this proposal, all-node explicitly means that no real node already present
+in the current memory buffer is dropped by semantic score, temporal score,
+Top-K, or a threshold. Padding/unavailable masks only mark invalid tensor slots;
+they are not a learned node-dropping policy. Eviction or merging at the memory
+writer is outside the scope of this reader change.
+
+This section is an architecture plan, not a claim about the checked-in runtime.
+The implementation below still uses the existing address localizer, typed
+navigation graph, categorical world-model adapters, and persistent Planner.
+
+The planned Qwen-IWM requires node-level SFT rows constructed by aligning
+grounded clue intervals with the adaptive nodes. Labels are
+`positive | trusted_negative | ignore`; non-overlap alone is never a semantic
+negative. The first pilot compares frozen-Qwen listwise prompting with
+rank-8/16 LoRA, randomizes node order, and tests permutation consistency.
+
+The Planner may remain frozen and deterministic initially. The Qwen-LoRA IWM,
+however, must either be SFT-trained on real sibling executions from immutable
+checkpoints or pass the same held-out transition gate as a zero-shot baseline.
+Verification first tests categorical belief-effect prediction on video-disjoint
+executed reads, then holds the Planner fixed and compares full/no/shuffled IWM
+under a matched read budget. This separates model prediction quality from
+Planner search behavior.
+
+The implementation uses one listwise Qwen pass per reasoning state, not one
+Qwen call per node. It emits compact categorical effects for all N nodes; long
+rationales are unnecessary. Bounded L1 captions are memory-visible, while
+source-clip values remain behind the read boundary. The same base checkpoint may
+serve as typed Planner/evidence judge after selection under separate pre-read
+and post-read contracts. Q-Former/Set-Transformer readers remain efficiency,
+dense-token, and distillation ablations.
+
 ## Data flow
 
 ```text

@@ -44,11 +44,10 @@ question-independent L1 evidence memory
         ↓
 typed L1.5 local navigation proposals
         ↓
-learned Frontier Model over the complete legal action set
+Qwen-LoRA IWM reads memory-visible node descriptors
+with path-local L1.5 navigation rows [N,1]
         ↓
-hypothesis-independent IWM observation prediction
-        ↓
-hypothesis-conditioned belief-effect prediction
+IWM predicts every legal path × node transition
         ↓
 one categorical Planner over persistent reasoning trajectories
         ↓
@@ -74,7 +73,7 @@ write/keep/retrieve baseline.
 |---|---|---|
 | L1/L1.5 evidence memory (open design) | Decide what to store and which retained items are navigably connected; the current baseline stores question-independent semantic observations, temporal edges, soft correlations, provenance, and embedding references | Read the future question/answer; present similarity as probability or verified fact; claim the current node/edge design is uniquely optimal |
 | Legal-action compiler | Expose executable root, temporal, correlation, backtrack, and terminal actions | Rank actions by a hand-written score or silently apply Top-K |
-| Frontier Model | Propose an explicit bounded set of plausible next clue reads from the complete legal action set using the question, missing roles, acquired evidence, and safe graph context | Read hidden values, decide the winning action, or drop candidates without measured clue/action recall |
+| Optional Frontier Model (open design) | Future efficiency layer that may propose a bounded subset from the complete legal action set | Be assumed by the current all-node method; read hidden values; decide the winning action; or drop candidates without measured clue/action recall |
 | Latent belief state | Summarize acquired evidence, competing interpretations, missing links, contradictions, answerability, and budget | Be confused with the explicit L1.5 graph or imagined evidence |
 | Implicit world model | Predict categorical outcome and belief-delta descriptors for target-bound actions; imagine one- or two-hop futures | Rewrite the selected target identity; emit reward, utility, Q-value, probability, confidence, or evidence used directly in the answer |
 | Preference planner | Compare complete candidate trajectories ordinally and execute the first hop of a uniquely preferred trajectory | Sum model-generated scores; silently break ties by candidate order |
@@ -89,10 +88,11 @@ explicit backup/baseline modes; it is not silently enabled.
 
 Learned navigation must not be replaced by accumulated routing rules. Structural
 code may enforce only executability, leakage isolation, graph direction,
-already-read state, and budget. Question-conditioned frontier proposal,
-expected belief change, and trajectory preference remain separate learned
-categorical decisions. The Frontier Model may reduce the legal set only through
-an explicit, recall-audited proposal contract; a Full-IWM control bypasses it.
+already-read state, and budget. The current planned method does not apply a
+relevance-ranked Frontier or Top-K: the IWM evaluates every structurally legal
+node in the fixed-capacity buffer. Frontier selection remains an open efficiency
+design and, if introduced later, must use an explicit recall-audited proposal
+contract with the all-node IWM path retained as the matched reference.
 Role count, keyword overlap, cosine value, edge density, timestamp proximity,
 compiler order, and fixed-K membership are not action utilities.
 
@@ -128,6 +128,239 @@ Relative time and relation type enter pairwise attention; the legal graph and
 streaming mask restrict which pairs may attend. These attention-derived graph
 embeddings are model inputs, not evidence, relevance labels, or action utility.
 
+### Current architecture decision: Qwen-LoRA all-node categorical IWM
+
+The main learned reader keeps the existing adaptive-length L1 nodes and current
+schema. Because the current node is primarily semantic memory—caption,
+entities/states, timestamp, provenance, and a Qwen3-VL embedding reference—the
+main path uses Qwen-LoRA rather than two standalone Q-Formers. Q-Former/Set-
+Transformer readers remain efficiency and distillation ablations, especially if
+dense visual-token sidecars are added later.
+
+At runtime the fixed-capacity retained buffer still has a tensor view:
+
+```text
+M in R^(N x F x D)
+
+N = fixed maximum number of retained nodes
+F = fixed feature slots per node
+D = shared embedding dimension
+```
+
+The initial feature-slot contract is:
+
+```text
+M[i, 0] = caption embedding
+M[i, 1] = entity/state embedding
+M[i, 2] = visual or multimodal node embedding
+M[i, 3] = temporal embedding
+```
+
+Every source is projected into the shared dimension `D`. Missing node or feature
+slots use explicit masks. For Qwen input, every retained node exposes a bounded
+memory-visible descriptor: one grounded caption, entity/state summary, time
+span, node id, and path-local L1.5 navigation context. Original frames, dense visual detail,
+audio/OCR detail, and provenance verification remain behind the real-read
+boundary.
+
+L1.5 is a stable, question-independent attention-weighted navigation graph:
+
+```text
+A_temp [N,N] = directed temporal navigation relations/weights
+A_corr [N,N] = embedding/attention-based correlation relations/weights
+
+for path p with active cursor c_p,t:
+G_temp_p,t = A_temp[c_p,t, :]  # [N,1]
+G_corr_p,t = A_corr[c_p,t, :]  # [N,1]
+```
+
+These rows say how the current cursor can navigate to other nodes; they are not
+question-node relevance, reward, utility, or calibrated probability. The legal
+compiler converts supported outgoing relations, backtrack, and terminal actions
+into the path-local action set. This is structural executability, not memory-node
+dropping. The Qwen-LoRA IWM interprets every legal action under the question,
+acquired evidence, and current hypothesis:
+
+```text
+IWM_QwenLoRA(q, evidence, hypothesis, legal target descriptors,
+             G_corr_p,t [N,1], G_temp_p,t [N,1], legal_mask_p,t)
+  -> belief_effect for every legal path x node action
+```
+
+Runtime output uses compact categorical tokens rather than numeric utility or
+long rationales. Training randomizes node presentation order while preserving
+node ids and timestamps; permutation consistency is an explicit diagnostic.
+The first pilot compares frozen-Qwen prompting with rank-8/16 LoRA and does not
+full-finetune the backbone.
+
+Here, **all-node means no node dropping inside the current buffer**. Every real,
+available node retained by the memory writer remains in memory and is reachable
+from the virtual root or supported graph navigation. Padding or unavailable masks are tensor-validity
+masks, not relevance-based node deletion. Buffer eviction, node merging, Top-K
+admission, and threshold dropping are outside the current reader proposal and
+must not be introduced implicitly.
+
+The complete proposed loop is:
+
+```text
+adaptive-length retained nodes
+  -> bounded memory-visible descriptors for all N nodes
+  -> question-independent L1.5 A_corr/A_temp [N,N]
+  -> take cursor rows G_corr/G_temp [N,1] for each path
+  -> compile supported outgoing/backtrack/terminal actions
+  -> Qwen-LoRA categorical IWM over every legal action
+  -> one categorical effect for every remaining path x node action
+  -> Planner comparison over persistent one- or two-hop trajectories
+  -> execute one grounded read
+  -> correct matching paths, retain unselected paths, and replan
+```
+
+For path `p` and node `i` under evaluation, the IWM input contains:
+
+```text
+question; acquired grounded evidence; current hypothesis and missing roles
+all N bounded memory-visible node descriptors
+cursor-local L1.5 correlation row [N,1]; temporal row [N,1]
+legal/availability mask; cursor, action history, and remaining budget
+```
+
+The Qwen-LoRA IWM performs one listwise pass over this state and returns compact
+categorical labels for every node rather than one call per node:
+
+```text
+node_0: semantic_relation, temporal_relation, belief_effect
+node_1: semantic_relation, temporal_relation, belief_effect
+...
+node_N-1: semantic_relation, temporal_relation, belief_effect
+```
+
+The runtime format may omit rationales and auxiliary labels when only the
+categorical effect is needed. Training randomizes the node order and checks that
+the output permutes with the input. A single Qwen pass can emit all effects, but
+an autoregressive long-JSON implementation, an independent per-node Qwen call,
+and a custom embedding-token projector remain explicit engineering ablations.
+
+The active-read boundary is now explicit: the bounded L1 caption/entity/state
+summary and timestamps are memory-visible indexing context. A real read means
+returning to the selected source clip to expose original frames, dense visual
+detail, OCR/audio detail, and provenance verification. The Qwen-IWM never sees
+those source values for unselected nodes. If an experiment exposes original
+clip values for every node, every such exposure counts as a read.
+
+#### Why the IWM and Planner remain necessary after L1.5 navigation
+
+L1.5, IWM, and the QA reasoner answer different questions:
+
+```text
+L1.5 temporal/correlation graph:
+  which structurally supported navigation actions leave the current cursor?
+
+Qwen-LoRA IWM:
+  for this specific reasoning path, how may reading each legal node change belief?
+
+Planner:
+  with a shared Qwen evidence reasoner, which action should be executed next,
+  and after the real read, did the grounded evidence change belief?
+```
+
+The two navigation rows are question-independent structural quantities. They do
+not by themselves represent what a particular path has already
+acquired, which role it
+still lacks, whether a node repeats known evidence, whether it opens or resolves
+a contradiction, or whether a weakly relevant bridge enables a useful later
+read. The IWM supplies this path-conditioned transition:
+
+```text
+T_phi(path_belief_p, node_descriptor_i, G_corr_p,i, G_temp_p,i, action_type_i)
+  -> progress: advanced | unchanged | regressed
+  -> answerability_after: ready | not_ready | abstain
+  -> frontier_change: opened | shifted | closed | unchanged
+  -> contradiction_change: opened | resolved | unchanged
+  -> resolved_roles / opened_roles
+```
+
+Consequently, the same node may advance one hypothesis, contradict another, and
+leave a third unchanged even though all three paths share the same global
+semantic and temporal retrieval scores. The IWM is not another relevance head:
+it predicts categorical reasoning dynamics conditioned on the persistent path.
+
+The Planner is justified only by delayed multi-hop value. A result node may have
+the highest immediate semantic relevance while an earlier, lower-ranked bridge
+node establishes the missing entity or state transition needed to interpret it:
+
+```text
+high-relevance effect node
+  -> confirms what happened but leaves the explanation incomplete
+
+lower-relevance state node
+  -> opens a temporal bridge
+  -> enables a second read that completes the evidence chain
+```
+
+A reactive baseline may execute the highest score under a separately declared
+fixed fusion rule. A horizon-one Planner using IWM effects can prefer an action
+with immediate belief progress. The horizon-two Planner instead compares
+predicted trajectories and executes the first hop of the uniquely preferred
+trajectory. Persistent alternatives remain suspended; after a real read, only
+paths directly and verifiably affected by that observation are corrected, and
+all surviving paths are replanned.
+
+This role separation creates three progressively stronger hypotheses:
+
+```text
+H_retrieval:
+  frozen L1.5 navigation plus reactive retrieval is sufficient
+
+H_transition:
+  path-conditioned IWM effects improve over reactive retrieval
+
+H_planning:
+  delayed trajectory comparison and persistent alternatives improve over
+  greedy one-step IWM selection
+```
+
+The IWM/Planner contribution is accepted only if matched experiments reject the
+simpler explanations. Required comparisons use the same frozen memory tensor,
+question, frozen L1.5 navigation graph, complete structural legal set, read budget, and
+answer model:
+
+- **Reactive L1.5 navigation:** follow the same graph with no predicted belief
+  effect;
+- **Greedy IWM, horizon one:** choose from categorical immediate belief effects;
+- **IWM + Planner, horizon two:** compare delayed two-hop trajectories;
+- **Forced single path:** discard persistent competing interpretations;
+- **Shuffled-IWM control:** preserve node actions while permuting predicted effects;
+- **Reset-belief control:** discard acquired path state between decisions.
+
+The evidence must show that IWM improves realized belief-transition prediction
+and downstream results beyond retrieval rank, that horizon two improves bridge
+acquisition or delayed success beyond horizon one, and that persistent paths help
+on genuinely ambiguous cases. Primary diagnostics are complete evidence-chain
+coverage, bridge-node acquisition, contradiction resolution, read efficiency,
+early-stop error, delayed success, and final answer accuracy. If these gains do
+not survive the shuffled-effect and matched-budget controls, the supported
+ conclusion is that static L1.5 navigation is sufficient; the project must not
+claim an additional IWM/Planner benefit.
+
+The matched evaluation contains at least:
+
+- **Qwen-LoRA All-Node IWM (current plan):** one listwise pass predicts
+  categorical effects for every structurally legal node using bounded
+  memory-visible descriptors and two cheap `[N,1]` priors;
+- **Frontier-IWM (open design):** an optional future efficiency arm may prune the
+  legal set only through an explicit, recall-audited selector;
+- **Q-Former/Set-Transformer efficiency ablation:** distill or replace the
+  listwise Qwen reader with a small continuous-embedding model;
+- **Reactive retrieval:** execute the highest-ranked node under the same declared
+  fusion baseline without the IWM/Planner;
+- **Graph-only navigation:** traverse the same L1/L1.5 topology without the
+  learned memory reader or IWM.
+
+All arms use the same question, frozen memory tensor, legal-action compiler,
+read budget, and answer model. This isolates whether state-conditioned
+categorical effects improve node-level reasoning and whether IWM/Planner
+multi-path reasoning adds value beyond reactive retrieval.
+
 ### 2.1 What the L1 graph stores
 
 L1 is a question-independent `ClueMemoryGraph` compatible with Video_Skills. A
@@ -161,13 +394,54 @@ visible video prefix
   → L1.5 soft-correlation build
 ```
 
-The streaming writer sees only the video prefix. With surprise-adaptive
-windowing it samples visual representations every 0.5 s, measures cosine
-distance from the previous sample, and compares the new change with the 0.8
-empirical quantile of the latest eight changes. A surprising change closes a
-window after the 2 s minimum; otherwise a window closes at the 12 s maximum or
-at stream end. These are current defaults, not semantic labels. A fixed or
-hierarchical clip policy is also legal. Neither policy receives the downstream
+The streaming writer sees only the video prefix. The intended adaptive-length
+node policy follows the SelectStream-style surprise principle: stable attention
+and representation dynamics produce longer source clips, while an unusual
+deviation closes the active clip and starts a shorter, more detailed node span.
+This writer attention is question-independent and is distinct from the
+question-conditioned Qwen-IWM reader described above.
+
+At sampled stream time `t`, let `x_t` be the visual representation and `a_t` be
+a fixed-shape attention signature produced by frozen or learned writer queries
+over the visible sample tokens. The signature may pool heads and token positions
+but must preserve the same dimensional contract at every time step. Its rolling
+prefix reference is `a_bar_t`, computed from the latest `H` signatures. The
+writer uses:
+
+```text
+s_attn(t) = JSD(a_t || a_bar_t)
+s_feat(t) = 1 - cosine(x_t, x_(t-1))
+s(t)      = lambda * s_attn(t) + (1 - lambda) * s_feat(t)
+theta(t)  = empirical_quantile({s(t-H), ..., s(t-1)}, rho)
+```
+
+The active clip closes at `t` when `s(t) > theta(t)` and its minimum duration
+has been reached. Stable content remains open until the maximum duration or
+stream end. The minimum and maximum durations are safety bounds rather than the
+primary segmentation rule. This produces an adaptive source span without
+changing the existing `MemoryNode` schema:
+
+```text
+adaptive source clip [start_s, end_s]
+  -> existing grounded caption / event observations
+  -> existing timestamp, embedding reference, entities/states, and provenance
+```
+
+No new node-level uncertainty field or dense-token sidecar is required for this
+path. Writer attention is used only to detect a change in storage granularity;
+its weights and surprise value are not semantic labels, evidence confidence,
+question relevance, or Planner utility. The complete attention signature need
+not be persisted after the boundary decision; the node stores the boundary
+reason, source span, and sampled-frame provenance through existing fields.
+
+The currently implemented smoke path is the feature-only special case
+`lambda = 0`: it samples representations every 0.5 s, compares adjacent cosine
+change with the 0.8 empirical quantile of the latest eight changes, closes a
+window after the 2 s minimum, and otherwise closes it at the 12 s maximum or
+stream end. A learned attention-signature provider is the proposed extension;
+until it is implemented and validated, results must identify the current path
+as representation-surprise rather than attention-surprise windowing. Fixed
+windows remain the required control. Neither policy receives the downstream
 question, answer, clue interval, or relevance label.
 
 For each selected window, sampled frames are converted to a clip schema:
@@ -560,15 +834,90 @@ observation and belief-delta targets. Identity, state-transition, causal, and
 counterevidence labels require their own trusted source; clue relevance must not
 be promoted into those stronger relations.
 
-The staged training plan is scoped to the **Frontier Model and IWM**:
+### Node-level SFT for the Qwen-LoRA IWM
 
-1. craft and validate evidence-linked legal-action, observation, belief-effect,
-   future-usefulness, and terminal-QA records from evidence-annotated Video QA;
-2. SFT the Frontier Model on next-candidate/action supervision;
-3. SFT the IWM on action-conditioned observation and per-hypothesis effects;
-4. apply GRPO to Frontier/IWM candidate or sibling-trajectory groups after SFT,
-   using dataset-grounded evidence coverage, transition correctness, and QA
-   outcomes.
+The 256-question, 205-video CG-Bench cohort contains 672 grounded clue/read
+intervals. It is sufficient for interface checks and a small learnability pilot,
+but the intervals are raw material rather than an already complete node-level
+SFT corpus. Every question must first be joined to the adaptive segmentation and
+ materialized all-node memory-visible record:
+
+```text
+{question, acquired evidence, hypothesis, all N bounded node descriptors,
+ A_corr/A_temp references, cursor-local graph rows [N,1], legal actions,
+ categorical belief effects [N,C], evidence groups, validity mask}
+```
+
+Labels are `positive | trusted_negative | ignore`. A clue-overlapping node is a
+positive. A semantically similar wrong occurrence, a question-inconsistent
+before/after occurrence, or a grounded wrong-choice node may be a trusted hard
+negative. An unmatched or merely non-overlapping node is not automatically a
+negative: nearby context, coreference introductions, and possible bridge nodes
+remain `ignore`. Multiple nodes covering one clue form one positive evidence
+group. Training may sample trusted negatives for the loss, but the forward pass
+and runtime scorer still retain every valid node in the buffer.
+
+Data are split by video, not by node. The staged route is:
+
+1. frozen L1.5 graph-only and question-node retrieval baselines;
+2. frozen-Qwen listwise prompting with compact categorical output;
+3. rank-8/16 LoRA SFT for all-node categorical effects;
+4. expand to evidence-provenance-preserving Video QA cohorts before increasing
+   adapter capacity;
+5. distill the Qwen-IWM into a Q-Former/Set-Transformer only if latency or dense
+   visual-token experiments require it.
+
+LLM/VLM assistance may propose temporal types, paraphrases, or hard-negative
+candidates, but generated numeric relevance or utility is not supervision.
+Dataset clue intervals, provenance, node overlap, and executed-read outcomes are
+the locking signals.
+
+### Does the IWM need training?
+
+The QA Planner need not be trained initially. It can be a frozen, deterministic
+Qwen evidence reasoner constrained by a typed decision schema over categorical
+predicted effects, budgets, and persistent paths. The pre-read selector and the
+post-read evidence judge use separate fixed prompts/contracts; the latter sees
+only the chosen grounded observation and produces the corrected belief. This
+makes behavior auditable and supplies an observed categorical effect for IWM
+evaluation. A prompted pretrained model is a useful **zero-shot IWM baseline**,
+but the claimed IWM should be SFT-trained unless zero-shot predictions already
+pass the same held-out transition tests.
+
+Qwen LoRA is the planned learned transition mechanism. The first baseline uses
+the frozen checkpoint with the same all-node prompt; the main learned arm adds a
+rank-8/16 adapter without full-model tuning. The input serializes only bounded
+memory-visible L1 descriptors, not original clip values. Calling Qwen once per
+node, exposing every source clip, or generating long free-form rationales are
+separate heavy baselines. Node-order randomization and permutation-consistency
+tests are required because the memory is a set even though Qwen sees a sequence.
+
+IWM SFT examples are counterfactual sibling executions from the same immutable
+pre-read checkpoint:
+
+```text
+input  = question + acquired grounded evidence + current hypothesis
+         + all N bounded node descriptors
+         + cursor-local G_corr [N,1] + G_temp [N,1] + legal actions
+target = realized categorical belief effect per legal action
+         + answerability transition + contradiction/redundancy status
+```
+
+The primary target is the categorical effect observed after a real read, not an
+invented exact future caption. Useful-now, useful-later, no-progress, redundant,
+contradictory, and ambiguous controls are all required. Positives alone cannot
+train or verify an IWM. The split is video-disjoint, and no hidden answer, clue
+identity, or post-read value enters the pre-read input.
+
+The staged training plan is therefore:
+
+1. craft runtime-aligned all-node Qwen-IWM SFT and executed sibling-transition
+   records;
+2. establish frozen-Qwen and L1.5 graph-only baselines;
+3. LoRA-SFT the Qwen-IWM on action-conditioned categorical belief effects;
+4. keep the Planner frozen for the first causal evaluation;
+5. consider trajectory preference/post-training only after SFT passes held-out
+   transition and policy-value gates.
 
 GRPO may compute internal group-relative advantages, but its reward must come
 from grounded dataset outcomes rather than an LLM/VLM-invented utility score.
@@ -598,6 +947,20 @@ Report separately:
 - categorical observation/belief-delta prediction accuracy;
 - delayed two-hop success and recovery after contradiction;
 - candidate recall before planning.
+
+Verification has two independent gates. The **model gate** evaluates held-out
+executed transitions before any planning: macro-F1/confusion by outcome class,
+answerability-transition accuracy, contradiction and no-progress false-positive
+rates, delayed-positive recall, and calibration. It compares the IWM with a
+belief-prior baseline, a question-node MLP, shuffled node/effect controls, and an
+oracle effect ceiling. The **policy gate** freezes the Planner and changes only
+the IWM condition under the same legal actions and read budget. Full IWM must
+improve realized evidence-chain coverage, delayed bridge acquisition, recovery,
+read efficiency, or answer accuracy over no-IWM and shuffled-IWM controls. A
+separate greedy-horizon-one versus persistent-horizon-two comparison tests the
+Planner mechanism. If transition prediction improves but policy outcomes do
+not, the IWM is predictive but not decision-useful; if policy gains disappear
+under a shuffled-effect control, they cannot be attributed to the IWM.
 
 The claim fails if perturbing or removing the IWM does not systematically change
 actions and outcomes, or if gains come from candidate retrieval/order heuristics.

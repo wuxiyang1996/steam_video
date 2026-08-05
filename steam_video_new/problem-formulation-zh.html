@@ -168,12 +168,12 @@ SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench �
 </section>
 
 <section class="card thesis">
-  <span class="label">核心方法 · 两个预测模型 + 一个决策模型</span>
-  <h2>2. 面向 Streaming Video QA 的 Frontier-guided Implicit World Model</h2>
-  <p>我们把 question answering 表述为反复执行的 active-evidence loop。首先将 question 转换为 answer hypotheses、required evidence roles、temporal constraints 和初始 missing-evidence state。每一步中，<strong>Frontier Model</strong> 从当前合法 graph actions 中提出可能包含下一条 clue 的位置；<strong>Hypothesis-Effect IWM</strong> 想象每个候选 read 可能揭示什么，以及立即或延迟使用它会怎样改变所有 active answer hypotheses；<strong>QA Planner</strong> 选择一次真实交互，只累积执行后得到的 grounded evidence，并决定继续、回答、等待或 abstain。</p>
+  <span class="label">核心方法 · Qwen-LoRA categorical dynamics + planning</span>
+  <h2>2. 面向 Streaming Video QA 的 All-node Implicit World Model</h2>
+  <p>我们把 question answering 表述为在固定容量 adaptive-length memory nodes 上反复执行的 active-evidence loop。L1.5 用 question-independent 的 <span class="math">A<sup>corr</sup>,A<sup>temp</sup>∈R<sup>N×N</sup></span> 表示 attention-weighted navigation graph；每条 path 按 active cursor 取得两条 <span class="math">[N,1]</span> navigation rows 并编译结构合法 actions。一次 listwise Qwen-LoRA IWM pass 结合 question、已获得证据、hypothesis、target descriptors 与这些 graph signals，预测全部合法 actions 的 categorical belief effects。<strong>QA Planner</strong> 只执行一次真实交互，再修正和重新规划。</p>
   <div class="equation">Question → missing-evidence belief
-→ Frontier Model：识别可能的 next clue reads
-→ Hypothesis-Effect IWM：想象 observation + 即时/延迟 belief effect
+→ L1.5 A_corr/A_temp [N,N] → cursor rows [N,1] → legal actions
+→ Qwen-LoRA IWM：解释全部合法 path × node belief transitions
 → QA Planner：选择一次真实 read / wait / answer / abstain
 → 观察 grounded clue → 修正 belief → repeat</div>
 </section>
@@ -203,7 +203,7 @@ SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench �
   <div class="equation">显式 navigator = problem map + localization/belief + frontier + history/repair
 Implicit world model = learned local dynamics p(z_{t+1}, o_{t+1} | z_t, a_t)
 本文视角 = mismatch-aware belief-space navigator 内部的 IWM</div>
-  <p>二者互补：显式 graph 避免重复探索，并支持可审计的局部修复；IWM 则跨 latent states 泛化，并想象一次 read 的长期效果。在 streaming Video QA 中，L1/L1.5 与 hypothesis/evidence graph 构成 map，Frontier Model 选择可到达边界，真实 read 后再依据 prediction–observation mismatch 修复 belief。据我们所知，既有工作尚未在 multi-clue streaming Video QA 中统一这套完整导航栈。</p>
+  <p>二者互补：显式 L1.5 graph 避免重复探索，并支持可审计的局部修复；Qwen-LoRA IWM 则在 question/evidence/hypothesis 条件下解释每条结构合法 graph action 的 categorical belief effect。Temporal/correlation rows 是 question-independent navigation affordance，不是 relevance、utility 或 gate。Planner 执行真实 read 后再通过 prediction–observation mismatch 修复 belief。</p>
 </section>
 
 <section class="card">
@@ -224,36 +224,29 @@ Implicit world model = learned local dynamics p(z_{t+1}, o_{t+1} | z_t, a_t)
   <div class="equation"><strong>输出契约——完整合法动作表：</strong>
 A_t = [{action_id, action_type, source_id, target_safe_address,
         relation/provenance, executor, protocol_gate, budget_cost}]</div>
-  <p>Frontier Model 必须接收这个完整集合。Full-IWM control 评估全部 <span class="math">A_t</span>；embedding Top-K 仍是独立 retrieval baseline。</p>
+  <p>当前 all-node 方法把完整结构合法集合 <span class="math">A_t</span> 交给 IWM。Embedding Top-K 仍是独立 retrieval baseline；learned bounded Frontier 是开放效率设计，不属于当前主路径。</p>
 </section>
 
 <section class="card">
-  <span class="label">Component 1 · Candidate proposal</span>
-  <h3>2.4 Frontier Model：下一条有用 clue 可能在哪里？</h3>
-  <p>Structural action compiler 首先根据 streaming visibility、graph topology、acquired state 和 budget 枚举全部可执行 actions。Learned Frontier Model 再使用 question、missing evidence roles、已经获得的 clues/evidence、current cursor，以及安全的 temporal/correlation/semantic graph context，从中识别一个有界的 plausible next-clue read 集合。初始步骤可以提出 <code>START_AT(node)</code> anchors；后续则提出合法的 temporal、correlation、backtrack、current-clip 或 wait actions。</p>
-  <p><strong>Graph input encoding。</strong>对 learned model 而言，temporal 和 correlation context 通过可见 node embeddings 之间的 attention scores 编码。Relation type 与 relative time 是 pairwise attention 的输入；legal graph 与 streaming mask 决定哪些 node pairs 可以互相 attention。因此，attention 表示 navigational connectivity，但不能创建非法 edge，也不能暴露 hidden/future node value。</p>
-  <div class="equation">e_i = NodeEmbed(safe_descriptor_i)
-α_{ij} = Attn(e_i, e_j, TimeEmbed(Δt_{ij}), RelationEmbed(r_{ij}))
-g_i = Σ_{j ∈ legal_visible_neighbors(i)} α_{ij}[e_j; Δt_{ij}; r_{ij}]</div>
-  <div class="equation">A_t = CompileLegal(M_t, graph, cursor_t, acquired_t, budget_t)
-C_t = Frontier_ψ(q, B_t, E_t, {e_i, g_i, α_{ij}}, A_t),   C_t ⊆ A_t</div>
-  <div class="equation"><strong>输出契约——显式 candidate subset：</strong>
-C_t = [{action_id, proposed_missing_role, proposal_rationale,
-        optional_continuation_hint}],   C_t ⊆ A_t</div>
-  <p>该模型回答的是<em>下一步可能值得去哪里看</em>，而不是哪个 candidate 已知就是 clue，也不决定最终获胜 action。它可以读取 safe node addresses、question-independent semantic captions/keys、timestamps 和 typed temporal/correlation proposals；不能读取未执行 node 的 hidden grounded value、未来 frames、answer labels 或 clue annotations。Compiler 仍是确定性的；Frontier Model 是显式 learned proposal stage，其 recall 及其对 planner 的影响必须单独评测。</p>
+  <span class="label">Component 1 · Complete-buffer semantic context</span>
+  <h3>2.4 L1.5 attention graph 与 path-local navigation rows</h3>
+  <p>固定容量 memory 表示为 <span class="math">M ∈ R<sup>N×F×D</sup></span>；L1.5 根据 node timestamps 与 question-independent embedding/attention correlation 构造两个 adjacency matrices。它们描述 node-to-node navigation，不描述 question-to-node relevance。</p>
+  <div class="equation">A^temp, A^corr ∈ R^{N×N}
+G^temp_{p,t}=A^temp[cursor_{p,t},:] ∈ R^{N×1}
+G^corr_{p,t}=A^corr[cursor_{p,t},:] ∈ R^{N×1}</div>
+  <p>Legal compiler 从 supported outgoing relations、backtrack 与 terminal operations 构造 <span class="math">A<sub>p,t</sub></span>。这是 structural executability，不是 node dropping：全部 nodes 仍保留在 buffer，初始 virtual root 对每个 node 提供 <code>START_AT</code>。第一版只取 active cursor row；若需要旧 evidence anchor，Planner 显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 后再取对应 row，不对多个 source rows 做无 provenance 的 max pooling。</p>
+  <div class="note"><strong>All-node 的明确边界：</strong>已经存在于当前 memory buffer 中的每个真实、可用 node 都保留；不按 semantic/temporal score、Top-K 或 threshold 做 node dropping。Padding/unavailable mask 只表示无效 tensor slot，不是相关性剪枝。Buffer eviction、node merging 和写入侧 admission policy 不在当前 reader 方案中，也不能被隐式加入。</div>
 </section>
 
 <section class="card thesis">
   <span class="label">Component 2 · Predictive dynamics</span>
   <h3>2.5 Hypothesis-Effect IWM：在 reasoning 中使用这条 clue 会改变什么？</h3>
-  <p>对每个 candidate physical read <span class="math">a ∈ C_t</span>，IWM 做两个相互耦合的预测。Observation head 根据 question、current belief、已获得的真实 evidence、target safe address 以及局部 temporal/correlation/semantic graph context，预测该 read 可能揭示的 categorical descriptor。Effect head 再投影这一可能 observation 将如何改变每个 active answer hypothesis：support/counterevidence/inconclusive status、resolved/opened evidence roles、contradiction change、frontier change 和 answerability。Horizon-two rollout 用于识别立即作用不完整、但下一跳 continuation 可能有用的 clue。</p>
-  <p>IWM 使用同一组由 attention 得到的 node/edge embeddings <span class="math">{e_i,g_i,α_{ij}}</span>。这里的 temporal/correlation attention pattern 只是描述证据可能如何连接的输入，本身不是 evidence、relevance 或 action utility。</p>
-  <div class="equation">ô_{t+1}^{a} = ObsIWM_θ(q, B_t^{shared}, E_t, a,
-                                  safe_address(a), {e_i,g_i,α_{ij}})
-Δẑ_{t+1}^{a,h} = EffectIWM_θ(B_t^h, h, ô_{t+1}^{a})
-τ_t^a = [a, ô^{a}, Δẑ^{a,*}, optional_second_hop]</div>
+  <p>Qwen-LoRA IWM 每个 reasoning step 做一次 listwise pass，联合读取 question、已获得的 grounded evidence、hypotheses/missing roles、合法 target descriptors、当前 cursor 的两条 L1.5 rows 与 action types，输出每个合法 action 的 categorical belief effect。Runtime 可以只生成紧凑 effect tokens，不要求 numeric utility、长 rationale 或精确 imagined caption。</p>
+  <div class="equation">ΔB̂_{p,t} = IWM_Qwen-LoRA(q, E_{p,t}, H_{p,t}, legal_targets,
+                                      G^corr_{p,t}, G^temp_{p,t}, action_types)</div>
+  <p>第一轮比较 frozen-Qwen prompting 与 rank-8/16 LoRA，不 full-finetune backbone。训练随机打乱 node presentation order，并检查 permutation consistency。每 node 单独调用 Qwen、暴露全部 source clips 或输出长 JSON 都是更重的独立 baseline。</p>
   <div class="equation"><strong>输出契约——每个 candidate 对应一个 predicted-only joint future：</strong>
-τ_t^a = {action_id, predicted_observation_descriptor,
+τ_t^a = {action_id, optional_coarse_observation_class,
          per_hypothesis{support|contradict|inconclusive,
                         roles_resolved, roles_opened, contradiction_change,
                         answerability_transition}, frontier_effect,
@@ -264,8 +257,8 @@ C_t = [{action_id, proposed_missing_role, proposal_rationale,
 <section class="card boundary">
   <span class="label">Component 3 · Action and stopping</span>
   <h3>2.6 QA Planner：测试一个未来，再判断证据是否充分</h3>
-  <p>QA Planner 接收 question、累积的 grounded evidence、current belief、remaining budget 和 IWM 产生的 joint candidate futures。它对完整短轨迹做 categorical comparison，最多选择一个真实 evidence-acquisition action，并丢弃所有未执行的 imagined observations。用真实 clue 修正 belief 后，它只在少量已获得证据上 reasoning，并输出一个 terminal/control decision：</p>
-  <div class="equation">Planner_φ(q, B_t, E_t, {τ_t^a}_{a∈C_t}, budget_t)
+  <p>QA Planner 可以先使用冻结的 Qwen checkpoint，不必训练。Pre-read selector 接收 question、累积的 grounded evidence、current belief、remaining budget 和 IWM 为全部合法 path–node actions 产生的 categorical effects，输出一个 typed decision。执行后，另一个固定 post-read evidence-judge contract 只查看被选中的 grounded observation，判断真实 belief effect 并修正状态。两个 contract 分离，使 Qwen 的选择与证据判断可审计，也为 IWM 提供 prediction–observation target。</p>
+  <div class="equation">Planner_φ(q, B_t, E_t, {τ_t^a}_{a∈A_t}, budget_t)
 ∈ {READ(a), INSPECT_CURRENT, WAIT_FOR_FUTURE,
    ANSWER_HIGH_CONFIDENCE, ANSWER_LOW_CONFIDENCE, ABSTAIN}</div>
   <div class="equation"><strong>输出契约——严格输出一个 decision：</strong>
@@ -273,6 +266,7 @@ d_t = READ(action_id) | INSPECT_CURRENT | WAIT_FOR_FUTURE
     | ANSWER(answer, confidence_tier, grounded_evidence_refs)
     | ABSTAIN(reason)</div>
   <p><code>ANSWER_HIGH_CONFIDENCE</code> 要求 grounded 且足够完整的 evidence chain。<code>ANSWER_LOW_CONFIDENCE</code> 只用于评测协议强制在残余不确定性下作答的情况；否则优先 <code>ABSTAIN</code>。只有允许 future evidence 的 streaming protocol 才能使用 <code>WAIT_FOR_FUTURE</code>，并且它会消耗 wait/latency budget。</p>
+  <div class="note"><strong>Qwen-LoRA 边界：</strong>先用完全相同的 all-node prompt 建立 frozen-Qwen baseline，再训练 rank 8/16 LoRA，不 full-finetune backbone。只有有长度上限的 L1 descriptors 是 memory-visible；每 node 调一次 Qwen、暴露全部 source clips 或生成长 rationale 都是更重的独立 baseline。</div>
 </section>
 
 <section class="card">
@@ -283,7 +277,7 @@ d_t = READ(action_id) | INSPECT_CURRENT | WAIT_FOR_FUTURE
 B_1 + read(object clue) → resolve object_found；open object_use
 B_2 + read(door clue) → resolve instrument_identity；answer ready
 B_2 + reread(search clue) → redundant / unchanged</div>
-  <p><strong>核心边界：</strong>Frontier Model 提出去哪里检查；IWM 预测该检查可能改变什么；Planner 决定实际执行什么，以及真实累积证据是否充分。三者都不能把 imagined clue 转换成事实。</p>
+  <p><strong>核心边界：</strong>L1.5 temporal/correlation graph 提供稳定 navigation topology；Qwen-LoRA IWM 结合当前 evidence/hypothesis 解释每个合法 graph action 的 belief effect；Planner 决定实际执行什么，以及真实累积证据是否充分。任何模块都不能把 imagined clue 转换成事实。</p>
 </section>
 
 <section class="card">
@@ -299,7 +293,7 @@ B_2 + reread(search clue) → redundant / unchanged</div>
       <tr><td>L2</td><td>已执行 action、真实 observation、realized delta 和决策审计</td><td>轨迹记录，不是 world model</td></tr>
     </tbody>
   </table>
-  <p>当前 baseline 主要沿用两种已有思路：以 <strong>Video_Skills-style atomic skills</strong> 构建 grounded、可审计的 memory；以 <strong>SelectStream-style bounded online selection</strong> 决定何时写入、保留什么以及查询什么。核心开放问题是：这些选择能否为后续 frontier exploration 和 IWM planning 产生合适的 nodes 与 edges。</p>
+  <p>当前 baseline 主要沿用两种已有思路：以 <strong>Video_Skills-style atomic skills</strong> 构建 grounded、可审计的 memory；以 <strong>SelectStream-style bounded online selection</strong> 决定何时写入、保留什么以及查询什么。核心开放问题是：这些选择能否为后续 Qwen-LoRA all-node categorical IWM 与 planning 产生合适的 memory-visible nodes。</p>
 </section>
 
 <section class="card">
@@ -325,7 +319,7 @@ B_2 + reread(search clue) → redundant / unchanged</div>
   <div class="equation">可见视频前缀 → question-independent 分窗 → 抽帧后的 Qwen clip schema
 → 冻结的 evidence-construction atomic skills → neighbor-aware graph compose
 → integrity/trust gate → 有界 keep/merge/evict → temporal rebuild → embedding refresh</div>
-  <p>Writer 不接收 question、answer、clue interval 或 relevance label。当前 surprise-window 默认每 0.5 s 采样视觉 representation，将相邻样本的 cosine change 与最近 8 个 change 的 0.8 经验分位数比较。High-surprise 在满足 2 s 最短窗口后切分；稳定内容到 12 s 最长窗口或 stream end 切分。也可使用 fixed/hierarchical windows。Qwen 随后生成 grounded clip schema：scene facts、atomic events、objects、clip-local entity mentions 及可见属性、states、places、OCR、dialogue/subtitle spans、evidence frames 和 timestamps。该 perception pass 不得推断 motive、跨 clip identity、state transition、causality 或 question relevance。</p>
+  <p>Writer 不接收 question、answer、clue interval 或 relevance label。拟议 adaptive policy 组合 question-independent attention deviation 与 feature change：<span class="math">s_t = λ·JSD(a_t || ā_t) + (1−λ)·(1−cos(x_t,x_{t−1}))</span>；当该 surprise 在满足最短 duration 后超过 rolling empirical-quantile threshold，就关闭 active span。稳定内容到最长 duration 或 stream end 关闭。当前 checked-in smoke path 是 <span class="math">λ=0</span> 的 feature-only 特例：每 0.5 s 采样 representation，将 cosine change 与最近 8 个 change 的 0.8 经验分位数比较，并使用 2–12 s bounds。Attention-signature writer 仍是 proposed、未实现；Qwen 继续生成现有 grounded clip schema，不需要新 node schema。</p>
   <p>Graph composer 使用有界的 previous/current/next-clip context，并且只能调用以下 9 个冻结的 Video_Skills 建图 atomic skills。这 9 个 skill 是完整的 L1 construction ontology；reasoning-graph skills 不用于制造 L1 evidence。Atomic-planner 路径记录每次 invocation 和 dependency，当前 neighbor-aware composer 则用 <code>neighbor_vlm_l1_*</code> trace ID 记录等价的 typed create/link/skip operation：</p>
   <table>
     <thead><tr><th>Atomic skill</th><th>构建效果</th></tr></thead>
@@ -424,8 +418,8 @@ SelectStream 用 surprise 决定视频历史的存储粒度，用固定容量 la
   <h2>4. 短视界 model-predictive reasoning</h2>
   <ol>
     <li>从单一 current-node cursor 和固定 L1.5 graph 枚举全部合法 actions；</li>
-    <li>Frontier Model 从完整合法集合中提出 plausible candidates；</li>
-    <li>为每个 frontier candidate 想象 horizon-one 或 horizon-two categorical transition；</li>
+    <li>为全部 retained nodes 构造 bounded descriptors，并从 frozen L1.5 graph 编译 path-local legal actions；</li>
+    <li>为每个合法 path–node action 预测 horizon-one 或 horizon-two categorical transition；</li>
     <li>对完整候选轨迹做 pairwise comparison；</li>
     <li>只执行唯一获偏好轨迹的第一跳；</li>
     <li>丢弃 imagined observation，读取真实证据，更新 belief，再规划。</li>
@@ -435,7 +429,7 @@ a_t* = First(τ*)
 o_{t+1} = Execute(M,a_t*)
 z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <p>World model 的价值体现在 delayed effect：第一跳可能几乎没有即时收益，却能打开一个 bridge，让第二跳补全关键证据。这是它区别于 reactive retrieval 或 immediate information-gain ranking 的核心。</p>
-  <p>Learned IWM 在一次 batched graph/tensor forward 中预测全部 frontier first hops；Full-IWM control 则预测全部合法 first hops。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。</p>
+  <p>当前 all-node IWM 使用 batched graph/tensor forwards 预测全部合法 first hops。Chunking 可以拆分执行 batch，但不能剪枝 actions。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。Frontier selection 只保留为未来可选效率实验。</p>
   <p>当前 <code>reasoning_v2</code> planner 保留由不同 hypothesis 与 action history 构成的竞争路径森林。一个 joint action tree 必须在同一个 shared physical first read 下覆盖所有仍存活的 answer hypotheses。Planner 每轮只调度一次真实 read，未选路径保持 suspended 而不是被删除；grounded correction 分别作用于每条路径，然后从修正后的森林重新规划。</p>
 </section>
 
@@ -445,7 +439,7 @@ z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
   <table>
     <thead><tr><th>允许的职责</th><th>主实验中禁止的职责</th></tr></thead>
     <tbody>
-      <tr><td>Frontier Model 提出显式有界 subset，并测量 clue/action recall</td><td>Frontier 暗中选择 winner、读取 hidden values，或在没有可审计 recall gate 时丢弃 candidates</td></tr>
+      <tr><td>当前 IWM 评估全部结构合法 nodes；未来可选 Frontier 必须报告 clue/action recall</td><td>默认假设 Frontier、暗中选择 winner、读取 hidden values，或在没有可审计 recall gate 时丢弃 actions</td></tr>
       <tr><td>Embedding similarity 提出候选</td><td>相似度最高者自动获胜</td></tr>
       <tr><td>Graph/factor constraint 排除 illegal 或 unsupported hop</td><td>Factor posterior 或 edge priority 排序 winner</td></tr>
       <tr><td>Lexical/temporal rule 作为显式 baseline</td><td>在 IWM arm 中隐式用于 tie-break</td></tr>
@@ -457,13 +451,13 @@ z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
 
 <section class="card">
   <h2>6. 控制模型输入大小</h2>
-  <p>任何模型都不接收整个视频、raw embedding matrix、hidden answer 或未 consolidation 的全部历史。由于 L1 memory 容量固定，Frontier Model 可以在不做 Top-K truncation 的情况下检查完整 retained safe graph：question/belief tokens、全部 retained node keys、temporal/correlation edges、全部合法 actions、recent history 和 budget status。IWM/planner 随后只接收显式有界 frontier、已获得的真实 evidence，以及想象和比较这些 actions 所需的局部 graph context。Full-IWM control 则把全部合法 actions 传给下游。</p>
+  <p>任何模型都不接收整个视频、hidden answer 或未 consolidation 的全部历史。Qwen-LoRA IWM 接收 compact current evidence/hypothesis、合法 target descriptors，以及 cursor-local L1.5 rows，一次输出全部 legal-action effects；它不接收未选 source clips，也不依赖 mandatory bounded Frontier。</p>
   <div class="equation">surprise-written、fixed-capacity L1 nodes
 + 完整 retained temporal/correlation graph
 + 单一 current-node cursor
 → 一次 batched IWM forward 预测全部合法 actions
 → partial-order planner</div>
-  <p>上图展示的是 Full-IWM control。在可扩展的 frontier-guided path 中，完整 retained graph 先进入 <code>Frontier_ψ</code>，只有通过审计的 candidate subset 才进入 batched IWM/planner。</p>
+  <p>上图展示的是当前 all-action 计划。未来 scalable Frontier 只能作为显式 recall-audited efficiency arm，并与该 all-node reference 做 matched comparison。</p>
   <p>未读取 target node 只暴露 compact key/address representation，完整 evidence value 只有执行后才能读取。<code>Qwen/Qwen3-VL-Embedding-2B</code> 向量保存在 sidecar，作为 semantic action feature，而不是主方法 ranking gate、reward 或 supervision。</p>
 </section>
 
@@ -478,7 +472,7 @@ baseline/ablation：gtsam_always</div>
 </section>
 
 <section class="card benchmark">
-  <span class="label">监督与训练 · 当前 Frontier + IWM；Planner + Perception TBD</span>
+  <span class="label">监督与训练 · Qwen-LoRA IWM planned；Planner + Perception TBD</span>
   <h2>8. Learning signal 与 Post-training 策略</h2>
   <p>我们将从同时提供 question、answer 与可定位或可重建 evidence 的 Video QA datasets 中构造训练数据。CG-Bench 提供最干净的人工 clue intervals 与 terminal answers；其他 streaming benchmarks 的 multi-clue/readiness subsets 只有在 evidence provenance 可无泄漏重建时才加入。执行一个 clue read 可以得到 <code>advances_required_clue_coverage</code>、<code>partial</code> 或 <code>complete</code> 等 categorical progress；完整 clue 轨迹与 leave-one-clue-out 轨迹提供 ordinal preference。</p>
   <div class="equation">Crafted record = {question, visible memory state, legal actions,
@@ -493,28 +487,44 @@ baseline/ablation：gtsam_always</div>
     <li>Validation/test 视频永不参与训练。</li>
   </ul>
   <p>从同一 immutable checkpoint 执行 sibling branches，可以监督 action-conditioned observation、belief-delta prediction 和 pairwise trajectory comparison，而不必给任何轨迹赋绝对 utility。</p>
+  <h3>Qwen-LoRA IWM 的 node-level SFT</h3>
+  <p>当前 256 questions、205 videos、672 grounded clue/read intervals 足以做接口与小规模 learnability pilot，但 interval 还不是最终 node-level SFT 样本。必须先把每个 question 与 adaptive segmentation 和完整 node tensor 对齐：</p>
+  <div class="equation">{question, acquired evidence, hypothesis, bounded descriptors [N],
+ A_corr/A_temp references, cursor-local rows [N,1], legal actions,
+ categorical belief effects [N,C], evidence groups, validity mask}</div>
+  <p>每个 label 只能是 <code>positive | trusted_negative | ignore</code>。Clue-overlap node 是 positive；语义相似但 occurrence/time 错误、与 before/after 条件冲突，或有 grounded wrong-choice provenance 的 node 才能作为 hard negative。仅仅不与 clue 重叠不能成为 semantic negative；邻近 context、指代引入和可能的 bridge node 必须保持 ignore。覆盖同一 clue 的多个 nodes 构成一个 positive evidence group。训练 loss 可以采样可信 negatives，但 forward 与 runtime 仍保留 buffer 中全部有效 nodes。</p>
+  <p>第一轮按 video 切分，对比 cosine/timestamp greedy、frozen-Qwen listwise prompting 与 rank-8/16 LoRA SFT。训练随机打乱 node presentation order，并报告 permutation consistency。Q-Former/Set-Transformer 仅作为 latency、dense-token 或 distillation ablation。LLM/VLM 可以提出 temporal type、paraphrase 或 negative candidate，但生成的 numeric relevance/utility 不是 supervision。</p>
+  <h3>IWM 是否需要训练</h3>
+  <p>QA Planner 第一阶段不必训练：它可以是冻结、确定性的 typed comparator，只根据 categorical effects、budget 与 persistent paths 做比较，从而把 Planner 行为与 IWM 质量分离。Prompted pretrained model 可以作为 zero-shot IWM baseline；主张中的 IWM 则应在真实 sibling executions 上做 SFT，除非 zero-shot 模型已经通过相同 held-out transition gate。</p>
+  <div class="equation">input  = question + acquired evidence + hypothesis
+         + legal target descriptors + G^corr [N,1] + G^temp [N,1]
+target = realized categorical belief effect per legal action
+         + answerability transition + contradiction/redundancy status</div>
+  <p>主要监督目标是真实 read 后得到的 categorical effect，不是模型虚构的精确未来 caption。数据必须同时包含 useful-now、useful-later、no-progress、redundant、contradictory 与 ambiguous controls；只有 positive clue reads 不能训练或验证 IWM。训练/验证按 video 隔离，pre-read input 不得包含 hidden answer、clue identity 或 post-read value。</p>
   <h3>Training route</h3>
   <ol>
-    <li><strong>对 Frontier Model 做 SFT</strong>：使用从 evidence-annotated Video QA 构造的 evidence-linked next-action/candidate targets 与 proposal rationales。</li>
-    <li><strong>对 IWM 做 SFT</strong>：学习真实 action-conditioned observation descriptor、逐 hypothesis belief effect，以及 delayed/future usefulness。</li>
-    <li><strong>对 Frontier + IWM 做 GRPO</strong>：SFT 后，从同一 immutable state 组成 legal candidate action 或 sibling-trajectory groups，并根据 grounded evidence coverage、transition correctness 与 terminal QA outcome 计算 group-relative advantage。</li>
+    <li><strong>建立 frozen L1.5 graph-only 与 frozen-Qwen baselines</strong>，使用相同 legal-action contract。</li>
+    <li><strong>对 Qwen-IWM 做 LoRA SFT</strong>，学习真实 action-conditioned categorical belief effects。</li>
+    <li><strong>先冻结 Planner 做 matched causal evaluation</strong>，避免把搜索策略变化误认为 IWM 增益。</li>
+    <li>只有 SFT 通过 held-out transition 与 policy-value gates 后，才考虑 trajectory preference/post-training 或低学习率 joint tuning。</li>
   </ol>
   <table>
     <thead><tr><th>模块</th><th>计划训练方式</th><th>状态</th></tr></thead>
     <tbody>
-      <tr><td>Frontier Model</td><td>Evidence-grounded SFT → GRPO</td><td>已定义下一步实验</td></tr>
-      <tr><td>Hypothesis-Effect IWM</td><td>Evidence/effect SFT → GRPO</td><td>已定义下一步实验</td></tr>
+      <tr><td>L1.5 temporal/correlation graph</td><td>Frozen navigation substrate 与 graph-only baseline</td><td>现有实现；新 IWM adapter 未实现</td></tr>
+      <tr><td>Qwen-LoRA Hypothesis-Effect IWM</td><td>All-node evidence/effect SFT → optional post-training</td><td>已定义下一步实验</td></tr>
       <tr><td>QA Planner / Reasoner</td><td>单独训练、联合训练，或先作为 prompted/frozen QA model</td><td><strong>TBD</strong></td></tr>
       <tr><td>Memory Crafter / Perception Model</td><td>是否及如何训练 writing、segmentation、node construction 与 connectivity</td><td><strong>TBD</strong></td></tr>
     </tbody>
   </table>
-  <p>GRPO reward 必须来自 dataset-grounded evidence/action outcomes，不能使用 LLM/VLM 虚构的 utility score。GPT-OSS-120B 仍是 inference/data-crafting baseline；Frontier/IWM training 已列入计划，但尚未开始。</p>
+  <p>Post-training signal 必须来自 dataset-grounded evidence/action outcomes，不能使用 LLM/VLM 虚构的 utility score。GPT-OSS-120B 仍是 inference/data-crafting baseline；Qwen-LoRA IWM training 尚未开始。</p>
 </section>
 
 <section class="card benchmark">
   <span class="label">决定性实验</span>
   <h2>9. 证明 planner 因果性依赖 IWM</h2>
-  <p>固定 question、evidence memory、candidate set、planner 和 read budget，只改变 world-model condition：</p>
+  <p>验证分为两个独立 gate。<strong>Model gate</strong> 在规划前直接检查 video-disjoint held-out executed transitions：按 outcome class 报告 macro-F1/confusion、answerability-transition accuracy、contradiction/no-progress false-positive rate、delayed-positive recall 与 calibration，并与 belief prior、question-node MLP、shuffled node/effect 和 oracle-effect ceiling 对照。</p>
+  <p><strong>Policy gate</strong> 固定 question、evidence memory、全部 legal nodes、Planner 和 read budget，只改变 world-model condition：</p>
   <ol>
     <li>完整 delayed-belief IWM；</li>
     <li>no world model；</li>
@@ -523,7 +533,7 @@ baseline/ablation：gtsam_always</div>
     <li>immediate-effect-only；</li>
     <li>oracle clue ceiling，只作为诊断上界。</li>
   </ol>
-  <p>Answer accuracy、evidence completeness、read efficiency、action divergence、categorical transition accuracy 和 delayed two-hop success 必须分开报告，不能压成一个 lexicographic gate 或 scalar utility。</p>
+  <p>Answer accuracy、evidence completeness、read efficiency、action divergence、categorical transition accuracy 和 delayed two-hop success 必须分开报告。Full IWM 必须在 no-IWM 与 shuffled-IWM 之上改善真实 evidence-chain coverage、bridge acquisition、recovery、read efficiency 或 answer accuracy。再固定同一 IWM，对比 greedy horizon-one 与 persistent horizon-two，单独验证 Planner 机制。若 prediction 提升但 policy 不提升，结论只能是 IWM 可预测但对决策无用；若增益在 shuffled-effect control 下仍存在，则不能归因于 IWM。</p>
 </section>
 
 <section class="card warning">
@@ -597,13 +607,13 @@ baseline/ablation：gtsam_always</div>
       <li>加入复杂 multi-hop Video QA 的导航假设：将 reasoning 建模为未知 POMDP/SLAM-like environment 中的 belief-space navigation，最终收敛到 high-confidence answer、low-confidence answer 或 abstention。</li>
       <li>将 benchmark scope 定位为 streaming multi-evidence QA；区分完整 benchmark 与 CG-Bench <code>min_clues ≥ 2</code> 子集，并明确 StreamingBench 和 OVO-Bench 的不同监督作用。</li>
       <li>澄清 <em>multi-clue</em> 是 annotation property，<em>multi-evidence</em> 是 reasoning requirement；二者都不自动保证存在显式 multi-hop dependency chain。</li>
-      <li>提出 Frontier-guided IWM loop，并拆成 related work、既有 frontier exploration、合法 action/compiler、Frontier Model、Hypothesis-Effect IWM、QA Planner 与 closed-loop dynamics 多张卡片。</li>
+      <li>历史 revision 依次提出 Frontier-guided 与 dual-Q-Former all-node loop；当前 revision 使用 Qwen-LoRA listwise all-node categorical IWM，mandatory Frontier pruning 仍被移除。</li>
       <li>补充与 research memory、可执行 scientific environment、action-consequence model、显式 hypothesis/search map、belief-guided exploration、backtracking 和 failure-aware replanning 的关系。</li>
-      <li>明确模块输出契约：compiler 输出完整合法动作表；Frontier 输出 candidate subset；IWM 为每个 candidate 输出 predicted-only joint future；Planner 严格输出一个可执行或终局 decision。</li>
+      <li>当前模块输出契约：L1.5 提供两个 <span class="math">[N,N]</span> adjacency matrices；compiler 按 cursor 输出完整合法动作表；Qwen-LoRA IWM 一次输出全部 legal-action effects；Planner 严格输出一个 decision。</li>
       <li>将原 Section 4 的 reasoning actions 移入 Section 2，并同步顺延后续章节与交叉引用。</li>
       <li>将 L1/L1.5 evidence memory 重定位为 storage/connectivity/navigation 的开放问题，拆分为多张卡片，并将 atomic-skill construction 与 SelectStream-style bounded write/keep/retrieve 标为当前 implementation baseline。</li>
-      <li>明确 Frontier 与 IWM 的 temporal/correlation graph context 来自可见 node embeddings 之间的 attention scores；relative time 与 relation type 参与计算，legal-graph/streaming mask 限制可 attention 的节点对。</li>
-      <li>将计划训练范围限定为 Frontier + IWM：使用带 evidence 的 Video QA 构造数据，先 SFT、再 GRPO；QA Planner/Reasoner 与 Memory Crafter/Perception Model 的训练仍为 TBD。</li>
+      <li>明确 temporal/correlation <span class="math">[N,1]</span> signals 是 L1.5 adjacency 的 cursor rows，而不是 question-conditioned retrieval score 或 admission gate。</li>
+      <li>将计划训练范围限定为 Qwen-LoRA IWM，并使用带 evidence 的 Video QA 构造数据；Q-Former 仅保留为效率/蒸馏消融，QA Planner 与 Memory Crafter 的训练仍为 TBD。</li>
       <li>将 learning signal 与 post-training 合并到 Section 8，并将原 OVO/StreamingBench future-question 卡片合并到 §1.2 benchmark 卡片。</li>
     </ol>
     <p>第一部分是已核实的 GitHub 历史；第二部分记录当前尚未提交的设计修改。二者都不能替代实验 provenance。</p>
