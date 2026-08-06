@@ -10,18 +10,26 @@
 <header>
   <h1>面向真实视频推理的多步 Evidence World Model</h1>
   <p class="subtitle">预测不同多 clue 获取轨迹的非加性后果，再依据真实读取执行推理与作答。</p>
-  <p class="meta">当前问题定义 · 2026-08-05 · <a href="problem-formulation-en.html">English</a> · <a href="problem-formulation-zh-reference-c1829a0.html">上一版问题定义（c1829a0）</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">仓库总览</a></p>
+  <p class="meta">当前问题定义 · 2026-08-06 · <a href="problem-formulation-en.html">English</a> · <a href="problem-formulation-zh-reference-c1829a0.html">上一版问题定义（c1829a0）</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">仓库总览</a></p>
 </header>
 
 <section class="card warning">
   <span class="label">核心挑战</span>
   <h2>长时程流式视频、有限记忆与有限推理预算</h2>
+  <p><strong>原始项目目标：“Streaming Video LLM with Infinite Memory”。</strong>这里的 <em>infinite memory</em> 不表示把无限 frames 放入模型 context，而是让系统持续处理潜在无界的视频流，同时保持 active context 与 computation 有界，并把较早信息写入可查询的 external memory。</p>
   <ol>
     <li><strong>有限记忆不完整。</strong>Evidence 分散在长时程 stream 中，较早 clues 可能被压缩、合并、淘汰，或从未被保留。</li>
     <li><strong>证据时序与 answerability 不确定。</strong>决定性 evidence 可能位于过去、当前片段或尚未出现的未来，因此系统必须在立即回答、继续检索、等待更多证据和 abstain 之间选择。</li>
     <li><strong>有限预算下的 multi-clue acquisition。</strong>系统必须在有限 response time、memory/context capacity、真实 read budget 和大模型 Reasoner calls 下检索并组合多个 clues。</li>
     <li><strong>多条竞争 reasoning trajectories。</strong>系统需要判断哪条多步 evidence path 值得真实执行，不能穷举读取所有 candidates 或运行所有 branches，也不能把 predicted consequence 当作已观察 evidence。</li>
   </ol>
+  <table>
+    <thead><tr><th>项目轴</th><th>核心问题</th><th>本文范围</th></tr></thead>
+    <tbody>
+      <tr><td>Streaming processing</td><td>Video LLM 如何接收持续视频流，而不重放全部历史 frames？</td><td>Bounded current context、adaptive temporal segmentation，以及 streaming-safe activation/visibility。</td></tr>
+      <tr><td>Memory storage and retrieval</td><td>面对 day-scale history，应写入、合并、索引、读取和组合什么？</td><td><strong>主要关注：</strong>grounded external memory，以及 multi-step、answerability-aware evidence navigation。</td></tr>
+    </tbody>
+  </table>
 </section>
 
 <section class="card">
@@ -48,7 +56,7 @@
   <table>
     <thead><tr><th>Baseline</th><th>在长时程 multi-clue reasoning 中的失败</th><th>IWM 必须提供的能力</th></tr></thead>
     <tbody>
-      <tr><td><strong>Single-step RAG / fixed Top-K retrieval</strong></td><td>只按当前相关性选择 evidence，容易漏掉暂时较弱的早期 clue、分散的互补 clues，或取回多个重复 nodes，却丢失真正使问题变得可回答的 clue combination。</td><td>分析每次 evidence acquisition 可能产生的 reasoning outcome，而不只计算当前 similarity。</td></tr>
+      <tr><td><strong>FAISS / single-step RAG / fixed Top-K</strong></td><td>Approximate nearest-neighbor search 可以高效取回局部相似 embeddings，但容易漏掉较弱的 boundary events、互补 clues，或两个独立定位事件之间的完整 interval。</td><td>使用 index 提供 candidate access，再预测 acquisition sequence 的结果，而不是只依赖 similarity。</td></tr>
       <tr><td><strong>Greedy iterative reasoning</strong></td><td>每轮读取一个 candidate、更新一次，并立即提交到局部最优 continuation。早期错误会丢失仍有价值的 evidence needs 或竞争 paths；恢复时还需要额外的真实 reads 和昂贵 Reasoner calls。</td><td>在提交真实 action 前保留多条 plausible reasoning paths，并比较其 predicted downstream consequences。</td></tr>
       <tr><td><strong>Independent / additive node scoring</strong></td><td>把每个 clue 的价值视为相互独立，无法表达 synergy、redundancy、contradiction、conditional relevance 或顺序敏感的 clue combinations。</td><td>在同一次 planning iteration 中整合多个 clues，并预测它们联合、非加性的 consequence。</td></tr>
       <tr><td><strong>大 Reasoner 穷举 branch search</strong></td><td>理论上可以测试多条 chain，但对每个 branch 反复执行真实 evidence read 和大模型推理，在 streaming 场景下过慢且成本过高。</td><td>使用轻量、快速的 world model 预演 multi-hop reasoning-chain outcomes，并在 grounded execution 前跟踪多条 reasoning trajectories。</td></tr>
@@ -59,7 +67,7 @@
 
 <section class="card">
   <h2>1. 问题设定</h2>
-  <p><strong>在线流与有限记忆。</strong>视频片段 <span class="math">x_1,x_2,…</span> 按时间顺序到达，系统无法保留全部历史。Agent 只有固定容量的 memory buffer <span class="math">M_t</span>（最多 <span class="math">K</span> 个条目），因此在尚不知道问题时，就必须持续决定<em>何时写入</em>和<em>写入什么</em>。一次写入可以新建 grounded entry，更新或合并已有 entry，以更细时间粒度保留显著事件，或淘汰/压缩较低价值的旧证据；跳过重复片段也是一种显式决策。所有这些决策必须 question-independent，并且只能使用当时已经可见的视频前缀 <span class="math">x_{1:t}</span>。</p>
+  <p><strong>在线流与有限 active memory。</strong>视频片段 <span class="math">x_1,x_2,…</span> 按时间顺序到达，不能全部保留在模型 context 中。Agent 只有固定容量的 active buffer <span class="math">M_t</span>（最多 <span class="math">K</span> 个条目），可选地由更大的 external index 支撑，因此在尚不知道问题时就必须决定<em>何时写入</em>和<em>写入什么</em>。一次写入可以新建、更新、合并、压缩或淘汰 grounded entry；跳过重复片段也是显式决策。所有决策必须 question-independent，并且只能使用 <span class="math">x_{1:t}</span>。Ego4D 一类 day-scale egocentric streams 是自然目标场景，但评测必须提供可审计的 temporal evidence。</p>
   <div class="equation">M_t = Write(M_{t-1}, x_t, w_t),   |M_t| ≤ K
 w_t ∈ {skip, append, update/merge, consolidate/evict}</div>
   <p><strong>问题到达与证据路由。</strong>问题 <span class="math">q</span> 可能在时刻 <span class="math">t_q</span> 到达，而相关事件可能已经发生在过去、正出现在当前片段，或尚未在未来出现。Agent 必须先判断问题需要什么证据，再在三个时间位置不同的来源之间选择：（1）查询有限 memory 中的过去证据；（2）检查当前视频片段；（3）暂缓作答并等待未来片段。它可以组合多个来源，并在 memory 上执行 multi-hop query；但不能偷看尚未到达的视频，也不能把预测结果当成已观察证据。</p>
@@ -106,7 +114,7 @@ C(S_1,…,S_H | q,z_t)：multi-step acquisition trajectory 的 consequence
     </tbody>
   </table>
   <h3>长视频中的示例 trajectory</h3>
-  <p>假设问题询问“什么物体导致了后来机器故障”。早期片段 A 显示工人拿起一个没有清晰标签的容器；中间片段 B 短暂显示容器标签；后期片段 C 显示同一工人把其中物质倒入机器；片段 D 显示机器故障。Single-step retriever 可能因为“故障”字面匹配而把 D 排在最前，取回多个重复的故障画面，却漏掉 A 或 B。真正有用的是 <span class="math">A→B→C→D</span>：A+B 确认 identity，C 确认 action，D 确认 outcome。IWM 应预测完整 chain 可以补全因果 evidence roles，而 <span class="math">C+D</span> 仍不充分，重复的 D 类 nodes 则是 redundant。</p>
+  <p>考虑原始 interval query：<em>“我从拿出手机到把手机放回口袋之间做了什么？”</em>系统必须先定位拿出手机事件 <span class="math">A</span>，再独立定位放回手机事件 <span class="math">B</span>，随后遍历并总结两者 timestamps 之间的 grounded events，例如打开 Instagram、浏览 memes、玩游戏和自拍。CLIP/FAISS nearest-neighbor query 可能取回外观像手机的 frames，却不能独立完成 <span class="math">locate(A)→locate(B)→read(A:B)→summarize</span>。每个中间结果都会改变下一步合法 query，因此这是 evidence-acquisition trajectory，而不是一次 retrieval call。</p>
   <h3>所需的 prediction object</h3>
   <p>对于每个 imagined prefix，模型应预测紧凑的 functional state，而不是 imagined caption：</p>
   <div class="equation">r̂(S_1:h) = {
@@ -228,10 +236,31 @@ Reasoner：带显式 answerability awareness 的 grounded execution</div>
       <tr><td><a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/f9668d223e713943634dce9c66e8f2c1-Abstract-Conference.html">IPRM</a><br><span class="small">Jaiswal et al., NeurIPS 2024</span></td><td>用轻量、fully differentiable module 结合 iterative computation 与 parallel computation：前者处理 compositional steps，后者同时探索相互独立的 reasoning paths，应用于 image/video VQA。</td><td>多 clue 推理不必展开成长 textual chain；iterative 与 parallel latent computation 可以高效整合多条视觉线索。</td><td>IPRM 对已经提供给模型的 features 进行推理，不建模合法 <code>READ(i)</code> intervention，也不预测不同 evidence trajectories 的 post-read consequence、管理 causal streaming memory，或约束 imagined 与 grounded evidence 的边界。</td></tr>
       <tr><td><a href="https://arxiv.org/abs/2606.04627">MIRAGE</a><br><span class="small">Yang et al., 2026</span></td><td>把 mobile-agent reasoning 蒸馏到 continuous latent slots；训练阶段用 Q-Former head 将这些 slots 对齐到 frozen next-screenshot features，使 hidden state 同时具有 action 与 transition awareness。</td><td>Future-state prediction 可以约束紧凑的 latent reasoning，不需要解码冗长 rationale 或生成 pixels，为高效 world-model interface 提供依据。</td><td>MIRAGE 预测执行 mobile action 后的下一 GUI observation，其 Q-Former world-model head 在 inference 时被移除。本方案的 IWM 则作为 inference-time planner 保留，用来比较多条 hypothetical evidence-read chains，并预测 clue need 与 answerability 的 functional change，而不是 future frames。</td></tr>
       <tr><td><a href="https://ai.meta.com/research/publications/v-jepa-2-self-supervised-video-models-enable-understanding-prediction-and-planning/">JEPA / V-JEPA 2</a><br><span class="small">Assran et al., 2025</span></td><td>Context encoder 与 predictor 学习预测 target representations，而不是重建全部 pixels；V-JEPA 2 还展示了用于 planning 的 action-conditioned latent world model。</td><td>JEPA 可以作为 IWM 的潜在实现参考：使用 stop-gradient target encoder，在 latent space 预测紧凑的 post-transition representation，而不是生成 imagined caption、reasoning text 或 pixels。</td><td>Physical-video JEPA 预测 visual state 如何演化；本方案预测合法 evidence action 将如何改变 question-conditioned reasoning state。JEPA 因而是一种 architecture option，而不是本方案 IWM 的定义。</td></tr>
+      <tr><td><a href="https://github.com/apple/ml-streambridge">StreamBridge</a> + <a href="https://github.com/IVGSZ/Flash-VStream">Flash-VStream</a></td><td>Streaming adaptations 使用 bounded/compressed memory、lightweight activation 或 hierarchical/flash memory 支持实时长视频理解。</td><td>它们支持在不重放全部 frame history 的情况下处理持续 stream。</td><td>本文主要研究 downstream memory navigation：retrieved events 与 intervals 如何联合改变 reasoning 和 answerability。</td></tr>
+      <tr><td><a href="https://github.com/Victorwz/LongMem">LongMem</a> + <a href="https://arxiv.org/abs/2203.08913">Memorizing Transformers</a></td><td>NLP 方法用 external memory 和 approximate kNN retrieval 扩展 LM，检索已存储的 internal representations。</td><td>它们支持在 bounded active context 后连接大型 non-parametric index；FAISS 是可行实现。</td><td>Text kNN memory 本身不能解决 video grounding、temporal-boundary discovery 或 conditional multi-hop acquisition。</td></tr>
       <tr><td><a href="https://arxiv.org/abs/2606.16353">SelectStream</a><br><span class="small">Ge et al., 2026；详见 §1.3</span></td><td>面向 streaming video 的 budgeted online evidence allocation。</td><td>Adaptive L1 scope 与 capacity-aware consolidation。</td><td>其 query routing 使用 latent memory graph；本方案保持 graph-free，并在执行前预测 multi-step evidence consequences。</td></tr>
     </tbody>
   </table>
   <div class="note"><strong>方法定位：</strong>IPRM 支持高效 latent multi-path computation；MIRAGE 支持 transition-predictive latent states；SelectStream 支持 bounded online evidence allocation。本方案通过 belief-space 中的 model-predictive evidence planning 连接三者：Q-Former 生成 node-aligned pre-read proposals，IWM rollout 多条合法 <code>READ</code> trajectories，Reasoner 再用真实 evidence 执行和校正。</div>
+</section>
+
+<section class="card">
+  <span class="label">Problem-Solving World Models</span>
+  <h2>2.2 面向审慎推理与问题求解的 world model</h2>
+  <p>与本方案最相关的一组近期工作把 reasoning 定义为 planning：policy 提出 reasoning 或 task action，world model 预测 action consequence，planner 在真正执行前比较多个可能未来。这些论文构成 Evidence World Model 最直接的概念性 baselines，但都没有建模 streaming video 中 grounded、budgeted 的 evidence acquisition。</p>
+  <table>
+    <thead><tr><th>工作</th><th>World-model 形式</th><th>与本方案的直接关系</th><th>尚未解决的问题 / 本方案区别</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://arxiv.org/abs/2510.08558">Agent Learning via Early Experience</a><br><span class="small">Zhang et al., ICML 2026</span></td><td>使用无 reward 的交互三元组 <span class="math">(state, action, next state)</span>，以同一组 language-model parameters 同时训练 next-state prediction 与 policy action prediction，从而把 environment dynamics 内化到 policy 中。</td><td>直接支持把 expert 与 non-expert actions 的真实后果作为可扩展 world-model supervision。这与本方案通过 teacher 执行合法 <code>READ</code> prefixes 和 alternative evidence actions 来训练 IWM 高度对应。</td><td>其 learned dynamics 隐式改善 policy，并不作为独立的 inference-time simulator 执行 rollout。本方案的 IWM 必须显式比较多条 multi-step acquisition futures，输出 uncertainty/answerability prediction，并在 grounded reads 后重新规划。</td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2505.15659">FLARE: Robot Learning with Implicit World Modeling</a><br><span class="small">Zheng et al., 2025</span></td><td>在 diffusion-transformer policy 中加入少量 future tokens，并将其中间 hidden representations 与 future observations 的紧凑、action-aware embeddings 对齐，不重建 pixels。</td><td>它是 lightweight future-latent alignment 的高度相关架构先例：compact tokens、action-conditioned prediction、frozen future target encoder，以及 auxiliary world-model objective 带来的实际 policy 增益。</td><td>FLARE 预测 policy action chunk 对应的 physical future observation，并把 foresight 内化进 policy；它不在 inference 时比较多个 branches。本方案预测不同 evidence reads 对 question-conditioned belief 产生的 functional change。</td></tr>
+      <tr><td><a href="https://aclanthology.org/2025.acl-long.1540/">SWAP</a><br><span class="small">Xiong et al., ACL 2025</span></td><td>Policy 提出 reasoning actions，learned world model 预测结构化 entailment-graph updates；discriminator 在继续规划前提高 transition accuracy。</td><td>它是 action-conditioned state prediction、multi-step look-ahead 与 verification-aware deliberate reasoning 在问题求解场景中的近似对应。</td><td>SWAP 在显式 entailment graph 和 textual structural updates 上规划。本方案的 IWM 保持 graph-free，预测合法 <code>READ(i)</code> action 引起的紧凑 latent belief change，并使用 grounded video evidence 验证选中的路径。</td></tr>
+      <tr><td><a href="https://aclanthology.org/2025.acl-long.1044/">D²PO</a><br><span class="small">Wang et al., ACL 2025</span></td><td>联合 preference-optimize state prediction 与 action selection，使 vision-language model 学习能够改善 embodied task planning 的 environment dynamics。</td><td>支持本方案的核心假设：学习 action-conditioned consequences 可以产生更强、更高效的 planner。</td><td>它预测 embodied environment state；本方案预测 evidence acquisition 后，clue need、contradiction 与 answerability 在 question-conditioned reasoning state 中的 functional change。</td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2412.06769">COCONUT</a><br><span class="small">Hao et al., 2024/2025</span></td><td>把 hidden states 作为 continuous thoughts 反馈给模型，在连续 latent space 中进行 reasoning，使多个 latent alternatives 不必逐步解码为自然语言。</td><td>为紧凑的 multi-token latent reasoning state 和 non-textual internal computation 提供依据。</td><td>COCONUT 不学习显式 action-conditioned transition model，不比较 evidence-acquisition actions，也不约束 predicted consequence 与 grounded answer evidence 的边界。</td></tr>
+      <tr><td><a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/2f6a6317bada76b26a4f61bb70a7db59-Abstract-Conference.html">Evaluating the World Model Implicit in a Generative Model</a><br><span class="small">Vafa et al., NeurIPS 2024</span></td><td>使用 automata-based criteria，在逻辑、导航和游戏任务中测试 generative model 的 hidden state 是否恢复了连贯的底层 states 与 transitions。</td><td>为 <em>implicit world model</em> 这一术语提供严格参考，并说明评估不能只依赖 downstream task accuracy，还应测量 transition coherence。</td><td>该工作评估自然涌现的内部 world representation，并不训练 inference-time planner。本方案的 IWM 是显式学习的模块，具有 counterfactual <code>READ</code>-transition objectives 和 grounded execution。</td></tr>
+      <tr><td><a href="https://aclanthology.org/2023.emnlp-main.507/">Reasoning with Language Model is Planning with World Model（RAP）</a><br><span class="small">Hao et al., EMNLP 2023</span></td><td>同时把 LLM 用作 reasoning agent 和 world model，通过 Monte Carlo Tree Search 预测 states 并探索不同 reasoning trajectories。</td><td>它是把通用 problem solving 表述为 world-model-based planning 的奠基性、最直接先例。</td><td>RAP 使用成本较高的 textual LLM simulation、task-specific rewards 与显式 tree search。本方案使用轻量 latent dynamics model 预测有预算的 evidence actions，随后执行真实读取并进行 receding-horizon replanning。</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>术语说明：</strong>现有文献至少以两种方式使用 <em>implicit world model</em>：一是没有专门训练目标、自然涌现的 hidden world representation（Vafa et al.）；二是通过 auxiliary future-state objective 学习 predictive dynamics，并将其内化到 policy 中，而不保留独立 inference-time simulator（FLARE；Agent Learning via Early Experience）。本方案的模块接受显式监督、工作在 latent belief space，并在 inference 时继续用于 counterfactual rollouts。因此 <em>Latent Evidence World Model</em> 是最准确的技术描述，同时可以继续保留 IWM 作为项目缩写。</div>
 </section>
 
 <section class="card thesis">
@@ -301,6 +330,7 @@ f_time         = 显式 start/end timestamps 的 temporal embedding</div>
   </table>
   <p><strong>通过 tool calling 按需获得额外信息。</strong>L1 不需要预先计算所有 entity relations、dialogue claims、temporal chains 或 state changes。当 Reasoner 需要更多细节时，可以使用 <a href="../../Steam_Video_Agents/atomic-skill-decomposition-and-assembly/atomic-skills-v1.md"><code>Steam_Video_Agents/atomic-skill-decomposition-and-assembly</code></a> 中 typed、executable 的基础设施。可用操作包括 event 与 entity-history retrieval、temporal-neighborhood lookup、clue/event localization、visual-evidence 与 dialogue extraction、entity tracking、event ordering 和 state-change checks。</p>
   <p>每个 tool result 都必须返回 timestamps 与 evidence references，通过对应 verifier；请求的信息不存在时必须 fail closed。因此，tool calling 是 grounded reading 的按需扩展：需要什么信息再获取什么，不必把所有可能结构都预存进每个 node。它不会为主方法建立 semantic graph edges，也不能把 IWM prediction 转换成事实。</p>
+  <p><strong>External-index baseline。</strong>Caption/entity/visual embeddings 也可以写入 FAISS 或其他 approximate nearest-neighbor index。这是面向无界 archive 的 scalable address layer，而不是 reasoning contribution：结果必须解析到带 timestamp 的 grounded nodes；interval 或 multi-clue questions 仍需 sequential、verified reads。</p>
   <p>在 <code>READ(i)</code> 之前，下游模型只能接收 pre-read contract 明确允许的有界 address/proposal view；权威 source value 必须等到执行后才可见。</p>
   <p><strong>架构变更：</strong>显式 L1.5 semantic/correlation graph 从主方法中移除。确定性的 temporal、visibility、provenance、availability 和 budget constraints 仍可作为 masks，但目标设计不构造静态 semantic adjacency、cursor-local rows 或 graph action compiler。</p>
   <div class="note">已有 L1.5、cursor、complete-graph 与 <code>full_graph_iwm</code> artifacts 继续作为可复现历史 baseline 和 regression tools；它们不再定义当前论文方法。</div>
