@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>World-Model-Guided Multi-Hop Reasoning over Grounded Video Memory</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>World-Model-Guided Multi-Hop Reasoning over Grounded Video Memory</h1>
+  <p class="subtitle">Predict which reasoning hop will change future belief, execute one real evidence read, correct, and replan.</p>
+  <p class="meta">Current problem formulation · 2026-07-30 · <a href="problem-formulation-zh.html">中文</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">Repository overview</a> · includes SelectStream + OVO/StreamingBench notes</p>
+</header>
+
+<section class="card thesis">
+  <span class="label">Core thesis</span>
+  <h2>Reasoning must genuinely depend on the world model</h2>
+  <p>Before every multi-hop reasoning step, an implicit world model (IWM) predicts how legal evidence-acquisition actions may change the future belief. A preference planner compares complete short trajectories, executes only the first hop of a preferred trajectory, observes real evidence, corrects the belief, and replans.</p>
+  <div class="equation">grounded L1/L1.5 evidence memory
+→ bounded candidate reasoning hops
+→ IWM imagined observation and belief transitions
+→ ordinal trajectory preference
+→ execute first hop
+→ real evidence correction
+→ replan</div>
+  <p><strong>Paper-level contribution:</strong> action-conditioned prediction and model-predictive navigation of reasoning dynamics in belief space—not graph construction, generic retrieval, or numeric reward modeling.</p>
+</section>
+
+<section class="card">
+  <h2>1. Problem setting</h2>
+  <p><strong>Online stream, bounded memory.</strong> Video clips <span class="math">x_1,x_2,…</span> arrive sequentially and cannot all be retained. The agent has a fixed-capacity memory buffer <span class="math">M_t</span> (at most <span class="math">K</span> entries), so before any question is known it must continually decide <em>when to write</em> and <em>what to write</em>. A write may create a grounded entry, update or merge an existing entry, preserve a salient event at finer temporal resolution, or evict/consolidate less useful evidence; skipping a redundant clip is also an explicit decision. These decisions must be question-independent and may use only the visible prefix <span class="math">x_{1:t}</span>.</p>
+  <div class="equation">M_t = Write(M_{t-1}, x_t, w_t),   |M_t| ≤ K
+w_t ∈ {skip, append, update/merge, consolidate/evict}</div>
+  <p><strong>Question arrival and evidence routing.</strong> A question <span class="math">q</span> may arrive at time <span class="math">t_q</span>, after some relevant event has already passed, while the relevant event is visible in the current clip, or before the decisive event occurs. The agent must infer what evidence the question requires and choose among three temporally distinct sources: (1) query the bounded memory for past evidence, (2) inspect the current clip, or (3) defer the answer and wait for future clips. It may combine evidence from multiple sources and perform multi-hop queries over memory, but it may not inspect unseen future video or treat a prediction as observed evidence.</p>
+  <table>
+    <thead><tr><th>Evidence location at query time</th><th>Required behavior</th><th>Main failure</th></tr></thead>
+    <tbody>
+      <tr><td>Past: event occurred before <span class="math">t_q</span></td><td>Form a question-conditioned memory query and navigate to retained evidence</td><td>The needed event was never written, was over-compressed, or was evicted</td></tr>
+      <tr><td>Current: evidence is in <span class="math">x_{t_q}</span></td><td>Inspect the live clip and combine it with relevant memory when necessary</td><td>Historical retrieval distracts from direct current evidence</td></tr>
+      <tr><td>Future: decisive evidence occurs after <span class="math">t_q</span></td><td>Return <code>WAIT/DEFER</code>, monitor subsequent clips, and answer only when evidence is sufficient</td><td>Premature guessing, indefinite waiting, or missing the trigger event</td></tr>
+    </tbody>
+  </table>
+  <p>Thus the problem couples two policies: a <strong>pre-query memory policy</strong> that allocates scarce storage without seeing the future question, and a <strong>post-query reasoning policy</strong> that decides what and where to query, whether the evidence is sufficient, and when to answer. Performance is constrained jointly by memory capacity, evidence-read/context budget, and—when waiting is legal—response latency.</p>
+  <div class="equation">s_t = (q, M_t, x_t, E_{1:t}, missing_t, alternatives_t,
+       contradictions_t, read_budget_t, wait_budget_t)
+a_t ∈ {QUERY_MEMORY(node/relation), INSPECT_CURRENT,
+       WAIT_FOR_FUTURE, ANSWER, ABSTAIN}
+z_t = Enc(s_t)
+T_θ(z_t,a_t) → (ô_{t+1}, Δẑ_{t+1})
+Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
+  <p><span class="math">z_t</span> is a latent, multi-token belief state. It need not be an explicit graph posterior. For a legal evidence action, the IWM predicts an observation descriptor and belief change—not the next reasoning sentence and not evidence that may be used directly in the final answer. Only retrieved memory grounded in previously observed clips or a real current/future read can support the answer.</p>
+</section>
+
+<section class="card">
+  <span class="label">Modeling assumption · active perception</span>
+  <h2>1.1 Complex multi-hop video QA as navigation under partial observability</h2>
+  <p>We model complex video question answering as <strong>goal-directed navigation in an initially unknown, partially observable evidence environment</strong>. The analogy is to a POMDP, SLAM, and probabilistic robotics: the question defines the goal, the structured video memory is an incomplete and possibly lossy map, legal reads are sensing/navigation actions, retrieved clips are observations, and the evolving latent belief summarizes where the answer may lie and which facts are still missing. This is a reasoning abstraction—not a claim that the video is a physical robot environment or that the memory graph is a metrically accurate map.</p>
+  <div class="equation">POMDP-QA = ⟨S, A, O, T, Ω, q, B⟩
+initial information: query q + structured memory M
+action: navigate / retrieve / inspect current / wait / backtrack
+observation: one real, source-grounded piece of video evidence
+belief update: b_{t+1} = Update(b_t, a_t, o_{t+1})
+termination: high-confidence answer | low-confidence answer | abstain</div>
+  <p>The agent does not begin with a complete evidence route. Starting from the query and the addresses exposed by structured memory, it selects an interaction, receives a real observation, updates competing answer hypotheses and missing-evidence requirements, and replans. As consistent clues accumulate, useful reasoning paths should contract toward an evidence-supported answer; contradictory or insufficient observations should keep alternatives open, trigger backtracking or additional sensing, and eventually support abstention. A low-confidence answer is appropriate only when the evaluation protocol requires an answer despite residual uncertainty; otherwise calibrated abstention is the safer terminal action.</p>
+  <table>
+    <thead><tr><th>Probabilistic-robotics concept</th><th>Video-QA counterpart</th></tr></thead>
+    <tbody>
+      <tr><td>Unknown environment</td><td>The relevant evidence locations and multi-clue dependency chain are not known at query time</td></tr>
+      <tr><td>Map / SLAM state</td><td>Structured, bounded memory with temporal and soft semantic links; useful but incomplete and potentially lossy</td></tr>
+      <tr><td>Sensor action</td><td>Read a memory node, follow a relation, inspect the live clip, wait for a future observation, or backtrack</td></tr>
+      <tr><td>Observation model</td><td>Predict what a legal read may reveal, then replace that prediction with the real grounded read</td></tr>
+      <tr><td>Belief / localization</td><td>Question-conditioned hypotheses, acquired support/counterevidence, missing links, and answerability</td></tr>
+      <tr><td>Goal / stopping rule</td><td>Reach sufficient evidence for a calibrated answer, or abstain when the route remains unresolved</td></tr>
+    </tbody>
+  </table>
+  <p><strong>This assumption is especially useful in three regimes:</strong></p>
+  <ol>
+    <li><strong>Evidence or context loss in long video:</strong> the relevant past is only partially preserved, so the agent must navigate an imperfect map, recover complementary clues, and recognize when missing evidence makes the answer unidentifiable.</li>
+    <li><strong>Streaming video with future evidence:</strong> the question can arrive before the decisive event, so waiting is an information-gathering action and premature answering is a planning failure.</li>
+    <li><strong>Complex multi-hop, multi-clue reasoning:</strong> no single clip is sufficient; the agent must compose temporally or semantically separated observations while maintaining alternative paths and correcting its belief after every real read.</li>
+  </ol>
+  <p>The desired convergence is therefore <em>evidence-driven rather than score-driven</em>: confidence may be reported as a calibrated categorical outcome, but imagined observations, embedding similarity, or a model-invented numeric utility cannot by themselves justify the final answer.</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Benchmark scope · streaming + multiple clues</span>
+  <h2>1.2 We target multi-evidence streaming Video QA—not every benchmark item is multi-hop</h2>
+  <p><strong>Scope.</strong> Our target is streaming video QA in which an answer may require multiple distinct evidence moments and the agent must preserve, retrieve, observe, or wait for them under bounded memory. We use <em>multi-clue</em> or <em>multi-evidence</em> when an instance needs more than one frame/interval. We reserve <em>multi-hop</em> for cases where those clues participate in a dependent reasoning chain. Multiple clues do not by themselves prove an ordered hop structure: two intervals can provide complementary facts without annotating that clue A must be reasoned over before clue B.</p>
+  <div class="equation">multiple clues ≠ necessarily multiple reasoning hops
+
+multi-evidence supervision: acquire clue A + acquire clue B → sufficient evidence
+explicit multi-hop supervision: clue A → intermediate dependency → clue B → answer</div>
+  <table>
+    <thead><tr><th>Benchmark / selected subset</th><th>Is it genuinely multi-hop?</th><th>Best supervision for this project</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Full CG-Bench</strong></td><td>No. It spans perception, reasoning, and hallucination QA; the benchmark provides clue intervals, but an instance may have only one clue.</td><td>General clue grounding and long-video QA</td></tr>
+      <tr><td><strong>Our CG-Bench subset</strong><br><code>min_clues ≥ 2</code></td><td>Explicitly multi-clue; often multi-hop-like, but the intervals do not guarantee an annotated reasoning order.</td><td>Core clue acquisition, belief progress, clue coverage, and hypothesis-effect supervision</td></tr>
+      <tr><td><strong>StreamingBench Multiple-Clues</strong></td><td>Multi-evidence, not uniformly explicit graph-hop reasoning. The paper labels 2,778 Multiple-Clues versus 1,522 Single-Clue cases among 4,300 analyzed QA instances (~64.6% multi-clue).</td><td>Largest next expansion for streaming multi-evidence QA; clue decomposition/localization may need reconstruction</td></tr>
+      <tr><td><strong>StreamingBench SQA / Proactive Output</strong></td><td>SQA is cross-turn multi-step; Proactive Output is temporal control. Neither is automatically a clue-to-clue reasoning path.</td><td>Persistent belief/entity context, cross-turn updates, and proactive trigger timing</td></tr>
+      <tr><td><strong>OVO-Bench</strong></td><td>Mostly temporally extended or action-sequential rather than generic multi-hop. Its task taxonomy does not uniformly expose a CG-Bench-style set of clue intervals per QA.</td><td>Past retrieval, current observation, temporal state, and <code>WAIT → READY → ANSWER</code> control; CRR is the clearest accumulated-clue subset</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Benchmark roles.</strong> The datasets supervise different parts of the IWM/planner and should be combined with dataset-specific masks rather than forced into one label schema:</p>
+  <div class="equation">CG-Bench filtered multi-clue subset
+    → primary hypothesis-effect and clue-progress supervision
+StreamingBench Multiple-Clues + SQA
+    → multi-evidence streaming QA + persistent belief/context
+OVO-Bench, especially CRR / SSR / REC
+    → temporal readiness, state transitions, and planner control</div>
+  <p><strong>Decision.</strong> CG-Bench with <code>min_clues ≥ 2</code> remains the cleanest source for explicit clue-acquisition supervision. StreamingBench’s 2,778 Multiple-Clues cases are the most promising expansion toward streaming multi-evidence QA. OVO-Bench complements them by supervising <code>RETRIEVE_PAST</code> vs. <code>OBSERVE_CURRENT</code> vs. <code>WAIT</code> vs. <code>ANSWER</code>, especially readiness transitions, rather than serving as the main generic multi-hop corpus.</p>
+  <h3>Future-question and wait-for-evidence protocols</h3>
+  <p>Active training/eval for this project remains <strong>CG-Bench</strong>. The notes below record a verified read of streaming VLM benches used by SelectStream-style work and <code>steam_video-streaming-3bench</code>, so protocol claims stay honest.</p>
+  <p>Verified on local annotations under <code>/fs/gamma-projects/vlm-robot/datasets</code> (2026-07-27). “Future” means the instruction is issued <em>before</em> the answer event appears—so the model must wait or decide when evidence is enough—not merely wording like “what will happen next.”</p>
+  <p><strong>Verdict:</strong> OVO-Bench has explicit wait-for-evidence (FAR). StreamingBench also has an analogue (Proactive Output). VideoMME does not.</p>
+  <table>
+    <thead><tr><th>Benchmark</th><th>Future / wait?</th><th>How it appears</th><th>Share</th></tr></thead>
+    <tbody>
+      <tr><td><strong>OVO-Bench FAR</strong></td><td>Yes</td><td><code>REC</code>/<code>SSR</code>/<code>CRR</code> via <code>test_info</code>; CRR also <code>ask_time</code>/<code>clue_time</code></td><td>172 / 1640 videos (~10.5%); expands to <strong>1567 / 3035</strong> timed queries (~51.6% of eval mass)</td></tr>
+      <tr><td><strong>StreamingBench Proactive</strong></td><td>Yes</td><td><code>time_stamp</code> &lt; <code>ground_truth_time_stamp</code>; adapter: <code>future_trigger_instruction</code> / <code>proactive_polling</code></td><td><strong>250 / ~4495</strong> (~5.6%); 246/250 emit after instruct (Δ 1–43s, median 7s)</td></tr>
+      <tr><td>StreamingBench RT / Omni / Contextual</td><td>No</td><td>Only <code>time_stamp</code> — answer from visible prefix</td><td>Majority of the bench</td></tr>
+      <tr><td>OVO RT / BT</td><td>No*</td><td>Known <code>realtime</code>; *FPD / Prospective Reasoning ask “what next” but lack wait-for-event fields</td><td>RT 837 + BT 631 source rows</td></tr>
+      <tr><td>VideoMME</td><td>No</td><td>No ask / trigger timestamps in 2700 rows</td><td>Whole-video MCQ only</td></tr>
+      <tr><td><strong>CG-Bench (this project)</strong></td><td>N/A (clue navigation)</td><td>Human <code>clue_intervals</code> + terminal answer; multi-hop evidence path under read budget</td><td>Primary testbed: 256 cases / 205 videos / 672 clue transitions</td></tr>
+    </tbody>
+  </table>
+  <h3>Verified examples</h3>
+  <ul>
+    <li><strong>OVO CRR id 1468:</strong> ask at 297s, clue at 308s; polls 297/302 insufficient (<code>type=0</code>), 310+ sufficient (<code>type=1</code>). All 48/48 CRR have <code>ask_time &lt; clue_time</code>.</li>
+    <li><strong>OVO REC id 1559:</strong> event counting over the stream (e.g. 5s→1, 13s→2, 18s→3).</li>
+    <li><strong>OVO SSR:</strong> “is this tutorial step happening now?” Yes/No along the timeline.</li>
+    <li><strong>StreamingBench Proactive <code>sample_1_1</code>:</strong> instruct @ 00:00:26 “When the number 20 appears… output 20” → emit @ 00:01:01; all 250 marked <code>temporal_clue_type=Subsequent</code>.</li>
+    <li><strong>StreamingBench Real-Time:</strong> timestamped prefix QA (e.g. logos at 00:00:04) — <em>not</em> future-trigger.</li>
+  </ul>
+  <div class="equation">Portion takeaway:
+OVO FAR = major slice of OVO eval mass after test_info expand (~half of timed queries)
+StreamingBench Proactive = minor slice (~5.6%)
+Same “wait for future evidence” family, different schemas
+(trigger-emit timing vs readiness / counting polls)
+
+For SelectStream-inspired memory work: evaluate OVO RT/BT → StreamingBench
+single-turn → VideoMME final-query before FAR / Proactive.
+Paper FAR is not reconstructible from the method section alone (no readiness/defer head).</div>
+  <p><strong>Runner caveat:</strong> flat known-timestamp 3-bench accuracy often scores RT-style single-turn subsets and leaves SQA / Proactive out of ordinary accuracy. Full free-running proactive still needs an activation/polling loop—not just prefix QA.</p>
+  <p class="small">Sibling write-ups: <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/baselines.html#timing">baselines Timing</a> · <a href="../../steam_video-streaming-3bench/streaming_3bench/docs/selectstream-method.html#timing">SelectStream method · Benches</a> · <a href="../../steam_video-streaming-3bench/dynamic_navigation/dynamic-navigation-en.html">dynamic_navigation notes</a>.</p>
+  <p class="small">Primary sources: <a href="https://cg-bench.github.io/leaderboard/">CG-Bench project</a> · <a href="https://arxiv.org/html/2411.03628">StreamingBench paper</a> · <a href="https://openaccess.thecvf.com/content/CVPR2025/html/Niu_OVO-Bench_How_Far_is_Your_Video-LLMs_from_Real-World_Online_Video_CVPR_2025_paper.html">OVO-Bench CVPR paper</a>. Repository selection contract: <code>implicit_world_model/cgbench_grounded_navigation/builder.py</code> defaults to <code>min_clues=2</code>.</p>
+</section>
+
+<section class="card">
+  <span class="label">Terminology · annotation vs. reasoning</span>
+  <h2>1.3 Multi-clue and multi-evidence are related, but not identical</h2>
+  <p><strong>Multi-clue is an annotation-level property.</strong> A QA instance has two or more benchmark-annotated relevant frames, timestamps, or temporal intervals. <strong>Multi-evidence is a reasoning-level property.</strong> A justified answer requires two or more distinct grounded facts acquired and used by the agent, regardless of how many annotated intervals contain them.</p>
+  <table>
+    <thead><tr><th>Term</th><th>Operational definition</th><th>Layer</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Clue</strong></td><td>A benchmark-annotated relevant frame, timestamp, or temporal interval</td><td>Dataset annotation</td></tr>
+      <tr><td><strong>Evidence</strong></td><td>A source-grounded fact actually read by the agent and used to update belief</td><td>Reasoning/runtime</td></tr>
+      <tr><td><strong>Multi-clue</strong></td><td>At least two distinct annotated clue regions</td><td>Dataset selection property</td></tr>
+      <tr><td><strong>Multi-evidence</strong></td><td>At least two distinct evidence items are jointly necessary to justify the answer</td><td>Reasoning requirement</td></tr>
+      <tr><td><strong>Multi-hop</strong></td><td>An evidence item supports an intermediate conclusion or dependency that affects the next reasoning/evidence-acquisition step</td><td>Reasoning-chain structure</td></tr>
+    </tbody>
+  </table>
+  <p>One annotated clue interval can contain multiple evidence facts—for example, the same clip shows a person picking up a key and then opening a door. That instance can be <em>single-clue but multi-evidence</em>. Conversely, an instance may have two annotated clue intervals even though one clue alone suffices for a particular question or model execution; it is <em>multi-clue</em>, but multi-evidence necessity has not been established.</p>
+  <div class="equation">Project convention:
+multi-clue instances are an observable proxy for multi-evidence QA,
+but multi-clue does not guarantee that every clue is necessary
+or that an explicit multi-hop reasoning chain is annotated.</div>
+</section>
+
+<section class="card thesis">
+  <span class="label">Key idea · Qwen-LoRA categorical dynamics + planning</span>
+  <h2>2. All-node implicit world modeling for streaming Video QA</h2>
+  <p>We treat question answering as a repeated active-evidence loop over fixed-capacity adaptive-length memory nodes. L1.5 is a question-independent attention-weighted navigation graph <span class="math">A<sup>corr</sup>,A<sup>temp</sup>∈R<sup>N×N</sup></span>. Each path takes two <span class="math">[N,1]</span> rows from its active cursor and compiles structurally legal actions. One listwise Qwen-LoRA IWM pass combines question, acquired evidence, hypothesis, target descriptors, and graph signals to predict categorical effects for every legal action. A <strong>QA Planner</strong> executes one real interaction, corrects belief, and replans.</p>
+  <div class="equation">Question → missing-evidence belief
+→ L1.5 A_corr/A_temp [N,N] → cursor rows [N,1] → legal actions
+→ Qwen-LoRA IWM: interpret every legal path × node belief transition
+→ QA Planner: choose one real read / wait / answer / abstain
+→ observe grounded clue → correct belief → repeat</div>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Related-work map</span>
+  <h3>2.1 Related work: which “world” is being modeled?</h3>
+  <p>Existing work falls into three nearby groups: structured research memory (<a href="https://arxiv.org/abs/2603.24402">AutoProf</a>), executable research or scientific environments (<a href="https://arxiv.org/html/2602.15112">ResearchGym</a>, <a href="https://arxiv.org/abs/2406.06769">DiscoveryWorld</a>), and learned action-consequence knowledge (<a href="https://arxiv.org/abs/2606.30639">WorldEvolver</a>, <a href="https://arxiv.org/abs/2405.14205">WKM</a>). Environment generators such as <a href="https://arxiv.org/abs/2602.10090">AWM</a>/<a href="https://arxiv.org/abs/2604.18292">Agent-World</a> and <a href="https://arxiv.org/abs/2607.12474">mechanistic world models</a> instead construct the external world or explain the studied system.</p>
+  <p><strong>Our target is the problem-solving world:</strong></p>
+  <div class="equation">(B_t, H_t, E_t, A_t) —a_t→
+(ô_{t+1}, ΔB_t, ΔH_t, answerability_{t+1}, frontier_{t+1})</div>
+  <p>Before a real evidence read, the IWM predicts how that action may change answer hypotheses, missing evidence, answerability, and future search; the real observation then corrects the prediction.</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Previous frontier exploration in problem solving</span>
+  <h3>2.2 Explicit problem-space navigation before the IWM</h3>
+  <p>Recent problem-solving agents increasingly borrow navigation ideas, but represent them explicitly rather than learning the complete local dynamics:</p>
+  <table>
+    <thead><tr><th>Mechanism</th><th>Representative work</th><th>What it contributes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Persistent map + frontier</strong></td><td><a href="https://arxiv.org/abs/2606.11926">Arbor</a>, <a href="https://arxiv.org/abs/2601.20539">PathWise</a>, <a href="https://arxiv.org/abs/2604.14116">TREX</a></td><td>Hypothesis/evidence graphs or search trees, an explicit current state, and selection of the next expandable node.</td></tr>
+      <tr><td><strong>Belief-guided exploration</strong></td><td><a href="https://arxiv.org/abs/2606.30335">BayesEvolve</a>, <a href="https://arxiv.org/abs/2606.29182">Evidence-Informed Beliefs</a></td><td>Uncertainty-aware belief updates that focus exploration and reduce redundant discovery.</td></tr>
+      <tr><td><strong>Search, feedback, and repair</strong></td><td><a href="https://arxiv.org/abs/2310.04406">LATS</a>, <a href="https://arxiv.org/abs/2607.08894">GATS</a>, <a href="https://arxiv.org/abs/2603.02772">SERP</a></td><td>Tree/graph search, environment feedback, backtracking, and failure-aware replanning.</td></tr>
+    </tbody>
+  </table>
+  <div class="equation">Explicit navigator = problem map + localization/belief + frontier + history/repair
+Implicit world model = learned local dynamics p(z_{t+1}, o_{t+1} | z_t, a_t)
+Our view = IWM inside a mismatch-aware belief-space navigator</div>
+  <p>The two are complementary: the explicit L1.5 graph prevents duplicate exploration and supports auditable local repair; the Qwen-LoRA IWM interprets every structurally legal graph action under the current question/evidence/hypothesis. Temporal/correlation rows are question-independent navigation affordances, not relevance, utility, or gates. Prediction–observation mismatch repairs belief after the Planner's real read.</p>
+</section>
+
+<section class="card">
+  <span class="label">Module 0 · legal interaction interface</span>
+  <h3>2.3 Reasoning actions and the Graph Action Compiler</h3>
+  <p>An action is a reasoning/evidence query, not a physical action:</p>
+  <div class="equation">A = {start_at, temporal_before, temporal_after,
+     follow_soft_correlation, backtrack, inspect_current,
+     wait_for_future, stop, answer, abstain}</div>
+  <p><code>INSPECT_CURRENT</code> is legal only when a live clip is available. <code>WAIT_FOR_FUTURE</code> is legal only in a future-evidence/proactive protocol, consumes latency or wait budget, advances the visible stream, and never reveals a future clip early. The active CG-Bench clue-navigation protocol uses the graph-navigation subset because it does not model free-running query arrival.</p>
+  <p>The main method has one active current-node cursor. Ordinary navigation actions use that cursor as their only source; acquired nodes remain in belief/frontier history and can be revisited through an explicit <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> operation.</p>
+  <div class="equation">A_t = outgoing_temporal(current)
+    ∪ positive_direction_soft_correlation(current)
+    ∪ backtrack(acquired frontier history)
+    ∪ protocol_enabled{inspect_current, wait_for_future}
+    ∪ {stop, answer, abstain}</div>
+  <p>A deterministic Graph Action Compiler enumerates actions from endpoint validity, streaming visibility, relation status, provenance, executor availability, and budget. It never filters by question relevance. A virtual query root exposes <code>START_AT(node)</code> for every retained node at the first step.</p>
+  <div class="equation"><strong>Output contract — complete legal action table:</strong>
+A_t = [{action_id, action_type, source_id, target_safe_address,
+        relation/provenance, executor, protocol_gate, budget_cost}]</div>
+  <p>The current all-node method sends the complete structural legal set <span class="math">A_t</span> to the IWM. Embedding Top-K remains a separate retrieval baseline; a learned bounded Frontier is an open efficiency design, not part of the current main path.</p>
+</section>
+
+<section class="card">
+  <span class="label">Component 1 · complete-buffer semantic context</span>
+  <h3>2.4 L1.5 attention graph and path-local navigation rows</h3>
+  <p>The fixed-capacity memory is <span class="math">M ∈ R<sup>N×F×D</sup></span>. L1.5 constructs two adjacency matrices from node timestamps and question-independent embedding/attention correlation. They describe node-to-node navigation, not question-to-node relevance.</p>
+  <div class="equation">A^temp, A^corr ∈ R^{N×N}
+G^temp_{p,t}=A^temp[cursor_{p,t},:] ∈ R^{N×1}
+G^corr_{p,t}=A^corr[cursor_{p,t},:] ∈ R^{N×1}</div>
+  <p>The legal compiler forms <span class="math">A<sub>p,t</sub></span> from supported outgoing relations, backtrack, and terminal operations. This is structural executability rather than node dropping: every node remains in the buffer, and the virtual root exposes <code>START_AT</code> for every node. The first version uses only the active-cursor row. Revisiting an old evidence anchor requires explicit <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> before taking its row, avoiding provenance-free max pooling across sources.</p>
+  <div class="note"><strong>Explicit all-node boundary:</strong> every real, available node already present in the current memory buffer remains in consideration; no node is dropped by semantic/temporal score, Top-K, or a threshold. Padding/unavailable masks denote invalid tensor slots rather than relevance pruning. Buffer eviction, node merging, and writer-side admission policies are outside the current reader proposal and must not be introduced implicitly.</div>
+</section>
+
+<section class="card thesis">
+  <span class="label">Component 2 · predictive dynamics</span>
+  <h3>2.5 Hypothesis-Effect IWM: what would using this clue change?</h3>
+  <p>The Qwen-LoRA IWM makes one listwise pass per reasoning step over the question, acquired grounded evidence, hypotheses/missing roles, legal target descriptors, both cursor-local L1.5 rows, and action types. It emits a categorical belief effect for every legal action. Runtime may emit only compact effect tokens; numeric utility, long rationales, and exact imagined captions are unnecessary.</p>
+  <div class="equation">ΔB̂_{p,t} = IWM_Qwen-LoRA(q, E_{p,t}, H_{p,t}, legal_targets,
+                                      G^corr_{p,t}, G^temp_{p,t}, action_types)</div>
+  <p>The first experiment compares frozen-Qwen prompting with rank-8/16 LoRA and does not full-finetune the backbone. Training randomizes node presentation order and tests permutation consistency. Per-node Qwen calls, exposing all source clips, and long JSON generation remain heavier standalone baselines.</p>
+  <div class="equation"><strong>Output contract — one predicted-only joint future per candidate:</strong>
+τ_t^a = {action_id, optional_coarse_observation_class,
+         per_hypothesis{support|contradict|inconclusive,
+                        roles_resolved, roles_opened, contradiction_change,
+                        answerability_transition}, frontier_effect,
+         optional_second_hop}</div>
+  <p>One physical read produces a <strong>joint future over all hypotheses</strong>; the planner must not compare a trajectory for one answer choice against an unrelated physical trajectory for another. Before execution, any visual clue or full caption is predicted only. After execution, the real visual/text observation and grounded caption replace the imagination through correction. Imagined evidence is never persisted or used directly to answer.</p>
+</section>
+
+<section class="card boundary">
+  <span class="label">Component 3 · action and stopping</span>
+  <h3>2.6 QA Planner: test one future, then decide whether evidence is sufficient</h3>
+  <p>The QA Planner may initially use a frozen Qwen checkpoint without training. Its pre-read selector receives the question, accumulated grounded evidence, current belief, remaining budget, and categorical IWM effects for every legal path–node action, then emits one typed decision. After execution, a separate fixed post-read evidence-judge contract sees only the selected grounded observation, identifies the realized belief effect, and corrects state. Separating the two contracts makes Qwen selection and evidence judgment auditable and provides a prediction–observation target for the IWM.</p>
+  <div class="equation">Planner_φ(q, B_t, E_t, {τ_t^a}_{a∈A_t}, budget_t)
+∈ {READ(a), INSPECT_CURRENT, WAIT_FOR_FUTURE,
+   ANSWER_HIGH_CONFIDENCE, ANSWER_LOW_CONFIDENCE, ABSTAIN}</div>
+  <div class="equation"><strong>Output contract — exactly one decision:</strong>
+d_t = READ(action_id) | INSPECT_CURRENT | WAIT_FOR_FUTURE
+    | ANSWER(answer, confidence_tier, grounded_evidence_refs)
+    | ABSTAIN(reason)</div>
+  <p><code>ANSWER_HIGH_CONFIDENCE</code> requires a grounded, sufficiently complete evidence chain. <code>ANSWER_LOW_CONFIDENCE</code> is reserved for protocols that force an answer under residual uncertainty; otherwise <code>ABSTAIN</code> is preferred. <code>WAIT_FOR_FUTURE</code> is legal only when the streaming protocol permits future evidence and consumes wait/latency budget.</p>
+  <div class="note"><strong>Qwen-LoRA boundary:</strong> first establish a frozen-Qwen baseline with the identical all-node prompt, then train a rank-8/16 LoRA without full-backbone tuning. Only bounded L1 descriptors are memory-visible. Per-node Qwen calls, exposing all source clips, and long-rationale generation are heavier standalone baselines.</div>
+</section>
+
+<section class="card">
+  <span class="label">Closed-loop dynamics</span>
+  <h3>2.7 Dynamic interpretation</h3>
+  <p>The same candidate can have a different effect at different steps because the missing roles, hypothesis states, acquired clues, cursor, reachable frontier, and remaining budget have changed. The IWM therefore models a transition in reasoning state rather than static question–clip similarity. The planner tests the most useful predicted transition through one real read, corrects the state, and runs the two models again.</p>
+  <div class="equation">B_0 + read(search clue) → resolve search_event; open object_found
+B_1 + read(object clue) → resolve object_found; open object_use
+B_2 + read(door clue) → resolve instrument_identity; answer ready
+B_2 + reread(search clue) → redundant / unchanged</div>
+  <p><strong>Core boundary:</strong> the L1.5 temporal/correlation graph provides stable navigation topology; the Qwen-LoRA IWM interprets each legal graph action under current evidence/hypothesis; the Planner chooses what to execute and whether grounded evidence is sufficient. None may convert an imagined clue into fact.</p>
+</section>
+
+<section class="card">
+  <span class="label">Open question · memory and navigability</span>
+  <h2>3. Evidence memory: L1/L1.5 as an open design question</h2>
+  <p>This layer must decide <strong>what to store, at what granularity, and which retained items should be connected and navigable</strong>. The current memory graph is an addressable, source-traceable evidence substrate built without the future question or answer, but its representation and connectivity are not treated as solved.</p>
+  <table>
+    <thead><tr><th>Layer</th><th>Role</th><th>Research status</th></tr></thead>
+    <tbody>
+      <tr><td>L1</td><td>Grounded visual/text observations, timestamps, provenance, embeddings</td><td>Open storage design; current implementation baseline</td></tr>
+      <tr><td>L1.5</td><td>Question-independent soft node-to-node navigation correlations over L1 IDs; optional verified typed relations are stored separately</td><td>Open connectivity design; current navigation baseline</td></tr>
+      <tr><td>Latent belief</td><td>Question-conditioned competing interpretations, missing links, and answerability</td><td>Main method state</td></tr>
+      <tr><td>L2</td><td>Executed actions, real observations, realized deltas, and decision audit</td><td>Trace, not a world model</td></tr>
+    </tbody>
+  </table>
+  <p>The baseline mainly follows two existing ideas: <strong>Video_Skills-style atomic skills</strong> for grounded, auditable memory construction, and <strong>SelectStream-style bounded online selection</strong> for deciding when to write, what to keep, and what to retrieve. A central open question is whether these choices produce the right memory-visible nodes for Qwen-LoRA all-node categorical IWM planning.</p>
+</section>
+
+<section class="card">
+  <span class="label">Open question · storage unit</span>
+  <h3>3.1 L1 storage contract</h3>
+  <p>L1 is a question-independent Video_Skills-compatible <code>ClueMemoryGraph</code>. Each node stores one local, time-scoped observation rather than a reasoning conclusion.</p>
+  <table>
+    <thead><tr><th>Node/field</th><th>Stored content</th></tr></thead>
+    <tbody>
+      <tr><td>Common fields</td><td>Stable node/video IDs, node type, grounded text descriptor, modality, time span, clip/local ID, evidence refs, source, producer, provenance, visibility, and optional embedding sidecar reference</td></tr>
+      <tr><td><code>clip</code></td><td>Addressable video span, granularity, and segmentation policy</td></tr>
+      <tr><td><code>observation</code>/<code>event</code></td><td>Directly visible/readable local description or atomic action, never an inferred motive</td></tr>
+      <tr><td><code>entity_mention</code></td><td>Local mention ID, entity type, visible attributes, time, and evidence; no automatic cross-clip identity</td></tr>
+      <tr><td><code>state</code></td><td>Subject, attribute, value, polarity, temporal scope, and evidence</td></tr>
+      <tr><td><code>dialogue_span</code>/OCR</td><td>Time-aligned text with its true modality; subtitles do not claim direct audio observation</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <span class="label">Implementation baseline · atomic skills</span>
+  <h3>3.1.1 Video-to-L1 construction</h3>
+  <div class="equation">visible video prefix → question-independent windowing → sampled-frame Qwen clip schemas
+→ frozen evidence-construction atomic skills → neighbor-aware graph compose
+→ integrity/trust gate → bounded keep/merge/evict → temporal rebuild → embedding refresh</div>
+  <p>The writer never receives the question, answer, clue interval, or relevance label. The intended adaptive policy combines question-independent attention deviation and feature change: <span class="math">s_t = λ·JSD(a_t || ā_t) + (1−λ)·(1−cos(x_t,x_{t−1}))</span>, and closes the active span when this surprise exceeds a rolling empirical-quantile threshold after the minimum duration. Stable content closes at the maximum duration or stream end. The checked-in smoke path is the feature-only special case <span class="math">λ=0</span>: representations are sampled every 0.5 s and cosine change is compared with the 0.8 empirical quantile of the previous eight changes, with 2–12 s bounds. The attention-signature writer remains proposed, not implemented. Qwen then produces the existing grounded clip schema; no new node schema is required.</p>
+  <p>The graph composer uses bounded previous/current/next-clip context and may invoke only the following nine frozen Video_Skills construction skills. They are the complete L1 construction ontology; reasoning-graph skills do not manufacture L1 evidence. The atomic-planner path logs each invocation and dependency, while the active neighbor-aware composer logs equivalent typed create/link/skip operations with <code>neighbor_vlm_l1_*</code> trace IDs:</p>
+  <table>
+    <thead><tr><th>Atomic skill</th><th>Construction effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>segment_video_or_select_clip</code></td><td>Create timestamped clip/window anchors under the selected policy.</td></tr>
+      <tr><td><code>extract_observation</code></td><td>Create a modality-preserving grounded observation and its <code>derived_from</code> source link.</td></tr>
+      <tr><td><code>extract_dialogue_span</code></td><td>Create timestamped subtitle/ASR/dialogue evidence with only an observed or supplied speaker hint.</td></tr>
+      <tr><td><code>detect_entity_mention</code></td><td>Create clip-local person/object/place/speaker mentions; no cross-clip identity claim.</td></tr>
+      <tr><td><code>resolve_entity_coreference</code></td><td>Conditionally propose a canonical entity and candidate <code>same_entity</code> links; a separate identity gate is still required.</td></tr>
+      <tr><td><code>create_event_node</code></td><td>Convert supporting observations/dialogue into one timestamped atomic action or occurrence.</td></tr>
+      <tr><td><code>create_state_node</code></td><td>Conditionally store a grounded subject–attribute–value–polarity tuple over a time scope; no automatic change claim.</td></tr>
+      <tr><td><code>link_graph_relation</code></td><td>Add an allowed typed edge only after both endpoints exist; unknown types and missing endpoints fail closed.</td></tr>
+      <tr><td><code>assign_provenance_trust</code></td><td>Attach producer, source, trust tier, visibility, and hidden-supervision status.</td></tr>
+    </tbody>
+  </table>
+  <p>The normal trace is segmentation → observation/dialogue extraction → local mentions → event/state creation → relation linking → provenance. State, dialogue, and coreference skills are invoked only when evidence exists; absence is never filled with a fabricated node. Each invocation, dependency, evidence reference, and failure is recorded in <code>metadata.graph_compose.execution_trace</code>.</p>
+</section>
+
+<section class="card">
+  <span class="label">Open question · connectivity</span>
+  <h3>3.1.2 Node context and temporal determination</h3>
+  <p>A node's routing key contains its type, short grounded descriptor, modality, and interval. Its read-time grounded value contains the full caption/predicate/utterance/OCR/state tuple; clip and local IDs; local participants and visible attributes; state subject, attribute, value, polarity, and temporal scope; evidence-frame or subtitle/ASR references; provenance/trust/visibility; incident composition links; and consolidation lineage. Previous/current/next clip digests are construction-time composer context, not evidence copied into the node value; their effects appear only as grounded candidate edges and in the compose audit. This context supports audit and later reads but may not include an answer, motive, cross-clip identity, or causal conclusion.</p>
+  <p>Temporal relations are deterministic interval tests after sorting nodes by <code>(start_s,end_s,node_id)</code>. Adjacent retained nodes receive <code>temporal_next</code>. <code>before(u,v)</code> holds when <code>end(u) ≤ start(v)+10⁻³ s</code>; <code>during</code> uses interval containment within the same tolerance; otherwise intersecting intervals receive <code>overlaps</code>. <code>before</code> is sparse over a bounded forward neighborhood, not a transitive closure. Consolidation removes orphans, rewires surviving non-temporal edges, and rebuilds this backbone from retained intervals. Time order never establishes identity, change, support, or causality.</p>
+  <p>The main L1 navigation structure is a deterministic <code>temporal_next/before/overlaps/during</code> backbone over grounded semantic nodes. Composition links such as <code>derived_from</code>, <code>entity_mention</code>, <code>state_of</code>, and <code>located_in</code> remain provenance/audit structure. Native <code>same_entity</code>, <code>state_change</code>, and <code>causal_hint</code> labels belong to an optional strict-relation path and never become navigation facts without their specific verifier.</p>
+  <p>The current repair enriches persisted visual L1 nodes with question-independent, time-aligned subtitles when available. The bounded address key supports routing, while the complete descriptor remains a grounded value revealed by a real read. Future visual extraction also requests a concise grounded caption and evidence-indexed visible text. Any descriptor change invalidates the old embedding reference; <code>Qwen/Qwen3-VL-Embedding-2B</code> embeddings must then be regenerated before rebuilding L1.5.</p>
+</section>
+
+<section class="card">
+  <span class="label">Implementation baseline · soft navigation graph</span>
+  <h3>3.2 L1.5 correlation overlay</h3>
+  <p><strong>Design change:</strong> the earlier L1.5 design was an atomic-event causal-temporal belief overlay that attempted to admit typed <code>explains</code>/<code>enables</code> edges. It over-labeled narrative succession and its candidate-causal edges did not reliably pass independent grounding gates. That path is historical/optional strict-relation evaluation. The active L1.5 is now a question-independent <em>correlation</em> overlay over retained L1 IDs. Identity, state transition, and causality are separate typed layers and never enter L1.5 merely because two nodes correlate.</p>
+  <ol>
+    <li>Freeze enriched/consolidated L1 descriptors; every descriptor change invalidates its old embedding.</li>
+    <li>Encode every node with <code>Qwen/Qwen3-VL-Embedding-2B</code>, L2-normalize, and compute cosine <code>s(i,j)=eᵢ·eⱼ</code> for every unordered pair.</li>
+    <li>Exclude pairs already covered by the temporal backbone from nonlocal admission, but retain their audit rows.</li>
+    <li>Union nodes with cosine ≥ 0.999 into semantic-equivalence classes. Preserve distinct recurrences as a time-ordered next-occurrence chain rather than a clique.</li>
+    <li>Average and renormalize each class embedding. For every source class, standardize all positive class cosines by its within-video mean/variance and apply sparsemax; zero-mass pairs disappear without fixed Top-K.</li>
+    <li>For each admitted class pair choose the endpoint pair with highest raw cosine, then smallest temporal separation, then stable ID. Sparsemax produces directional proposals, but because cosine is symmetric, the current emitted edge uses the maximum proposal mass as equal two-way navigation affinity rather than claiming a directional fact.</li>
+    <li>Apply one frozen global channel/cosine/positive-affinity policy and record every pair's admission/exclusion reason, model/checksum, policy fingerprint, and frozen-L1 fingerprint.</li>
+  </ol>
+  <p>Temporal edges are exact interval constraints. Correlation edges are sparse representation-supported proposals for where related evidence may reside. Temporal proximity alone does not create correlation, and cosine alone does not guarantee admission because temporal exclusion, equivalence-chain, sparsemax, and global policy gates still apply. Similarity/affinity is not probability, confidence, identity, state transition, support, causality, relevance, or action utility. Independently verified categorical facts are stored separately.</p>
+</section>
+
+<section class="card boundary">
+  <span class="label">Boundary · topology is not policy</span>
+  <h3>3.3 Correlation is not action preference</h3>
+  <div class="equation">L1.5 correlation: determine supported node-to-node navigable adjacency
+→ legal-action compiler: expose executable cursor-incident hops
+→ IWM: predict each hop's categorical observation and belief effect
+→ planner: choose the next hop from those predictions</div>
+  <p>This boundary is mandatory. Correlation constructs question-independent graph topology; it does not choose a winner for a question. The IWM/planner may consume fixed correlation edges but may not invent, verify, or reclassify them during action selection. Measured embedding similarity, directional affinity, calibration, and provenance may be numeric graph features. The no-numeric-model-output rule applies to invented reward, utility, Q-value, probability, or confidence used for planning, not to measured graph-construction features. Edge affinity must never directly rank the winning action.</p>
+  <p>L1/L1.5 never stores the correct answer, hidden clue identity, question-conditioned belief, IWM imagination, predicted belief delta, planner trajectory, reward/utility/Q-value, GTSAM posterior, or final claim. These belong to hidden evaluation, latent belief, or the executed L2 trace.</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Implementation baseline · SelectStream</span>
+  <h3>3.4 SelectStream: budgeted online latent evidence</h3>
+  <p><strong>Core idea.</strong> SelectStream (arXiv:2606.16353v1) is not about “how to store more video.” Under a fixed memory and context budget, it decides online <em>when to write</em>, <em>what to keep</em>, <em>what to read at query time</em>, and <em>how much historical evidence to expose to the VLM</em>.</p>
+  <p>Prior methods usually sit at two extremes:</p>
+  <ul>
+    <li><strong>Recent-window:</strong> only the latest video — sharp current perception, but early critical events are easy to forget.</li>
+    <li><strong>Large memory / replay:</strong> store and inject lots of history — longer coverage, but irrelevant past dilutes the current scene and raises compute.</li>
+  </ul>
+  <p>SelectStream’s fix: the current frame always goes straight into the VLM; history is compressed into a fixed-capacity latent evidence graph; only a small, query-relevant slice of historical evidence is retrieved and injected as a few latent tokens.</p>
+  <div class="equation">Streaming video
+     ↓
+1. SAW — Surprise-driven Adaptive Windowing     (when to write?)
+     ↓
+2. LVM — Latent Visual Memory Graph             (what to write / keep under capacity N?)
+     ↓
+3. GAR — Query-conditioned Graph Reasoning      (which historical evidence? budget B)
+     ↓
+4. Latent Evidence Injection                    (expose M calibrated tokens to frozen VLM)
+     ↓
+Answer
+
+Budgets (paper defaults): N=256 memory nodes · B=64 routed subgraph · M=8 evidence tokens</div>
+  <h3>Modules</h3>
+  <table>
+    <thead><tr><th>Module</th><th>Decision</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>SAW</td><td>When to write</td><td>Surprise <span class="math">s_t = λ s_t^attn + (1−λ) s_t^feat</span> closes variable-length segments (coarse on stable intervals, fine near changes)</td></tr>
+      <tr><td>LVM + merge</td><td>What to preserve</td><td>Gated write or new node; priority-aware consolidation keeps capacity at N (not FIFO / last-N only)</td></tr>
+      <tr><td>Route + GAR</td><td>What to retrieve</td><td>Top seeds expand over temporal/semantic edges into B≤64, then graph attention — an evidence chain, not independent top-k clips</td></tr>
+      <tr><td>Calibrate / inject</td><td>How much to expose</td><td><span class="math">X = [prompt; current; e₁…e_M]</span>; history context does not grow with stream length T</td></tr>
+    </tbody>
+  </table>
+  <p>What is stored is neither raw frames nor text summaries, but latent embeddings already passed through a frozen VLM visual encoder and multimodal projector. As of 2026-07-26, SelectStream.github.io returns 404 and no official code/weights were found—paper-level reimplementation only; published LR 2e-4 vs 2e-5 conflict.</p>
+  <div class="equation">One-liner:
+SelectStream uses surprise to set storage granularity, a fixed-capacity latent graph
+to merge/keep evidence, retrieves a small multi-hop evidence subgraph for the query,
+and compresses it into latent tokens injected into a frozen VLM.</div>
+  <p class="boundary" style="border-left:5px solid var(--red);padding-left:12px;margin-top:12px"><strong>Boundary vs. this IWM work:</strong> SelectStream navigates <em>where</em> evidence lives (addressable nodes + graph edges) and how much history a frozen decoder may see. This project keeps a grounded L1/L1.5 evidence substrate, then asks whether an IWM can predict how a legal hop changes future <em>belief</em> and whether a planner should execute that hop. Fixed-capacity surprise-written L1 is compatible infrastructure; latent-token injection into a frozen VLM is not our main claim. Historical “operation-conditioned soft read over continuous memory without nodes/edges” (dynamic-navigation text proxy) was a separate No-Go path—not the active CG-Bench IWM protocol.</p>
+</section>
+
+<section class="card">
+  <h2>4. Short-horizon model-predictive reasoning</h2>
+  <ol>
+    <li>Compile every legal action from the single current-node cursor and fixed L1.5 graph.</li>
+    <li>Build bounded descriptors for every retained node and compile path-local legal actions from the frozen L1.5 graph.</li>
+    <li>Predict horizon-one or horizon-two categorical transitions for every legal path–node action.</li>
+    <li>Compare complete candidate trajectories pairwise.</li>
+    <li>Execute only the first action of a uniquely preferred trajectory.</li>
+    <li>Discard imagined observations, read real evidence, update belief, and replan.</li>
+  </ol>
+  <div class="equation">τ* = PreferredTrajectory({Rollout_T(z_t,a)}_a)
+a_t* = First(τ*)
+o_{t+1} = Execute(M,a_t*)
+z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
+  <p>The world model is useful when a low-immediate-gain bridge hop unlocks a decisive second hop. This delayed effect is the principal distinction from reactive retrieval or immediate information-gain ranking.</p>
+  <p>The current all-node IWM predicts every legal first hop in batched graph/tensor forwards. Chunking may split execution batches but may not prune actions. Horizon two may remove only strictly dominated first hops before expanding every second hop from the remaining partial-order set; it does not use fixed-K beam pruning. Frontier selection remains an optional future efficiency arm.</p>
+  <p>The current <code>reasoning_v2</code> planner retains a forest of competing hypothesis-conditioned reasoning histories. A joint action tree must cover every surviving answer hypothesis under one shared physical first read. The planner schedules one real read, keeps unselected alternatives suspended rather than deleting them, applies the grounded correction separately to every path, and then replans from the corrected forest.</p>
+</section>
+
+<section class="card boundary">
+  <span class="label">Non-heuristic boundary</span>
+  <h2>5. What may and may not choose the next hop</h2>
+  <table>
+    <thead><tr><th>Allowed role</th><th>Forbidden role in the main arm</th></tr></thead>
+    <tbody>
+      <tr><td>Current IWM evaluates every structurally legal node; an optional future Frontier must report clue/action recall</td><td>Frontier is silently assumed, chooses the winner, reads hidden values, or drops actions without an auditable recall gate</td></tr>
+      <tr><td>Embedding similarity proposes candidates</td><td>Highest similarity automatically wins</td></tr>
+      <tr><td>Graph/factor constraints reject illegal or unsupported hops</td><td>Factor posterior or edge priority ranks the winner</td></tr>
+      <tr><td>Lexical/temporal rules define explicit baselines</td><td>Hidden fallback decides ties in the IWM arm</td></tr>
+      <tr><td>IWM predicts categorical future belief effects</td><td>Model emits scalar reward, utility, Q-value, confidence, or probability</td></tr>
+    </tbody>
+  </table>
+  <p><code>tie</code> and <code>incomparable</code> must trigger further evidence, additional comparison, or abstention. Candidate order must be permutation invariant.</p>
+</section>
+
+<section class="card">
+  <h2>6. Keep the model input bounded</h2>
+  <p>No model receives the entire video, hidden answers, or unconsolidated history. The Qwen-LoRA IWM receives compact current evidence/hypothesis, legal target descriptors, and cursor-local L1.5 rows, then emits all legal-action effects in one pass. It never receives unselected source clips or a mandatory bounded Frontier.</p>
+  <div class="equation">surprise-written, fixed-capacity L1 nodes
++ complete retained temporal/correlation graph
++ one current-node cursor
+→ all legal actions in one batched IWM forward
+→ partial-order planner</div>
+  <p>The displayed all-action path is the current plan. A future scalable Frontier may propose a bounded subset only as an explicit recall-audited efficiency arm matched against this all-node reference.</p>
+  <p>Unread target nodes expose compact key/address representations; their full evidence values are revealed only after execution. <code>Qwen/Qwen3-VL-Embedding-2B</code> vectors remain in sidecars and serve as semantic action features—not a main-arm ranking gate, reward, or supervision.</p>
+</section>
+
+<section class="card">
+  <h2>7. Belief correction and the GTSAM backup</h2>
+  <p>The main method uses a latent belief update after each real observation. GTSAM/factor graph is retained as an optional correction backend, baseline, diagnostic oracle, teacher, and visualization tool.</p>
+  <div class="equation">default:              iwm_belief_only
+optional correction:  iwm_with_gtsam_backup
+baseline/ablation:     gtsam_always</div>
+  <p>Only executed, provenance-bearing, categorically verified observations may become factors. Imagined rollouts never enter persistent belief. Backup activation uses explicit categorical conditions such as identity ambiguity, contradiction, state-history conflict, or failed correction—not a hand-set posterior threshold.</p>
+  <p>GTSAM does not generate actions, traverse the graph, rank candidates, predict transitions, or ground the final answer. The main contribution must survive without it.</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Supervision and training · Qwen-LoRA IWM planned; Planner + Perception TBD</span>
+  <h2>8. Learning signals and post-training strategy</h2>
+  <p>We will craft training records from Video QA datasets that provide questions, answers, and localized or reconstructible evidence. CG-Bench supplies the cleanest human clue intervals and terminal answers; compatible multi-clue/readiness subsets from other streaming benchmarks can be added only when their evidence provenance can be reconstructed without leakage. Executing a clue read yields categorical progress such as <code>advances_required_clue_coverage</code>, <code>partial</code>, or <code>complete</code>. Complete-clue versus leave-one-clue-out trajectories provide an ordinal preference.</p>
+  <div class="equation">Crafted record = {question, visible memory state, legal actions,
+                  evidence-linked next clue/action, real observation,
+                  realized per-hypothesis effect, future usefulness,
+                  grounded terminal answer or abstention}</div>
+  <ul>
+    <li>Unmatched L1.5 candidates remain unlabeled; they are not fabricated semantic negatives.</li>
+    <li>Qwen-VL produces grounded observation descriptors, not GT relation labels.</li>
+    <li>GPT-5.6 visual review is optional diagnosis and does not overwrite CG-Bench ground truth.</li>
+    <li>Identity, state-transition, causal, and counterevidence relations need their own trusted labels.</li>
+    <li>Validation/test videos are never used for training.</li>
+  </ul>
+  <p>Sibling branches executed from the same immutable checkpoint supervise action-conditioned observation and belief-delta prediction, and give pairwise trajectory comparisons without assigning absolute utility.</p>
+  <h3>Node-level SFT for the Qwen-LoRA IWM</h3>
+  <p>The current 256 questions, 205 videos, and 672 grounded clue/read intervals support interface checks and a small learnability pilot, but intervals are not yet final node-level SFT examples. Each question must first be aligned with the adaptive segmentation and complete node tensor:</p>
+  <div class="equation">{question, acquired evidence, hypothesis, bounded descriptors [N],
+ A_corr/A_temp references, cursor-local rows [N,1], legal actions,
+ categorical belief effects [N,C], evidence groups, validity mask}</div>
+  <p>Each label is <code>positive | trusted_negative | ignore</code>. A clue-overlap node is positive. A semantically similar wrong occurrence/time, a node inconsistent with a before/after condition, or a grounded wrong-choice node may be a hard negative. Mere non-overlap is not a semantic negative: nearby context, coreference introductions, and possible bridge nodes remain ignored. Multiple nodes covering one clue form one positive evidence group. The loss may sample trusted negatives, but forward and runtime scoring still retain every valid node in the buffer.</p>
+  <p>The first pilot uses video-level splits and compares cosine/timestamp greedy retrieval, frozen-Qwen listwise prompting, and rank-8/16 LoRA SFT. Training randomizes node presentation order and reports permutation consistency. Q-Former/Set-Transformer readers remain latency, dense-token, and distillation ablations. LLM/VLM assistance may propose temporal types, paraphrases, or negative candidates, but generated numeric relevance/utility is not supervision.</p>
+  <h3>Does the IWM need training?</h3>
+  <p>The QA Planner need not be trained initially. It can remain a frozen deterministic typed comparator over categorical effects, budgets, and persistent paths, isolating Planner behavior from IWM quality. A prompted pretrained model is a useful zero-shot IWM baseline; the claimed IWM should be SFT-trained on real sibling executions unless the zero-shot model passes the same held-out transition gate.</p>
+  <div class="equation">input  = question + acquired evidence + hypothesis
+         + legal target descriptors + G^corr [N,1] + G^temp [N,1]
+target = realized categorical belief effect per legal action
+         + answerability transition + contradiction/redundancy status</div>
+  <p>The primary target is the categorical effect realized after a real read, not an invented exact future caption. Data must include useful-now, useful-later, no-progress, redundant, contradictory, and ambiguous controls; positive clue reads alone cannot train or verify an IWM. Splits are video-disjoint, and the pre-read input never contains a hidden answer, clue identity, or post-read value.</p>
+  <h3>Training route</h3>
+  <ol>
+    <li><strong>Establish frozen L1.5 graph-only and frozen-Qwen baselines</strong> under the same legal-action contract.</li>
+    <li><strong>LoRA-SFT the Qwen-IWM</strong> on realized action-conditioned categorical belief effects.</li>
+    <li><strong>Keep the Planner frozen for the first matched causal evaluation</strong> so search-policy changes cannot masquerade as IWM gains.</li>
+    <li>Consider trajectory preference/post-training or low-learning-rate joint tuning only after SFT passes held-out transition and policy-value gates.</li>
+  </ol>
+  <table>
+    <thead><tr><th>Module</th><th>Planned training</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>L1.5 temporal/correlation graph</td><td>Frozen navigation substrate and graph-only baseline</td><td>Existing implementation; new IWM adapter not implemented</td></tr>
+      <tr><td>Qwen-LoRA Hypothesis-Effect IWM</td><td>All-node evidence/effect SFT → optional post-training</td><td>Defined next experiment</td></tr>
+      <tr><td>QA Planner / Reasoner</td><td>Whether to train separately, jointly, or initially keep as a prompted/frozen QA model</td><td><strong>TBD</strong></td></tr>
+      <tr><td>Memory Crafter / Perception Model</td><td>Whether and how to train writing, segmentation, node construction, and connectivity</td><td><strong>TBD</strong></td></tr>
+    </tbody>
+  </table>
+  <p>Post-training signals must be computed from dataset-grounded evidence/action outcomes rather than an LLM/VLM-invented utility score. GPT-OSS-120B remains an inference/data-crafting baseline; Qwen-LoRA IWM training has not yet started.</p>
+</section>
+
+<section class="card benchmark">
+  <span class="label">Decisive experiment</span>
+  <h2>9. Prove causal dependence on the IWM</h2>
+  <p>Verification has two independent gates. The <strong>model gate</strong> directly evaluates video-disjoint held-out executed transitions before planning: macro-F1/confusion by outcome class, answerability-transition accuracy, contradiction/no-progress false-positive rates, delayed-positive recall, and calibration, compared with a belief prior, question-node MLP, shuffled node/effect controls, and an oracle-effect ceiling.</p>
+  <p>The <strong>policy gate</strong> holds question, evidence memory, every legal node, Planner, and read budget fixed, changing only the world-model condition:</p>
+  <ol>
+    <li>full delayed-belief IWM;</li>
+    <li>no world model;</li>
+    <li>shuffled IWM predictions;</li>
+    <li>frozen IWM;</li>
+    <li>immediate-effect-only;</li>
+    <li>oracle clue ceiling, reported only as a diagnostic upper bound.</li>
+  </ol>
+  <p>Report answer accuracy, evidence completeness, read efficiency, action divergence, categorical transition accuracy, and delayed two-hop success separately. Full IWM must improve realized evidence-chain coverage, bridge acquisition, recovery, read efficiency, or answer accuracy over no-IWM and shuffled-IWM controls. Then hold the IWM fixed and compare greedy horizon one with persistent horizon two to test the Planner mechanism separately. If prediction improves but policy does not, the IWM is predictive but not decision-useful; if gains survive shuffled effects, they cannot be attributed to the IWM.</p>
+</section>
+
+<section class="card warning">
+  <span class="label">Go / No-Go</span>
+  <h2>10. Evidence required for the claim</h2>
+  <p><strong>Go:</strong> the full IWM improves delayed multi-hop success under matched budgets; removing, freezing, or shuffling its predictions changes actions and hurts outcomes; prediction error correlates with navigation failure; and gains persist under candidate-order permutation.</p>
+  <p><strong>No-Go:</strong> the same action sequence appears without the IWM, graph/embedding heuristics explain the gain, imagined evidence leaks into answers, candidate recall is too low to expose the required clue, or only immediate-gain cases improve.</p>
+</section>
+
+<section class="card">
+  <h2>11. Current implementation status</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Status on 2026-07-30</th></tr></thead>
+    <tbody>
+      <tr><td>L1 retained memory</td><td>Implemented: pluggable representation-surprise windows, materialized fixed-capacity consolidation, lineage, time-aligned subtitle enrichment, richer grounded visual descriptors, embedding invalidation, edge rewiring, and temporal-chain rebuild</td></tr>
+      <tr><td>L1.5 correlations</td><td>Implemented: regenerated Qwen embedding soft navigation correlations, semantic duplicate coalescing, recurrence chains instead of cliques, class-level standardized sparsemax, directional affinity, and a separate optional verified fact-relation layer. Correlation remains a proposal, not factual confidence or action preference.</td></tr>
+      <tr><td>Reasoning-v2 IWM/planner</td><td>Implemented: complete-graph oracle/learned entry protocols, persistent multi-hypothesis path forests, shared physical reads, categorical observation/effect prediction, real correction, replanning, no heuristic Top-K, and matched IWM/no-WM/shuffled/immediate/oracle arms</td></tr>
+      <tr><td>Legacy IWM/planner workflows</td><td>Existing bounded-context navigator remains the data/review/baseline path and is not silently used as the new main arm</td></tr>
+      <tr><td>Model adapters</td><td>Strict categorical GPT-OSS/Qwen/OpenRouter adapters implemented; numeric planning output rejected. Schema-repair attempts now use distinct cache keys, and concurrent cache writers merge under a file lock.</td></tr>
+      <tr><td>GTSAM</td><td>Correction pilot and optional backup modes implemented; not the default research method</td></tr>
+      <tr><td>CG-Bench v2</td><td>256 cases, 205 videos, 672 human-clue transitions; the current Qwen grounding/embedding validation is 670/672 with two failed reads</td></tr>
+      <tr><td>Repaired complete graph</td><td>The frozen diagnostic graph has 256 L1 nodes and 957 typed proposals. All 7/7 annotated clue intervals are retained, and every hidden clue group has a non-placeholder grounded value plus a refreshed Qwen embedding reference.</td></tr>
+      <tr><td>GPT-5-mini closed loop</td><td>A real record run and a 3.6-second cache-only replay both completed. Learned-entry IWM produced the correct answer after one read, but immediate-only produced the same answer. Oracle-entry beliefs changed and diverged, yet IWM missed the next shortest-path hop and did not answer.</td></tr>
+      <tr><td>Budget audit</td><td>The nearest first-clue node is two graph edges from the next clue group, requiring at least 3 reads including entry; the matched smoke budget is 2. Closed-loop execution therefore passes while oracle route feasibility and later-clue reach correctly fail.</td></tr>
+      <tr><td>Learned IWM result</td><td>Not trained. The one-case result validates infrastructure and substrate repair, not an IWM navigation advantage.</td></tr>
+      <tr><td>Production readiness</td><td>Not reached</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="card thesis">
+  <span class="label">Immediate gate</span>
+  <h2>12. What happens next</h2>
+  <ol>
+    <li>Freeze a multi-video cohort whose exact complete-graph oracle paths fit the declared matched read budget; entry itself counts as one read.</li>
+    <li>Independently calibrate executed observation transitions and hypothesis-conditioned belief effects, including surface-correlation hard negatives.</li>
+    <li>Run matched IWM, no-WM, shuffled-IWM, immediate-only, and oracle arms over that fixed cohort.</li>
+    <li>Report answer accuracy, read efficiency, action divergence, strict interval localization, abstention, delayed success, and latency as separate metric families.</li>
+    <li>Train or distill a 9B IWM only after intact predictions outperform no-WM and shuffled-IWM on delayed, budget-feasible cases.</li>
+  </ol>
+  <p>The code and repaired evidence substrate now work end to end. Training remains blocked because transition calibration and a fixed multi-video, budget-feasible matched experiment are still missing, and the current correct learned-entry answer is also obtained by the immediate-only arm.</p>
+</section>
+
+<footer class="small">
+  <details>
+    <summary><strong>Document footnote · complete edit history since creation</strong></summary>
+    <p><strong>History span:</strong> <time datetime="2026-07-14">July 14, 2026</time>–<time datetime="2026-07-30">July 30, 2026</time>. GitHub checked on <time datetime="2026-07-30">July 30, 2026</time> against <a href="https://github.com/wuxiyang1996/steam_video/tree/agent/iwm-v2-rearchitecture"><code>origin/agent/iwm-v2-rearchitecture</code></a>.</p>
+    <h4>GitHub commit timeline</h4>
+    <ol>
+      <li><time datetime="2026-07-14">2026-07-14</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/d4ae200e2751a63a6aa68c203bd75bd69ddb9641"><code>d4ae200</code></a> · EN+ZH · Add steam video problem formulations and legacy docs. <strong>Document created.</strong></li>
+      <li><time datetime="2026-07-14">2026-07-14</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/7ad3201ed98ac2eda37592029a4c5484e87a01a8"><code>7ad3201</code></a> · EN+ZH · Add causality-aware latent memory track to problem formulations.</li>
+      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/bfacb98a40ba312da3ded62ad4483d3e22f52c3e"><code>bfacb98</code></a> · EN+ZH · Sync factor-graph world-model framing into problem formulations.</li>
+      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1c4e003624736aab1fa1468d1316e28f842bbfd0"><code>1c4e003</code></a> · EN+ZH · docs: refine causal-temporal world model formulation.</li>
+      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/d72c51a80532634ad81e0ad0f090734809a76e0b"><code>d72c51a</code></a> · EN+ZH · docs: scope world model work around Video Skills.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1ee8f5ff307c0cb08056d79175dee78269b64602"><code>1ee8f5f</code></a> · EN · Document preference-only world model contract.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/abb33a76bcd041ce18969f3358153dcaf94414fc"><code>abb33a7</code></a> · EN · Add factor-graph exploration belief backend.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1555764c7de873b4286e0df0025f9730bb7935ae"><code>1555764</code></a> · EN · Add locked preference navigation workflow.</li>
+      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/09852fab70e736b7386d2897c41af1e759ebbf48"><code>09852fa</code></a> · EN · Add diagnostic case mining and model baselines.</li>
+      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/aa882fb3493fbf5009075eb8b46183a3db1bb306"><code>aa882fb</code></a> · EN+ZH · Document world-model-guided reasoning design.</li>
+      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/61aa49232cb5c47e24cc611a4402261f9cac4f76"><code>61aa492</code></a> · EN+ZH · Define cursor-based full-graph IWM navigation.</li>
+      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/0ff7f0990e84e7eb9ea53f9094869441af6cd57e"><code>0ff7f09</code></a> · EN+ZH · Implement full-graph IWM navigation.</li>
+      <li><time datetime="2026-07-22">2026-07-22</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/0fddc76145d1835949f1145748ad246d0f659bcf"><code>0fddc76</code></a> · EN+ZH · Add grounded IWM navigation evaluation.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/a8805102429fe1e70ce7946896947341bad479e0"><code>a880510</code></a> · EN+ZH · update IWM problem formulation pages.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/cef755838aef6712ef311b5685b779a5a0d399c4"><code>cef7558</code></a> · EN+ZH · Merge SelectStream and OVO/StreamingBench notes into IWM formulation pages.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/f6855e484ea4ec7ccfbc367cd882ce4917759861"><code>f6855e4</code></a> · EN+ZH · Expand streaming video problem setting.</li>
+      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/2bf7a07a63b59da7029a2d9fa5687113bcc0ecf6"><code>2bf7a07</code></a> · EN+ZH · Document graph construction and baseline results.</li>
+    </ol>
+    <h4>Current working-tree edit memory (not yet committed)</h4>
+    <ol>
+      <li>Expanded the streaming problem setting: bounded memory requires decisions about when and what to write; after a question arrives, the agent must route among past memory, the current clip, and waiting for future clips.</li>
+      <li>Added the navigation assumption for complex multi-hop Video QA: reasoning is treated as belief-space navigation in an unknown POMDP/SLAM-like environment, converging to a high-confidence answer, low-confidence answer, or abstention.</li>
+      <li>Defined the benchmark scope around streaming multi-evidence QA; separated full benchmarks from the selected CG-Bench <code>min_clues ≥ 2</code> subset and clarified the roles of StreamingBench and OVO-Bench.</li>
+      <li>Clarified that <em>multi-clue</em> is an annotation property, <em>multi-evidence</em> is a reasoning requirement, and neither alone guarantees an explicit multi-hop dependency chain.</li>
+      <li>Historical revisions introduced Frontier-guided and then dual-Q-Former all-node loops. The current revision uses a listwise Qwen-LoRA all-node categorical IWM while continuing to remove mandatory Frontier pruning.</li>
+      <li>Positioned the method relative to research memories, executable scientific environments, action-consequence models, explicit hypothesis/search maps, belief-guided exploration, backtracking, and failure-aware replanning.</li>
+      <li>Current contracts: L1.5 provides two <span class="math">[N,N]</span> adjacency matrices; the compiler emits the complete cursor-local legal action table; the Qwen-LoRA IWM emits every legal-action effect in one pass; Planner emits exactly one decision.</li>
+      <li>Moved reasoning actions from the former Section 4 into Section 2 and renumbered all downstream sections and cross-references.</li>
+      <li>Reframed L1/L1.5 evidence memory as an open storage/connectivity/navigation question, split it into multiple cards, and labeled atomic-skill construction plus SelectStream-style bounded write/keep/retrieve as the current implementation baseline.</li>
+      <li>Specified that temporal/correlation <span class="math">[N,1]</span> signals are cursor rows of L1.5 adjacency, not question-conditioned retrieval scores or admission gates.</li>
+      <li>Scoped planned learning to the Qwen-LoRA IWM using evidence-crafted Video QA records. Q-Former readers remain efficiency/distillation ablations; training the QA Planner and Memory Crafter remains TBD.</li>
+      <li>Merged learning signals with post-training into Section 8, and merged the former OVO/StreamingBench future-question card into the benchmark card in §1.2.</li>
+    </ol>
+    <p>The first timeline is verified GitHub history; the second list records the current uncommitted design edits. Neither substitutes for experimental provenance.</p>
+  </details>
+  <p>Canonical implementation notes live in <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>, <a href="../memory_graph/README.md">memory_graph</a>, <a href="../plan/README.md">plan</a>, and <a href="../factor_graph/README.md">factor_graph</a>. Related SelectStream / OVO–StreamingBench discussion is merged above (§3.4, §1.2). The complete-graph GPT-5-mini artifact is under <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>.</p>
+</footer>
+</body>
+</html>

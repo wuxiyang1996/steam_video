@@ -3,15 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>基于真实视频证据记忆的世界模型引导多跳推理</title>
+  <title>面向真实视频推理的多步 Evidence World Model</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header>
-  <h1>基于真实视频证据记忆的世界模型引导多跳推理</h1>
-  <p class="subtitle">预测下一跳推理会如何改变未来 belief，执行一次真实证据读取，修正并重新规划。</p>
-  <p class="meta">当前问题定义 · 2026-07-30 · <a href="problem-formulation-en.html">English</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">仓库总览</a> · 已合并 SelectStream + OVO/StreamingBench 讨论</p>
+  <h1>面向真实视频推理的多步 Evidence World Model</h1>
+  <p class="subtitle">预测不同多 clue 获取轨迹的非加性后果，再依据真实读取执行推理与作答。</p>
+  <p class="meta">当前问题定义 · 2026-08-05 · <a href="problem-formulation-en.html">English</a> · <a href="problem-formulation-zh-reference-c1829a0.html">上一版问题定义（c1829a0）</a> · <a href="baseline-results.html">Baseline results</a> · <a href="README.md">仓库总览</a></p>
 </header>
+
+<section class="card warning">
+  <span class="label">核心挑战</span>
+  <h2>长时程流式视频、有限记忆与有限推理预算</h2>
+  <ol>
+    <li><strong>有限记忆不完整。</strong>Evidence 分散在长时程 stream 中，较早 clues 可能被压缩、合并、淘汰，或从未被保留。</li>
+    <li><strong>证据时序与 answerability 不确定。</strong>决定性 evidence 可能位于过去、当前片段或尚未出现的未来，因此系统必须在立即回答、继续检索、等待更多证据和 abstain 之间选择。</li>
+    <li><strong>有限预算下的 multi-clue acquisition。</strong>系统必须在有限 response time、memory/context capacity、真实 read budget 和大模型 Reasoner calls 下检索并组合多个 clues。</li>
+    <li><strong>多条竞争 reasoning trajectories。</strong>系统需要判断哪条多步 evidence path 值得真实执行，不能穷举读取所有 candidates 或运行所有 branches，也不能把 predicted consequence 当作已观察 evidence。</li>
+  </ol>
+</section>
+
+<section class="card">
+  <span class="label">TL;DR</span>
+  <p><strong>问题：</strong>长时程 streaming QA 必须从有限、可能被压缩或缺失的 memory 中恢复多个 clues，有时还要等待 future evidence，并在严格 time 与 reasoning budgets 下判断 answerability。</p>
+  <p><strong>现有缺口：</strong>Single-step RAG 与 greedy reasoning 容易漏掉 conditional 或 delayed clue combinations；SelectStream 改善了 online evidence allocation，但 heuristic graph construction 成本高、灵活性不足，并严重依赖 graph quality。</p>
+  <p><strong>我们的方向：</strong>用 graph-free、question-conditioned Q-Former 表示 candidate nodes，再用轻量 IWM 预演多条 multi-clue、multi-hop trajectories 的联合 outcomes，而不必真实执行所有昂贵 reasoning branches。</p>
+  <p><strong>Grounding rule：</strong>Answerability-aware Reasoner 使用这些 rollout priors 执行真实 reads、replan、answer、wait 或 abstain；最终答案只能由真正观察到的 evidence 支持。</p>
+</section>
 
 <section class="card thesis">
   <span class="label">核心命题</span>
@@ -25,6 +44,17 @@
 → 真实 evidence correction
 → 重新规划</div>
   <p><strong>论文级贡献：</strong>在 belief space 中预测 action-conditioned reasoning dynamics，并用 model-predictive planning 导航下一跳；不是 graph construction、普通 retrieval 或数字 reward modeling。</p>
+  <h3>为什么常见 baseline 不够</h3>
+  <table>
+    <thead><tr><th>Baseline</th><th>在长时程 multi-clue reasoning 中的失败</th><th>IWM 必须提供的能力</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Single-step RAG / fixed Top-K retrieval</strong></td><td>只按当前相关性选择 evidence，容易漏掉暂时较弱的早期 clue、分散的互补 clues，或取回多个重复 nodes，却丢失真正使问题变得可回答的 clue combination。</td><td>分析每次 evidence acquisition 可能产生的 reasoning outcome，而不只计算当前 similarity。</td></tr>
+      <tr><td><strong>Greedy iterative reasoning</strong></td><td>每轮读取一个 candidate、更新一次，并立即提交到局部最优 continuation。早期错误会丢失仍有价值的 evidence needs 或竞争 paths；恢复时还需要额外的真实 reads 和昂贵 Reasoner calls。</td><td>在提交真实 action 前保留多条 plausible reasoning paths，并比较其 predicted downstream consequences。</td></tr>
+      <tr><td><strong>Independent / additive node scoring</strong></td><td>把每个 clue 的价值视为相互独立，无法表达 synergy、redundancy、contradiction、conditional relevance 或顺序敏感的 clue combinations。</td><td>在同一次 planning iteration 中整合多个 clues，并预测它们联合、非加性的 consequence。</td></tr>
+      <tr><td><strong>大 Reasoner 穷举 branch search</strong></td><td>理论上可以测试多条 chain，但对每个 branch 反复执行真实 evidence read 和大模型推理，在 streaming 场景下过慢且成本过高。</td><td>使用轻量、快速的 world model 预演 multi-hop reasoning-chain outcomes，并在 grounded execution 前跟踪多条 reasoning trajectories。</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>当前架构映射：</strong>这里保留的是“推理必须因果依赖 world model”的核心命题。在新版实现中，“L1/L1.5”表示 grounded L1 加确定性执行约束，而不是 semantic navigation graph；Q-Former 准备有界的 node-aligned proposals，multi-step IWM 预测组合后果，Reasoner 负责 trajectory choice 与 grounded execution。</div>
 </section>
 
 <section class="card">
@@ -50,37 +80,43 @@ z_t = Enc(s_t)
 T_θ(z_t,a_t) → (ô_{t+1}, Δẑ_{t+1})
 Pref_φ(τ_i,τ_j | z_t) ∈ {prefer_left,tie,prefer_right,incomparable}</div>
   <p><span class="math">z_t</span> 是 multi-token latent belief state，不必等同于显式 graph posterior。对于合法 evidence action，IWM 预测 observation descriptor 和 belief change，不预测下一句 reasoning text，也不能生成直接进入最终答案的想象证据。只有来自已观察历史片段的 grounded memory，或对当前/未来片段的真实读取，才能作为答案依据。</p>
+  <div class="note"><strong>新版职责映射：</strong>这里的 state/action formulation 保持不变。新版 IWM 从 Q-Former proposals 预演 multi-step clue-combination consequences，而 grounded Reasoner 承担上述 <span class="math">Pref_φ</span> 与真实 action loop 所表达的 planner/executor 职责。</div>
 </section>
 
-<section class="card">
-  <span class="label">建模假设 · Active perception</span>
-  <h2>1.1 将复杂多跳 Video QA 建模为部分可观测环境中的导航</h2>
-  <p>我们把复杂 video question answering 建模为<strong>在初始未知、部分可观测 evidence environment 中进行目标驱动导航</strong>。其类比来自 POMDP、SLAM 和 probabilistic robotics：question 定义目标，structured video memory 是不完整且可能有损的地图，合法 read 是 sensing/navigation action，读到的视频片段是 observation，持续变化的 latent belief 则概括答案可能位于何处以及仍缺少哪些事实。这是一种 reasoning abstraction，并不声称视频本身是物理机器人环境，也不把 memory graph 当作度量精确的地图。</p>
-  <div class="equation">POMDP-QA = ⟨S, A, O, T, Ω, q, B⟩
-初始信息：query q + structured memory M
-action：navigate / retrieve / inspect current / wait / backtrack
-observation：一条真实、可追溯来源的视频证据
-belief update：b_{t+1} = Update(b_t, a_t, o_{t+1})
-终止状态：high-confidence answer | low-confidence answer | abstain</div>
-  <p>Agent 开始时并不知道完整 evidence route。它从 query 和 structured memory 暴露的地址出发，选择一次交互，接收真实 observation，更新 competing answer hypotheses 与 missing-evidence requirements，然后重新规划。随着一致线索不断累积，有效 reasoning paths 应逐步收缩并汇聚到 evidence-supported answer；如果 observation 相互矛盾或仍不充分，则应保留多个候选、触发 backtracking 或额外 sensing，并最终允许 abstain。只有当评测协议强制要求在残余不确定性下作答时，low-confidence answer 才是合理终点；否则 calibrated abstention 更安全。</p>
+<section class="card benchmark">
+  <span class="label">目标场景</span>
+  <h2>1.1 IWM 必须建模的 multi-clue consequences</h2>
+  <p>Relevance model 为单个 candidate node 分配当前上下文下的分数 <span class="math">r(i|q,z_t)</span>。它可以估计 node <span class="math">i</span> <em>现在</em>看起来是否有用，却不能说明读取一组或一串 clues 后，reasoning state 会变成什么。IWM 要预测的是 functional post-acquisition state：</p>
+  <div class="equation">r(i | q,z_t)：当前 single-node relevance
+
+C(S_1,…,S_H | q,z_t)：multi-step acquisition trajectory 的 consequence
+
+Δ(i | S) = C(S ∪ {i}) − C(S)：依赖 prefix 的 marginal consequence</div>
+  <p>Marginal consequence <span class="math">Δ(i|S)</span> 会随着已经取得的 prefix <span class="math">S</span> 改变。因此，全局排序的 node list 或独立 node value 的加和无法表达下面所有情况。</p>
   <table>
-    <thead><tr><th>Probabilistic robotics 概念</th><th>Video QA 中的对应项</th></tr></thead>
+    <thead><tr><th>情况</th><th>详细的 multi-clue 行为</th><th>IWM 的预测目标</th></tr></thead>
     <tbody>
-      <tr><td>Unknown environment</td><td>问题到达时，相关证据的位置和 multi-clue dependency chain 都未知</td></tr>
-      <tr><td>Map / SLAM state</td><td>带 temporal 与 soft semantic links 的有界 structured memory；可用于导航，但不完整且可能有损</td></tr>
-      <tr><td>Sensor action</td><td>读取 memory node、沿 relation 跳转、检查 live clip、等待未来 observation 或 backtrack</td></tr>
-      <tr><td>Observation model</td><td>先预测合法 read 可能揭示什么，再用真实 grounded read 替换预测</td></tr>
-      <tr><td>Belief / localization</td><td>Question-conditioned hypotheses、已获得的 support/counterevidence、missing links 和 answerability</td></tr>
-      <tr><td>Goal / stopping rule</td><td>获得足够证据后输出 calibrated answer；路径仍无法确定时 abstain</td></tr>
+      <tr><td><strong>Synergy</strong></td><td>Clue A 识别 entity，clue B 揭示其后续状态；二者单独都无法确定答案。即使 A、B 各自 relevance 只属中等，组合后也可能是决定性的。</td><td>预测 <span class="math">A+B</span> 会跨过 answerability threshold，并补全缺失的 evidence role。</td></tr>
+      <tr><td><strong>Conditional relevance</strong></td><td>A 识别人、物体或事件后，B 才变得可解释或可检索；在 A 之前，B 含义模糊，甚至看似无关。</td><td>预测 prefix A 之后 next evidence need 与 candidate distribution 如何变化。</td></tr>
+      <tr><td><strong>Redundancy</strong></td><td>A、B 都高度相关，但重复同一个 observation、paraphrase 或 visual state。两者都读会浪费预算，却不增加 evidence coverage。</td><td>预测在已经读取 A 后，B 的 marginal state change 很小，把预算留给互补 clue。</td></tr>
+      <tr><td><strong>Contradiction</strong></td><td>A 支持当前 hypothesis，而稍后的 B 提供 grounded counterevidence，或推翻假设的 temporal order。</td><td>预测 hypothesis reversal、alternatives 重新打开、contradiction status 与 replanning need。</td></tr>
+      <tr><td><strong>Delayed value</strong></td><td>A 不会立即提高 answerability，但它引入理解数步之后 clue C 所需的 entity、location 或 event boundary。</td><td>即使 immediate answerability delta 接近零，也预测其具有正的 long-horizon value。</td></tr>
+      <tr><td><strong>Order sensitivity</strong></td><td>先读 A 再读 B 可以建立有效 dependency；先读 B 则 observation 含义模糊，或在尚不知道其角色时提前消耗预算。</td><td>当 sequence 不可交换时，区分 <span class="math">C(A→B)</span> 与 <span class="math">C(B→A)</span>。</td></tr>
+      <tr><td><strong>Insufficiency</strong></td><td>当前可见的所有 clues 仍无法补全必要 role，或者决定性 clue 位于 future clip。</td><td>预测 <code>continue</code>、<code>wait</code> 或 <code>abstain</code>，而不是制造 answer confidence。</td></tr>
     </tbody>
   </table>
-  <p><strong>该假设尤其适用于三类场景：</strong></p>
-  <ol>
-    <li><strong>长视频中的 evidence loss 或 context loss：</strong>相关历史只被部分保留，因此 agent 必须在不完美地图上导航、补齐互补线索，并识别证据缺失是否已使答案不可辨识。</li>
-    <li><strong>带未来证据的 streaming video：</strong>question 可能早于决定性事件到达，因此等待本身是 information-gathering action，过早回答则是一种 planning failure。</li>
-    <li><strong>复杂 multi-hop、multi-clue reasoning：</strong>任何单个 clip 都不足以回答问题；agent 必须组合时间或语义上分离的 observations，同时保留 alternative paths，并在每次真实 read 后修正 belief。</li>
-  </ol>
-  <p>因此，我们希望得到的是<em>由证据驱动，而不是由分数驱动的 convergence</em>：confidence 可以作为经过校准的 categorical outcome 报告，但 imagined observation、embedding similarity 或模型虚构的 numeric utility 都不能单独为最终答案提供依据。</p>
+  <h3>长视频中的示例 trajectory</h3>
+  <p>假设问题询问“什么物体导致了后来机器故障”。早期片段 A 显示工人拿起一个没有清晰标签的容器；中间片段 B 短暂显示容器标签；后期片段 C 显示同一工人把其中物质倒入机器；片段 D 显示机器故障。Single-step retriever 可能因为“故障”字面匹配而把 D 排在最前，取回多个重复的故障画面，却漏掉 A 或 B。真正有用的是 <span class="math">A→B→C→D</span>：A+B 确认 identity，C 确认 action，D 确认 outcome。IWM 应预测完整 chain 可以补全因果 evidence roles，而 <span class="math">C+D</span> 仍不充分，重复的 D 类 nodes 则是 redundant。</p>
+  <h3>所需的 prediction object</h3>
+  <p>对于每个 imagined prefix，模型应预测紧凑的 functional state，而不是 imagined caption：</p>
+  <div class="equation">r̂(S_1:h) = {
+  answerability,
+  已补全与缺失的 evidence roles,
+  next evidence need,
+  answer / read / wait / abstain,
+  redundancy, contradiction, insufficiency
+}</div>
+  <p>因此，核心 target 是 trajectory-level 且 non-additive：<span class="math">C(A,B) ≠ C(A)+C(B)</span>。科学问题不是模型能否对 relevant nodes 排序，而是它能否在执行真实 reads 之前，预测不同 clue combinations 会如何改变后续 grounded reasoning。</p>
 </section>
 
 <section class="card benchmark">
@@ -147,478 +183,367 @@ SelectStream 启发的记忆工作评测顺序：OVO RT/BT → StreamingBench �
 </section>
 
 <section class="card">
-  <span class="label">术语说明 · Annotation vs. reasoning</span>
-  <h2>1.3 Multi-clue 与 multi-evidence 相关，但并不等同</h2>
-  <p><strong>Multi-clue 是 annotation-level property：</strong>一个 QA 样本具有两个或更多由 benchmark 标注的相关 frames、timestamps 或 temporal intervals。<strong>Multi-evidence 是 reasoning-level property：</strong>一个有充分依据的答案需要 agent 获取并共同使用至少两条不同的 grounded facts，与这些事实分布在多少个标注 interval 中无关。</p>
+  <span class="label">SelectStream debrief</span>
+  <h2>1.3 关于 online evidence allocation 的三个 RQ</h2>
+  <p><a href="https://arxiv.org/abs/2606.16353">SelectStream</a> 把 streaming-video memory 定义为<strong>有预算的 online latent evidence allocation</strong>。它的贡献可以简化为三个相互配合的 research questions：</p>
   <table>
-    <thead><tr><th>术语</th><th>可操作定义</th><th>所属层级</th></tr></thead>
+    <thead><tr><th>Research question</th><th>SelectStream 的回答</th><th>在本项目中的作用</th></tr></thead>
     <tbody>
-      <tr><td><strong>Clue</strong></td><td>Benchmark 标注的相关 frame、timestamp 或 temporal interval</td><td>Dataset annotation</td></tr>
-      <tr><td><strong>Evidence</strong></td><td>Agent 真实读取、具有来源依据并用于更新 belief 的事实</td><td>Reasoning/runtime</td></tr>
-      <tr><td><strong>Multi-clue</strong></td><td>至少存在两个不同的 annotated clue regions</td><td>Dataset selection property</td></tr>
-      <tr><td><strong>Multi-evidence</strong></td><td>至少两条不同 evidence items 必须共同出现，才能为答案提供充分依据</td><td>Reasoning requirement</td></tr>
-      <tr><td><strong>Multi-hop</strong></td><td>一条 evidence 支持某个 intermediate conclusion 或 dependency，并影响下一步 reasoning/evidence-acquisition action</td><td>Reasoning-chain structure</td></tr>
+      <tr><td><strong>RQ1：什么时候应该把 stream 写入 memory？</strong></td><td>使用 surprise-driven adaptive windowing，在视觉流发生有意义变化时结束 segment 并写入，而不是按固定时间间隔采样。</td><td>决定候选 L1 的时间粒度，并减少重复写入。</td></tr>
+      <tr><td><strong>RQ2：固定容量下应该保留什么？</strong></td><td>把 latent evidence 保存在固定容量 memory 中，通过 priority-preserving consolidation 或 merge 管理历史，而不是只保留最近 observations。</td><td>决定哪些 grounded history 能为未来问题继续使用；缺失或过度压缩的 clue 无法由 IWM 恢复。</td></tr>
+      <tr><td><strong>RQ3：问题到来后应该检索并暴露哪些历史？</strong></td><td>用 query-conditioned routing 选取一个小型 evidence set，只向冻结 VLM 注入数量有界、经过 calibration 的 latent tokens。</td><td>提供 evidence access 的效率 baseline，但不预测不同 multi-clue trajectories 的联合 reasoning outcome。</td></tr>
     </tbody>
   </table>
-  <p>一个 annotated clue interval 可以包含多条 evidence facts。例如，同一个 clip 同时展示人物拿起钥匙，随后用它打开门；该样本可能是 <em>single-clue but multi-evidence</em>。反过来，一个样本可能包含两个 annotated clue intervals，但对于某个具体问题或某次 model execution，其中一个 clue 已经足够；此时它是 <em>multi-clue</em>，但尚不能证明存在 multi-evidence necessity。</p>
-  <div class="equation">本项目约定：
-使用 multi-clue instances 作为 multi-evidence QA 的可观测 proxy，
-但 multi-clue 不保证每个 clue 都是答案所必需，
-也不保证 annotation 中存在显式 multi-hop reasoning chain。</div>
+  <h3>面向灵活 multi-clue reasoning 的局限</h3>
+  <ol>
+    <li><strong>Heuristic graph 构建与更新过于笨重、粗糙。</strong>Query-time retrieval 依赖由人工设计的 surprise、similarity、merge、priority 和 edge-update rules 构建并维护的 graph。这些操作增加工程复杂度；当新问题改变哪些 clue relations 更重要时，固定 topology 也缺少灵活适应能力。</li>
+    <li><strong>Multi-node、multi-subgraph reasoning cost 较高。</strong>为了覆盖多个互补 clues，系统可能需要检索、扩展并编码大量 nodes 或多个 candidate subgraphs。当多条竞争 evidence chains 需要同时比较时，graph reasoning cost 和注入 VLM 的上下文长度都会明显增加。</li>
+    <li><strong>系统严重依赖 graph quality。</strong>Node 缺失、错误 merge、虚假或较弱 edges，以及不充分的 temporal/semantic connectivity 都会直接限制 retrieval reachability。一旦必要 clue chain 没有被正确写入 graph，或在 graph 中被扭曲，下游模型很难恢复。</li>
+  </ol>
+  <div class="note"><strong>边界：</strong>SelectStream 研究有限历史证据应如何分配，以及 VLM 应看到多少。本项目从 grounded candidate memory 出发，进一步提出不同的 downstream question：轻量 IWM 能否在 Reasoner 执行之前，预测多个 multi-step evidence-acquisition paths 的非加性后果？</div>
 </section>
 
 <section class="card thesis">
-  <span class="label">核心方法 · Qwen-LoRA categorical dynamics + planning</span>
-  <h2>2. 面向 Streaming Video QA 的 All-node Implicit World Model</h2>
-  <p>我们把 question answering 表述为在固定容量 adaptive-length memory nodes 上反复执行的 active-evidence loop。L1.5 用 question-independent 的 <span class="math">A<sup>corr</sup>,A<sup>temp</sup>∈R<sup>N×N</sup></span> 表示 attention-weighted navigation graph；每条 path 按 active cursor 取得两条 <span class="math">[N,1]</span> navigation rows 并编译结构合法 actions。一次 listwise Qwen-LoRA IWM pass 结合 question、已获得证据、hypothesis、target descriptors 与这些 graph signals，预测全部合法 actions 的 categorical belief effects。<strong>QA Planner</strong> 只执行一次真实交互，再修正和重新规划。</p>
-  <div class="equation">Question → missing-evidence belief
-→ L1.5 A_corr/A_temp [N,N] → cursor rows [N,1] → legal actions
-→ Qwen-LoRA IWM：解释全部合法 path × node belief transitions
-→ QA Planner：选择一次真实 read / wait / answer / abstain
-→ 观察 grounded clue → 修正 belief → repeat</div>
+  <span class="label">Motivation</span>
+  <h2>2. 从 graph-free proposals 到 answerability-aware grounded reasoning</h2>
+  <p>目标 setup 将 candidate representation、counterfactual consequence prediction 与 grounded execution 分为三个阶段：</p>
+  <ol>
+    <li><strong>Graph-free、question-conditioned candidate representation。</strong>对于每个合法 node，Q-Former 根据问题和该 node 在 pre-read contract 下允许暴露的 features，生成固定大小、node-aligned 的 query/proposal tokens。这些 tokens 编码粗粒度 relevance、时间位置与可能的 evidence role。系统不再首先构建或更新显式 semantic correlation graph；node 之间的关系保持 implicit 且依赖当前问题，由下游进行组合，而不是预先固定成 graph edges。</li>
+    <li><strong>轻量预演 multi-clue、multi-hop outcomes。</strong>IWM 组合有序的 proposal-token trajectories——第一版每个 imagined hop 只加入一个 candidate node——并 roll out 不同 acquisitions 可能如何改变 answerability、missing evidence roles、contradiction、redundancy，以及是否应继续或 abstain。通过轻量模型预演多条可能 reasoning paths，系统不必为每个 branch 都支付完整 evidence read 和大 Reasoner execution 的成本。</li>
+    <li><strong>Grounded、answerability-aware Reasoner execution。</strong>Reasoner 接收当前 grounded evidence state、candidate evidence trajectories，以及 IWM 预测的 reasoning prior/status。它可以执行 multi-clue、multi-hop reads，提前停止、偏离或 replan，并持续判断 evidence 是否足以回答。Prediction 只用于引导 acquisition；最终 answer 与 abstention decision 必须由真正读取过的 evidence 支持。</li>
+  </ol>
+  <div class="equation">Q-Former：根据问题生成 node-aligned candidate proposals
+IWM：轻量预演 multi-clue / multi-hop consequence combinations
+Reasoner：带显式 answerability awareness 的 grounded execution</div>
+  <div class="note"><strong>关键修正：</strong>“implicit correlation”不表示 Q-Former 输出一张隐藏 adjacency matrix。Q-Former 负责表示各个 candidates；IWM 负责建模 candidates 与 trajectory prefixes 之间 conditional、non-additive 的 interaction。这样主方法保持 graph-free，同时仍能进行 question-dependent clue composition。</div>
 </section>
 
-<section class="card benchmark">
-  <span class="label">Related-work map</span>
-  <h3>2.1 Related work：究竟在建模哪个“世界”？</h3>
-  <p>现有工作可压缩为三个相邻方向：结构化 research memory（<a href="https://arxiv.org/abs/2603.24402">AutoProf</a>）、可执行 research/science environment（<a href="https://arxiv.org/html/2602.15112">ResearchGym</a>、<a href="https://arxiv.org/abs/2406.06769">DiscoveryWorld</a>），以及 learned action-consequence knowledge（<a href="https://arxiv.org/abs/2606.30639">WorldEvolver</a>、<a href="https://arxiv.org/abs/2405.14205">WKM</a>）。<a href="https://arxiv.org/abs/2602.10090">AWM</a>/<a href="https://arxiv.org/abs/2604.18292">Agent-World</a> 等 environment generators 与 <a href="https://arxiv.org/abs/2607.12474">mechanistic world models</a> 则分别构造外部世界或解释被研究系统。</p>
-  <p><strong>我们的目标是 problem-solving world：</strong></p>
-  <div class="equation">(B_t, H_t, E_t, A_t) —a_t→
-(ô_{t+1}, ΔB_t, ΔH_t, answerability_{t+1}, frontier_{t+1})</div>
-  <p>IWM 在真实 evidence read 前预测该 action 对 answer hypotheses、missing evidence、answerability 和 future search 的影响，再用真实 observation 修正预测。</p>
-</section>
-
-<section class="card benchmark">
-  <span class="label">问题求解中的既有 Frontier Exploration</span>
-  <h3>2.2 IWM 之前的显式问题空间导航</h3>
-  <p>近期 problem-solving agents 已明显吸收导航思想，但通常显式表示这些结构，而不是学习完整的局部 dynamics：</p>
+<section class="card">
+  <span class="label">Related work 与方法定位</span>
+  <h2>2.1 从高效 visual reasoning、latent world model 到 streaming evidence planning</h2>
+  <p>本方案位于 lightweight visual reasoning、latent world-model supervision 与 bounded streaming-video memory 的交叉位置。以下最相关工作分别提供了互补的设计依据，但都没有从 grounded streaming memory 出发，预测 action-conditioned、multi-clue evidence-acquisition consequences。</p>
   <table>
-    <thead><tr><th>机制</th><th>代表工作</th><th>主要贡献</th></tr></thead>
+    <thead><tr><th>工作</th><th>核心思想</th><th>本方案保留什么</th><th>尚未解决的问题 / 本方案区别</th></tr></thead>
     <tbody>
-      <tr><td><strong>Persistent map + frontier</strong></td><td><a href="https://arxiv.org/abs/2606.11926">Arbor</a>、<a href="https://arxiv.org/abs/2601.20539">PathWise</a>、<a href="https://arxiv.org/abs/2604.14116">TREX</a></td><td>用 hypothesis/evidence graph 或 search tree 显式记录当前状态，并选择下一个可扩展节点。</td></tr>
-      <tr><td><strong>Belief-guided exploration</strong></td><td><a href="https://arxiv.org/abs/2606.30335">BayesEvolve</a>、<a href="https://arxiv.org/abs/2606.29182">Evidence-Informed Beliefs</a></td><td>用 uncertainty-aware belief update 聚焦探索并减少重复发现。</td></tr>
-      <tr><td><strong>Search、feedback 与 repair</strong></td><td><a href="https://arxiv.org/abs/2310.04406">LATS</a>、<a href="https://arxiv.org/abs/2607.08894">GATS</a>、<a href="https://arxiv.org/abs/2603.02772">SERP</a></td><td>引入 tree/graph search、environment feedback、backtracking 与 failure-aware replanning。</td></tr>
+      <tr><td><a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/f9668d223e713943634dce9c66e8f2c1-Abstract-Conference.html">IPRM</a><br><span class="small">Jaiswal et al., NeurIPS 2024</span></td><td>用轻量、fully differentiable module 结合 iterative computation 与 parallel computation：前者处理 compositional steps，后者同时探索相互独立的 reasoning paths，应用于 image/video VQA。</td><td>多 clue 推理不必展开成长 textual chain；iterative 与 parallel latent computation 可以高效整合多条视觉线索。</td><td>IPRM 对已经提供给模型的 features 进行推理，不建模合法 <code>READ(i)</code> intervention，也不预测不同 evidence trajectories 的 post-read consequence、管理 causal streaming memory，或约束 imagined 与 grounded evidence 的边界。</td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2606.04627">MIRAGE</a><br><span class="small">Yang et al., 2026</span></td><td>把 mobile-agent reasoning 蒸馏到 continuous latent slots；训练阶段用 Q-Former head 将这些 slots 对齐到 frozen next-screenshot features，使 hidden state 同时具有 action 与 transition awareness。</td><td>Future-state prediction 可以约束紧凑的 latent reasoning，不需要解码冗长 rationale 或生成 pixels，为高效 world-model interface 提供依据。</td><td>MIRAGE 预测执行 mobile action 后的下一 GUI observation，其 Q-Former world-model head 在 inference 时被移除。本方案的 IWM 则作为 inference-time planner 保留，用来比较多条 hypothetical evidence-read chains，并预测 clue need 与 answerability 的 functional change，而不是 future frames。</td></tr>
+      <tr><td><a href="https://ai.meta.com/research/publications/v-jepa-2-self-supervised-video-models-enable-understanding-prediction-and-planning/">JEPA / V-JEPA 2</a><br><span class="small">Assran et al., 2025</span></td><td>Context encoder 与 predictor 学习预测 target representations，而不是重建全部 pixels；V-JEPA 2 还展示了用于 planning 的 action-conditioned latent world model。</td><td>JEPA 可以作为 IWM 的潜在实现参考：使用 stop-gradient target encoder，在 latent space 预测紧凑的 post-transition representation，而不是生成 imagined caption、reasoning text 或 pixels。</td><td>Physical-video JEPA 预测 visual state 如何演化；本方案预测合法 evidence action 将如何改变 question-conditioned reasoning state。JEPA 因而是一种 architecture option，而不是本方案 IWM 的定义。</td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2606.16353">SelectStream</a><br><span class="small">Ge et al., 2026；详见 §1.3</span></td><td>面向 streaming video 的 budgeted online evidence allocation。</td><td>Adaptive L1 scope 与 capacity-aware consolidation。</td><td>其 query routing 使用 latent memory graph；本方案保持 graph-free，并在执行前预测 multi-step evidence consequences。</td></tr>
     </tbody>
   </table>
-  <div class="equation">显式 navigator = problem map + localization/belief + frontier + history/repair
-Implicit world model = learned local dynamics p(z_{t+1}, o_{t+1} | z_t, a_t)
-本文视角 = mismatch-aware belief-space navigator 内部的 IWM</div>
-  <p>二者互补：显式 L1.5 graph 避免重复探索，并支持可审计的局部修复；Qwen-LoRA IWM 则在 question/evidence/hypothesis 条件下解释每条结构合法 graph action 的 categorical belief effect。Temporal/correlation rows 是 question-independent navigation affordance，不是 relevance、utility 或 gate。Planner 执行真实 read 后再通过 prediction–observation mismatch 修复 belief。</p>
-</section>
-
-<section class="card">
-  <span class="label">Module 0 · 合法交互接口</span>
-  <h3>2.3 Reasoning actions 与 Graph Action Compiler</h3>
-  <p>Action 表示 reasoning/evidence query，不是机器人在物理世界中的动作：</p>
-  <div class="equation">A = {start_at, temporal_before, temporal_after,
-     follow_soft_correlation, backtrack, inspect_current,
-     wait_for_future, stop, answer, abstain}</div>
-  <p>只有存在 live clip 时，<code>INSPECT_CURRENT</code> 才是合法 action。只有 future-evidence/proactive protocol 才允许 <code>WAIT_FOR_FUTURE</code>；它会消耗 latency 或 wait budget，并推进 visible stream，绝不能提前暴露未来片段。当前 CG-Bench clue-navigation protocol 不模拟 free-running query arrival，因此只使用 graph-navigation 子集。</p>
-  <p>主方法维护一个 active current-node cursor。普通 navigation action 只以该 cursor 为 source；已读取 nodes 保留在 belief/frontier history，需要时通过显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 返回。</p>
-  <div class="equation">A_t = outgoing_temporal(current)
-    ∪ positive_direction_soft_correlation(current)
-    ∪ backtrack(acquired frontier history)
-    ∪ protocol_enabled{inspect_current, wait_for_future}
-    ∪ {stop, answer, abstain}</div>
-  <p>确定性的 Graph Action Compiler 只根据 endpoint validity、streaming visibility、relation status、provenance、executor availability 和 budget 枚举 actions，不按 question relevance 过滤。初始步骤使用 virtual query root，为每个 retained node 提供 <code>START_AT(node)</code>。</p>
-  <div class="equation"><strong>输出契约——完整合法动作表：</strong>
-A_t = [{action_id, action_type, source_id, target_safe_address,
-        relation/provenance, executor, protocol_gate, budget_cost}]</div>
-  <p>当前 all-node 方法把完整结构合法集合 <span class="math">A_t</span> 交给 IWM。Embedding Top-K 仍是独立 retrieval baseline；learned bounded Frontier 是开放效率设计，不属于当前主路径。</p>
-</section>
-
-<section class="card">
-  <span class="label">Component 1 · Complete-buffer semantic context</span>
-  <h3>2.4 L1.5 attention graph 与 path-local navigation rows</h3>
-  <p>固定容量 memory 表示为 <span class="math">M ∈ R<sup>N×F×D</sup></span>；L1.5 根据 node timestamps 与 question-independent embedding/attention correlation 构造两个 adjacency matrices。它们描述 node-to-node navigation，不描述 question-to-node relevance。</p>
-  <div class="equation">A^temp, A^corr ∈ R^{N×N}
-G^temp_{p,t}=A^temp[cursor_{p,t},:] ∈ R^{N×1}
-G^corr_{p,t}=A^corr[cursor_{p,t},:] ∈ R^{N×1}</div>
-  <p>Legal compiler 从 supported outgoing relations、backtrack 与 terminal operations 构造 <span class="math">A<sub>p,t</sub></span>。这是 structural executability，不是 node dropping：全部 nodes 仍保留在 buffer，初始 virtual root 对每个 node 提供 <code>START_AT</code>。第一版只取 active cursor row；若需要旧 evidence anchor，Planner 显式 <code>BACKTRACK</code>/<code>SHIFT_FOCUS</code> 后再取对应 row，不对多个 source rows 做无 provenance 的 max pooling。</p>
-  <div class="note"><strong>All-node 的明确边界：</strong>已经存在于当前 memory buffer 中的每个真实、可用 node 都保留；不按 semantic/temporal score、Top-K 或 threshold 做 node dropping。Padding/unavailable mask 只表示无效 tensor slot，不是相关性剪枝。Buffer eviction、node merging 和写入侧 admission policy 不在当前 reader 方案中，也不能被隐式加入。</div>
+  <div class="note"><strong>方法定位：</strong>IPRM 支持高效 latent multi-path computation；MIRAGE 支持 transition-predictive latent states；SelectStream 支持 bounded online evidence allocation。本方案通过 belief-space 中的 model-predictive evidence planning 连接三者：Q-Former 生成 node-aligned pre-read proposals，IWM rollout 多条合法 <code>READ</code> trajectories，Reasoner 再用真实 evidence 执行和校正。</div>
 </section>
 
 <section class="card thesis">
-  <span class="label">Component 2 · Predictive dynamics</span>
-  <h3>2.5 Hypothesis-Effect IWM：在 reasoning 中使用这条 clue 会改变什么？</h3>
-  <p>Qwen-LoRA IWM 每个 reasoning step 做一次 listwise pass，联合读取 question、已获得的 grounded evidence、hypotheses/missing roles、合法 target descriptors、当前 cursor 的两条 L1.5 rows 与 action types，输出每个合法 action 的 categorical belief effect。Runtime 可以只生成紧凑 effect tokens，不要求 numeric utility、长 rationale 或精确 imagined caption。</p>
-  <div class="equation">ΔB̂_{p,t} = IWM_Qwen-LoRA(q, E_{p,t}, H_{p,t}, legal_targets,
-                                      G^corr_{p,t}, G^temp_{p,t}, action_types)</div>
-  <p>第一轮比较 frozen-Qwen prompting 与 rank-8/16 LoRA，不 full-finetune backbone。训练随机打乱 node presentation order，并检查 permutation consistency。每 node 单独调用 Qwen、暴露全部 source clips 或输出长 JSON 都是更重的独立 baseline。</p>
-  <div class="equation"><strong>输出契约——每个 candidate 对应一个 predicted-only joint future：</strong>
-τ_t^a = {action_id, optional_coarse_observation_class,
-         per_hypothesis{support|contradict|inconclusive,
-                        roles_resolved, roles_opened, contradiction_change,
-                        answerability_transition}, frontier_effect,
-         optional_second_hop}</div>
-  <p>一次 physical read 必须生成覆盖<strong>所有 hypotheses 的 joint future</strong>；planner 不能拿某个 answer choice 的 trajectory 与另一个 choice 的无关 physical trajectory 比较。执行前，任何 visual clue 或完整 caption 都只能是 predicted-only；执行后，真实 visual/text observation 与 grounded caption 通过 correction 替换 imagination。Imagined evidence 永不持久化，也不能直接用于回答。</p>
-</section>
-
-<section class="card boundary">
-  <span class="label">Component 3 · Action and stopping</span>
-  <h3>2.6 QA Planner：测试一个未来，再判断证据是否充分</h3>
-  <p>QA Planner 可以先使用冻结的 Qwen checkpoint，不必训练。Pre-read selector 接收 question、累积的 grounded evidence、current belief、remaining budget 和 IWM 为全部合法 path–node actions 产生的 categorical effects，输出一个 typed decision。执行后，另一个固定 post-read evidence-judge contract 只查看被选中的 grounded observation，判断真实 belief effect 并修正状态。两个 contract 分离，使 Qwen 的选择与证据判断可审计，也为 IWM 提供 prediction–observation target。</p>
-  <div class="equation">Planner_φ(q, B_t, E_t, {τ_t^a}_{a∈A_t}, budget_t)
-∈ {READ(a), INSPECT_CURRENT, WAIT_FOR_FUTURE,
-   ANSWER_HIGH_CONFIDENCE, ANSWER_LOW_CONFIDENCE, ABSTAIN}</div>
-  <div class="equation"><strong>输出契约——严格输出一个 decision：</strong>
-d_t = READ(action_id) | INSPECT_CURRENT | WAIT_FOR_FUTURE
-    | ANSWER(answer, confidence_tier, grounded_evidence_refs)
-    | ABSTAIN(reason)</div>
-  <p><code>ANSWER_HIGH_CONFIDENCE</code> 要求 grounded 且足够完整的 evidence chain。<code>ANSWER_LOW_CONFIDENCE</code> 只用于评测协议强制在残余不确定性下作答的情况；否则优先 <code>ABSTAIN</code>。只有允许 future evidence 的 streaming protocol 才能使用 <code>WAIT_FOR_FUTURE</code>，并且它会消耗 wait/latency budget。</p>
-  <div class="note"><strong>Qwen-LoRA 边界：</strong>先用完全相同的 all-node prompt 建立 frozen-Qwen baseline，再训练 rank 8/16 LoRA，不 full-finetune backbone。只有有长度上限的 L1 descriptors 是 memory-visible；每 node 调一次 Qwen、暴露全部 source clips 或生成长 rationale 都是更重的独立 baseline。</div>
-</section>
-
-<section class="card">
-  <span class="label">Closed-loop dynamics</span>
-  <h3>2.7 Dynamic interpretation</h3>
-  <p>同一个 candidate 在不同步骤可能产生不同 effect，因为 missing roles、hypothesis states、acquired clues、cursor、reachable frontier 和 remaining budget 已经变化。因此，IWM 建模的是 reasoning state transition，而不是静态 question–clip similarity。Planner 通过一次真实 read 测试预测中最有价值的 transition，修正状态，再重新运行两个模型。</p>
-  <div class="equation">B_0 + read(search clue) → resolve search_event；open object_found
-B_1 + read(object clue) → resolve object_found；open object_use
-B_2 + read(door clue) → resolve instrument_identity；answer ready
-B_2 + reread(search clue) → redundant / unchanged</div>
-  <p><strong>核心边界：</strong>L1.5 temporal/correlation graph 提供稳定 navigation topology；Qwen-LoRA IWM 结合当前 evidence/hypothesis 解释每个合法 graph action 的 belief effect；Planner 决定实际执行什么，以及真实累积证据是否充分。任何模块都不能把 imagined clue 转换成事实。</p>
-</section>
-
-<section class="card">
-  <span class="label">开放问题 · Memory 与 Navigability</span>
-  <h2>3. Evidence memory：L1/L1.5 是一个开放设计问题</h2>
-  <p>这一层必须决定<strong>存什么、以什么粒度存，以及哪些保留项之间应该建立可导航连接</strong>。当前 memory graph 是不读取未来 question/answer、可寻址且可追溯来源的 evidence substrate，但其 representation 和 connectivity 尚不视为已解决。</p>
+  <span class="label">目标架构</span>
+  <h2>3. 四个模块的职责划分</h2>
   <table>
-    <thead><tr><th>层级</th><th>职责</th><th>研究定位</th></tr></thead>
+    <thead><tr><th>模块</th><th>职责</th><th>禁止行为</th></tr></thead>
     <tbody>
-      <tr><td>L1</td><td>真实 visual/text observations、时间戳、provenance、embedding</td><td>开放的 storage design；当前 implementation baseline</td></tr>
-      <tr><td>L1.5</td><td>L1 node IDs 之间 question-independent 的 soft navigation correlation；已验证 typed relations 单独保存</td><td>开放的 connectivity design；当前 navigation baseline</td></tr>
-      <tr><td>Latent belief</td><td>问题条件下的 competing interpretations、missing links 和 answerability</td><td>主方法状态</td></tr>
-      <tr><td>L2</td><td>已执行 action、真实 observation、realized delta 和决策审计</td><td>轨迹记录，不是 world model</td></tr>
+      <tr><td><strong>L1 grounded memory</strong></td><td>保存可追溯 evidence nodes、timestamps、provenance、visibility 与 read state</td><td>在真实读取前暴露隐藏 grounded value</td></tr>
+      <tr><td><strong>Q-Former</strong></td><td>为所有合法未读 nodes 生成固定大小、node-aligned 的 pre-read proposal tokens</td><td>选择下一次 read、预测 trajectory 或回答问题</td></tr>
+      <tr><td><strong>IWM</strong></td><td>预测不同 clue combinations 的多步 latent consequences</td><td>生成事实 caption、写入 memory 或提供 answer evidence</td></tr>
+      <tr><td><strong>Reasoner</strong></td><td>执行真实读取、停止、偏离、replan、回答或 abstain</td><td>把 imagined consequence tokens 当作事实引用</td></tr>
     </tbody>
   </table>
-  <p>当前 baseline 主要沿用两种已有思路：以 <strong>Video_Skills-style atomic skills</strong> 构建 grounded、可审计的 memory；以 <strong>SelectStream-style bounded online selection</strong> 决定何时写入、保留什么以及查询什么。核心开放问题是：这些选择能否为后续 Qwen-LoRA all-node categorical IWM 与 planning 产生合适的 memory-visible nodes。</p>
+  <div class="equation">Q-Former 表示候选 evidence。
+IWM 预测多步 clue-combination consequences。
+Reasoner 执行 grounded reasoning。</div>
 </section>
 
 <section class="card">
-  <span class="label">开放问题 · Storage unit</span>
-  <h3>3.1 L1 存储协议</h3>
-  <p>L1 是 question-independent、兼容 Video_Skills 的 <code>ClueMemoryGraph</code>。每个 node 存一条局部、有时间范围的 observation，而不是 reasoning conclusion。</p>
+  <span class="label">事实基础</span>
+  <h2>3.1 L1 grounded evidence memory</h2>
+  <p><strong>采用 SelectStream-like、但保持 grounded 的构建方式。</strong>L1 writer 先把视频切成较短的 fixed-duration clips，再根据 content change、temporal continuity 与 memory pressure，对相邻 clips 进行 merge，或扩展其 scope，形成 adaptive-length evidence nodes。稳定内容可以合并成覆盖范围更大的 node；快速变化或显著事件则保留更细的时间粒度。</p>
+  <div class="equation">stream → 短 fixed-interval clips
+→ caption / entity-state / embedding extraction
+→ 基于 change 与 continuity 的 merge 或 boundary decision
+→ 固定容量下的 adaptive-scope grounded L1 nodes</div>
+  <h3>3.1.1 在线 node update 与 capacity-aware consolidation</h3>
+  <p><strong>每个新的短 segment 到达时，writer 都执行一次 question-independent 决策。</strong>借鉴 <a href="https://arxiv.org/html/2606.16353">SelectStream</a> 中有用的机制，它联合 attention drift 与 feature change：前者检测 segment encoder 的关注位置是否转移，后者通过 cosine distance 检测 visual-semantic content 是否变化。Exponential moving average 提供局部 baseline；surprise spike、累计 surprise budget 或 maximum segment length 均可触发 segment boundary，而 minimum length 用于避免噪声造成的过度切分。</p>
+  <div class="equation">s_t^attn = JS(A_t || A_{t-1})
+s_t^feat = 1 - cos(g_t, g_{t-1})
+s_t = λ s_t^attn + (1-λ) s_t^feat
+s̄_t = ρ s̄_{t-1} + (1-ρ)s_t</div>
+  <p>Segment 结束后，轻量 segment encoder 生成 candidate <span class="math">z_j</span>。一个 learned write determiner 综合其 quality/grounding score、surprise、duration、temporal gap、capacity pressure，以及它与 active nodes 的 similarity；它预测明确的 typed action，而不是含义模糊的单一分数：</p>
+  <div class="equation">d_j = D_ψ(z_j, quality_j, surprise_j, Δt, {cos(z_j,h_i)}, |M|/K)
+d_j ∈ {discard_low_quality, merge_update(i*), append_new, consolidate_then_append}</div>
+  <p><strong>Low quality 指证据不可靠或 grounding 不充分，而不是与当前问题不相关。</strong>由于未来问题未知，determiner 不能仅因 question relevance 低而丢弃一个有效事件。若最佳 feature match 超过 redundancy threshold 且 candidate surprise 较低，writer 更新对应 node；否则创建新 node。Gated update 在吸收真实变化的同时避免覆盖历史：</p>
+  <div class="equation">i* = argmax_i cos(z_j,h_i)
+γ_j = sigmoid(MLP([z_j; h_i*; s̄_j; Δt; quality_j]))
+h_i* ← (1-γ_j)h_i* + γ_j f_write(z_j,h_i*)</div>
+  <p>执行 update 时，还要合并 time span，对 caption 与 entity/state fields 做 grounded merge，保留 source provenance 与 lineage，并更新 write/merge metadata；随后使 §3.2.1 中缓存的 question-independent Q-Former tokens <span class="math">U_i</span> 失效并重新计算。若容量将超过 <span class="math">K</span>，writer 合并风险最低的一对 node：高 feature redundancy 鼓励合并，而 surprise、access frequency、recency 与 evidential quality 共同保护高价值 node。该设计保留 SelectStream 的 priority-preserving consolidation 思路，但不构建 semantic graph edges。</p>
+  <div class="equation">(u,v) = argmin merge_cost(u,v)
+merge_cost = dissimilarity(u,v) + protection(u) + protection(v)
+M ← (M \ {u,v}) ∪ {GroundedMerge(u,v)}</div>
+  <h3>3.1.2 作为 feature embeddings 存储的基础 node content</h3>
+  <p><strong>Caption、entity、visual embedding 与 timestamps 是每个 L1 node 的基础内容。</strong>Node 既保留可审计的 source fields，也将这些内容保存为对齐的 model-facing feature embeddings：</p>
+  <div class="equation">M[i] = [
+  f_caption(i),
+  f_entity/state(i),
+  f_visual(i),
+  f_time(t_start,t_end)
+]
+
+f_caption      = Proj(Encode(有界 grounded caption))
+f_entity/state = Proj(Encode(grounded entities 与 states))
+f_visual       = Proj(visual 或 multimodal clip representation)
+f_time         = 显式 start/end timestamps 的 temporal embedding</div>
+  <p>所有 feature slots 都投影到共享 dimension，并携带显式 validity masks。原始的有界 caption、entity/state fields 与精确 timestamps 仍与 embeddings 一起保存，用于 provenance、debugging 和 tool arguments。因此 timestamps 有意采用双重表示：精确 metadata 用于 temporal legality 与审计，learned feature embedding 用于 Q-Former/IWM computation。</p>
+  <p>每个 materialized node 保存稳定 node ID、精确 source interval 与 timestamps、有界 grounded caption、证据支持的 entities/states、embedding 或 embedding reference、provenance/evidence pointers、visibility、lineage/merge history 和 read status。L1 是最终答案的 factual substrate。</p>
   <table>
-    <thead><tr><th>Node/字段</th><th>存储内容</th></tr></thead>
+    <thead><tr><th>L1 字段</th><th>用途</th><th>访问边界</th></tr></thead>
     <tbody>
-      <tr><td>公共字段</td><td>稳定 node/video ID、node type、grounded text descriptor、modality、time span、clip/local ID、evidence refs、source、producer、provenance、visibility 和可选 embedding sidecar reference</td></tr>
-      <tr><td><code>clip</code></td><td>可寻址视频区间、粒度和 segmentation policy</td></tr>
-      <tr><td><code>observation</code>/<code>event</code></td><td>直接可见/可读的局部描述或 atomic action，不存推断出的 motive</td></tr>
-      <tr><td><code>entity_mention</code></td><td>局部 mention ID、entity type、可见属性、时间和 evidence；不自动声明跨 clip identity</td></tr>
-      <tr><td><code>state</code></td><td>Subject、attribute、value、polarity、temporal scope 和 evidence</td></tr>
-      <tr><td><code>dialogue_span</code>/OCR</td><td>带真实 modality 的 time-aligned text；字幕不能冒充直接 audio observation</td></tr>
+      <tr><td>Node ID、time span、availability、lineage</td><td>稳定寻址、合法性控制与审计</td><td>始终 memory-visible</td></tr>
+      <tr><td>有界 caption、entity/state tags、embedding reference</td><td>为 Q-Former 提供粗粒度 candidate representation</td><td>只在声明的 pre-read contract 下可见；本身不足以作为 final answer evidence</td></tr>
+      <tr><td>细粒度 frames、完整 caption/dialogue、OCR/audio、verified provenance</td><td>权威 grounded observation</td><td>只有真实 <code>READ(i)</code> 或 typed evidence tool call 后才向 Reasoner 暴露</td></tr>
+    </tbody>
+  </table>
+  <p><strong>通过 tool calling 按需获得额外信息。</strong>L1 不需要预先计算所有 entity relations、dialogue claims、temporal chains 或 state changes。当 Reasoner 需要更多细节时，可以使用 <a href="../../Steam_Video_Agents/atomic-skill-decomposition-and-assembly/atomic-skills-v1.md"><code>Steam_Video_Agents/atomic-skill-decomposition-and-assembly</code></a> 中 typed、executable 的基础设施。可用操作包括 event 与 entity-history retrieval、temporal-neighborhood lookup、clue/event localization、visual-evidence 与 dialogue extraction、entity tracking、event ordering 和 state-change checks。</p>
+  <p>每个 tool result 都必须返回 timestamps 与 evidence references，通过对应 verifier；请求的信息不存在时必须 fail closed。因此，tool calling 是 grounded reading 的按需扩展：需要什么信息再获取什么，不必把所有可能结构都预存进每个 node。它不会为主方法建立 semantic graph edges，也不能把 IWM prediction 转换成事实。</p>
+  <p>在 <code>READ(i)</code> 之前，下游模型只能接收 pre-read contract 明确允许的有界 address/proposal view；权威 source value 必须等到执行后才可见。</p>
+  <p><strong>架构变更：</strong>显式 L1.5 semantic/correlation graph 从主方法中移除。确定性的 temporal、visibility、provenance、availability 和 budget constraints 仍可作为 masks，但目标设计不构造静态 semantic adjacency、cursor-local rows 或 graph action compiler。</p>
+  <div class="note">已有 L1.5、cursor、complete-graph 与 <code>full_graph_iwm</code> artifacts 继续作为可复现历史 baseline 和 regression tools；它们不再定义当前论文方法。</div>
+</section>
+
+<section class="card">
+  <span class="label">候选表示</span>
+  <h2>3.2 Node-aligned Q-Former proposals</h2>
+  <p><strong>唯一职责：</strong>把每个 video-memory node 压缩成少量、与问题相关、保留时间信息、且始终绑定 node ID 的 <em>pre-read proposal tokens</em>，供 IWM 预测 multi-step、multi-clue acquisition consequences。</p>
+  <h3>输入</h3>
+  <div class="equation">X_i = FrozenVideoEncoder(x_i) ∈ R^(L_i×d_v)
+P_i = Q_φ(X_i, q, τ_i) ∈ R^(m×d_w)</div>
+  <table>
+    <thead><tr><th>输入</th><th>内容</th><th>设计边界</th></tr></thead>
+    <tbody>
+      <tr><td><span class="math">X_i</span></td><td>由冻结 visual/VLM encoder 预计算的 token-level node features，包括 visual frame/patch tokens、可用 OCR/subtitle features、modality/type embeddings 和基础 L1 feature slots。</td><td>使用 token-level features，而不只使用最终 pooled embedding；首版不把 video encoder 与 Q-Former 端到端联合训练。</td></tr>
+      <tr><td><span class="math">q</span></td><td>Question tokens 用于让 learned queries 聚焦 node <span class="math">i</span> 中可能与问题有关的部分。</td><td>主版本不输入完整、持续变化的 reasoning state <span class="math">h_t</span>；该状态留给 IWM，使同一问题下的 node proposals 稳定且可缓存。</td></tr>
+      <tr><td><span class="math">τ_i</span></td><td>显式归一化的 start/end time、duration，以及可选的 query-time offset，经小型 time MLP 编码。</td><td>时间信息直接写入 proposal tokens；Q-Former 不单独输出 temporal-relevance score。</td></tr>
+    </tbody>
+  </table>
+  <h3>3.2.1 Node craft/update 时计算 question-independent query tokens</h3>
+  <p>为了避免每个问题都重新对完整 token sequence <span class="math">X_i</span> 做 attention，L1 可以在 node 被创建、merge 或发生实质 update 时，运行一个小型 Q-Former-style node compressor。固定数量的 learned node queries 先进行 self-attention，再 cross-attend 到 node features：</p>
+  <div class="equation">U_i = Q_base(Q_node, X_i, τ_i^abs) ∈ R^(m_0×d)
+
+Q_node：带 self-attention 的 learned query tokens
+Q_node → X_i：对 token-level node features 的 cross-attention</div>
+  <p><span class="math">U_i</span> 是可缓存、question-independent 的 node content 与 absolute-time summary。它不能编码 question relevance、answerability、reasoning trajectory 或 node-to-node relation，并始终绑定 <span class="math">node_i</span>。当 node 的 source span、caption/entity fields、feature embeddings 或 merge lineage 改变时，必须重新计算并使旧缓存失效。</p>
+  <p>问题到来后，question-conditioned Q-Former 基于缓存的 node queries 进行 refine，而不再重复处理完整 clip：</p>
+  <div class="equation">P_i = Q_question(U_i, E_q(q), τ_i^rel) ∈ R^(m×d_w)
+
+τ_i^abs = [t_start/T, t_end/T, duration/T]
+τ_i^rel = [t_start−t_q, t_end−t_q]</div>
+  <p>这个 factorization 将 <strong>node crafting</strong> 与 <strong>question-conditioned proposal generation</strong> 分开：第一阶段只在 memory 变化时运行一次，第二阶段在 query time 保持轻量。两个阶段都不执行 cross-node attention；multi-node 与 multi-clue interaction 仍属于 IWM。</p>
+  <h3>输出契约</h3>
+  <div class="equation">P_i = Q_φ(X_i,q,τ_i) ∈ R^(m×d_w),   m = 4 或 8
+P = [P_1,…,P_N] ∈ R^(N×m×d_w)
+P_i ↔ node_i</div>
+  <p>每组 proposals 可以保留粗粒度 node content、question relevance、时间位置和可能的 evidence role——信息量应足以让 IWM 判断它与其他 clues 的联合后果。每组 tokens 始终绑定对应 node ID；全局混合不能丢失可执行的 node identity。</p>
+  <p>Proposal tokens 不应直接编码完整 caption、final answer、imagined reasoning trace、answerability verdict、next-read decision 或 multi-clue consequence。Synergy、conditional relevance、redundancy、ordering 和 delayed consequences 都属于 IWM。</p>
+  <p><strong>V1 实现：</strong>采用共享的 4–6 层 BLIP-2-style cross-attention Transformer，hidden size 768/1024，每个 node 4–8 个 queries。先预计算冻结 node features 并 warm up representation/clue/time preservation，再在学习 IWM dynamics 时冻结 Q-Former。§7 统一评测 clue recall、proposal-only QA leakage、token budget <span class="math">m∈{2,4,8,16}</span> 与 node-order consistency。Reference path 包含所有合法未读 nodes；任何 selector 都是需要单独 recall audit 的效率优化。</p>
+</section>
+
+<section class="card">
+  <span class="label">Counterfactual dynamics</span>
+  <h2>3.3 Multi-step compositional IWM</h2>
+  <p><strong>唯一职责：</strong>基于当前真实 reasoning state 与 node-aligned Q-Former proposals，低成本预测连续读取多个 clues 后的联合推理后果，为 Reasoner 提供 multi-step look-ahead。IWM 不是第二个 Q-Former、node-ranking policy，也不负责最终 QA。</p>
+  <div class="equation">grounded memory nodes → Q-Former proposal tokens
+→ IWM multi-step consequence rollouts
+→ Reasoner grounded reads and QA / abstain / replan</div>
+  <h3>真实初始状态与有界输入</h3>
+  <p>初始状态由 Reasoner 对问题和已经真实读取的 evidence 的 representation 投影得到。少量 state tokens 表示当前已知内容、仍缺失的推理条件、已经读取的 clues，以及答案是否接近充分；无需手写庞大的 belief schema。</p>
+  <div class="equation">Z_0 = S_η(H_R(q,E_t)) ∈ R^(M_s×d)
+P_i = Q_φ(q,X_i,τ_i) ∈ R^(M_p×d)
+IWM input = (Z_0, P_(1:N), mask_t, b_t)</div>
+  <p>每组 <span class="math">P_i</span> 始终绑定具体 node ID，只携带低带宽的 pre-read content 与时间信息，不包含完整 grounded evidence。Mask 约束 visibility、arrival time、already-read/visited status 和 trajectory legality；<span class="math">b_t</span> 编码剩余 reads、rollout horizon 与 wait budget。主线不需要 L1.5 graph 或 semantic adjacency。</p>
+  <h3>Action-conditioned shared transition</h3>
+  <p>在 imagined step <span class="math">h</span>，模型预测下一步读取 node <span class="math">i_h</span> 将产生什么后果。一个小型 latent Transformer 在所有 imagined hops 之间复用同一个 transition cell：</p>
+  <div class="equation">U_h = CrossAttn(Z_h,P_(i_h))
+Z_(h+1) = LN(Z_h + TransitionBlock(Z_h,U_h,e_h))
+ρ_k = (i_(k,1), …, i_(k,L_k)),  L_k ≤ H</div>
+  <p>第一版每个 imagined hop 只加入一个 node，并使用小 beam（例如 <span class="math">H=3, B=4</span>），允许提前 halt。因此 <span class="math">A→B→C</span> 可以表达 multi-clue combination，而无需在单个 action 中枚举任意 node subset；只有数据确实需要时，才扩展 parallel clue sets。</p>
+  <p>该 transition 必须学习 non-additive consequence：<span class="math">C(A,B) ≠ C(A)+C(B)</span>。它需要区分 complementary、redundant 与 contradictory clues，识别一个 clue 如何使下一个 clue 变得有用，并预测一条 path 是否仍不完整或已经不可恢复。</p>
+  <h3>潜在的 JEPA-style 实现</h3>
+  <p><a href="https://ai.meta.com/research/publications/v-jepa-2-self-supervised-video-models-enable-understanding-prediction-and-planning/">JEPA</a> 可以作为 IWM 的潜在 architecture reference，因为它预测抽象 target representations，而不是重建 raw observations。Context encoder 表示 <span class="math">Z_h</span>；action-conditioned predictor 接收 <span class="math">READ(i_h)</span> 与 <span class="math">P_(i_h)</span>；stop-gradient target encoder 则表示 teacher Reasoner 在真实读取 evidence 后的状态：</p>
+  <div class="equation">Ẑ_(h+1) = Predictor_θ(Z_h, READ(i_h), P_(i_h))
+Z*_(h+1) = stopgrad(TargetEnc(H_R(q,E_t ∪ {o_(i_h)})))</div>
+  <p>这是一种实现选择，不改变 IWM 的定义。与 physical-video JEPA 不同，这里的 prediction target 是 evidence acquisition 带来的 functional、question-conditioned consequence；仍需 next-clue、answerability、contradiction 与 insufficiency heads，而且 predicted representation 仍不能作为最终答案证据。</p>
+  <h3>Rollout 输出与事实边界</h3>
+  <div class="equation">R_t = {(ρ_k, C_k, u_k)}_(k=1)^B
+C_k = Pool(Z_(k,1:L_k))
+u_k ∈ {CONTINUE, EXPECTED_ANSWERABLE, EXPECTED_ABSTAIN}</div>
+  <p>每个 candidate 只包含 node IDs、少量 latent consequence tokens 和预计 terminal status。这些 tokens 概括 predicted progress、synergy、redundancy、contradiction 与 remaining evidence need，仅作为 planning context；它们不是 imagined caption、numeric reward、Q-value、memory write 或 final-answer evidence。Terminal label 同样只是预测，真实 answer/abstain 决策仍由 Reasoner 在 grounded execution 后作出。</p>
+  <p><strong>训练目标：</strong>使用 frozen teacher Reasoner 真实读取 clue prefixes 与 combinations（如 <span class="math">A</span>、<span class="math">B</span>、<span class="math">A+B</span>、<span class="math">A+C</span>）后产生的 functional consequences，监督 next-clue distribution、terminal status、functional planning behavior 以及每个 rollout horizon；不能把 IWM 自己的 imagined state 当作事实 target。生成最终答案时屏蔽全部 consequence tokens，使答案只依赖 <span class="math">q+E_grounded</span>。</p>
+</section>
+
+<section class="card">
+  <span class="label">Grounded control</span>
+  <h2>3.4 Reasoner execution and QA</h2>
+  <p><strong>唯一职责：</strong>比较 IWM 预测的 multi-step evidence trajectories，选择并执行真实 evidence reads，根据 observation 调整行为，判断 grounded answerability，最终回答或 abstain。</p>
+  <div class="equation">IWM predicts multi-step consequences.
+Reasoner performs grounded multi-step execution and QA.</div>
+  <p>Reasoner 不为全部未读 nodes 编码 proposals，不模拟大规模 counterfactual tree，不预测未读 node 的具体内容，也不把 IWM consequence 当作回答证据。它是一个统一的 multimodal tool-using model，但 runtime 严格分为两种模式；无需额外设置 Planner LLM、post-read judge 或独立 answerability model。</p>
+  <h3>Control mode：路径选择与 grounded execution</h3>
+  <div class="equation">a_t = R_ψ^control(q,E_t,R_t,m_t,b_t)
+a_t ∈ {READ(i), REPLAN, WAIT, ANSWER_READY, ABSTAIN}</div>
+  <p>Control mode 接收问题、只记录真实 reads 的 evidence ledger、最多 <span class="math">B</span> 条 IWM rollouts、execution state、剩余 read/wait/replan budgets 与 tool schema。每条 rollout 暴露 node sequence、少量 projected consequence tokens 和 terminal prediction。Reasoner 不应接收完整 Q-Former proposal bank，否则它可能绕过 IWM，自行执行无约束 retrieval。</p>
+  <table>
+    <thead><tr><th>Typed action</th><th>执行约束</th></tr></thead>
+    <tbody>
+      <tr><td><code>READ(node_id, rollout_id)</code></td><td>读取一个已到达、可见的 node，并把带 timestamp、provenance 与 read order 的 observation 加入 <span class="math">E_t</span>。V1 默认每次只读一个 node。</td></tr>
+      <tr><td><code>REPLAN(reason)</code></td><td>发生 mismatch、contradiction、path exhaustion 或 insufficient progress 后，从更新过的 grounded state 重新运行 IWM。</td></tr>
+      <tr><td><code>WAIT</code></td><td>只在允许未来证据的 streaming protocol 中开放；普通 clue-navigation evaluation 不启用。</td></tr>
+      <tr><td><code>ANSWER_READY</code></td><td>声明当前 grounded evidence 可能已经充分，随后切换到隔离的 Answer mode。</td></tr>
+      <tr><td><code>ABSTAIN(reason)</code></td><td>以 typed cause 终止，例如 missing evidence、unresolved conflict、budget exhausted 或 unrecoverable memory loss。</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Multi-step execution 指同一持续 episode 中交错执行多次真实 tool calls。</strong>每次 <code>READ(i)</code> 后，Reasoner 都先观察真实结果，再决定继续预测 path、跳过已经冗余的 hop、提前停止或 replan；绝不把整条 imagined trajectory 当作一个 atomic batch 直接执行。</p>
+  <div class="equation">READ(12) → grounded o_12
+→ READ(37) → grounded o_37
+→ ANSWER_READY
+
+或：READ(12) → prediction mismatch → REPLAN</div>
+  <h3>Answer mode：只进行 grounded QA</h3>
+  <p>Control mode 输出 <code>ANSWER_READY</code> 后，同一个模型执行一次独立 answer forward，并通过 input/attention contract 移除 IWM consequence tokens、未执行 rollouts、Q-Former proposals 与未读 node information：</p>
+  <div class="equation">y = R_ψ^answer(q,E_grounded)
+output ∈ {ANSWER(y, evidence_refs), ABSTAIN(reason)}</div>
+  <p>Evidence ledger 中每项都保留 node ID、timestamp、grounded visual/text content 或可审计 feature reference、可用的 OCR/subtitles、provenance 与 read order。最终答案必须引用真正读取过的 node IDs；自由生成的 model summary 不能单独作为 evidence，fail-closed validation 会拒绝任何未读 node reference。</p>
+  <p class="small">训练使用完整 grounded execution episodes，覆盖正确、冗余、冲突、缺失证据与 replan cases；统一训练流程见 §6。</p>
+</section>
+
+<section class="card">
+  <h2>4. 正式 runtime contract</h2>
+  <div class="equation">Z_t = S_η(H_R(q,E_t))
+P_i = Q_φ(q,X_i,τ_i),  i ∈ U_t
+R_t = Rollout_θ(Z_t,{P_i},H,B)
+a_t = R_ψ^control(q,E_t,R_t,m_t,b_t)
+
+若 READ(i)：      o_i = Execute(READ(i)); E_(t+1) = E_t ∪ {o_i}
+若 REPLAN：       重新计算 Z_(t+1)、P 与 R_(t+1)
+若 ANSWER_READY： y = R_ψ^answer(q,E_grounded)
+以 grounded ANSWER 或 ABSTAIN 结束</div>
+  <p>所有模型输入都必须有界。任何模型都不能接收完整视频、hidden answers、未选择的 source clips 或未经压缩的全部历史。Prediction 可以影响获取哪些 evidence，但绝不能越过事实边界进入答案。</p>
+  <table>
+    <thead><tr><th>允许的确定性控制</th><th>主方法中不允许</th></tr></thead>
+    <tbody>
+      <tr><td>Visibility、provenance、availability、temporal legality、already-read state 与 budgets</td><td>以静态 semantic adjacency 作为 reasoning substrate</td></tr>
+      <tr><td>显式 padding 与 unavailable-node masks</td><td>隐藏 relevance threshold 或 mandatory Top-K</td></tr>
+      <tr><td>Fail-closed answer-evidence validation</td><td>把 imagined rollout 持久化为 grounded memory</td></tr>
+      <tr><td>可审计的 future-evidence wait/defer policy</td><td>提前读取尚未出现的 future clips</td></tr>
     </tbody>
   </table>
 </section>
 
 <section class="card">
-  <span class="label">Implementation baseline · Atomic skills</span>
-  <h3>3.1.1 从视频到 L1 的构建流程</h3>
-  <div class="equation">可见视频前缀 → question-independent 分窗 → 抽帧后的 Qwen clip schema
-→ 冻结的 evidence-construction atomic skills → neighbor-aware graph compose
-→ integrity/trust gate → 有界 keep/merge/evict → temporal rebuild → embedding refresh</div>
-  <p>Writer 不接收 question、answer、clue interval 或 relevance label。拟议 adaptive policy 组合 question-independent attention deviation 与 feature change：<span class="math">s_t = λ·JSD(a_t || ā_t) + (1−λ)·(1−cos(x_t,x_{t−1}))</span>；当该 surprise 在满足最短 duration 后超过 rolling empirical-quantile threshold，就关闭 active span。稳定内容到最长 duration 或 stream end 关闭。当前 checked-in smoke path 是 <span class="math">λ=0</span> 的 feature-only 特例：每 0.5 s 采样 representation，将 cosine change 与最近 8 个 change 的 0.8 经验分位数比较，并使用 2–12 s bounds。Attention-signature writer 仍是 proposed、未实现；Qwen 继续生成现有 grounded clip schema，不需要新 node schema。</p>
-  <p>Graph composer 使用有界的 previous/current/next-clip context，并且只能调用以下 9 个冻结的 Video_Skills 建图 atomic skills。这 9 个 skill 是完整的 L1 construction ontology；reasoning-graph skills 不用于制造 L1 evidence。Atomic-planner 路径记录每次 invocation 和 dependency，当前 neighbor-aware composer 则用 <code>neighbor_vlm_l1_*</code> trace ID 记录等价的 typed create/link/skip operation：</p>
+  <h2>5. 为什么需要 action-conditioned world model</h2>
+  <p>Reactive Reasoner 本身也能边读取边重新规划，因此“支持多步推理”不足以证明 IWM 有必要。IWM 必须低成本预演多个 counterfactual branches，例如 <span class="math">A→B</span>、<span class="math">A→C</span> 与 <span class="math">D→E</span>，避免为每个分支付出真实 reads 和大模型 calls。</p>
+  <p>多层 Q-Former 或 iterative module 只是在反复 refine 已经提供的 features：</p>
+  <div class="equation">z_(h+1) = F(z_h, P)</div>
+  <p>网络更深并不自动成为 world model。每个 IWM step 都必须对应合法 evidence intervention，并由 teacher 在真实 evidence 上执行相同 prefix 后的 consequence 监督：</p>
+  <div class="equation">READ(i_(1:h)) → r*(i_(1:h))</div>
+  <p>普通 iterative reasoning 学习如何在已有 features 上计算；IWM 学习尚未执行的 acquisition 会如何改变后续 reasoning。其价值必须体现为 matched budgets 下更少的 reads/calls、更高 chain completion，或更好的 grounded QA 与 abstention。</p>
+  <div class="warning"><strong>Go/No-Go：</strong>如果 reactive Reasoner 在相同预算下得到相同 trajectories 与结果，或收益可以由 parameter-matched extra depth 解释，则 IWM 没有必要。</div>
+</section>
+
+<section class="card">
+  <span class="label">Dynamics supervision</span>
+  <h2>6. 训练与 V1 实现</h2>
+  <p>仅使用最终 QA loss 不能证明 IWM 学会了 dynamics。数据流程必须从同一 immutable initial state 执行真实 clue combinations，例如 <span class="math">∅</span>、<span class="math">A</span>、<span class="math">B</span>、<span class="math">A+B</span> 和 <span class="math">A+C</span>。</p>
+  <div class="equation">r*(S) = R_teacher(q, E_0 ∪ E_S)
+r̂(S) = D(T_θ(P,S))</div>
+  <p>冻结 teacher Reasoner 读取真实 evidence 后产生 functional targets，包括 answerability、next evidence need、subsequent read distribution、answer distribution、<code>continue | answer | abstain</code>、contradiction 与 insufficiency。</p>
+  <p>训练必须覆盖 clue synergy、leave-one-clue-out、redundancy、contradiction、conditional relevance、不同 clue prefixes、可交换与顺序敏感的 sequences、缺少关键证据时的 abstention，以及表面相似但没有 realized clue gain 的 hard negatives。</p>
+  <p>数据按 video-disjoint 划分；candidate order 随机化；teacher branches 从 immutable checkpoints 出发；hidden grounded values 永不进入 pre-read proposal input。</p>
+  <h3>Reasoner 模型与接口</h3>
+  <p>主 Reasoner 建议采用开放权重的 multimodal <a href="https://huggingface.co/Qwen/Qwen3.5-9B">Qwen3.5-9B</a> 并通过 LoRA 适配。这是当前 implementation choice，而不是科学定义的一部分；较小模型和 frozen prompting 仍是必要的规模与适配 controls。</p>
   <table>
-    <thead><tr><th>Atomic skill</th><th>构建效果</th></tr></thead>
+    <thead><tr><th>部分</th><th>V1 建议</th></tr></thead>
     <tbody>
-      <tr><td><code>segment_video_or_select_clip</code></td><td>按策略创建带 timestamp 的 clip/window anchor。</td></tr>
-      <tr><td><code>extract_observation</code></td><td>创建保留 modality 的 grounded observation 及其 <code>derived_from</code> source link。</td></tr>
-      <tr><td><code>extract_dialogue_span</code></td><td>创建带 timestamp 的 subtitle/ASR/dialogue evidence，speaker 只能是观测到或已提供的 hint。</td></tr>
-      <tr><td><code>detect_entity_mention</code></td><td>创建 clip-local person/object/place/speaker mention，不声称跨 clip identity。</td></tr>
-      <tr><td><code>resolve_entity_coreference</code></td><td>只在有足够兼容上下文时候选 canonical entity 和 <code>same_entity</code> links；仍需独立 identity gate。</td></tr>
-      <tr><td><code>create_event_node</code></td><td>将 supporting observations/dialogue 转为一个带 timestamp 的 atomic action/occurrence。</td></tr>
-      <tr><td><code>create_state_node</code></td><td>有直接证据时存储带 temporal scope 的 subject–attribute–value–polarity，不自动声称 change。</td></tr>
-      <tr><td><code>link_graph_relation</code></td><td>仅在两个 endpoint 存在后添加 allowed typed edge；unknown type 或 missing endpoint 直接 fail closed。</td></tr>
-      <tr><td><code>assign_provenance_trust</code></td><td>记录 producer、source、trust tier、visibility 和 hidden-supervision status。</td></tr>
+      <tr><td>Reasoner</td><td>Qwen3.5-9B；LoRA rank 16（ablate 32），作用于 attention Q/K/V/O 与 MLP；初期冻结 visual encoder</td></tr>
+      <tr><td>IWM interface</td><td>两层 IWM-to-Reasoner projector；top <span class="math">B=4</span> rollouts；每条最多 <span class="math">H≤3</span> nodes；每个 rollout step 约两个 consequence tokens</td></tr>
+      <tr><td>Typed tokens</td><td><code>&lt;READ&gt;</code>、<code>&lt;REPLAN&gt;</code>、<code>&lt;ANSWER_READY&gt;</code>、<code>&lt;ABSTAIN&gt;</code>、<code>&lt;ROLLOUT&gt;</code>、<code>&lt;EVIDENCE&gt;</code></td></tr>
+      <tr><td>Execution limits</td><td>每次 tool call 执行一个 grounded read；每个 episode 最多 3–4 reads 与 1–2 replans</td></tr>
+      <tr><td>Answer</td><td>单独 forward，输入仅为 question 与 grounded evidence</td></tr>
     </tbody>
   </table>
-  <p>正常 trace 是 segmentation → observation/dialogue extraction → local mentions → event/state creation → relation linking → provenance。State、dialogue 和 coreference 只在证据存在时调用；缺失就保持缺失，不构造 node。每次 invocation、dependency、evidence reference 和 failure 都记录在 <code>metadata.graph_compose.execution_trace</code>。</p>
+  <p>最低限度的模型 controls 包括：较小 Qwen3.5 Reasoner 作为规模下界、9B 主模型、frozen-9B prompting 用于确认 LoRA 价值，以及只用于离线 trajectory/target construction 的更大 teacher。</p>
+  <h3>Execution episodes 与可信 labels</h3>
+  <div class="equation">(q,R_0) → a_0 → o_1 → a_1 → o_2 → … → y</div>
+  <p>当多个 clue orders 都合法时，next-read supervision 必须是 multi-positive：对合法 action set 优化 marginal likelihood，不能把另一个同样有效的 clue 标为错误。可信 <code>ANSWER_READY</code> label 要求 frozen teacher 基于 grounded evidence 稳定作答，并与 full-video reference 一致，最好再通过 evidence-removal 或 counterfactual check 验证；不确定状态保持 ignore，而不是强制归入 answerability class。</p>
+  <p><code>ABSTAIN</code> targets 来自人为移除必要 clues、budget exhausted、无法消除的 contradiction、benchmark-unanswerable cases，以及 teacher 判定不充分的 leave-one-clue-out states。多个 annotated clue intervals 并不自动表示每条 clue 都必要，也不表示存在唯一顺序。</p>
+  <h3>简化的 V1 训练流程</h3>
+  <table>
+    <thead><tr><th>阶段</th><th>训练信号与目的</th></tr></thead>
+    <tbody>
+      <tr><td>Baseline gate · 不属于训练阶段</td><td>评测 frozen/reactive no-IWM Reasoner 的 next-read、answerability、abstention 与 grounded QA，用于判断 world model 是否必要，但不把它计入 training curriculum。</td></tr>
+      <tr><td>1 · Unified contract SFT</td><td>用 mixed batches 联合训练 Control 与 Answer modes：oracle trajectories 教 typed tool use；corrupted、redundant 与 wrong-terminal rollouts 教 early stop 和 <code>REPLAN</code>；answer-only batches 使用 <span class="math">(q,E_grounded)→(y,evidence refs)</span>，并屏蔽所有 IWM tokens。同一次训练中先以 oracle 为主，再逐步提高 noisy cases 比例。</td></tr>
+      <tr><td>2 · Real-IWM adaptation</td><td>冻结 IWM，训练 projector 与 Reasoner LoRA，使其适应真实 path format、prediction errors、horizon degradation、consequence-token geometry 与 terminal bias；同时保留少量 oracle、corrupted-rollout 与 grounded-answer replay，避免遗忘。</td></tr>
+      <tr><td>Optional · low-rate joint tuning</td><td>只有 frozen-IWM adaptation 已饱和时，才解冻 IWM 最后若干层；visual encoder 与 Q-Former 继续冻结，并满足 <span class="math">η_IWM &lt; η_projector ≈ η_Reasoner-LoRA</span>。V1 不要求该步骤。</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>V1 停止点：</strong>Unified contract SFT 加 real-IWM adaptation。只有简单流程已经稳定，且 matched no-IWM comparison 显示仍存在可学习差距时，才加入 joint tuning 或 RL。</div>
+  <div class="equation">L_R = λ_ctrl L_ctrl + λ_ans L_answer
+    + λ_ref L_evidence-ref + λ_rob L_robust</div>
+  <p>Control loss 监督 typed actions；answer loss 只在 grounded Answer mode 生效；evidence-reference loss 要求输出真正读取的 node IDs；robustness loss 在 corrupted IWM context 下训练拒绝、replan、early stop 与 abstention。无需单独 numeric utility/value head。Optional GRPO 推迟到 SFT 稳定之后，且不是 V1 必需；后续若使用 reward，必须重罚 unsupported answers、unread-node citations 与无上限 replanning。</p>
 </section>
 
 <section class="card">
-  <span class="label">开放问题 · Connectivity</span>
-  <h3>3.1.2 Node context 和 temporal 判定</h3>
-  <p>Node 的 routing key 包含 type、短 grounded descriptor、modality 和 interval。真实 read 返回的 grounded value 还包含完整 caption/predicate/utterance/OCR/state tuple、clip/local IDs、local participants 和 visible attributes、state subject/attribute/value/polarity/temporal scope、evidence-frame 或 subtitle/ASR references、provenance/trust/visibility、incident composition links 和 consolidation lineage。Previous/current/next clip digest 只是 construction-time composer context，不会被复制到 node value；它们的影响只体现在 grounded candidate edges 和 compose audit 中。这些 context 用于 audit 和后续 read，不得包含 answer、motive、跨 clip identity 或 causal conclusion。</p>
-  <p>Temporal relation 来自确定性 interval test。Node 按 <code>(start_s,end_s,node_id)</code> 排序，相邻 retained nodes 连 <code>temporal_next</code>；若 <code>end(u) ≤ start(v)+10⁻³ s</code> 则为 <code>before(u,v)</code>；<code>during</code> 使用同一 tolerance 的 interval containment；其他相交 interval 为 <code>overlaps</code>。<code>before</code> 只在有界 forward neighborhood 内保存，不建 dense transitive closure。Consolidation 会删除 orphan、rewire 存活非 temporal edges，并按 retained intervals 重建 backbone。时间顺序不证明 identity、change、support 或 causality。</p>
-  <p>L1 的主导航结构是 grounded semantic nodes 上确定性的 <code>temporal_next/before/overlaps/during</code> backbone。<code>derived_from</code>、<code>entity_mention</code>、<code>state_of</code>、<code>located_in</code> 等 composition links 只保留为 provenance/audit structure。Native <code>same_entity</code>、<code>state_change</code>、<code>causal_hint</code> 属于可选 strict-relation 路径，未通过各自 verifier 绝不成为 navigation fact。</p>
-  <p>当前修复会在存在字幕时，用 question-independent、time-aligned subtitle 丰富已持久化的 visual L1 node。有限长度的 address key 用于导航，完整 descriptor 仍是执行真实 read 后才获得的 grounded value。未来 visual extraction 还会请求简洁 grounded caption 和带 evidence frame 的 visible text。Descriptor 一旦变化，旧 embedding reference 必须失效；重建 L1.5 前必须重新生成 <code>Qwen/Qwen3-VL-Embedding-2B</code> embedding。</p>
-</section>
-
-<section class="card">
-  <span class="label">Implementation baseline · Soft navigation graph</span>
-  <h3>3.2 L1.5 correlation overlay</h3>
-  <p><strong>设计变更：</strong>早期 L1.5 是 atomic-event causal-temporal belief overlay，尝试接纳 typed <code>explains</code>/<code>enables</code> edges。它容易把 narrative succession 误标为 causality，candidate-causal edges 也未能稳定通过独立 grounding gates。该路径现只作为历史/可选 strict-relation evaluation。<strong>当前 L1.5 是 correlation，不是 causality</strong>：它在 retained L1 IDs 上建立 question-independent soft navigation overlay。Identity、state transition 和 causality 属于独立 typed layers，不会因为两个 node 相关就进入 L1.5。</p>
+  <span class="label">Matched causal evaluation</span>
+  <h2>7. Evaluation 与 causal gates</h2>
+  <p>在相同 Q-Former、Reasoner、L1 memory、真实 read budget 和大模型 call budget 下比较：</p>
   <ol>
-    <li>冻结 enriched/consolidated L1 descriptor；descriptor 一旦改变，旧 embedding 立即失效。</li>
-    <li>用 <code>Qwen/Qwen3-VL-Embedding-2B</code> 编码所有 node，L2 normalize，并对每个 unordered pair 计算 cosine <code>s(i,j)=eᵢ·eⱼ</code>。</li>
-    <li>已被 temporal backbone 覆盖的 pair 不再作为 nonlocal correlation 接纳，但仍保留完整 audit row。</li>
-    <li>Cosine ≥ 0.999 的 nodes 归并为 semantic-equivalence class。不合并的不同时刻 recurrence 只按时间连下一次 occurrence，不建 clique。</li>
-    <li>对 class 内 embedding 求均值后重新 normalize。对每个 source class，将全部 positive class cosine 按该 source 在当前视频内的 mean/variance standardize，再应用 sparsemax；zero-mass pair 不输出，全程没有 fixed Top-K。</li>
-    <li>对 admitted class pair，先选 raw cosine 最高的 endpoint pair，再以最小 temporal separation 和 stable ID 破同分。Sparsemax 会从两个 source direction 产生 proposal，但 cosine 是 symmetric signal，当前 edge 取两个 proposal mass 的最大值作为相同的双向 navigation affinity，不伪造 directional semantic fact。</li>
-    <li>应用一个冻结的 global channel/cosine/positive-affinity policy，并记录每个 pair 的 admission/exclusion reason、model/checksum、policy fingerprint 和 frozen-L1 fingerprint。</li>
+    <li>Q-Former proposal tokens 直接输入 Reasoner；</li>
+    <li>参数量匹配的 deep Transformer 或 iterative module；</li>
+    <li>每次真实 read 后 replan 的 reactive Reasoner；</li>
+    <li>single-step consequence model；</li>
+    <li>independent-node consequences 的加性组合；</li>
+    <li>multi-step compositional IWM；</li>
+    <li>IWM 只提供 node sequences、不提供 consequence tokens；</li>
+    <li>IWM 只提供 consequence tokens、不提供 node sequences；</li>
+    <li>shuffled IWM rollouts；</li>
+    <li>oracle real post-read consequences；</li>
+    <li>Answer mode 可见 IWM tokens，与按要求屏蔽 IWM tokens 的 Answer mode。</li>
   </ol>
-  <p>Temporal edge 是精确 interval constraint；correlation edge 是有 representation 支持的稀疏候选导航路径。Temporal proximity 不会单独创建 correlation，cosine 也不能单独保证 admission，因为还要经过 temporal exclusion、equivalence-chain、sparsemax 和 global-policy gates。Similarity/affinity 不是 probability、confidence、identity、state transition、support、causality、relevance 或 action utility；独立验证过的 categorical facts 单独保存。</p>
-</section>
-
-<section class="card boundary">
-  <span class="label">边界 · Topology 不是 Policy</span>
-  <h3>3.3 Correlation 不是 action preference</h3>
-  <div class="equation">L1.5 correlation：确定有支持的 node-to-node 可导航邻接
-→ legal-action compiler：暴露可执行的 cursor-incident hops
-→ IWM：预测每一跳的 categorical observation 和 belief effect
-→ planner：根据这些预测选择下一跳</div>
-  <p>这条边界是强制的。Correlation 负责构建 question-independent graph topology，不负责针对问题选出 winner。IWM/planner 可以消费固定 correlation edges，但不能在 action selection 时创建、验证或重分类这些 edges。来自测量的 embedding similarity、directional affinity、calibration 和 provenance 可以是数值 graph features。“模型不输出数字”的规则限制的是用于 planning 的虚构 reward、utility、Q-value、probability 或 confidence，不是这些可测量的建图特征。Edge affinity 绝不能直接排序并决定获胜 action。</p>
-  <p>L1/L1.5 永不保存 correct answer、hidden clue identity、question-conditioned belief、IWM imagination、predicted belief delta、planner trajectory、reward/utility/Q-value、GTSAM posterior 或 final claim。这些分别属于 hidden evaluation、latent belief 或 executed L2 trace。</p>
-</section>
-
-<section class="card benchmark">
-  <span class="label">Implementation baseline · SelectStream</span>
-  <h3>3.4 SelectStream：有预算的在线潜在证据分配</h3>
-  <p><strong>核心想法。</strong>SelectStream（arXiv:2606.16353v1）的核心不是“如何保存更多视频”，而是：在固定的 memory 和 context budget 下，在线决定<em>何时写入</em>、<em>保留什么</em>、<em>查询时读取什么</em>，以及<em>最终向 VLM 暴露多少历史证据</em>。</p>
-  <p>传统方法通常走两个极端：</p>
-  <ul>
-    <li><strong>Recent-window：</strong>只看最近的视频，当前感知清晰，但容易忘掉早期关键事件。</li>
-    <li><strong>Large memory / replay：</strong>保存并注入大量历史，虽然覆盖更长，但无关历史会稀释当前场景，并增加计算量。</li>
-  </ul>
-  <p>SelectStream 的解法：当前画面始终直接输入 VLM；历史压缩成固定容量 latent evidence graph；只有与当前问题相关的一小部分历史证据被取出，并以少量 latent tokens 注入。</p>
-  <div class="equation">Streaming video
-     ↓
-1. SAW — Surprise-driven Adaptive Windowing     （何时写入？）
-     ↓
-2. LVM — Latent Visual Memory Graph             （写什么 / 容量 N 下保留什么？）
-     ↓
-3. GAR — Query-conditioned Graph Reasoning      （读哪些历史证据？预算 B）
-     ↓
-4. Latent Evidence Injection                    （向冻结 VLM 暴露 M 个校准 token）
-     ↓
-Answer
-
-论文默认预算：N=256 memory nodes · B=64 routed subgraph · M=8 evidence tokens</div>
-  <h3>模块</h3>
+  <p>还需使用较小 Reasoner、9B 主模型与 frozen-9B prompting 进行 model-scale controls。历史 graph navigation 与 explicit planners 是可选 legacy baselines，不能替代以上 matched controls。</p>
+  <h3>必须报告的 metrics 与 gates</h3>
   <table>
-    <thead><tr><th>模块</th><th>决策</th><th>作用</th></tr></thead>
+    <thead><tr><th>指标族</th><th>必须报告</th></tr></thead>
     <tbody>
-      <tr><td>SAW</td><td>When to write</td><td>Surprise <span class="math">s_t = λ s_t^attn + (1−λ) s_t^feat</span> 关闭可变长度片段（稳定区间粗、变化附近细）</td></tr>
-      <tr><td>LVM + merge</td><td>What to preserve</td><td>门控更新或新建；优先级合并把容量锁在 N（不是 FIFO / 仅最近 N 段）</td></tr>
-      <tr><td>Route + GAR</td><td>What to retrieve</td><td>seeds 沿时间/语义边扩展到 B≤64，再做图注意力——要证据链，不是独立 top-k 片段</td></tr>
-      <tr><td>Calibrate / inject</td><td>How much to expose</td><td><span class="math">X = [prompt; current; e₁…e_M]</span>；历史上下文不随流长度 T 增长</td></tr>
+      <tr><td>Acquisition</td><td>Multi-clue chain completion、delayed-clue reach、reads per question</td></tr>
+      <tr><td>Prediction</td><td>Combination-consequence error、synergy/redundancy discrimination、error versus rollout horizon</td></tr>
+      <tr><td>Reasoner control</td><td>Valid next-read accuracy、trajectory selection、early-stop accuracy、replan precision/recall</td></tr>
+      <tr><td>QA</td><td>Grounded answer accuracy、answerability、abstention、insufficiency detection</td></tr>
+      <tr><td>Grounding</td><td>Complete evidence-chain rate、evidence-reference accuracy、unsupported-answer 与 unread-citation rates</td></tr>
+      <tr><td>Efficiency</td><td>Reasoner forward calls、latency、proposal 与 rollout cost</td></tr>
+      <tr><td>Causal use</td><td>Intact、removed、additive 与 shuffled predictions 下的 action divergence 和 outcome change</td></tr>
     </tbody>
   </table>
-  <p>存储的既不是原始帧，也不是文本摘要，而是已经过冻结 VLM visual encoder 与 multimodal projector 的 latent embeddings。截至 2026-07-26，SelectStream.github.io 返回 404，未找到官方代码/权重——只能做论文级重实现；论文学习率存在 2e-4 / 2e-5 冲突。</p>
-  <div class="equation">一句话：
-SelectStream 用 surprise 决定视频历史的存储粒度，用固定容量 latent graph 动态合并和保留证据，
-再根据问题检索一个小型多跳证据子图，并将其压缩成 latent tokens 注入冻结 VLM。</div>
-  <p class="boundary" style="border-left:5px solid var(--red);padding-left:12px;margin-top:12px"><strong>与本 IWM 工作的边界：</strong>SelectStream 导航的是证据<em>存在哪里</em>（可寻址 nodes + graph edges），以及冻结 decoder 能看到多少历史。本项目保留 grounded L1/L1.5 作为证据底物，进一步问：IWM 能否预测合法 hop 如何改变未来 <em>belief</em>，以及 planner 是否应执行该 hop。固定容量、surprise 写入的 L1 是兼容基础设施；把 latent tokens 注入冻结 VLM 不是我们的主 claim。历史的“无 nodes/edges、对连续语义状态做 operation-conditioned soft read”（dynamic-navigation 文本 proxy）是另一条已 No-Go 的路径，不是当前 CG-Bench IWM 协议。</p>
+  <div class="warning"><strong>Go：</strong>完整 multi-step predictions 相比 matched controls 改善 grounded accuracy、chain completion、calibration 或 read/call efficiency。<br><strong>No-Go：</strong>移除 IWM 后 action 与结果不变；收益可由 generic depth 解释；candidate recall 隐藏必要 clue；或 imagined information 泄漏进答案。</div>
 </section>
 
 <section class="card">
-  <h2>4. 短视界 model-predictive reasoning</h2>
-  <ol>
-    <li>从单一 current-node cursor 和固定 L1.5 graph 枚举全部合法 actions；</li>
-    <li>为全部 retained nodes 构造 bounded descriptors，并从 frozen L1.5 graph 编译 path-local legal actions；</li>
-    <li>为每个合法 path–node action 预测 horizon-one 或 horizon-two categorical transition；</li>
-    <li>对完整候选轨迹做 pairwise comparison；</li>
-    <li>只执行唯一获偏好轨迹的第一跳；</li>
-    <li>丢弃 imagined observation，读取真实证据，更新 belief，再规划。</li>
-  </ol>
-  <div class="equation">τ* = PreferredTrajectory({Rollout_T(z_t,a)}_a)
-a_t* = First(τ*)
-o_{t+1} = Execute(M,a_t*)
-z_{t+1} = Update(z_t,a_t*,o_{t+1})</div>
-  <p>World model 的价值体现在 delayed effect：第一跳可能几乎没有即时收益，却能打开一个 bridge，让第二跳补全关键证据。这是它区别于 reactive retrieval 或 immediate information-gain ranking 的核心。</p>
-  <p>当前 all-node IWM 使用 batched graph/tensor forwards 预测全部合法 first hops。Chunking 可以拆分执行 batch，但不能剪枝 actions。Horizon two 只能先移除 strictly dominated first hops，再为剩余 partial-order set 展开全部 second hops；不能使用 fixed-K beam pruning。Frontier selection 只保留为未来可选效率实验。</p>
-  <p>当前 <code>reasoning_v2</code> planner 保留由不同 hypothesis 与 action history 构成的竞争路径森林。一个 joint action tree 必须在同一个 shared physical first read 下覆盖所有仍存活的 answer hypotheses。Planner 每轮只调度一次真实 read，未选路径保持 suspended 而不是被删除；grounded correction 分别作用于每条路径，然后从修正后的森林重新规划。</p>
-</section>
-
-<section class="card boundary">
-  <span class="label">非启发式边界</span>
-  <h2>5. 什么可以、什么不可以决定下一跳</h2>
+  <h2>8. Implementation plan 与当前状态</h2>
   <table>
-    <thead><tr><th>允许的职责</th><th>主实验中禁止的职责</th></tr></thead>
+    <thead><tr><th>区域</th><th>2026-08-05 状态</th></tr></thead>
     <tbody>
-      <tr><td>当前 IWM 评估全部结构合法 nodes；未来可选 Frontier 必须报告 clue/action recall</td><td>默认假设 Frontier、暗中选择 winner、读取 hidden values，或在没有可审计 recall gate 时丢弃 actions</td></tr>
-      <tr><td>Embedding similarity 提出候选</td><td>相似度最高者自动获胜</td></tr>
-      <tr><td>Graph/factor constraint 排除 illegal 或 unsupported hop</td><td>Factor posterior 或 edge priority 排序 winner</td></tr>
-      <tr><td>Lexical/temporal rule 作为显式 baseline</td><td>在 IWM arm 中隐式用于 tie-break</td></tr>
-      <tr><td>IWM 预测 categorical future-belief effect</td><td>模型输出 scalar reward、utility、Q-value、confidence 或 probability</td></tr>
+      <tr><td>L1 evidence substrate</td><td>已有 grounded nodes、lineage、time-aligned subtitle enrichment、source reads 与 validation 可以复用；pre-read/read boundary 仍需最终 leakage audit。</td></tr>
+      <tr><td>Graph-based runtime</td><td>L1.5 correlations、cursor-local actions、complete-graph evaluation、categorical effects 与 replanning 已实现，现归类为历史 baselines。</td></tr>
+      <tr><td>Node-aligned Q-Former</td><td>目标接口已定义；主路径实现与 clue-recall/permutation gates 尚待完成。</td></tr>
+      <tr><td>Combination teacher data</td><td>尚未形成固定 multi-video cohort 的 immutable-state sibling executions。</td></tr>
+      <tr><td>Multi-step compositional IWM</td><td>已经定义，但尚未按新定义训练或验证。</td></tr>
+      <tr><td>Grounded Reasoner integration</td><td>现有 execution/replanning infrastructure 可复用；rollout-context integration 与 matched reactive controls 尚待实现。</td></tr>
+      <tr><td>Scientific claim</td><td>在 held-out prediction gates 与 matched-budget decision-usefulness gates 通过前保持 blocked。</td></tr>
     </tbody>
   </table>
-  <p><code>tie</code> 或 <code>incomparable</code> 必须触发更多证据、进一步比较或 abstain，不能默认选择列表第一项。Candidate order 必须满足 permutation invariance。</p>
-</section>
-
-<section class="card">
-  <h2>6. 控制模型输入大小</h2>
-  <p>任何模型都不接收整个视频、hidden answer 或未 consolidation 的全部历史。Qwen-LoRA IWM 接收 compact current evidence/hypothesis、合法 target descriptors，以及 cursor-local L1.5 rows，一次输出全部 legal-action effects；它不接收未选 source clips，也不依赖 mandatory bounded Frontier。</p>
-  <div class="equation">surprise-written、fixed-capacity L1 nodes
-+ 完整 retained temporal/correlation graph
-+ 单一 current-node cursor
-→ 一次 batched IWM forward 预测全部合法 actions
-→ partial-order planner</div>
-  <p>上图展示的是当前 all-action 计划。未来 scalable Frontier 只能作为显式 recall-audited efficiency arm，并与该 all-node reference 做 matched comparison。</p>
-  <p>未读取 target node 只暴露 compact key/address representation，完整 evidence value 只有执行后才能读取。<code>Qwen/Qwen3-VL-Embedding-2B</code> 向量保存在 sidecar，作为 semantic action feature，而不是主方法 ranking gate、reward 或 supervision。</p>
-</section>
-
-<section class="card">
-  <h2>7. Belief correction 与 GTSAM backup</h2>
-  <p>主方法在每次真实 observation 后更新 latent belief。GTSAM/factor graph 保留为可选 correction backend、baseline、diagnostic oracle、teacher 和 visualization 工具。</p>
-  <div class="equation">默认主方法：       iwm_belief_only
-可选纠错：         iwm_with_gtsam_backup
-baseline/ablation：gtsam_always</div>
-  <p>只有真实执行、带 provenance、经过 categorical verification 的 observation 才能成为 factor；imagined rollout 永远不能写入 persistent belief。Backup 只由 identity ambiguity、contradiction、state-history conflict 或 correction failure 等显式 categorical condition 触发，不依赖手设 posterior threshold。</p>
-  <p>GTSAM 不生成 action、不遍历 graph、不排序候选、不预测 transition，也不为最终答案提供 grounding。主方法贡献必须在不使用 GTSAM 时仍然成立。</p>
-</section>
-
-<section class="card benchmark">
-  <span class="label">监督与训练 · Qwen-LoRA IWM planned；Planner + Perception TBD</span>
-  <h2>8. Learning signal 与 Post-training 策略</h2>
-  <p>我们将从同时提供 question、answer 与可定位或可重建 evidence 的 Video QA datasets 中构造训练数据。CG-Bench 提供最干净的人工 clue intervals 与 terminal answers；其他 streaming benchmarks 的 multi-clue/readiness subsets 只有在 evidence provenance 可无泄漏重建时才加入。执行一个 clue read 可以得到 <code>advances_required_clue_coverage</code>、<code>partial</code> 或 <code>complete</code> 等 categorical progress；完整 clue 轨迹与 leave-one-clue-out 轨迹提供 ordinal preference。</p>
-  <div class="equation">Crafted record = {question, visible memory state, legal actions,
-                  evidence-linked next clue/action, real observation,
-                  realized per-hypothesis effect, future usefulness,
-                  grounded terminal answer or abstention}</div>
-  <ul>
-    <li>未匹配的 L1.5 candidate 保持 unlabeled，不能伪造成 semantic negative；</li>
-    <li>Qwen-VL 生成 grounded observation descriptor，不冒充 GT relation label；</li>
-    <li>GPT-5.6 visual review 只是可选诊断，不能覆盖 CG-Bench ground truth；</li>
-    <li>Identity、state-transition、causal 和 counterevidence 需要各自可信的标注来源；</li>
-    <li>Validation/test 视频永不参与训练。</li>
-  </ul>
-  <p>从同一 immutable checkpoint 执行 sibling branches，可以监督 action-conditioned observation、belief-delta prediction 和 pairwise trajectory comparison，而不必给任何轨迹赋绝对 utility。</p>
-  <h3>Qwen-LoRA IWM 的 node-level SFT</h3>
-  <p>当前 256 questions、205 videos、672 grounded clue/read intervals 足以做接口与小规模 learnability pilot，但 interval 还不是最终 node-level SFT 样本。必须先把每个 question 与 adaptive segmentation 和完整 node tensor 对齐：</p>
-  <div class="equation">{question, acquired evidence, hypothesis, bounded descriptors [N],
- A_corr/A_temp references, cursor-local rows [N,1], legal actions,
- categorical belief effects [N,C], evidence groups, validity mask}</div>
-  <p>每个 label 只能是 <code>positive | trusted_negative | ignore</code>。Clue-overlap node 是 positive；语义相似但 occurrence/time 错误、与 before/after 条件冲突，或有 grounded wrong-choice provenance 的 node 才能作为 hard negative。仅仅不与 clue 重叠不能成为 semantic negative；邻近 context、指代引入和可能的 bridge node 必须保持 ignore。覆盖同一 clue 的多个 nodes 构成一个 positive evidence group。训练 loss 可以采样可信 negatives，但 forward 与 runtime 仍保留 buffer 中全部有效 nodes。</p>
-  <p>第一轮按 video 切分，对比 cosine/timestamp greedy、frozen-Qwen listwise prompting 与 rank-8/16 LoRA SFT。训练随机打乱 node presentation order，并报告 permutation consistency。Q-Former/Set-Transformer 仅作为 latency、dense-token 或 distillation ablation。LLM/VLM 可以提出 temporal type、paraphrase 或 negative candidate，但生成的 numeric relevance/utility 不是 supervision。</p>
-  <h3>IWM 是否需要训练</h3>
-  <p>QA Planner 第一阶段不必训练：它可以是冻结、确定性的 typed comparator，只根据 categorical effects、budget 与 persistent paths 做比较，从而把 Planner 行为与 IWM 质量分离。Prompted pretrained model 可以作为 zero-shot IWM baseline；主张中的 IWM 则应在真实 sibling executions 上做 SFT，除非 zero-shot 模型已经通过相同 held-out transition gate。</p>
-  <div class="equation">input  = question + acquired evidence + hypothesis
-         + legal target descriptors + G^corr [N,1] + G^temp [N,1]
-target = realized categorical belief effect per legal action
-         + answerability transition + contradiction/redundancy status</div>
-  <p>主要监督目标是真实 read 后得到的 categorical effect，不是模型虚构的精确未来 caption。数据必须同时包含 useful-now、useful-later、no-progress、redundant、contradictory 与 ambiguous controls；只有 positive clue reads 不能训练或验证 IWM。训练/验证按 video 隔离，pre-read input 不得包含 hidden answer、clue identity 或 post-read value。</p>
-  <h3>Training route</h3>
-  <ol>
-    <li><strong>建立 frozen L1.5 graph-only 与 frozen-Qwen baselines</strong>，使用相同 legal-action contract。</li>
-    <li><strong>对 Qwen-IWM 做 LoRA SFT</strong>，学习真实 action-conditioned categorical belief effects。</li>
-    <li><strong>先冻结 Planner 做 matched causal evaluation</strong>，避免把搜索策略变化误认为 IWM 增益。</li>
-    <li>只有 SFT 通过 held-out transition 与 policy-value gates 后，才考虑 trajectory preference/post-training 或低学习率 joint tuning。</li>
-  </ol>
-  <table>
-    <thead><tr><th>模块</th><th>计划训练方式</th><th>状态</th></tr></thead>
-    <tbody>
-      <tr><td>L1.5 temporal/correlation graph</td><td>Frozen navigation substrate 与 graph-only baseline</td><td>现有实现；新 IWM adapter 未实现</td></tr>
-      <tr><td>Qwen-LoRA Hypothesis-Effect IWM</td><td>All-node evidence/effect SFT → optional post-training</td><td>已定义下一步实验</td></tr>
-      <tr><td>QA Planner / Reasoner</td><td>单独训练、联合训练，或先作为 prompted/frozen QA model</td><td><strong>TBD</strong></td></tr>
-      <tr><td>Memory Crafter / Perception Model</td><td>是否及如何训练 writing、segmentation、node construction 与 connectivity</td><td><strong>TBD</strong></td></tr>
-    </tbody>
-  </table>
-  <p>Post-training signal 必须来自 dataset-grounded evidence/action outcomes，不能使用 LLM/VLM 虚构的 utility score。GPT-OSS-120B 仍是 inference/data-crafting baseline；Qwen-LoRA IWM training 尚未开始。</p>
-</section>
-
-<section class="card benchmark">
-  <span class="label">决定性实验</span>
-  <h2>9. 证明 planner 因果性依赖 IWM</h2>
-  <p>验证分为两个独立 gate。<strong>Model gate</strong> 在规划前直接检查 video-disjoint held-out executed transitions：按 outcome class 报告 macro-F1/confusion、answerability-transition accuracy、contradiction/no-progress false-positive rate、delayed-positive recall 与 calibration，并与 belief prior、question-node MLP、shuffled node/effect 和 oracle-effect ceiling 对照。</p>
-  <p><strong>Policy gate</strong> 固定 question、evidence memory、全部 legal nodes、Planner 和 read budget，只改变 world-model condition：</p>
-  <ol>
-    <li>完整 delayed-belief IWM；</li>
-    <li>no world model；</li>
-    <li>shuffled IWM predictions；</li>
-    <li>frozen IWM；</li>
-    <li>immediate-effect-only；</li>
-    <li>oracle clue ceiling，只作为诊断上界。</li>
-  </ol>
-  <p>Answer accuracy、evidence completeness、read efficiency、action divergence、categorical transition accuracy 和 delayed two-hop success 必须分开报告。Full IWM 必须在 no-IWM 与 shuffled-IWM 之上改善真实 evidence-chain coverage、bridge acquisition、recovery、read efficiency 或 answer accuracy。再固定同一 IWM，对比 greedy horizon-one 与 persistent horizon-two，单独验证 Planner 机制。若 prediction 提升但 policy 不提升，结论只能是 IWM 可预测但对决策无用；若增益在 shuffled-effect control 下仍存在，则不能归因于 IWM。</p>
-</section>
-
-<section class="card warning">
-  <span class="label">Go / No-Go</span>
-  <h2>10. 支撑研究结论所需证据</h2>
-  <p><strong>Go：</strong>在 matched budget 下，完整 IWM 提升 delayed multi-hop success；移除、冻结或打乱预测会改变 action 并降低结果；prediction error 与 navigation failure 相关；收益在 candidate-order permutation 下仍存在。</p>
-  <p><strong>No-Go：</strong>没有 IWM 仍产生相同 action sequence；收益可由 graph/embedding heuristic 解释；imagined evidence 泄漏进答案；candidate recall 太低而无法暴露所需 clue；或只有 immediate-gain case 获益。</p>
-</section>
-
-<section class="card">
-  <h2>11. 当前实现状态</h2>
-  <table>
-    <thead><tr><th>部分</th><th>截至 2026-07-30 的状态</th></tr></thead>
-    <tbody>
-      <tr><td>L1 retained memory</td><td>已实现可插入 learned representation 的 surprise windows、materialized fixed-capacity consolidation、lineage、time-aligned subtitle enrichment、更丰富的 grounded visual descriptor、embedding invalidation、edge rewiring 和 temporal-chain rebuild</td></tr>
-      <tr><td>L1.5 correlations</td><td>已实现重新生成的 Qwen embedding soft navigation correlation、semantic duplicate coalescing、recurrence chain 代替 clique、class-level standardized sparsemax、directional affinity，以及独立的可选 verified fact-relation layer。Correlation 仍只是 proposal，不是事实置信度或 action preference。</td></tr>
-      <tr><td>Reasoning-v2 IWM/planner</td><td>已实现 complete-graph oracle/learned entry 双协议、persistent multi-hypothesis path forest、shared physical read、categorical observation/effect prediction、真实 correction、replanning、无 heuristic Top-K，以及 matched IWM/no-WM/shuffled/immediate/oracle arms</td></tr>
-      <tr><td>Legacy IWM/planner workflows</td><td>现有 bounded-context navigator 继续作为 data/review/baseline 路径，不会被静默当作新主方法</td></tr>
-      <tr><td>Model adapters</td><td>已实现 strict categorical GPT-OSS/Qwen/OpenRouter adapters，拒绝 numeric planning output。Schema repair 的每次尝试使用不同 cache key，并发 cache writer 使用文件锁合并。</td></tr>
-      <tr><td>GTSAM</td><td>已实现 correction pilot 和 optional backup mode；不是默认研究方法</td></tr>
-      <tr><td>CG-Bench v2</td><td>256 cases、205 videos、672 条人工 clue transitions；当前 Qwen grounding/embedding validation 为 670/672，剩余 2 条失败</td></tr>
-      <tr><td>修复后的 complete graph</td><td>冻结的诊断图包含 256 个 L1 nodes 和 957 条 typed proposals；7/7 标注 clue intervals 全部保留，每个 hidden clue group 都有非 placeholder grounded value 和新生成的 Qwen embedding reference。</td></tr>
-      <tr><td>GPT-5-mini closed loop</td><td>真实 record run 与 3.6 秒纯 cache replay 均已完成。Learned-entry IWM 第一读得到正确答案，但 immediate-only 得到相同答案。Oracle-entry belief 已变化并分化，但 IWM 未命中下一 shortest-path hop，也未得到答案。</td></tr>
-      <tr><td>Budget audit</td><td>First-clue group 最近节点到下一 clue group 相距 2 条 graph edges，连同 entry 至少需要 3 reads；matched smoke budget 为 2。因此 closed-loop execution 通过，而 oracle route feasibility 和 later-clue reach 正确失败。</td></tr>
-      <tr><td>Learned IWM result</td><td>尚未训练。当前单例只验证 infrastructure 与 substrate repair，不能证明 IWM navigation advantage。</td></tr>
-      <tr><td>Production readiness</td><td>尚未达到</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<section class="card thesis">
-  <span class="label">近期门禁</span>
-  <h2>12. 下一步</h2>
-  <ol>
-    <li>冻结多视频 cohort，要求 complete-graph oracle 的精确路径符合声明的 matched read budget；entry 本身计作一次 read；</li>
-    <li>独立校准 executed observation transition 与 hypothesis-conditioned belief effect，并包含 surface-correlation hard negatives；</li>
-    <li>在固定 cohort 上运行 matched IWM、no-WM、shuffled-IWM、immediate-only 和 oracle arms；</li>
-    <li>将 answer accuracy、read efficiency、action divergence、strict interval localization、abstention、delayed success 和 latency 分开报告；</li>
-    <li>只有 intact IWM prediction 在 delayed、预算可行 cases 上超过 no-WM 与 shuffled-IWM 后，才训练或蒸馏 9B IWM。</li>
-  </ol>
-  <p>代码与修复后的 evidence substrate 已经端到端工作。训练仍被阻止，因为缺少 independent transition calibration 和固定的多视频预算可行 matched experiment；当前 learned-entry 的正确答案也能由 immediate-only 获得。</p>
+  <p><strong>下一步：</strong>审计 L1 pre-read boundary → 实现 Q-Former proposals → 收集 immutable-state combination trajectories → 训练 IWM 与 Reasoner interfaces → 完成 fixed-cohort matched evaluation。Explicit graph navigation 保留为命名的 legacy baseline。</p>
 </section>
 
 <footer class="small">
   <details>
-    <summary><strong>文档脚注 · 从创建至今的完整编辑历史</strong></summary>
-    <p><strong>历史范围：</strong><time datetime="2026-07-14">2026 年 7 月 14 日</time>至 <time datetime="2026-07-30">2026 年 7 月 30 日</time>。已于 <time datetime="2026-07-30">2026 年 7 月 30 日</time>对照 <a href="https://github.com/wuxiyang1996/steam_video/tree/agent/iwm-v2-rearchitecture"><code>origin/agent/iwm-v2-rearchitecture</code></a> 核实 GitHub 历史。</p>
-    <h4>GitHub commit 时间线</h4>
-    <ol>
-      <li><time datetime="2026-07-14">2026-07-14</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/d4ae200e2751a63a6aa68c203bd75bd69ddb9641"><code>d4ae200</code></a> · EN+ZH · Add steam video problem formulations and legacy docs. <strong>文档创建。</strong></li>
-      <li><time datetime="2026-07-14">2026-07-14</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/7ad3201ed98ac2eda37592029a4c5484e87a01a8"><code>7ad3201</code></a> · EN+ZH · Add causality-aware latent memory track to problem formulations.</li>
-      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/bfacb98a40ba312da3ded62ad4483d3e22f52c3e"><code>bfacb98</code></a> · EN+ZH · Sync factor-graph world-model framing into problem formulations.</li>
-      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1c4e003624736aab1fa1468d1316e28f842bbfd0"><code>1c4e003</code></a> · EN+ZH · docs: refine causal-temporal world model formulation.</li>
-      <li><time datetime="2026-07-17">2026-07-17</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/d72c51a80532634ad81e0ad0f090734809a76e0b"><code>d72c51a</code></a> · EN+ZH · docs: scope world model work around Video Skills.</li>
-      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1ee8f5ff307c0cb08056d79175dee78269b64602"><code>1ee8f5f</code></a> · EN · Document preference-only world model contract.</li>
-      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/abb33a76bcd041ce18969f3358153dcaf94414fc"><code>abb33a7</code></a> · EN · Add factor-graph exploration belief backend.</li>
-      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/1555764c7de873b4286e0df0025f9730bb7935ae"><code>1555764</code></a> · EN · Add locked preference navigation workflow.</li>
-      <li><time datetime="2026-07-20">2026-07-20</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/09852fab70e736b7386d2897c41af1e759ebbf48"><code>09852fa</code></a> · EN · Add diagnostic case mining and model baselines.</li>
-      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/aa882fb3493fbf5009075eb8b46183a3db1bb306"><code>aa882fb</code></a> · EN+ZH · Document world-model-guided reasoning design.</li>
-      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/61aa49232cb5c47e24cc611a4402261f9cac4f76"><code>61aa492</code></a> · EN+ZH · Define cursor-based full-graph IWM navigation.</li>
-      <li><time datetime="2026-07-21">2026-07-21</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/0ff7f0990e84e7eb9ea53f9094869441af6cd57e"><code>0ff7f09</code></a> · EN+ZH · Implement full-graph IWM navigation.</li>
-      <li><time datetime="2026-07-22">2026-07-22</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/0fddc76145d1835949f1145748ad246d0f659bcf"><code>0fddc76</code></a> · EN+ZH · Add grounded IWM navigation evaluation.</li>
-      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/a8805102429fe1e70ce7946896947341bad479e0"><code>a880510</code></a> · EN+ZH · update IWM problem formulation pages.</li>
-      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/cef755838aef6712ef311b5685b779a5a0d399c4"><code>cef7558</code></a> · EN+ZH · Merge SelectStream and OVO/StreamingBench notes into IWM formulation pages.</li>
-      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/f6855e484ea4ec7ccfbc367cd882ce4917759861"><code>f6855e4</code></a> · EN+ZH · Expand streaming video problem setting.</li>
-      <li><time datetime="2026-07-30">2026-07-30</time> · <a href="https://github.com/wuxiyang1996/steam_video/commit/2bf7a07a63b59da7029a2d9fa5687113bcc0ecf6"><code>2bf7a07</code></a> · EN+ZH · Document graph construction and baseline results.</li>
-    </ol>
-    <h4>当前 working-tree 编辑记忆（尚未提交）</h4>
-    <ol>
-      <li>扩展 streaming problem setting：有限 memory 要求 agent 决定何时写、写什么；question 到来后，还要在 past memory、current clip 与等待 future clips 之间选择。</li>
-      <li>加入复杂 multi-hop Video QA 的导航假设：将 reasoning 建模为未知 POMDP/SLAM-like environment 中的 belief-space navigation，最终收敛到 high-confidence answer、low-confidence answer 或 abstention。</li>
-      <li>将 benchmark scope 定位为 streaming multi-evidence QA；区分完整 benchmark 与 CG-Bench <code>min_clues ≥ 2</code> 子集，并明确 StreamingBench 和 OVO-Bench 的不同监督作用。</li>
-      <li>澄清 <em>multi-clue</em> 是 annotation property，<em>multi-evidence</em> 是 reasoning requirement；二者都不自动保证存在显式 multi-hop dependency chain。</li>
-      <li>历史 revision 依次提出 Frontier-guided 与 dual-Q-Former all-node loop；当前 revision 使用 Qwen-LoRA listwise all-node categorical IWM，mandatory Frontier pruning 仍被移除。</li>
-      <li>补充与 research memory、可执行 scientific environment、action-consequence model、显式 hypothesis/search map、belief-guided exploration、backtracking 和 failure-aware replanning 的关系。</li>
-      <li>当前模块输出契约：L1.5 提供两个 <span class="math">[N,N]</span> adjacency matrices；compiler 按 cursor 输出完整合法动作表；Qwen-LoRA IWM 一次输出全部 legal-action effects；Planner 严格输出一个 decision。</li>
-      <li>将原 Section 4 的 reasoning actions 移入 Section 2，并同步顺延后续章节与交叉引用。</li>
-      <li>将 L1/L1.5 evidence memory 重定位为 storage/connectivity/navigation 的开放问题，拆分为多张卡片，并将 atomic-skill construction 与 SelectStream-style bounded write/keep/retrieve 标为当前 implementation baseline。</li>
-      <li>明确 temporal/correlation <span class="math">[N,1]</span> signals 是 L1.5 adjacency 的 cursor rows，而不是 question-conditioned retrieval score 或 admission gate。</li>
-      <li>将计划训练范围限定为 Qwen-LoRA IWM，并使用带 evidence 的 Video QA 构造数据；Q-Former 仅保留为效率/蒸馏消融，QA Planner 与 Memory Crafter 的训练仍为 TBD。</li>
-      <li>将 learning signal 与 post-training 合并到 Section 8，并将原 OVO/StreamingBench future-question 卡片合并到 §1.2 benchmark 卡片。</li>
-    </ol>
-    <p>第一部分是已核实的 GitHub 历史；第二部分记录当前尚未提交的设计修改。二者都不能替代实验 provenance。</p>
+    <summary><strong>Revision note</strong></summary>
+    <p>2026-08-05 revision 用 node-aligned Q-Former 与 multi-step compositional Evidence World Model 取代显式 L1.5 graph、cursor rows 和 Qwen-LoRA single-step formulation，并明确由 Reasoner 而不是 IWM 负责 grounded execution 与 final QA。</p>
   </details>
-  <p>实现细节见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="../memory_graph/README.md">memory_graph</a>、<a href="../plan/README.md">plan</a> 和 <a href="../factor_graph/README.md">factor_graph</a>。SelectStream / OVO–StreamingBench 相关讨论已合并于上文（§3.4、§1.2）。Complete-graph GPT-5-mini artifact 位于 <a href="../outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.subtitle_l1.json">outputs/reasoning_v2</a>。</p>
+  <p>正式实现与研究契约见 <a href="implicit_world_model/reasoning_v2/README.md">reasoning_v2</a>、<a href="README.md">仓库总览</a>、<a href="../memory_graph/README.md">memory_graph</a> 和 <a href="baseline-results.html">baseline results</a>。</p>
 </footer>
 </body>
 </html>

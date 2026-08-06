@@ -1,227 +1,316 @@
-# Reasoning v2
+# Reasoning v2: Multi-step Evidence World Model
 
-This package is the clean implementation path for world-model-guided reasoning.
-It does not modify frozen v1 artifacts and it does not train a model.
+This package is the clean implementation path for world-model-guided evidence
+acquisition. The target architecture predicts the consequences of *unexecuted*
+multi-step read trajectories, then lets a separate Reasoner execute grounded
+reads and answer from real evidence.
 
-## Planned Qwen-LoRA all-node reader (not yet implemented)
+> **Status:** this document is the target research and implementation contract.
+> The checked-in runtime still contains graph-navigation and categorical
+> single-step components inherited from earlier iterations. Those components
+> are migration baselines, not claims about the final method.
 
-The current research plan keeps the persisted L1 schema and adaptive
-segmentation, but uses a listwise Qwen-LoRA IWM over bounded memory-visible node
-descriptors rather than two standalone Q-Formers:
+## 1. Research question
 
-```text
-retained node descriptors for all N nodes
-  -> frozen L1.5 A_corr/A_temp [N,N]
-  -> take G_corr/G_temp [N,1] rows from each path's active cursor
-  -> compile outgoing/backtrack/terminal legal actions
-  -> one Qwen-LoRA listwise pass; no relevance Top-K or mandatory Frontier
-  -> categorical belief effect for every legal path-node action
-  -> Planner selects one next hop while retaining unselected paths
-```
+Long videos contain many candidate evidence nodes, but full evidence reads and
+large-model reasoning calls are expensive. The central question is:
 
-The all-node input contains the question, acquired grounded evidence, current
-hypothesis/missing roles, bounded target descriptors, and the path-local L1.5
-navigation rows. These rows are question-independent structural affordances, not
-probabilities, reward, utility, or question-node relevance. Original frames, dense visual detail, OCR/audio,
-and provenance verification remain hidden until the selected source clip is
-read. Frontier selection remains an open efficiency design matched against the
-all-node path.
+> Can a lightweight world model predict the joint reasoning consequences of
+> alternative multi-step, multi-clue evidence-acquisition trajectories before
+> execution, so that a grounded Reasoner avoids wasteful or myopic search?
 
-In this proposal, all-node explicitly means that no real node already present
-in the current memory buffer is dropped by semantic score, temporal score,
-Top-K, or a threshold. Padding/unavailable masks only mark invalid tensor slots;
-they are not a learned node-dropping policy. Eviction or merging at the memory
-writer is outside the scope of this reader change.
+The method targets cases where static node relevance is insufficient:
 
-This section is an architecture plan, not a claim about the checked-in runtime.
-The implementation below still uses the existing address localizer, typed
-navigation graph, categorical world-model adapters, and persistent Planner.
+- one clue is insufficient but several clues jointly answer the question;
+- an early clue changes the meaning or retrievability of a later clue;
+- individually relevant clues are redundant when acquired together;
+- a new clue contradicts the current reasoning direction;
+- a temporarily unhelpful read completes a necessary evidence chain later.
 
-The planned Qwen-IWM requires node-level SFT rows constructed by aligning
-grounded clue intervals with the adaptive nodes. Labels are
-`positive | trusted_negative | ignore`; non-overlap alone is never a semantic
-negative. The first pilot compares frozen-Qwen listwise prompting with
-rank-8/16 LoRA, randomizes node order, and tests permutation consistency.
+The IWM therefore models delayed, conditional, and non-additive acquisition
+consequences rather than static relevance.
 
-The Planner may remain frozen and deterministic initially. The Qwen-LoRA IWM,
-however, must either be SFT-trained on real sibling executions from immutable
-checkpoints or pass the same held-out transition gate as a zero-shot baseline.
-Verification first tests categorical belief-effect prediction on video-disjoint
-executed reads, then holds the Planner fixed and compares full/no/shuffled IWM
-under a matched read budget. This separates model prediction quality from
-Planner search behavior.
-
-The implementation uses one listwise Qwen pass per reasoning state, not one
-Qwen call per node. It emits compact categorical effects for all N nodes; long
-rationales are unnecessary. Bounded L1 captions are memory-visible, while
-source-clip values remain behind the read boundary. The same base checkpoint may
-serve as typed Planner/evidence judge after selection under separate pre-read
-and post-read contracts. Q-Former/Set-Transformer readers remain efficiency,
-dense-token, and distillation ablations.
-
-## Data flow
+## 2. Final module boundary
 
 ```text
-question-independent video
-  -> evidence/     L1 address + hidden-until-read grounded value
-  -> navigation/   L1.5 typed local proposals, never factual confidence
-  -> world_model/  hypothesis-independent observation prediction
-                  + separate hypothesis-conditioned belief effect
-  -> planner/      persistent forest of different reasoning/action histories
-  -> belief/       optional GTSAM correction after one real shared read
-  -> evaluation/   independent substrate, reachability, oracle, and model gates
+question + current grounded reasoning state
+                    |
+                    v
+L1 grounded evidence memory: candidate nodes and hidden-until-read values
+                    |
+                    v
+Q-Former: fixed-size, node-aligned pre-read proposal tokens for every unread node
+                    |
+                    v
+IWM: counterfactual multi-step rollout over alternative clue combinations
+                    |
+                    v
+Reasoner: choose/deviate/stop, execute real READs, answer or abstain
+                    |
+                    v
+L1 update and next grounded planning state
 ```
 
-## Non-negotiable contracts
+The boundary is summarized by three rules:
 
-- An unread address does not expose its grounded predicate, entities, states, or
-  attributes.
-- The same physical action has one observation prediction. Answer hypotheses
-  may affect belief interpretation, never the observation itself.
-- L1.5 correlation is a navigation proposal, not a probability, causal edge,
-  identity claim, relevance label, or action score.
-- The planner compares joint action trees. Each tree groups every available
-  hypothesis-conditioned future under one shared physical first read; it may
-  not select an isolated single-hypothesis trajectory. There is no second
-  scheduler that silently becomes the real planner.
-- Unselected reasoning alternatives remain suspended with their original
-  action histories. One real read enters shared evidence memory without
-  rewriting every path into the selected trajectory.
-- Normal replanning expands active paths only. Suspended paths remain
-  recoverable state and may be reactivated only by an explicit recovery
-  decision; retaining a path does not mean expanding it every round.
-- No fixed Top-K pruning and no numeric value emitted by an LLM. Numeric metrics
-  exist only in offline evaluators.
-- GTSAM remains an optional real-belief correction backend, not the main method.
-  Its adapter receives an executed action and grounded overlay node only after
-  the read; one shared measurement is projected categorically to all paths.
+1. **Q-Former represents candidate evidence.**
+2. **IWM predicts multi-step clue-combination consequences.**
+3. **Reasoner performs grounded execution and QA.**
 
-## Migration
+Imagined IWM states never become evidence. Only an executed read can expose a
+node's grounded value or support the final answer.
 
-`evidence.legacy_adapter` and `navigation.adapter` read the existing
-`RetainedEvidenceGraph`. The adapters deliberately downgrade legacy semantic
-correlations to uncalibrated proposals and expose only coarse `action_kind` as
-the pre-read event family. Existing `full_graph_iwm` remains available for
-historical artifact reproduction but is not the v2 research implementation.
+## 3. L1: grounded evidence memory
 
-## Required gates before 9B training
+L1 stores real, traceable video evidence nodes. Each node retains at least:
 
-1. Learned-representation L1 windowing and adequate grounded descriptor quality.
-2. Complete clue retention on a frozen cohort.
-3. Trusted hard-negative calibration for non-temporal L1.5 proposals.
-4. Legal reachability plus explicit delayed cases requiring at least two hops.
-5. Oracle-observation/oracle-effect headroom.
-6. Independent observation calibration.
-7. Independent hypothesis-effect supervision and divergent effects.
-8. Grounded categorical trajectory preferences.
+- stable node ID;
+- source interval and timestamp;
+- grounded visual/text content;
+- provenance;
+- visibility and read status.
 
-Until these pass, conservative baselines fail closed instead of manufacturing
-belief progress.
+L1 is the factual source for the final answer. Before `READ(i)`, the system may
+expose a bounded, low-bandwidth address/proposal view of node `i`; the full
+grounded evidence remains hidden until execution.
 
-## First real model-backed smoke (GPT-5-mini)
+The explicit L1.5 semantic/correlation graph is removed from the main method.
+Deterministic temporal, visibility, provenance, availability, and budget
+constraints remain valid execution masks, but the target architecture does not
+construct static semantic adjacency, cursor rows, or a graph-action compiler.
+Existing `navigation/` and `full_graph_iwm` code remains available only for
+historical reproduction and matched graph-based baselines.
 
-The first frozen CG-Bench case smoke is stored outside the training datasets at
-`outputs/reasoning_v2/gpt5mini_case_03ae/model_smoke.json`. It exercised five
-matched read-budget arms (`iwm`, `no_wm`, `shuffled_iwm`, `immediate_only`, and
-`oracle`) plus one executed read and replan.
+## 4. Q-Former: node-aligned proposal encoder
 
-Confirmed infrastructure properties:
+For every unread node `i`, Q-Former emits a fixed number of proposal tokens:
 
-- all 192 safe semantic addresses were inspected without Top-K;
-- physical observations were deduplicated across six hypotheses;
-- every joint action tree covered all six hypothesis-conditioned outcomes;
-- one real read was executed and a second planning round produced candidates;
-- short request/tree aliases eliminated long-ID copy corruption;
-- suspended paths were retained but not recursively expanded during normal
-  replanning;
-- strict categorical responses were cached, and no training was performed.
+```text
+p_i = Q_phi(q, X_i, t_i) in R^(m x d)
+```
 
-The scientific gates did **not** pass. The localizer selected nodes `0045` and
-`0060`, while the hidden evaluator's delayed first clue was node `0021`. IWM,
-no-WM, and shuffled-IWM consequently selected the same incorrect first read;
-the immediate-only arm tied. The executed evidence was inconclusive for every
-hypothesis, so real beliefs did not diverge. Answer accuracy, independently
-calibrated transitions, and a multi-video fixed cohort were not available.
+`p_i` is a low-bandwidth, node-aligned *pre-read* representation. It may encode:
 
-This failure must not be repaired with heuristic Top-K or forced tie-breaking.
-It identifies the next data/model requirement: supervision for delayed entry
-localization and grounded hypothesis-conditioned effects, with semantic-neighbor
-hard negatives. Each smoke writes a sibling
-`<artifact>.training_export.blocked.json`, so experiments cannot overwrite one
-another's failed gates; no 9B training export was produced.
+- coarse node content available under the pre-read contract;
+- relation to the current question;
+- temporal position;
+- a possible evidence role.
 
-## Complete-graph dual-entry verification
+Q-Former does not select the next hop, predict a multi-step consequence, expose
+the hidden source value, or answer the question. It prepares the candidate set
 
-The model-backed evaluator now runs two protocols over the exact same complete,
-question-independent L1/L1.5 artifact:
+```text
+P = {p_1, ..., p_N}
+```
 
-- `oracle_entry` changes only the initial `entry_node_ids` to the hidden
-  evaluator's first-clue nodes.  It is a downstream diagnostic: after the
-  common first real read, IWM/no-WM/shuffled-IWM/immediate-only/oracle each
-  correct belief and independently replan toward the next clue.
-- `learned_entry` obtains the initial frontier by inspecting every safe address,
-  then runs the same arms, horizon, two-read budget, correction, and replanning
-  loop.  It is the end-to-end diagnostic.
+for the IWM. Proposal generation must preserve node identity, use explicit masks
+for unavailable/padding slots, and be tested for permutation consistency.
 
-All nodes and proposals remain present in both protocols.  An entry protocol
-does not dump the graph into one prompt and does not expose unread evidence
-values.  Legal actions are still compiled from entry nodes on round zero and
-from graph adjacency after a real read.  Hidden clue IDs and shortest-path next
-hops exist only in evaluator metrics and the evaluator-only oracle arm; they are
-never sent to the IWM, learned localizer, or learned planner.
+## 5. IWM: multi-step compositional consequence model
 
-The output reports each arm's two round decisions, executed target sequence,
-remaining matched read budget, hypothesis divergence after real correction,
-and whether the replan selected a first hop on a shortest route to the later
-clue.  Infrastructure, localization, transition, planning, intervention, and
-answer metrics remain separate; they are not collapsed into a claimed model
-improvement.  Failed scientific gates continue to block training export.
+The IWM receives the current grounded reasoning state `z_0` and proposal set
+`P`. It rolls out imagined evidence interventions:
 
-The first dual-entry result localized the evidence bottleneck more precisely.
-Even oracle entry at node `0021` produced no real belief change because its L1
-value was only `person holding object`; IWM then followed surface-color/package
-associations to `0176` instead of the evaluator route target `0034`. The
-substrate repair therefore adds time-aligned, question-independent subtitle
-content to both the bounded address key and hidden-until-read value, regenerates
-Qwen3-VL-2B embeddings, and adds a hidden evaluator audit requiring every clue
-group to have a materially enriched grounded value. Temporal overlap alone no
-longer passes this substrate gate.
+```text
+z_(h+1) = T_theta(z_h, READ(S_h), {p_i : i in S_h})
+```
 
-Each real read now also reports whether correction changed belief, separately
-from whether answer hypotheses diverged. A partial clue may legitimately
-advance a shared missing role without distinguishing answers, so these metrics
-must not be conflated. Delayed transition collection marks executed
-correlation reads with no realized clue gain as the categorical slice
-`surface_correlation_without_realized_clue_gain`; these are the required hard
-negatives for surface matches such as color or packaging recurrence.
+where `S_h` contains one or more imagined clue nodes. A candidate trajectory is
 
-## Repaired complete-graph result and honest headroom
+```text
+tau = (S_1, S_2, ..., S_H).
+```
 
-After subtitle enrichment and Qwen3-VL-Embedding-2B regeneration, the same
-complete graph contains 256 nodes and 957 typed proposals, and all three hidden
-clue groups have non-placeholder grounded values and current embedding
-references. In the two-read GPT-5-mini replay, oracle entry now changes and
-diverges real beliefs, although its second IWM action still misses the shortest-
-path hop. Learned entry selects a more direct subtitle-bearing node and
-produces the correct unique answer after its first real read. This shows that
-the repaired substrate can support the closed loop; it does not yet show that
-IWM improves navigation.
+For each trajectory, the IWM predicts how the combined clues would change:
 
-The evaluator prevents two false conclusions exposed by this replay:
+- the latent reasoning state;
+- remaining evidence needs;
+- expected answerability;
+- the decision to continue, answer, or abstain;
+- contradiction or insufficiency status.
 
-- Dataset interval/node-ID recall is a strict localization metric, separate
-  from grounded belief change and final answer accuracy. A direct evidence node
-  outside the annotated interval remains a strict miss, but its correct answer
-  is not described as an end-to-end failure.
-- Route headroom uses exact graph distance. For this case, the nearest node in
-  the first annotated clue group is two proposal edges from the next clue
-  group, so reaching it requires three real reads including entry. A two-read arm can test correction and
-  replanning but cannot pass the later-clue/answer oracle gate. Merely executing
-  two oracle reads is no longer called “route available.”
+The primary object is the composition, not independent node utility:
 
-This remains a single-case substrate diagnostic. IWM changes the oracle action
-sequence relative to no-WM and shuffled-IWM but does not turn that divergence
-into clue reach or a correct answer; learned-entry IWM and immediate-only both
-obtain the same answer in one read. Training stays blocked until a fixed multi-video cohort has
-budget-feasible oracle paths, independent transition calibration, and matched-
-arm evidence that intact IWM predictions improve accuracy or read efficiency.
+```text
+C(A, B) != C(A) + C(B).
+```
+
+The rollout output contains a proposed evidence trajectory, a lightweight
+latent consequence at each step, and a predicted terminal status. It does not
+contain imagined captions, factual memory writes, a final answer, scalar
+reward, or evidence that can be cited by the Reasoner.
+
+## 6. Reasoner: grounded execution and QA
+
+The Reasoner receives current real evidence plus one or more IWM rollout
+contexts. It may:
+
+- execute several real reads along a predicted trajectory;
+- stop early after a decisive observation;
+- deviate when an observation invalidates the rollout;
+- replan after prediction mismatch;
+- produce a grounded answer;
+- abstain when the acquired evidence is insufficient.
+
+The Reasoner owns the execution policy. The IWM predicts multi-step futures;
+the Reasoner performs multi-step grounded execution. Every answer claim must be
+traceable to evidence actually read by the Reasoner.
+
+## 7. Runtime loop
+
+```text
+1. Build z_0 from the question and already-read grounded evidence.
+2. Encode every eligible unread node into node-aligned proposal tokens p_i.
+3. Roll out several counterfactual trajectories with the IWM.
+4. Give compact rollout contexts and candidate trajectories to the Reasoner.
+5. Execute READ(S_h) under the real visibility/provenance/budget constraints.
+6. Compare the observation with the predicted consequence.
+7. Stop, continue, deviate, or replan.
+8. Answer only from executed evidence, otherwise abstain.
+```
+
+This is not a requirement to execute an entire imagined trajectory blindly.
+Model-predictive replanning after every real observation remains permitted.
+
+## 8. Why a world model is necessary
+
+A reactive Reasoner can also read and replan. The IWM is justified only if it
+can cheaply preview several counterfactual trajectories, for example
+`A -> B`, `A -> C`, and `D -> E`, without paying for every real read and every
+large Reasoner call.
+
+The intended gains are:
+
+- fewer full evidence reads;
+- fewer large-model Reasoner calls;
+- higher multi-clue chain completion;
+- better acquisition of delayed clues;
+- better answerability and abstention decisions;
+- higher grounded QA performance at a matched reasoning budget.
+
+If a reactive Reasoner produces the same trajectories and results at the same
+budget, the IWM is unnecessary. This is the project's explicit Go/No-Go rule.
+
+## 9. Difference from iterative reasoning
+
+A deep Q-Former or iterative module may repeatedly refine representations that
+have already been supplied:
+
+```text
+z_(h+1) = F(z_h, P).
+```
+
+Depth alone does not make it a world model. Here, every rollout step corresponds
+to an explicit evidence intervention `a_h = READ(S_h)`, and supervision comes
+from the consequence of executing the same clue combination on real evidence:
+
+```text
+READ(S_(1:h)) -> r*(S_(1:h)).
+```
+
+Ordinary iterative reasoning learns to compute over available features. The IWM
+learns what an unexecuted multi-step acquisition would do to later reasoning.
+
+## 10. Training contract
+
+Final QA loss alone is insufficient evidence that the IWM learned dynamics.
+Training examples must branch from the same immutable initial state and execute
+real clue combinations such as:
+
+```text
+empty, A, B, A+B, A+C
+```
+
+A frozen teacher Reasoner reads the real evidence and produces a functional
+target state:
+
+```text
+r*(S) = R_teacher(q, E_0 union E_S).
+```
+
+Targets may include answerability, next evidence need, subsequent read
+distribution, answer distribution, `continue | answer | abstain`, contradiction,
+and insufficiency. The IWM predicts the same target using only pre-read proposal
+tokens and the imagined intervention sequence.
+
+The dataset must deliberately cover:
+
+- clue synergy and leave-one-clue-out examples;
+- redundancy and contradiction;
+- conditional relevance;
+- different prefixes of the same trajectory;
+- exchangeable and order-sensitive clue sequences;
+- missing-key-evidence abstention;
+- hard negatives with surface similarity but no realized clue gain.
+
+Splits must be video-disjoint. Candidate order must be randomized, hidden
+grounded values must never leak into proposal inputs, and all teacher targets
+must be generated from real reads at immutable checkpoints.
+
+## 11. Decisive evaluation
+
+Under the same Q-Former, Reasoner, memory, real-read budget, and large-model call
+budget, compare:
+
+1. Q-Former proposal tokens directly to the Reasoner;
+2. a parameter-matched deep Transformer/iterative module;
+3. a reactive Reasoner that replans after every real read;
+4. a single-step consequence model;
+5. additive independent-node consequences;
+6. the multi-step compositional IWM;
+7. shuffled IWM rollouts;
+8. oracle real post-read consequences.
+
+Report:
+
+- multi-clue evidence-chain completion;
+- grounded answer accuracy;
+- answerability and abstention quality;
+- combination-consequence prediction;
+- synergy/redundancy discrimination;
+- reads per question and Reasoner forward calls;
+- rollout error versus horizon;
+- causal effect of IWM predictions on executed trajectories.
+
+Graph-based navigation, Qwen listwise readers, and previous categorical planners
+may be retained as additional historical baselines, but they are not substitutes
+for the matched ablations above.
+
+## 12. Required gates
+
+Do not claim a successful IWM or start expensive scaling until all of the
+following hold on a fixed multi-video cohort:
+
+1. L1 nodes retain complete grounded clue coverage with valid provenance.
+2. The pre-read proposal contract passes leakage audits.
+3. Q-Former preserves candidate/clue recall and node alignment.
+4. Real clue combinations yield measurable non-additive teacher consequences.
+5. The IWM beats single-step, additive, iterative, and shuffled controls on
+   held-out consequence prediction.
+6. Oracle trajectories have budget-feasible headroom.
+7. Intact IWM predictions change real execution decisions.
+8. The full system improves grounded accuracy or read/call efficiency over the
+   reactive Reasoner at matched budget.
+
+Failed gates must fail closed. They must not be repaired by hidden relevance
+Top-K, heuristic tie-breaking, or treating imagined consequences as evidence.
+
+## 13. Migration from the current code
+
+The migration should preserve frozen artifacts while replacing the main method
+in stages:
+
+1. keep `evidence/` as the grounded L1 substrate and formalize its pre-read/read
+   boundary;
+2. add a node-aligned Q-Former proposal interface for all eligible unread nodes;
+3. add real combination rollouts and teacher consequence collection;
+4. train/evaluate a compositional multi-step IWM;
+5. adapt the Reasoner to consume rollout contexts and execute grounded reads;
+6. demote `navigation/`, cursor-local graph rows, and graph action compilation to
+   explicit legacy/baseline modes;
+7. run the decisive matched-budget evaluation before scaling.
+
+Existing single-case GPT-5-mini and complete-graph outputs remain useful for
+substrate and evaluator regression tests. They do not establish IWM value under
+the new definition because they did not train or test multi-step compositional
+consequence prediction.
