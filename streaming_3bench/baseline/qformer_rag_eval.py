@@ -98,6 +98,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--video-fps", type=float, default=1.0)
     parser.add_argument("--video-max-frames-per-clip", type=int, default=8)
     parser.add_argument("--max-new-tokens", type=int, default=128)
+    parser.add_argument(
+        "--fail-on-error",
+        action="store_true",
+        help="Return non-zero when any example fails; intended for smoke gates.",
+    )
     args = parser.parse_args(argv)
     if not 0 <= args.shard_index < args.num_shards:
         parser.error("--shard-index must be in [0, --num-shards)")
@@ -233,6 +238,8 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     print(json.dumps({"records": len(records), "metrics": metrics}, indent=2))
+    if args.fail_on_error and any(not row.get("ok", False) for row in records):
+        return 1
     return 0
 
 

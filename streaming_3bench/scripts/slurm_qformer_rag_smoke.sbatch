@@ -44,4 +44,5 @@ python -m baseline.qformer_rag_eval \
   --device cuda:0 \
   --video-fps 1.0 \
   --video-max-frames-per-clip 8 \
-  --max-new-tokens 128
+  --max-new-tokens 128 \
+  --fail-on-error
