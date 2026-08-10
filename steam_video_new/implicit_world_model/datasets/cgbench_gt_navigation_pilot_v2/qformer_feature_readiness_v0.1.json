@@ -1,0 +1,35 @@
+{
+  "schema_version": "steam-qformer-feature-readiness/v0.1",
+  "overlay_count": 36,
+  "unique_video_count": 36,
+  "unique_node_count": 15181,
+  "counts": {
+    "caption_source": 15181,
+    "entity_state_source": 14694,
+    "time_source": 15181,
+    "combined_text_embedding": 15181,
+    "explicit_visual_embedding": 0,
+    "safe_pre_read_source": 15181,
+    "complete_four_slot_ready": 0
+  },
+  "coverage": {
+    "caption_source": 1.0,
+    "entity_state_source": 0.9679204268493512,
+    "time_source": 1.0,
+    "combined_text_embedding": 1.0,
+    "explicit_visual_embedding": 0.0,
+    "safe_pre_read_source": 1.0,
+    "complete_four_slot_ready": 0.0
+  },
+  "boundary_failures": {},
+  "blockers": [
+    "independent_visual_embeddings_missing",
+    "entity_state_source_incomplete",
+    "complete_four_slot_training_not_ready"
+  ],
+  "qf1_training_ready": false,
+  "interpretation": {
+    "combined_text_embedding": "Existing event+participants+states text embedding; it is not an independent visual slot.",
+    "missing_slot_policy": "mask for engineering smoke; fail closed for formal four-slot training"
+  }
+}
