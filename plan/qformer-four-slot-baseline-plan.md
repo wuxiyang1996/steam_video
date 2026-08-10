@@ -33,6 +33,41 @@ L_{QF2}=L_{\text{multi-positive retrieval}}
 
 QF1 和 QF2 的 query 数量相同，但 query embeddings、Transformer 参数与职责均不共享。
 
+## 1.1 三 benchmark RAG 外部验证（冻结协议）
+
+检索训练完成后，使用同一个 frozen QF checkpoint 在以下三个未参与模型选择的 benchmark
+上验证最终 QA 效果：
+
+- OVO-Bench：全部 3035 个问题；
+- VideoMME：全部 2700 个问题；
+- StreamingBench：官方协议兼容的 timestamped single-turn subset 为主结果，flattened 4500
+  条结果只作附录。
+
+每个 benchmark 运行三种 matched arms：
+
+```text
+uniform： 从可见候选 clip 中均匀取 K=3
+visual：  相同候选池，以 frozen visual-query cosine 取 K=3
+qformer：相同候选池，以 frozen visual anchor + QF residual 取 K=3
+```
+
+严格控制变量：
+
+- 三个 arm 使用相同 Qwen3.5-9B reasoner、prompt、确定性 decoding、`K=3`、每 clip
+  `fps=1/max_frames=8`；
+- retrieval query 只包含 question text，不包含选项或答案；
+- clip caption/visual/time 在看到测试问题前一次性计算，candidate pool 完全相同；
+- 只有 `start_s < visible_until_s` 的 clip 可检索，实际送入 reasoner 的 `end_s` 还必须
+  截断到 cutoff，防止跨边界解码；
+- OVO/VideoMME/StreamingBench 没有与训练 contract 一致的独立 entity/state sidecar，V1
+  将该槽置零并令 validity=0，不从测试答案或问题生成该槽；
+- checkpoint/seed 只能由原训练集 selection split 决定，禁止按三 benchmark test 结果选择；
+- failure 和无法解析的输出均按错误计入主准确率。
+
+统计报告使用逐题配对差值、10,000 次 bootstrap 95% CI、exact McNemar test，并对
+`3 benchmarks × 2 comparisons` 的六个检验做 Holm correction。主比较是
+`qformer - visual`，次比较是 `visual - uniform`。
+
 ## 2. 当前仓库状态与实现缺口
 
 设计目标中的四槽输入为：
