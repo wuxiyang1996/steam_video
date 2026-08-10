@@ -188,39 +188,45 @@ def _encode_visual_nodes(
     failures: list[dict[str, Any]] = []
     with tempfile.TemporaryDirectory(prefix="steam-qformer-frames-") as directory:
         temp = Path(directory)
-        captures: dict[str, Any] = {}
-        try:
-            for index, node in enumerate(nodes):
-                video_path = str(node.get("_raw_video_path") or "")
-                if not video_path or not Path(video_path).is_file():
+        # Bound decoder memory/file descriptors by processing one video at a
+        # time. Large benchmark cohorts may contain thousands of videos; a
+        # persistent VideoCapture per path grows to tens of GB.
+        nodes_by_video: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+        for index, node in enumerate(nodes):
+            nodes_by_video.setdefault(str(node.get("_raw_video_path") or ""), []).append(
+                (index, node)
+            )
+        for video_path, indexed_nodes in nodes_by_video.items():
+            if not video_path or not Path(video_path).is_file():
+                for _, node in indexed_nodes:
                     failures.append({"node_id": node.get("node_id"), "reason": "video_missing"})
-                    continue
-                capture = captures.get(video_path)
-                if capture is None:
-                    capture = cv2.VideoCapture(video_path)
-                    captures[video_path] = capture
-                start, end = _span(node)
-                times = np.linspace(start, end, frames_per_node + 2, dtype=np.float64)[1:-1]
-                node_frame_count = 0
-                for frame_number, time_s in enumerate(times):
-                    capture.set(cv2.CAP_PROP_POS_MSEC, float(time_s) * 1000.0)
-                    success, frame = capture.read()
-                    if not success:
-                        continue
-                    output = temp / f"{index:07d}_{frame_number:02d}.jpg"
-                    if not cv2.imwrite(str(output), frame):
-                        continue
-                    frame_paths.append(str(output))
-                    owners.append(index)
-                    node_frame_count += 1
-                if not node_frame_count:
-                    failures.append({"node_id": node.get("node_id"), "reason": "frame_decode_failed"})
-            if not frame_paths:
-                raise ValueError("no visual frames could be decoded")
-            frame_embeddings = _encode(model, frame_paths, VISUAL_PROMPT, batch_size)
-        finally:
-            for capture in captures.values():
+                continue
+            capture = cv2.VideoCapture(video_path)
+            try:
+                for index, node in indexed_nodes:
+                    start, end = _span(node)
+                    times = np.linspace(start, end, frames_per_node + 2, dtype=np.float64)[1:-1]
+                    node_frame_count = 0
+                    for frame_number, time_s in enumerate(times):
+                        capture.set(cv2.CAP_PROP_POS_MSEC, float(time_s) * 1000.0)
+                        success, frame = capture.read()
+                        if not success:
+                            continue
+                        output = temp / f"{index:07d}_{frame_number:02d}.jpg"
+                        if not cv2.imwrite(str(output), frame):
+                            continue
+                        frame_paths.append(str(output))
+                        owners.append(index)
+                        node_frame_count += 1
+                    if not node_frame_count:
+                        failures.append(
+                            {"node_id": node.get("node_id"), "reason": "frame_decode_failed"}
+                        )
+            finally:
                 capture.release()
+        if not frame_paths:
+            raise ValueError("no visual frames could be decoded")
+        frame_embeddings = _encode(model, frame_paths, VISUAL_PROMPT, batch_size)
 
     dimension = int(frame_embeddings.shape[1])
     visual = np.zeros((len(nodes), dimension), dtype=np.float32)
