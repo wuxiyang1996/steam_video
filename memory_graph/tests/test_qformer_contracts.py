@@ -9,6 +9,7 @@ from steam_video_new.implicit_world_model.reasoning_v2.qformer import (
     SLOT_NAMES,
     FeatureRow,
     FourSlotFeatureStore,
+    merge_feature_stores,
     write_feature_store,
 )
 from steam_video_new.implicit_world_model.reasoning_v2.qformer.splits import (
@@ -87,3 +88,40 @@ def test_video_split_is_disjoint_and_deterministic() -> None:
     assert {videos[index] for index in train}.isdisjoint(
         {videos[index] for index in validation}
     )
+
+
+def test_merge_feature_stores_reindexes_disjoint_compatible_rows(tmp_path) -> None:
+    first = _write_store(tmp_path / "first")
+    rows = tuple(
+        FeatureRow(index, f"other-node:{index}", f"other-video:{index // 2}", f"other:{index}")
+        for index in range(4)
+    )
+    arrays = {
+        name: np.full((4, index + 2), 10 + index, dtype=np.float32)
+        for index, name in enumerate(SLOT_NAMES)
+    }
+    second = write_feature_store(
+        tmp_path / "second",
+        arrays=arrays,
+        validity=np.ones((4, 4), dtype=np.bool_),
+        rows=rows,
+        encoders={name: f"fixture/{name}" for name in SLOT_NAMES},
+        source_contract="fixture-safe-pre-read/v1",
+        boundary_audit_version="fixture-boundary/v1",
+    )
+
+    merged = FourSlotFeatureStore(
+        merge_feature_stores([first, second], tmp_path / "merged")
+    )
+
+    assert len(merged) == 8
+    assert [row.row_index for row in merged.manifest.rows] == list(range(8))
+    assert merged.node("node:0")["features"]["caption"].tolist() == [1.0, 1.0]
+    assert merged.node("other-node:0")["features"]["caption"].tolist() == [10.0, 10.0]
+
+
+def test_merge_feature_stores_rejects_overlapping_videos(tmp_path) -> None:
+    first = _write_store(tmp_path / "first")
+    second = _write_store(tmp_path / "second")
+    with pytest.raises(ValueError, match="overlapping videos"):
+        merge_feature_stores([first, second], tmp_path / "merged")

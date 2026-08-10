@@ -15,6 +15,7 @@ MEMORY_PER_TASK="${MEMORY_PER_TASK:-64G}"
 EXTRACT_TIME_LIMIT="${EXTRACT_TIME_LIMIT:-1-00:00:00}"
 FINALIZE_TIME_LIMIT="${FINALIZE_TIME_LIMIT:-08:00:00}"
 COLLECTION_TIME_LIMIT="${COLLECTION_TIME_LIMIT:-3-00:00:00}"
+SKIP_COLLECTION="${SKIP_COLLECTION:-0}"
 VLLM_ROOT="${VLLM_ROOT:-/fs/gamma-projects/vlm-robot/Video_Skills/.venv-qwen35-vllm}"
 
 mkdir -p "${COLLECTION_ROOT}/slurm_logs" "${GRAPH_ROOT}/shard_reports"
@@ -57,15 +58,18 @@ FINALIZE_JOB_ID="$(sbatch --parsable \
   --export=ALL,REPO_ROOT="${REPO_ROOT}",ARTIFACT_ROOT="${SOURCE_ROOT}",GRAPH_ROOT="${GRAPH_ROOT}",SELECTION="${SELECTION}",RUN_STAGE=finalize,NUM_SHARDS="${NUM_SHARDS}",VIDEO_LIMIT="${NUM_SHARDS}",MEMORY_CAPACITY=192,COHORT_PROTOCOL="${PROTOCOL}",COHORT_GATE_OUTPUT="${GRAPH_ROOT}/train_clue_retention_gate.json",COHORT_GATE_DETAILS="${GRAPH_ROOT}/train_clue_retention_gate.hidden_key.json" \
   "${REPO_ROOT}/steam_video_new/implicit_world_model/cgbench_grounded_navigation/run_l15_graph_smoke_job.sh")"
 
-COLLECTION_JOB_ID="$(sbatch --parsable \
-  --dependency="afterok:${FINALIZE_JOB_ID}" \
-  --job-name=cg-train-iwm-collect \
-  --partition=gamma --account=gamma --qos=default \
-  --cpus-per-task=4 --mem=32G --time="${COLLECTION_TIME_LIMIT}" \
-  --output="${COLLECTION_ROOT}/slurm_logs/multi-trajectory-%j.out" \
-  --error="${COLLECTION_ROOT}/slurm_logs/multi-trajectory-%j.err" \
-  --export=ALL,REPO_ROOT="${REPO_ROOT}",SOURCE_ROOT="${SOURCE_ROOT}",COLLECTION_ROOT="${COLLECTION_ROOT}",GRAPH_ROOT="${GRAPH_ROOT}",SELECTION="${SELECTION}",PROTOCOL="${PROTOCOL}" \
-  "${REPO_ROOT}/steam_video_new/implicit_world_model/cgbench_grounded_navigation/run_train_multi_trajectory_collection.sh")"
+COLLECTION_JOB_ID="skipped"
+if [[ "${SKIP_COLLECTION}" != "1" ]]; then
+  COLLECTION_JOB_ID="$(sbatch --parsable \
+    --dependency="afterok:${FINALIZE_JOB_ID}" \
+    --job-name=cg-train-iwm-collect \
+    --partition=gamma --account=gamma --qos=default \
+    --cpus-per-task=4 --mem=32G --time="${COLLECTION_TIME_LIMIT}" \
+    --output="${COLLECTION_ROOT}/slurm_logs/multi-trajectory-%j.out" \
+    --error="${COLLECTION_ROOT}/slurm_logs/multi-trajectory-%j.err" \
+    --export=ALL,REPO_ROOT="${REPO_ROOT}",SOURCE_ROOT="${SOURCE_ROOT}",COLLECTION_ROOT="${COLLECTION_ROOT}",GRAPH_ROOT="${GRAPH_ROOT}",SELECTION="${SELECTION}",PROTOCOL="${PROTOCOL}" \
+    "${REPO_ROOT}/steam_video_new/implicit_world_model/cgbench_grounded_navigation/run_train_multi_trajectory_collection.sh")"
+fi
 
 printf 'l40s_extract_array_job_id=%s\n' "${EVEN_JOB_ID}"
 printf 'a6000_extract_array_job_id=%s\n' "${ODD_JOB_ID}"

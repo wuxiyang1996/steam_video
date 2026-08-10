@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import numpy as np
+import pytest
 
 from steam_video_new.implicit_world_model.reasoning_v2.qformer import (
     SLOT_NAMES,
@@ -12,8 +13,12 @@ from steam_video_new.implicit_world_model.reasoning_v2.qformer import (
 from steam_video_new.implicit_world_model.reasoning_v2.qformer.evaluate_embedding_baselines import (
     evaluate_embedding_baselines,
 )
+from steam_video_new.implicit_world_model.reasoning_v2.qformer.compare_gated_reports import (
+    paired_case_bootstrap,
+)
 
 from steam_video_new.implicit_world_model.reasoning_v2.qformer.evaluation import (
+    clue_group_metrics,
     permutation_consistency,
     retrieval_metrics,
 )
@@ -39,6 +44,25 @@ def test_permutation_consistency_restores_node_order() -> None:
     permuted = np.take_along_axis(original, permutation, axis=1)
     report = permutation_consistency(original, permuted, permutation)
     assert report["max_absolute_error"] == 0.0
+
+
+def test_clue_group_metrics_accept_interchangeable_nodes() -> None:
+    scores = np.asarray([[0.8, 0.9, 0.85, 0.1]], dtype=np.float32)
+    valid = np.ones_like(scores, dtype=np.bool_)
+    groups = [
+        np.asarray(
+            [
+                [True, True, False, False],
+                [False, False, True, False],
+            ],
+            dtype=np.bool_,
+        )
+    ]
+    metrics = clue_group_metrics(scores, valid, groups, ks=(1, 2))
+    assert metrics["clue_group_recall@1"] == 0.5
+    assert metrics["all_clue_group_coverage@1"] == 0.0
+    assert metrics["clue_group_recall@2"] == 1.0
+    assert metrics["all_clue_group_coverage@2"] == 1.0
 
 
 def test_embedding_baselines_use_full_same_video_pool(tmp_path) -> None:
@@ -94,3 +118,25 @@ def test_embedding_baselines_use_full_same_video_pool(tmp_path) -> None:
     )
     assert report["question_count"] == 1
     assert report["metrics"]["b0_caption_question_cosine"]["recall@1"] == 1.0
+
+
+def test_paired_bootstrap_reports_case_aligned_positive_delta() -> None:
+    def report(offset: float):
+        rows = []
+        for index, value in enumerate((0.1, 0.3, 0.5)):
+            rows.append(
+                {
+                    "case_id": f"case:{index}",
+                    "node_union_metrics": {"mrr": value + offset, "recall@8": value + offset},
+                    "clue_group_metrics": {
+                        "clue_group_recall@4": value + offset,
+                        "clue_group_recall@8": value + offset,
+                        "all_clue_group_coverage@8": value + offset,
+                    },
+                }
+            )
+        return {"heldout_ranking": {"per_case": rows}}
+
+    comparison = paired_case_bootstrap(report(0.0), report(0.1), samples=500, seed=4)
+    assert comparison["mrr"]["mean_delta"] == pytest.approx(0.1)
+    assert comparison["mrr"]["bootstrap_probability_positive"] == 1.0

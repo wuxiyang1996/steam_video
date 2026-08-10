@@ -10,12 +10,14 @@ from steam_video_new.implicit_world_model.reasoning_v2.qformer.contracts import 
 from steam_video_new.implicit_world_model.reasoning_v2.qformer.losses import (
     masked_heterogeneous_slot_distillation_loss,
     masked_slot_distillation_loss,
+    trusted_group_retrieval_loss,
     trusted_multi_positive_retrieval_loss,
 )
 from steam_video_new.implicit_world_model.reasoning_v2.qformer.model import (
     ConditionedProposalQFormer,
     FourSlotDecoder,
     FourSlotProjector,
+    GatedFourFeatureResidualScorer,
     HeterogeneousSlotHeads,
     IndependentNodeQFormer,
     NodeScoreHead,
@@ -93,6 +95,21 @@ def test_retrieval_loss_ignores_unlabeled_and_accepts_multiple_positives() -> No
     assert scores.grad[0, 3].item() > 0.0
 
 
+def test_group_retrieval_loss_weights_clue_groups_not_positive_node_count() -> None:
+    scores = torch.tensor([[2.0, 2.0, 1.0, 0.0]], requires_grad=True)
+    groups = torch.tensor(
+        [[[1, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]]]
+    ).bool()
+    group_validity = torch.tensor([[1, 1, 0]]).bool()
+    negatives = torch.tensor([[0, 0, 0, 1]]).bool()
+    loss = trusted_group_retrieval_loss(scores, groups, group_validity, negatives)
+    loss.backward()
+    assert torch.isfinite(loss)
+    assert scores.grad[0, 0] < 0
+    assert scores.grad[0, 2] < 0
+    assert scores.grad[0, 3] > 0
+
+
 def test_qf1_can_be_frozen_while_qf2_receives_gradients() -> None:
     _, _, qf1, _, _, qf2 = _models()
     for parameter in qf1.parameters():
@@ -108,6 +125,67 @@ def test_node_score_shapes() -> None:
     scorer = NodeScoreHead(16)
     scores = scorer(torch.randn(2, 5, 8, 16), torch.randn(2, 3, 16))
     assert scores.shape == (2, 5)
+
+
+def test_gated_residual_initializes_exactly_to_visual_anchor() -> None:
+    model = GatedFourFeatureResidualScorer(
+        6,
+        enable_caption=True,
+        enable_entity=True,
+        enable_time=True,
+        enable_qf=True,
+        anchor_logit_scale=10.0,
+    )
+    semantic = torch.randn(2, 5, 3)
+    scores, diagnostics = model(
+        torch.randn(2, 6),
+        semantic,
+        torch.randn(2, 5, 4),
+        qf_score=torch.randn(2, 5),
+    )
+    assert torch.allclose(scores, 10.0 * semantic[:, :, 2], atol=1e-6)
+    assert diagnostics["semantic_scales"].tolist() == [0.0, 0.0]
+    assert diagnostics["time_scale"].item() == 0.0
+    assert diagnostics["qf_scale"].item() == 0.0
+
+
+def test_four_token_qf2_residual_propagates_token_level_gradients() -> None:
+    hidden_size = 16
+    batch_size, node_count = 2, 3
+    qf2 = ConditionedProposalQFormer(
+        hidden_size=hidden_size, num_queries=8, num_layers=1, num_heads=4
+    )
+    scorer = NodeScoreHead(hidden_size)
+    residual = GatedFourFeatureResidualScorer(
+        6,
+        enable_caption=False,
+        enable_entity=False,
+        enable_time=False,
+        enable_qf=True,
+    )
+    with torch.no_grad():
+        residual.qf_scale.fill_(0.1)
+    four_tokens = torch.randn(
+        batch_size * node_count, 4, hidden_size, requires_grad=True
+    )
+    question_token = torch.randn(batch_size, 1, hidden_size)
+    repeated_question = question_token[:, None].expand(
+        -1, node_count, -1, -1
+    ).reshape(batch_size * node_count, 1, hidden_size)
+    proposals = qf2(four_tokens, repeated_question).reshape(
+        batch_size, node_count, 8, hidden_size
+    )
+    qf_score = scorer(proposals, question_token)
+    scores, _ = residual(
+        torch.randn(batch_size, 6),
+        torch.randn(batch_size, node_count, 3),
+        torch.randn(batch_size, node_count, 4),
+        qf_score=qf_score,
+    )
+    scores.mean().backward()
+    assert four_tokens.grad is not None
+    assert torch.isfinite(four_tokens.grad).all()
+    assert four_tokens.grad.abs().sum() > 0
 
 
 def test_qf1_cache_export_round_trip_and_lineage(tmp_path) -> None:

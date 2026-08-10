@@ -186,3 +186,94 @@ def write_feature_store(
     )
     FourSlotFeatureStore(manifest_path)
     return manifest_path
+
+
+def merge_feature_stores(
+    manifest_paths: Sequence[str | Path],
+    destination: str | Path,
+    *,
+    require_disjoint_videos: bool = True,
+) -> Path:
+    """Merge compatible stores while preserving node lineage and slot masks."""
+
+    if len(manifest_paths) < 2:
+        raise ValueError("at least two feature stores are required for a merge")
+    stores = [FourSlotFeatureStore(path) for path in manifest_paths]
+    reference = stores[0].manifest
+    for store in stores[1:]:
+        manifest = store.manifest
+        if manifest.source_contract != reference.source_contract:
+            raise ValueError("feature stores use different source contracts")
+        if manifest.boundary_audit_version != reference.boundary_audit_version:
+            raise ValueError("feature stores use different boundary audit versions")
+        for name in SLOT_NAMES:
+            left = reference.matrices[name]
+            right = manifest.matrices[name]
+            comparable = ("dimension", "dtype", "encoder")
+            if any(getattr(left, key) != getattr(right, key) for key in comparable):
+                raise ValueError(f"incompatible {name} matrix specifications")
+
+    normalized: dict[str, bool] = {}
+    for slot_index, name in enumerate(SLOT_NAMES):
+        declared = {store.manifest.matrices[name].normalized for store in stores}
+        if len(declared) == 1:
+            normalized[name] = declared.pop()
+            continue
+        # Early materializations omitted the normalized=True metadata even
+        # though the encoder output was already unit-normalized. Reconcile that
+        # historical metadata bug only when every valid vector proves the same
+        # numeric contract.
+        if not all(
+            _valid_vectors_are_l2_normalized(store, name, slot_index)
+            for store in stores
+        ):
+            raise ValueError(f"incompatible {name} normalization contracts")
+        normalized[name] = True
+
+    node_ids: set[str] = set()
+    video_ids: set[str] = set()
+    rows: list[FeatureRow] = []
+    for store in stores:
+        current_videos = {row.video_id for row in store.manifest.rows}
+        if require_disjoint_videos and video_ids.intersection(current_videos):
+            overlap = sorted(video_ids.intersection(current_videos))
+            raise ValueError(f"feature stores contain overlapping videos: {overlap[:3]}")
+        video_ids.update(current_videos)
+        for row in store.manifest.rows:
+            if row.node_id in node_ids:
+                raise ValueError(f"duplicate node ID across feature stores: {row.node_id}")
+            node_ids.add(row.node_id)
+            rows.append(
+                FeatureRow(
+                    row_index=len(rows),
+                    node_id=row.node_id,
+                    video_id=row.video_id,
+                    lineage_hash=row.lineage_hash,
+                )
+            )
+
+    arrays = {
+        name: np.concatenate([store._arrays[name] for store in stores], axis=0)
+        for name in SLOT_NAMES
+    }
+    validity = np.concatenate([store._validity for store in stores], axis=0)
+    return write_feature_store(
+        destination,
+        arrays=arrays,
+        validity=validity,
+        rows=rows,
+        encoders={name: reference.matrices[name].encoder for name in SLOT_NAMES},
+        source_contract=reference.source_contract,
+        boundary_audit_version=reference.boundary_audit_version,
+        normalized=normalized,
+    )
+
+
+def _valid_vectors_are_l2_normalized(
+    store: FourSlotFeatureStore, name: str, slot_index: int
+) -> bool:
+    values = store._arrays[name][store._validity[:, slot_index]]
+    if not len(values):
+        return True
+    norms = np.linalg.norm(values, axis=1)
+    return bool(np.all(np.abs(norms - 1.0) <= 1e-2))

@@ -78,3 +78,26 @@ def test_graph_worker_selection_is_separate_from_case_protocol(tmp_path) -> None
         {"case_id": "case:0", "video_id": "video:0", "split": "train"}
     ]
     assert protocol["graph_builder_receives_case_protocol"] is False
+
+
+def test_train_collection_can_exclude_prior_video_cohort() -> None:
+    dataset = {
+        "dataset_id": "dataset:test",
+        "cases": [
+            {
+                "case_id": f"case:{index}",
+                "video_id": f"video:{index}",
+                "video_ref": f"video:{index}.mp4",
+                "split": "train",
+            }
+            for index in range(41)
+        ],
+    }
+    manifest = build_train_collection_manifest(
+        dataset,
+        collection_id="collection:extension",
+        case_count=40,
+        exclude_video_ids={"video:0"},
+    )
+    assert "video:0" not in {row["video_id"] for row in manifest["cases"]}
+    assert manifest["selection_policy"]["excluded_prior_video_count"] == 1

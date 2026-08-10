@@ -311,3 +311,96 @@ class NodeScoreHead(nn.Module):
             - math.log(similarities.shape[-1])
         )
         return scores[:, 0] if single_node else scores
+
+
+class GatedFourFeatureResidualScorer(nn.Module):
+    """Protect a frozen visual anchor while learning gated feature residuals."""
+
+    def __init__(
+        self,
+        question_dimension: int,
+        *,
+        context_size: int = 64,
+        enable_caption: bool = True,
+        enable_entity: bool = True,
+        enable_time: bool = True,
+        enable_qf: bool = False,
+        anchor_logit_scale: float = 10.0,
+    ) -> None:
+        super().__init__()
+        if question_dimension <= 0 or context_size <= 0 or anchor_logit_scale <= 0:
+            raise ValueError("gated residual dimensions and scale must be positive")
+        self.enable_caption = enable_caption
+        self.enable_entity = enable_entity
+        self.enable_time = enable_time
+        self.enable_qf = enable_qf
+        self.question_context = nn.Sequential(
+            nn.LayerNorm(question_dimension),
+            nn.Linear(question_dimension, context_size),
+            nn.GELU(),
+        )
+        self.gate_head = nn.Linear(context_size, 4)
+        nn.init.zeros_(self.gate_head.weight)
+        nn.init.constant_(self.gate_head.bias, -2.0)
+        # Zero residual scales make every learned variant exactly equal to the
+        # frozen visual-only baseline at initialization.
+        self.semantic_scales = nn.Parameter(torch.zeros(2))
+        self.time_scale = nn.Parameter(torch.zeros(()))
+        self.qf_scale = nn.Parameter(torch.zeros(()))
+        self.log_anchor_scale = nn.Parameter(
+            torch.tensor(float(math.log(anchor_logit_scale)))
+        )
+        self.time_head = nn.Sequential(
+            nn.Linear(context_size + 4, context_size),
+            nn.GELU(),
+            nn.Linear(context_size, 1),
+        )
+
+    def forward(
+        self,
+        question_embedding: Tensor,
+        semantic_cosines: Tensor,
+        time_values: Tensor,
+        *,
+        qf_score: Tensor | None = None,
+    ) -> tuple[Tensor, dict[str, Tensor]]:
+        if semantic_cosines.ndim != 3 or semantic_cosines.shape[-1] != 3:
+            raise ValueError("semantic cosines must have shape [B,N,3]")
+        if time_values.shape != (*semantic_cosines.shape[:2], 4):
+            raise ValueError("time values must have shape [B,N,4]")
+        if question_embedding.shape[0] != semantic_cosines.shape[0]:
+            raise ValueError("question and candidate batch sizes differ")
+        if self.enable_qf and (qf_score is None or qf_score.shape != semantic_cosines.shape[:2]):
+            raise ValueError("QF residual requires scores with shape [B,N]")
+        context = self.question_context(question_embedding)
+        gates = torch.sigmoid(self.gate_head(context))
+        anchor_scale = self.log_anchor_scale.clamp(math.log(0.1), math.log(100.0)).exp()
+        scores = anchor_scale * semantic_cosines[:, :, 2]
+        if self.enable_caption:
+            scores = scores + (
+                gates[:, 0, None]
+                * self.semantic_scales[0]
+                * semantic_cosines[:, :, 0]
+            )
+        if self.enable_entity:
+            scores = scores + (
+                gates[:, 1, None]
+                * self.semantic_scales[1]
+                * semantic_cosines[:, :, 1]
+            )
+        time_score = torch.zeros_like(scores)
+        if self.enable_time:
+            expanded_context = context[:, None, :].expand(-1, time_values.shape[1], -1)
+            time_score = self.time_head(
+                torch.cat((expanded_context, time_values), dim=-1)
+            ).squeeze(-1)
+            scores = scores + gates[:, 2, None] * self.time_scale * time_score
+        if self.enable_qf:
+            scores = scores + gates[:, 3, None] * self.qf_scale * qf_score
+        return scores, {
+            "gates": gates,
+            "semantic_scales": self.semantic_scales,
+            "time_scale": self.time_scale.reshape(1),
+            "qf_scale": self.qf_scale.reshape(1),
+            "anchor_scale": anchor_scale.reshape(1),
+        }

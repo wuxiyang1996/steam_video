@@ -28,9 +28,11 @@ def build_train_collection_manifest(
     *,
     collection_id: str,
     case_count: int = 40,
+    exclude_video_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     if case_count < 30 or case_count > 50:
         raise ValueError("runtime train collection must freeze 30 to 50 cases")
+    excluded = exclude_video_ids or set()
     candidates = [
         row
         for row in dataset.get("cases") or ()
@@ -38,6 +40,7 @@ def build_train_collection_manifest(
         and row.get("case_id")
         and row.get("video_id")
         and row.get("video_ref")
+        and str(row.get("video_id")) not in excluded
     ]
     candidates.sort(
         key=lambda row: hashlib.sha256(
@@ -85,6 +88,7 @@ def build_train_collection_manifest(
             "question_text_used_for_selection": False,
             "hidden_answer_used_for_selection": False,
             "graph_must_be_question_independent": True,
+            "excluded_prior_video_count": len(excluded),
         },
         "target_failure_slices": [
             "weak_related_but_insufficient",
@@ -224,16 +228,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dataset", required=True, type=Path)
     parser.add_argument("--collection-id", required=True)
     parser.add_argument("--case-count", type=int, default=40)
+    parser.add_argument(
+        "--exclude-selection",
+        type=Path,
+        help="Optional prior worker selection whose video IDs must be excluded.",
+    )
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--graph-manifest", type=Path)
     parser.add_argument("--dataset-root", type=Path)
     parser.add_argument("--selection-output", type=Path)
     parser.add_argument("--protocol-output", type=Path)
     args = parser.parse_args(argv)
+    excluded_video_ids: set[str] = set()
+    if args.exclude_selection is not None:
+        prior = _read(args.exclude_selection)
+        excluded_video_ids = {
+            str(row["video_id"])
+            for row in prior.get("videos") or ()
+            if row.get("video_id")
+        }
     manifest = build_train_collection_manifest(
         _read(args.dataset),
         collection_id=args.collection_id,
         case_count=args.case_count,
+        exclude_video_ids=excluded_video_ids,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

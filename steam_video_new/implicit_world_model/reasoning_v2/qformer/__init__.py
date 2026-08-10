@@ -14,7 +14,7 @@ from .contracts import (
     FeatureStoreManifest,
     QF1CacheManifest,
 )
-from .feature_store import FourSlotFeatureStore, write_feature_store
+from .feature_store import FourSlotFeatureStore, merge_feature_stores, write_feature_store
 from .qf1_cache import QF1Cache
 
 __all__ = [
@@ -27,5 +27,6 @@ __all__ = [
     "FourSlotFeatureStore",
     "QF1CacheManifest",
     "QF1Cache",
+    "merge_feature_stores",
     "write_feature_store",
 ]

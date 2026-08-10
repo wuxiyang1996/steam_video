@@ -1,0 +1,218 @@
+{
+  "schema_version": "steam-iwm-runtime-train-graph-protocol/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "collection_id": "cgbench-train-qformer-extension-v2",
+  "case_count": 40,
+  "video_count": 40,
+  "splits": [
+    "train"
+  ],
+  "minimum_locked_cases": 40,
+  "maximum_locked_cases": 40,
+  "cases": [
+    {
+      "case_id": "cgcase:fa645659221984e3663c",
+      "video_id": "BV1Ws4y177So",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:86f3e1e873e6785418bf",
+      "video_id": "BV1zH4y13792",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:c37c11423e6546a121d9",
+      "video_id": "aHEvCl1QNk0",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:f974d5286c31d723a787",
+      "video_id": "BV1vZ4y147f2",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:1b7fe027d812710b6586",
+      "video_id": "5kozt0uDa4c",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:3c0c2732e8e6e98923ea",
+      "video_id": "BV1dS4y1R72i",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:53df297ef19c980213cd",
+      "video_id": "VGAIFZOGdHE",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:05bd737f1cd502c30c74",
+      "video_id": "BV1Ci421h7rT",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:13c9ce268658640c0fbd",
+      "video_id": "BV1L54y1n7hp",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:4adc31710ef665c4ed2b",
+      "video_id": "4MK89zVlYdQ",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:10897b4e7a48b86aee57",
+      "video_id": "BV1gP411B7uZ",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:8bbda12ba6499a6672d4",
+      "video_id": "BV1zJhWeKELU",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:7570f5c349bab3150df3",
+      "video_id": "PlxWf493en4",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:13e52be737dbcff439e5",
+      "video_id": "_Xnkq0ZjBXc",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:1096bf963dc6de928b96",
+      "video_id": "BV1Uv4y1h7Gb",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:0be196686fb7a37cf6b8",
+      "video_id": "BV1vWebeSEVU",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:2ba7c1f1a0e0de8d3f80",
+      "video_id": "BV1fS4y1P7mQ",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:cff924abdc0faaf95a2f",
+      "video_id": "4x8XQAPC4Vk",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:e61e657cde0311e94fab",
+      "video_id": "BV1Mx4y1S7Tf",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:7e6bb9f733ca334747ce",
+      "video_id": "kl5IMeu-UhU",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:15a8a07d5586999f4e8d",
+      "video_id": "fpMo-aLnEEc",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:19b9a2b5f8dcc8688273",
+      "video_id": "LmrKejHOaG4",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:511e4a5d1f095b197d7e",
+      "video_id": "BV1uw411u7JL",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:03cbb8e4d893d9a2c2dd",
+      "video_id": "gED3SwLUEzs",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:06d80dceec0df74ea833",
+      "video_id": "BV1wo4y1C7Dz",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:6482c8b79eb51cee4e60",
+      "video_id": "zPuLGkluoTY",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:6fb743a94fec392b649e",
+      "video_id": "BV18Z421s7iV",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:b43fed28e3895dd1ea87",
+      "video_id": "BV1tu411f7ja",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:76e954e7eea95209c673",
+      "video_id": "BV1QG411q7Bx",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:88958818e629075338ea",
+      "video_id": "SUYK3QQdyXs",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:3ea72d2768b90f21816f",
+      "video_id": "BV1dS411A7bX",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:7713d95bacb57e7c6b58",
+      "video_id": "BV1Az421C7Tp",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:e2bed844f15ae05d8bf5",
+      "video_id": "BV1HJgue7EQA",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:71ccf45c0e4a7dccf537",
+      "video_id": "BV1Na4y1D7E2",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:9eed50c1aadaca2c674f",
+      "video_id": "BV1BD4y187uF",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:44b92cf39bae484d2f7e",
+      "video_id": "BV1Tv42117jv",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:d9bf599410e21308a79e",
+      "video_id": "BV15x4y1i7ot",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:6b4739ef1181f2c70eb6",
+      "video_id": "5Gm4ijmIjZQ",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:81157a2c5d7b335d296e",
+      "video_id": "BV1VW42197UT",
+      "split": "train"
+    },
+    {
+      "case_id": "cgcase:f1b83d01b909caadabf2",
+      "video_id": "BV12T41127be",
+      "split": "train"
+    }
+  ],
+  "case_selection_uses_question_text": false,
+  "case_selection_uses_clue_or_answer_gt": false,
+  "graph_builder_receives_case_protocol": false,
+  "training_performed": false
+}

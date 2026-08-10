@@ -45,6 +45,42 @@ def retrieval_metrics(
     return result
 
 
+def clue_group_metrics(
+    scores: np.ndarray,
+    valid_mask: np.ndarray,
+    positive_group_masks: Sequence[np.ndarray],
+    *,
+    ks: Sequence[int] = (1, 4, 8),
+) -> dict[str, float]:
+    """Measure whether Top-K hits each clue interval's interchangeable nodes."""
+
+    if scores.ndim != 2 or valid_mask.shape != scores.shape:
+        raise ValueError("group metric scores and validity must share shape [B, N]")
+    if valid_mask.dtype != np.bool_ or len(positive_group_masks) != scores.shape[0]:
+        raise ValueError("group metric validity or batch size is invalid")
+    recalls = {int(k): [] for k in ks}
+    coverage = {int(k): [] for k in ks}
+    for row_scores, row_valid, groups in zip(scores, valid_mask, positive_group_masks):
+        groups = np.asarray(groups)
+        if groups.ndim != 2 or groups.shape[1] != scores.shape[1] or groups.dtype != np.bool_:
+            raise ValueError("each positive group mask must have shape [G, N]")
+        if not len(groups) or np.any(~groups.any(axis=1)) or np.any(groups & ~row_valid):
+            raise ValueError("every clue group requires valid candidate nodes")
+        valid_indices = np.flatnonzero(row_valid)
+        ordered = valid_indices[np.argsort(-row_scores[valid_indices], kind="stable")]
+        for k in ks:
+            retrieved = np.zeros(scores.shape[1], dtype=np.bool_)
+            retrieved[ordered[: int(k)]] = True
+            hit = np.any(groups & retrieved[None, :], axis=1)
+            recalls[int(k)].append(float(hit.mean()))
+            coverage[int(k)].append(float(hit.all()))
+    result: dict[str, float] = {}
+    for k in ks:
+        result[f"clue_group_recall@{k}"] = float(np.mean(recalls[int(k)]))
+        result[f"all_clue_group_coverage@{k}"] = float(np.mean(coverage[int(k)]))
+    return result
+
+
 def permutation_consistency(
     original_scores: np.ndarray,
     permuted_scores: np.ndarray,
@@ -58,4 +94,3 @@ def permutation_consistency(
         "max_absolute_error": float(difference.max(initial=0.0)),
         "mean_absolute_error": float(difference.mean()) if difference.size else 0.0,
     }
-

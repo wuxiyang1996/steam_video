@@ -260,7 +260,17 @@ def train_qf2(
     return report
 
 
-def _build_split_examples(records, cache: QF1Cache, *, split: str, trusted_negatives: int, seed: int):
+def _build_split_examples(
+    records,
+    cache: QF1Cache,
+    *,
+    split: str,
+    trusted_negatives: int,
+    seed: int,
+    same_video_negatives: int = 0,
+):
+    if same_video_negatives < 0 or same_video_negatives > trusted_negatives:
+        raise ValueError("same-video negatives must be between zero and total negatives")
     rows_by_video: dict[str, list[str]] = {}
     for row in cache.manifest.rows:
         rows_by_video.setdefault(row.video_id, []).append(row.node_id)
@@ -274,18 +284,32 @@ def _build_split_examples(records, cache: QF1Cache, *, split: str, trusted_negat
             continue
         video_id = str(record["video_id"])
         positives = [node for node in record["positive_node_ids"] if node in cache]
-        negative_pool = [
+        cross_video_pool = [
             node
             for other_video in sorted(split_videos.get(record_split, ()))
             if other_video != video_id
             for node in rows_by_video.get(other_video, ())
         ]
-        if not positives or not negative_pool:
+        same_video_pool = [
+            node
+            for node in record.get("trusted_same_video_negative_node_ids") or ()
+            if node in cache and node not in positives
+        ]
+        cross_count = trusted_negatives - min(same_video_negatives, len(same_video_pool))
+        if not positives or (not cross_video_pool and not same_video_pool):
             continue
         case_id = str(record["case_id"])
         digest = hashlib.sha256(f"{seed}:{case_id}".encode()).digest()
         rng = random.Random(int.from_bytes(digest[:8], "big"))
-        negatives = rng.sample(negative_pool, min(trusted_negatives, len(negative_pool)))
+        selected_same_video = rng.sample(
+            same_video_pool, min(same_video_negatives, len(same_video_pool))
+        )
+        selected_cross_video = rng.sample(
+            cross_video_pool, min(cross_count, len(cross_video_pool))
+        )
+        negatives = selected_same_video + selected_cross_video
+        if not negatives:
+            continue
         candidates = positives + negatives
         labels = [True] * len(positives) + [False] * len(negatives)
         order = list(range(len(candidates)))

@@ -670,3 +670,225 @@ B3 > B1：失败
 保留为可复现的 negative result。下一步若继续，应优先诊断 sampled cross-video training objective
 与 full same-video ranking 的分布错配，并加入可信的 same-video hard negatives；不能通过增加
 auxiliary losses 或使用 test split 来掩盖当前结果。
+
+## 17. V0.2 四特征 gated residual 验证（2026-08-09）
+
+V0.1 的 `Coverage@K` 把同一个 clue interval 覆盖到的多个 node 全部当成必须命中的独立
+positive，因此 21 个 validation cases 中有 11 个在 `K=8` 时数学上不可能完全覆盖。V0.2 label
+保留 positive-node union，同时增加按原 clue interval 划分的 `positive_node_groups`；训练时每个
+clue group 等权，评估时新增：
+
+```text
+clue_group_recall@K
+all_clue_group_coverage@K
+```
+
+为验证是否应使用全部四类 features，实现以 visual cosine 为不可破坏 anchor 的
+question-conditioned gated residual：
+
+\[
+s(i,q)=10s_{visual}+\alpha_cg_c(q)s_{caption}
++\alpha_eg_e(q)s_{entity}+\alpha_tg_t(q)h_t(q,t_i)
++\alpha_qg_q(q)s_{QF}
+\]
+
+所有 residual scale 零初始化，因此 epoch 0 与 visual-only 排序严格一致；checkpoint 首先按
+`clue_group_recall@8`、其次按 `all_clue_group_coverage@8`、最后按 MRR 选择，且不会保存比 visual
+anchor 更差的 selection key。time 使用 question-time MLP，而不是把四维时间值与问题 embedding
+直接做 cosine。
+
+GPU job `7229034` 在 RTX A5000 上完成，exit code 0；集群端 21 tests 通过，包含 padding clue
+group 的 finite-loss、label groups、group metrics、visual-anchor 初始化和 permutation tests。完整
+validation video 内候选池结果如下：
+
+| Variant | 使用的 residual | MRR | Clue-group R@4 | Clue-group R@8 | All-group coverage@8 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| A0 | visual anchor only | 0.5134 | 0.3515 | 0.4535 | 0.2857 |
+| A1 | + caption | 0.5133 | 0.3558 | 0.4588 | 0.2857 |
+| A2 | + entity/state | 0.5133 | 0.3558 | 0.4588 | 0.2857 |
+| A3 | + time（全部四特征，无 QF） | **0.5139** | 0.3558 | 0.4588 | 0.2857 |
+| A4 | + frozen QF1 / trainable QF2 residual | 0.4953 | **0.3558** | **0.4656** | 0.2857 |
+
+结论：四类 features 都应被保留在 node contract 和模型输入中，但当前结果不支持把它们做固定
+均权或强制强融合。visual 是主要信号；caption/entity/time 作为 gated residual 只产生很小的正向
+变化，A3 是当前最平衡的 baseline。A4 虽将 clue-group R@8 相对 A0 提高 0.0121，却令 MRR
+下降 0.0181，而且没有提高 all-group coverage，因此 QF residual 暂不进入默认路径。
+
+下一步停止增加模型 term。先用多个 train seeds 验证 A3 的微小增益是否稳定，并扩大
+video-disjoint validation cohort；若增益不能超过 bootstrap 不确定性，默认部署 A0 visual anchor，
+但继续存储四槽以便后续重新训练。
+
+### 17.1 无 held-out selection bias 的五 seed 复验
+
+随后修正 checkpoint protocol：40 个训练视频固定划为 32 个 fit videos 和 8 个
+selection videos；只在 selection videos 上选 epoch，外部 17 个 validation videos 仅在 checkpoint
+冻结后评估一次。A3 使用 seeds `7/17/31/43/59`，GPU array job `7229138` 全部成功。
+
+五个 seeds 的 checkpoint 均在 selection 上把 clue-group R@8 从 0.3667 提高到 0.4167；在真正
+held-out validation 上却几乎得到相同结果：
+
+```text
+A0 visual anchor:
+  MRR                  0.513390
+  clue-group R@8       0.453487
+  all-group coverage@8 0.285714
+
+A3 five seeds:
+  MRR                  0.513302–0.513381
+  clue-group R@8       0.458778
+  all-group coverage@8 0.285714
+```
+
+对 21 个 held-out questions 做 10,000 次 paired case bootstrap：
+
+```text
+clue-group R@8 delta   +0.005291
+95% CI                 [0.000000, 0.015873]
+P(delta > 0)           约 0.64
+improved/tied/worse    1 / 20 / 0 cases
+
+MRR delta              -0.000088 至 -0.000009
+95% CI                 跨过 0
+all-group coverage@8   0 change
+```
+
+最终决策：默认 retrieval scorer 使用 A0 visual anchor。四槽 feature contract、storage 和 validity
+mask 继续保留；caption/entity/time gated residual 作为实验开关，不作为默认生产路径。当前数据只
+证明它改变了一个 case，尚未证明可泛化。下一项工作应是增加独立 held-out videos/questions，或
+针对失败 cases 改进 feature 质量，而不是继续增加 Q-Former 层数或 auxiliary loss。
+
+### 17.2 A5：真正的四 token question-conditioned fusion
+
+为区分“scalar residual 无效”和“四特征无效”，新增 A5：
+
+```text
+caption typed token ─────┐
+entity/state typed token ├→ QF2(8 conditioned queries) → node score residual
+visual typed token ──────┤                                      │
+time typed token ────────┘                                      ▼
+visual cosine anchor ────────────────────────────────────────────+
+```
+
+A5 读取 train-only QF1 projector 产生的四个完整 768-D typed tokens，不启用 caption/entity/time
+scalar cosine residual。QF residual 零初始化，因此 epoch 0 严格等于 visual anchor。新增测试确认
+cache memory token 数为 4，且 score gradient 能穿过 QF2 回到全部 token-level memory inputs。
+
+GPU array job `7229201` 使用同一 32-fit/8-selection/17-heldout protocol，运行 seeds
+`7/17/31/43/59`，全部 exit code 0：
+
+| Seed | Selected epoch | Held-out MRR | Clue-group R@4 | Clue-group R@8 | Coverage@8 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 10 | 0.511689 | 0.351515 | 0.453487 | 0.285714 |
+| 17 | 9 | 0.511692 | 0.351515 | 0.453487 | 0.285714 |
+| 31 | 11 | 0.510934 | 0.351515 | 0.453487 | 0.285714 |
+| 43 | 8 | 0.511690 | 0.351515 | 0.453487 | 0.285714 |
+| 59 | 8 | **0.513442** | 0.351515 | 0.453487 | 0.285714 |
+| A0 | 0 | 0.513390 | 0.351515 | 0.453487 | 0.285714 |
+
+Paired bootstrap 显示五个 seeds 的 R@4、R@8 和 coverage delta 均严格为 0；四个 seeds 的 MRR
+下降约 0.0017–0.0025，一个 seed 提高 0.00005。A5 因此证明了工程路径正确，但没有证明当前
+supervision 能学到有泛化能力的四特征融合。
+
+主要瓶颈是 objective mismatch：训练 loss 只使用跨视频 trusted negatives，而 held-out 评估是
+同视频完整 node pool 排序。同视频 non-positive nodes 当前按规范属于 unlabeled/ignore，QF2
+没有监督学习区分同一场景中的相邻事件。因此下一阶段若坚持让四槽产生检索增益，必须先构造
+可审计的 same-video hard-negative supervision；继续更换 fusion 层或增加 queries 不会解决该
+监督缺口。
+
+### 17.3 Same-video supervision 与 BLIP-style QF2 initialization
+
+Label schema v0.3 从 evaluator-only clue intervals 构造可信同视频负样本：node 必须与每一个
+clue interval 至少相隔 2 秒；margin 内的非 positive nodes 仍为 ignore。56 个 train questions
+每题至少有 106 个安全 negatives，median 350；48 个 held-out questions 每题至少 67 个，median
+417.5。输出不包含 answer fields，positive/negative 集合严格不相交。
+
+随机抽取 8/16/32 个安全同视频 negatives 的 job `7229212` 没有改善，平均 MRR 分别为
+0.5046/0.5051/0.5023。随后使用 visual anchor 在安全池内选择最高分节点作为真正 hard
+negatives。随机初始化 QF2 的 job `7229230` 中，hard4 seed 7 曾达到 MRR 0.5302、R@8
+0.5011、coverage@8 0.3333，但其他 seeds 不复现，说明 46 个 fit questions 无法稳定训练随机
+初始化的 QF2。
+
+最终采用更接近 BLIP 的初始化方式：
+
+```text
+QF2 queries + attention blocks ← pretrained QF1
+question projector             ← pretrained caption projector
+proposal/question score maps   ← identity matrices
+visual anchor residual scale   ← zero initialized
+```
+
+job `7229242` 使用 4-layer pretrained QF2、hard4 与五个 seeds：
+
+| Setting | Mean MRR | Mean clue R@4 | Mean clue R@8 | Mean coverage@8 |
+| --- | ---: | ---: | ---: | ---: |
+| A0 visual | 0.513390 | 0.351515 | 0.453487 | 0.285714 |
+| pretrained A5, cross-video only | 0.512823 | 0.351515 | 0.453487 | 0.285714 |
+| pretrained A5, hard4 | 0.513064 | **0.354113** | 0.453487 | 0.285714 |
+
+hard4 在 3/5 seeds 上将 clue R@4 提高 0.004329，另外两个 seeds 不变；R@8 和 coverage 完全
+不变，MRR 变化约在 -0.0017 到 +0.00023。预训练初始化消除了随机 QF2 的大幅方差，但当前样本
+量下仍没有统计充分的总体提升。
+
+如果产品约束要求所有四槽都进入模型，推荐 baseline 为 `visual anchor + pretrained A5 + 4
+visual-hard safe same-video negatives`，并保留 residual fallback；它是目前最稳定的真正四 token
+路径。科研结论仍应写为“工程可行、弱 R@4 信号、尚未证明整体优于 visual-only”。进一步提升
+需要增加带 clue intervals 的训练 questions，而不是继续扩大 Q-Former。
+
+## 18. 扩展 public-train cohort（执行中）
+
+为增加带 clue intervals 的训练 questions，已从 169 个 public-train videos 中冻结第二批 40 个
+question-independent videos。它与原训练 cohort 的 40 videos 零重叠，40/40 原始视频文件均可用，
+总时长 17.40 小时。selection 不读取 question、clue intervals 或 answer，并通过 prior-selection
+exclusion 保证 cohort disjoint。
+
+```text
+collection: iwm_runtime_train_collection_v2
+graph root: l15_fixed_train_v2_vllm
+L40S extraction array: 7229254
+RTX A6000 extraction array: 7229255
+finalize/evaluator gate: 7229259
+multi-trajectory collection: skipped（本实验不需要）
+```
+
+graphs 完成后将按顺序运行：四槽 feature materialization → v0.3 safe same-video labels → 扩展
+QF1/projector pretraining → pretrained A5+hard4 多 seed → 原 held-out validation 一次性评估。
+
+### 18.1 80-video 合并训练结果
+
+第二批 GPU materialization job `7230194` 成功生成 16,005 nodes；caption/visual/time 覆盖率
+100%，entity/state 覆盖率 90.9%，无 visual failures。新增 contract-safe merge 工具，要求 source
+contract、boundary audit、维度、dtype 和 encoder 一致，并拒绝重复 node/video。旧 manifest 曾漏标
+text/visual embedding 的 `normalized=true`；合并器仅在所有有效向量的实际 L2 norm 误差小于
+0.01 时修复该历史 metadata，不无条件放宽契约。
+
+合并 store 共 32,251 nodes / 80 videos，entity/state 总覆盖率 93.54%。Label compiler 现在支持
+多个 overlay roots 和 `--require-all-clue-groups`；同时修正 `clue_group_count` 为原始 clue 总组数。
+严格过滤后旧 cohort 为 54 个完整问题、新 cohort 为 45 个，合计 99 questions / 76 videos。
+
+prepare job `7230384` 全部 gates 通过。QF1 在 64/16 个 video-disjoint train/validation videos
+上训练 10 epochs，best validation loss 为 0.039734；validation slot cosine 为 caption 0.9511、
+entity/state 0.9647、visual 0.9256、time 0.99999。随后导出 train `[32251,4,768]`、held-out
+`[15181,4,768]` projected slots，并生成 99 个 question embeddings。
+
+五 seed pretrained A5 + visual-hard4 array job `7230385` 全部 exit 0：
+
+| Seed | Epoch | MRR | Node R@8 | Clue R@4 | Clue R@8 | Coverage@8 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 18 | 0.535428 | 0.234625 | 0.351515 | 0.453487 | 0.285714 |
+| 17 | 18 | 0.513298 | 0.234436 | 0.355844 | 0.453487 | 0.285714 |
+| 31 | 15 | 0.511475 | 0.232135 | 0.351515 | 0.453487 | 0.285714 |
+| 43 | 15 | 0.535560 | 0.227823 | 0.351515 | 0.453487 | 0.285714 |
+| 59 | 9 | 0.513770 | 0.234436 | 0.351515 | 0.453487 | 0.285714 |
+| Mean | — | 0.521906 | 0.232691 | 0.352381 | 0.453487 | 0.285714 |
+| A0 visual | — | 0.513390 | 0.234436 | 0.351515 | 0.453487 | 0.285714 |
+
+50,000-sample paired case bootstrap over the seed-ensemble gives MRR delta +0.008516，95% CI
+`[-0.003572,+0.029051]`，P(delta>0)=0.749；node R@8 delta -0.001745，CI crosses zero；clue
+R@8 and coverage@8 are unchanged. MRR mean improvement is dominated by one 5-clue case where seeds 7/43
+move the first positive from rank 2 to rank 1. Across 21 held-out cases, ensemble MRR improves 5、worsens
+4、ties 12。
+
+结论仍不变：扩大到 99 questions 后四 token 路径保持工程稳定，并出现不显著的 MRR 信号，但没有
+提升 evidence coverage。默认 scorer 仍应是 visual anchor；若接口必须消费全部四槽，则保留
+`visual anchor + pretrained A5 + hard4` 作为可回退实验路径。下一步应扩大独立 held-out case 数，
+或针对同视频长序列优化 clue-group coverage supervision，而不是增加新的 loss terms。
