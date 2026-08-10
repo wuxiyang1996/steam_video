@@ -52,7 +52,6 @@ python -m baseline.qformer_rag_eval \
   --datasets "$DATASET" \
   --arm "$ARM" \
   --split test \
-  --limit-per-dataset -1 \
   --shard-index "$SHARD_INDEX" \
   --num-shards "$SHARDS" \
   --top-k 3 \

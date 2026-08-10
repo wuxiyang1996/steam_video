@@ -151,7 +151,9 @@ class ThreeBenchRetriever:
             if not bool(feature["validity"][2]):
                 values.append(float("-inf"))
                 continue
-            visual = np.asarray(feature["features"]["visual"], dtype=np.float32)
+            # FeatureStore uses read-only mmap arrays; normalization must not
+            # mutate the persisted feature artifact.
+            visual = np.array(feature["features"]["visual"], dtype=np.float32, copy=True)
             visual /= max(float(np.linalg.norm(visual)), 1e-12)
             values.append(float(visual @ question))
         return np.asarray(values, dtype=np.float32)

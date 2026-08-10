@@ -1,3 +1,5 @@
+import numpy as np
+
 from streaming_3bench.baseline.qformer_retrieval import ThreeBenchRetriever
 from streaming_3bench.baseline.qformer_rag_stats import holm_adjust, paired_report
 
@@ -37,3 +39,18 @@ def test_paired_statistics_are_deterministic_and_holm_monotone():
     assert report["left_only_correct"] == 2
     adjusted = holm_adjust([("a", 0.01), ("b", 0.04), ("c", 0.2)])
     assert adjusted["a"] <= adjusted["b"] <= adjusted["c"]
+
+
+def test_visual_scoring_copies_read_only_mmap_values():
+    visual = np.asarray([1.0, 0.0], dtype=np.float32)
+    visual.setflags(write=False)
+
+    class Store:
+        def node(self, _node_id):
+            return {"validity": np.asarray([True, False, True, True]), "features": {"visual": visual}}
+
+    retriever = ThreeBenchRetriever.__new__(ThreeBenchRetriever)
+    retriever.features = Store()
+    scores = retriever._visual_scores([{"node_id": "node"}], np.asarray([1.0, 0.0]))
+    assert scores.tolist() == [1.0]
+    assert visual.tolist() == [1.0, 0.0]

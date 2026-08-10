@@ -14,6 +14,7 @@ from scipy.stats import binomtest
 
 ARMS = ("uniform", "visual", "qformer")
 DATASETS = ("ovo_bench", "videomme", "streaming_bench")
+EXPECTED_COUNTS = {"ovo_bench": 3035, "videomme": 2700, "streaming_bench": 4500}
 
 
 def load_arm(root: Path, arm: str) -> dict[tuple[str, str], dict[str, Any]]:
@@ -93,6 +94,13 @@ def main(argv: list[str] | None = None) -> int:
     if common != union:
         counts = {arm: len(rows) for arm, rows in arms.items()}
         raise ValueError(f"arms do not contain identical paired examples: {counts}")
+    actual_counts = {
+        dataset: sum(key[0] == dataset for key in common) for dataset in DATASETS
+    }
+    if actual_counts != EXPECTED_COUNTS:
+        raise ValueError(
+            f"full benchmark cardinalities disagree: got {actual_counts}, expected {EXPECTED_COUNTS}"
+        )
 
     report: dict[str, Any] = {
         "schema_version": "streaming-3bench-qformer-paired-stats/v0.1",

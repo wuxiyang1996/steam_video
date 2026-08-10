@@ -25,6 +25,9 @@ from .per_video_embedding_rag import LocalVideoQwen, media_records_from_retrieve
 from .qformer_retrieval import ThreeBenchRetriever
 
 
+FULL_DATASET_COUNTS = {"ovo_bench": 3035, "videomme": 2700, "streaming_bench": 4500}
+
+
 def _parse_answer_text(response: str) -> str | None:
     try:
         payload = json.loads(response)
@@ -110,6 +113,14 @@ def main(argv: list[str] | None = None) -> int:
     from .schemas import visible_until_from_canonical
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    examples = iter_examples(args)
+    if args.limit_per_dataset is None and len(args.datasets) == 1:
+        total = FULL_DATASET_COUNTS[args.datasets[0]]
+        expected = len(range(args.shard_index, total, args.num_shards))
+        if len(examples) != expected:
+            raise ValueError(
+                f"canonical shard cardinality mismatch: got {len(examples)}, expected {expected}"
+            )
     retriever = ThreeBenchRetriever(
         steam_root=args.steam_root,
         feature_manifest=args.feature_manifest,
@@ -142,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
         "shard_index": args.shard_index,
         "num_shards": args.num_shards,
+        "example_count": len(examples),
     }
     (args.output_dir / "run_config.json").write_text(
         json.dumps(config, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -149,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
 
     records: list[dict[str, Any]] = []
     with (args.output_dir / "records.jsonl").open("w", encoding="utf-8") as output:
-        for dataset, example in iter_examples(args):
+        for dataset, example in examples:
             started = time.perf_counter()
             question = example.get("question") or {}
             gold_label = _question_answer_label(example)
