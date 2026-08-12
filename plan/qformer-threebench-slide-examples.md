@@ -38,7 +38,7 @@ top-k recall 差异。
 
 - Example：`Anomaly Context Understanding_sample_40_1`
 - 30 秒窗口：原视频 `18–48s`
-- Video：`streaming_sample_40_1_30s.mp4`
+- Video：`streaming_sample_40_1_30s_v2.mp4`
 - Poster：`streaming_sample_40_1_poster.jpg`
 - Question：**What unusual event just occurred?**
 - Gold：**C. An orange player stole the ball from purple No. 95 and scored.**
