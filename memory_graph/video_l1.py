@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
+from .adaptive_windowing import AdaptiveWindowProvider
 from .atomic_events import atomicity_issues
 from .contracts import AtomicEvent, EntityMention, StateAssertion
 from .types import MemoryNode, TimeSpan
@@ -23,6 +25,8 @@ class VideoL1Config:
     max_events_per_window: int = 4
     minimum_confidence: float = 0.5
     track_max_gap_s: float = 12.0
+    localization_mode: str = "coarse_to_fine"
+    request_concurrency: int = 1
 
     def __post_init__(self) -> None:
         if self.coarse_window_s <= 0 or self.coarse_stride_s <= 0:
@@ -31,8 +35,15 @@ class VideoL1Config:
             raise ValueError("coarse/fine frame counts are too small")
         if self.max_events_per_window < 1:
             raise ValueError("max_events_per_window must be positive")
+        if self.request_concurrency < 1:
+            raise ValueError("request_concurrency must be positive")
         if not 0.0 <= self.minimum_confidence <= 1.0:
             raise ValueError("minimum_confidence must be in [0, 1]")
+        if self.localization_mode not in {
+            "coarse_to_fine",
+            "grounded_single_pass",
+        }:
+            raise ValueError("unsupported L1 localization mode")
 
 
 @dataclass(frozen=True)
@@ -43,6 +54,7 @@ class VideoL1ExtractionResult:
     coarse_candidate_count: int
     fine_localized_count: int
     entity_track_count: int
+    model_call_count: int | None = None
     rejected: tuple[dict[str, Any], ...] = ()
     model: str | None = None
     protocol_version: str = "video-only-l1/v0.1"
@@ -56,6 +68,7 @@ class VideoL1ExtractionResult:
             "coarse_candidate_count": self.coarse_candidate_count,
             "fine_localized_count": self.fine_localized_count,
             "entity_track_count": self.entity_track_count,
+            "model_call_count": self.model_call_count,
             "rejected": list(self.rejected),
             "nodes": [node.to_dict() for node in self.nodes],
         }
@@ -88,20 +101,31 @@ class PayloadVideoL1Provider:
         observation_end_s: float | None = None,
     ) -> VideoL1ExtractionResult:
         del video_path
-        nodes = tuple(_memory_node_from_dict(value) for value in self.payload.get("nodes") or [])
+        nodes = tuple(
+            _memory_node_from_dict(value) for value in self.payload.get("nodes") or []
+        )
         if not nodes or any(node.video_id != video_id for node in nodes):
-            raise ValueError("persisted video L1 nodes are empty or belong to another video")
+            raise ValueError(
+                "persisted video L1 nodes are empty or belong to another video"
+            )
         if observation_end_s is not None and any(
             node.time_span.end_s > observation_end_s + 1e-6 for node in nodes
         ):
             raise ValueError("persisted video L1 exceeds the observation horizon")
         return VideoL1ExtractionResult(
             nodes=nodes,
-            duration_s=float(self.payload.get("duration_s") or observation_end_s or 0.0),
+            duration_s=float(
+                self.payload.get("duration_s") or observation_end_s or 0.0
+            ),
             coarse_window_count=int(self.payload.get("coarse_window_count") or 0),
             coarse_candidate_count=int(self.payload.get("coarse_candidate_count") or 0),
             fine_localized_count=len(nodes),
             entity_track_count=int(self.payload.get("entity_track_count") or 0),
+            model_call_count=(
+                int(self.payload["model_call_count"])
+                if self.payload.get("model_call_count") is not None
+                else None
+            ),
             rejected=tuple(self.payload.get("rejected") or []),
             model=str(self.payload.get("model") or self.model),
             protocol_version=str(
@@ -113,6 +137,7 @@ class PayloadVideoL1Provider:
 @dataclass
 class _LocalizedEvent:
     predicate: str
+    grounded_caption: str
     time_span: TimeSpan
     confidence: float
     action_kind: str
@@ -121,7 +146,9 @@ class _LocalizedEvent:
     participants: list[dict[str, Any]]
     states: list[dict[str, Any]]
     state_change: dict[str, Any] | None
+    visible_text: list[dict[str, Any]]
     coarse_window: dict[str, Any]
+    localization_method: str
 
 
 @dataclass
@@ -131,11 +158,17 @@ class QwenVideoL1Extractor:
     client: VLMClient
     config: VideoL1Config = field(default_factory=VideoL1Config)
     model: str = "Qwen/Qwen3.5-9B"
+    window_provider: AdaptiveWindowProvider | None = None
+    client_factory: Callable[[], VLMClient] | None = None
 
     def __post_init__(self) -> None:
         client_model = getattr(self.client, "model", None)
         if client_model:
             self.model = str(client_model)
+        if self.config.request_concurrency > 1 and self.client_factory is None:
+            raise ValueError(
+                "client_factory is required when request_concurrency is greater than 1"
+            )
 
     def extract(
         self,
@@ -153,98 +186,107 @@ class QwenVideoL1Extractor:
         if duration_s <= 0:
             raise ValueError("raw video has no readable duration")
 
-        windows = _coarse_windows(duration_s, self.config)
+        windows = (
+            self.window_provider.windows(path, duration_s=duration_s)
+            if self.window_provider is not None
+            else _coarse_windows(duration_s, self.config)
+        )
         candidates: list[dict[str, Any]] = []
+        single_pass_localized: list[_LocalizedEvent] = []
         rejected: list[dict[str, Any]] = []
-        for window_index, window in enumerate(windows):
-            images, records = _sample_frame_data_uris(
-                path,
-                windows=[window],
-                frames_per_window=self.config.frames_per_coarse_window,
-            )
-            if not images:
-                rejected.append(
-                    {"stage": "coarse", "window_index": window_index, "reason": "no frames"}
+        indexed_windows = list(enumerate(windows))
+        if self.config.request_concurrency == 1:
+            coarse_results = [
+                self._scan_coarse_window(path, window_index, window, self.client)
+                for window_index, window in indexed_windows
+            ]
+        else:
+            assert self.client_factory is not None
+
+            def scan(item: tuple[int, dict[str, Any]]):
+                window_index, window = item
+                return self._scan_coarse_window(
+                    path,
+                    window_index,
+                    window,
+                    self.client_factory(),
                 )
-                continue
-            response = self.client.perceive(
-                _coarse_prompt(
-                    window=window,
-                    frame_records=records,
-                    max_events=self.config.max_events_per_window,
-                ),
-                image_urls=images,
-                system=(
-                    "Report only directly visible video events and states in strict JSON. "
-                    "Do not infer causes, goals, identity, or events between sampled frames."
-                ),
-            )
-            parsed, problems = _parse_coarse_response(
-                response,
-                window=window,
-                window_index=window_index,
-                minimum_confidence=self.config.minimum_confidence,
-                max_events=self.config.max_events_per_window,
-            )
+
+            with ThreadPoolExecutor(
+                max_workers=self.config.request_concurrency,
+                thread_name_prefix="video-l1-window",
+            ) as executor:
+                # executor.map preserves input order, so node IDs and rejection
+                # ordering remain deterministic despite concurrent inference.
+                coarse_results = list(executor.map(scan, indexed_windows))
+
+        for parsed, problems, window_localized in coarse_results:
             candidates.extend(parsed)
             rejected.extend(problems)
+            single_pass_localized.extend(window_localized)
 
-        localized: list[_LocalizedEvent] = []
-        for candidate_index, candidate in enumerate(_dedupe_candidates(candidates)):
-            window = {
-                "start_s": max(
-                    0.0,
-                    float(candidate["coarse_start_s"]) - self.config.fine_context_s,
-                ),
-                "end_s": min(
-                    duration_s,
-                    float(candidate["coarse_end_s"]) + self.config.fine_context_s,
-                ),
-                "purpose": "fine_localization",
-            }
-            images, records = _sample_frame_data_uris(
-                path,
-                windows=[window],
-                frames_per_window=self.config.frames_per_fine_window,
-            )
-            if not images:
-                rejected.append(
-                    {
-                        "stage": "fine",
-                        "candidate_index": candidate_index,
-                        "reason": "no frames",
-                    }
+        localized: list[_LocalizedEvent] = single_pass_localized
+        fine_candidate_count = 0
+        if self.config.localization_mode == "coarse_to_fine":
+            fine_candidates = _dedupe_candidates(candidates)
+            fine_candidate_count = len(fine_candidates)
+            for candidate_index, candidate in enumerate(fine_candidates):
+                window = {
+                    "start_s": max(
+                        0.0,
+                        float(candidate["coarse_start_s"]) - self.config.fine_context_s,
+                    ),
+                    "end_s": min(
+                        duration_s,
+                        float(candidate["coarse_end_s"]) + self.config.fine_context_s,
+                    ),
+                    "purpose": "fine_localization",
+                }
+                images, records = _sample_frame_data_uris(
+                    path,
+                    windows=[window],
+                    frames_per_window=self.config.frames_per_fine_window,
                 )
-                continue
-            response = self.client.perceive(
-                _fine_prompt(candidate=candidate, frame_records=records),
-                image_urls=images,
-                system=(
-                    "Localize only what is directly visible in the labeled frames. "
-                    "Use frame indices as evidence and return strict JSON."
-                ),
-            )
-            try:
-                event = _parse_fine_response(
-                    response,
-                    candidate=candidate,
-                    frame_records=records,
-                    minimum_confidence=self.config.minimum_confidence,
+                if not images:
+                    rejected.append(
+                        {
+                            "stage": "fine",
+                            "candidate_index": candidate_index,
+                            "reason": "no frames",
+                        }
+                    )
+                    continue
+                response = self.client.perceive(
+                    _fine_prompt(candidate=candidate, frame_records=records),
+                    image_urls=images,
+                    system=(
+                        "Localize only what is directly visible in the labeled frames. "
+                        "Use frame indices as evidence and return strict JSON."
+                    ),
                 )
-            except ValueError as exc:
-                rejected.append(
-                    {
-                        "stage": "fine",
-                        "candidate_index": candidate_index,
-                        "reason": str(exc),
-                    }
-                )
-                continue
-            if event is not None:
-                localized.append(event)
+                try:
+                    event = _parse_fine_response(
+                        response,
+                        candidate=candidate,
+                        frame_records=records,
+                        minimum_confidence=self.config.minimum_confidence,
+                    )
+                except ValueError as exc:
+                    rejected.append(
+                        {
+                            "stage": "fine",
+                            "candidate_index": candidate_index,
+                            "reason": str(exc),
+                        }
+                    )
+                    continue
+                if event is not None:
+                    localized.append(event)
 
         localized = _dedupe_localized(localized)
-        track_count = _assign_track_ids(localized, max_gap_s=self.config.track_max_gap_s)
+        track_count = _assign_track_ids(
+            localized, max_gap_s=self.config.track_max_gap_s
+        )
         nodes = tuple(
             _event_to_l1_node(event, video_id=video_id, index=index)
             for index, event in enumerate(localized, start=1)
@@ -256,9 +298,70 @@ class QwenVideoL1Extractor:
             coarse_candidate_count=len(candidates),
             fine_localized_count=len(nodes),
             entity_track_count=track_count,
+            model_call_count=len(windows) + fine_candidate_count,
             rejected=tuple(rejected),
             model=self.model,
+            protocol_version=(
+                "video-only-l1/v0.3-rich-grounded-single-pass"
+                if self.config.localization_mode == "grounded_single_pass"
+                else "video-only-l1/v0.1"
+            ),
         )
+
+    def _scan_coarse_window(
+        self,
+        path: Path,
+        window_index: int,
+        window: dict[str, Any],
+        client: VLMClient,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[_LocalizedEvent]]:
+        images, records = _sample_frame_data_uris(
+            path,
+            windows=[window],
+            frames_per_window=self.config.frames_per_coarse_window,
+        )
+        if not images:
+            return [], [
+                {
+                    "stage": "coarse",
+                    "window_index": window_index,
+                    "reason": "no frames",
+                }
+            ], []
+        response = client.perceive(
+            _coarse_prompt(
+                window=window,
+                frame_records=records,
+                max_events=self.config.max_events_per_window,
+            ),
+            image_urls=images,
+            system=(
+                "Report only directly visible video events and states in strict JSON. "
+                "Do not infer causes, goals, identity, or events between sampled frames."
+            ),
+        )
+        parsed, problems = _parse_coarse_response(
+            response,
+            window=window,
+            window_index=window_index,
+            minimum_confidence=self.config.minimum_confidence,
+            max_events=self.config.max_events_per_window,
+        )
+        localized: list[_LocalizedEvent] = []
+        if self.config.localization_mode == "grounded_single_pass":
+            for local_index, candidate in enumerate(parsed):
+                try:
+                    localized.append(_parse_single_pass_candidate(candidate, records))
+                except ValueError as exc:
+                    problems.append(
+                        {
+                            "stage": "single_pass",
+                            "window_index": window_index,
+                            "local_index": local_index,
+                            "reason": str(exc),
+                        }
+                    )
+        return parsed, problems, localized
 
 
 @dataclass(frozen=True)
@@ -333,7 +436,9 @@ def _video_duration_s(path: Path) -> float:
     try:
         import cv2
     except ImportError as exc:
-        raise RuntimeError("opencv-python is required for video-only L1 extraction") from exc
+        raise RuntimeError(
+            "opencv-python is required for video-only L1 extraction"
+        ) from exc
     capture = cv2.VideoCapture(str(path))
     if not capture.isOpened():
         return 0.0
@@ -355,10 +460,19 @@ def _coarse_prompt(
         "Scan this time window for directly visible atomic actions or state changes. "
         "The images are sparse samples, so do not claim an event between frames. "
         f"Return at most {max_events} events. Each event needs predicate, "
-        "coarse_start_s, coarse_end_s, confidence, action_kind "
+        "coarse_start_s, coarse_end_s, grounding_status (observed|inconclusive), action_kind "
         "(action|motion|contact|transfer|state_change|visible_response|other), "
-        "participants [{role, entity_type, surface}], and visible states "
-        "[{participant_index, attribute, value, polarity}]. Return JSON as "
+        "visible_start_frame, visible_end_frame, evidence_frames (all integer "
+        "indices from frame_records), participants "
+        "[{role, entity_type, surface, visual_signature, evidence_frames}], and "
+        "grounded_caption (one concise factual sentence describing only visible "
+        "content), visible_text [{text, evidence_frames}] for legible packaging, "
+        "sign, or burned-in subtitle text, visible states "
+        "[{participant_index, attribute, value, polarity, "
+        "evidence_frames}]. An optional state_change has participant_index, "
+        "attribute, before, after, and evidence_frames. Every observed event and "
+        "participant must cite directly visible frame indices. Do not output confidence, "
+        "probability, score, reward, or utility. Return JSON as "
         '{"events": [...]}.\n'
         f"window={window}\nframe_records={frame_records}"
     )
@@ -372,12 +486,14 @@ def _fine_prompt(
     return (
         "Verify and localize this coarse event using the labeled frames. If it is "
         "not directly visible, set observed=false. Otherwise return observed=true, "
-        "predicate, confidence, visible_start_frame, visible_end_frame, "
-        "evidence_frames, action_kind, participants with role/entity_type/surface/"
+        "predicate, visible_start_frame, visible_end_frame, "
+        "evidence_frames, action_kind, grounded_caption, visible_text with text/"
+        "evidence_frames, participants with role/entity_type/surface/"
         "visual_signature/evidence_frames, visible states with participant_index/attribute/value/"
         "polarity/evidence_frames, and optional state_change with participant_index/"
         "attribute/before/after/evidence_frames. Do not infer causes or intent. "
-        "All evidence fields contain integer frame indices. Return strict JSON.\n"
+        "All evidence fields contain integer frame indices. Do not output confidence, "
+        "probability, score, reward, or utility. Return strict JSON.\n"
         f"candidate={candidate}\nframe_records={frame_records}"
     )
 
@@ -393,7 +509,11 @@ def _parse_coarse_response(
     raw_events = payload.get("events")
     if not isinstance(raw_events, list):
         return [], [
-            {"stage": "coarse", "window_index": window_index, "reason": "missing events"}
+            {
+                "stage": "coarse",
+                "window_index": window_index,
+                "reason": "missing events",
+            }
         ]
     accepted: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
@@ -405,7 +525,7 @@ def _parse_coarse_response(
             reason = "event is not an object"
         else:
             predicate = str(raw.get("predicate") or "").strip()
-            confidence = _probability(raw.get("confidence"))
+            confidence = _grounding_value(raw)
             event_start = _number(raw.get("coarse_start_s"))
             event_end = _number(raw.get("coarse_end_s"))
             if atomicity_issues(predicate):
@@ -433,7 +553,7 @@ def _parse_coarse_response(
             {
                 **raw,
                 "predicate": str(raw["predicate"]).strip(),
-                "confidence": float(raw["confidence"]),
+                "confidence": float(confidence),
                 "coarse_start_s": float(raw["coarse_start_s"]),
                 "coarse_end_s": float(raw["coarse_end_s"]),
                 "coarse_window": dict(window),
@@ -463,11 +583,13 @@ def _parse_fine_response(
     evidence = _frame_indices(payload.get("evidence_frames"), by_index)
     if not evidence or start_index not in evidence or end_index not in evidence:
         raise ValueError("localized event lacks endpoint frame evidence")
-    predicate = str(payload.get("predicate") or candidate.get("predicate") or "").strip()
+    predicate = str(
+        payload.get("predicate") or candidate.get("predicate") or ""
+    ).strip()
     issues = atomicity_issues(predicate)
     if issues:
         raise ValueError(f"localized predicate failed atomicity checks: {issues}")
-    confidence = _probability(payload.get("confidence"))
+    confidence = _grounding_value(payload, observed_default=True)
     if confidence is None or confidence < minimum_confidence:
         raise ValueError("localized event confidence is below threshold")
     participants = _parse_visual_participants(payload.get("participants"), by_index)
@@ -477,18 +599,106 @@ def _parse_fine_response(
         participants,
         by_index,
     )
+    visible_text = _parse_visible_text(payload.get("visible_text"), by_index)
     return _LocalizedEvent(
         predicate=predicate,
+        grounded_caption=_grounded_caption(payload, predicate),
         time_span=TimeSpan(start_s, end_s),
         confidence=confidence,
-        action_kind=str(payload.get("action_kind") or candidate.get("action_kind") or "other"),
+        action_kind=str(
+            payload.get("action_kind") or candidate.get("action_kind") or "other"
+        ),
         evidence_frames=evidence,
         frame_records=tuple(frame_records),
         participants=participants,
         states=states,
         state_change=state_change,
+        visible_text=visible_text,
         coarse_window=dict(candidate.get("coarse_window") or {}),
+        localization_method="coarse_to_fine_frame_grounding",
     )
+
+
+def _parse_single_pass_candidate(
+    candidate: dict[str, Any],
+    frame_records: list[dict[str, Any]],
+) -> _LocalizedEvent:
+    """Create a grounded L1 event without a second per-candidate VLM call."""
+
+    by_index = {int(record["frame_index"]): record for record in frame_records}
+    evidence = _frame_indices(candidate.get("evidence_frames"), by_index)
+    start_index = _integer(candidate.get("visible_start_frame"))
+    end_index = _integer(candidate.get("visible_end_frame"))
+    endpoint_evidence = tuple(
+        dict.fromkeys(index for index in (start_index, end_index) if index in by_index)
+    )
+    if not evidence and endpoint_evidence:
+        evidence = endpoint_evidence
+    if not evidence:
+        raise ValueError("single-pass event lacks sampled-frame evidence")
+    participants = _parse_visual_participants(candidate.get("participants"), by_index)
+    raw_participants = candidate.get("participants")
+    if isinstance(raw_participants, list) and raw_participants and not participants:
+        raise ValueError("single-pass participants lack sampled-frame evidence")
+    states = _parse_visual_states(candidate.get("states"), participants, by_index)
+    state_change = _parse_state_change(
+        candidate.get("state_change"),
+        participants,
+        by_index,
+    )
+    visible_text = _parse_visible_text(candidate.get("visible_text"), by_index)
+    grounded_start_s = (
+        float(by_index[start_index]["time_s"])
+        if start_index in by_index
+        and end_index in by_index
+        and start_index != end_index
+        else float(candidate["coarse_start_s"])
+    )
+    grounded_end_s = (
+        float(by_index[end_index]["time_s"])
+        if start_index in by_index
+        and end_index in by_index
+        and start_index != end_index
+        else float(candidate["coarse_end_s"])
+    )
+    if grounded_end_s <= grounded_start_s:
+        raise ValueError("single-pass grounded endpoints are empty or reversed")
+    return _LocalizedEvent(
+        predicate=str(candidate["predicate"]),
+        grounded_caption=_grounded_caption(candidate, str(candidate["predicate"])),
+        time_span=TimeSpan(grounded_start_s, grounded_end_s),
+        confidence=1.0,
+        action_kind=str(candidate.get("action_kind") or "other"),
+        evidence_frames=evidence,
+        frame_records=tuple(frame_records),
+        participants=participants,
+        states=states,
+        state_change=state_change,
+        visible_text=visible_text,
+        coarse_window=dict(candidate.get("coarse_window") or {}),
+        localization_method="grounded_single_pass_sampled_frames",
+    )
+
+
+def _grounding_value(
+    payload: dict[str, Any], *, observed_default: bool = False
+) -> float | None:
+    """Adapt categorical grounding to the legacy numeric storage field.
+
+    The returned value is a deterministic compatibility marker, never model
+    confidence, reward, action utility, or a training target. Legacy persisted
+    payloads containing numeric confidence remain readable.
+    """
+
+    status = str(payload.get("grounding_status") or "").strip().lower()
+    if status == "observed":
+        return 1.0
+    if status in {"inconclusive", "not_observed", "rejected"}:
+        return None
+    legacy = _probability(payload.get("confidence"))
+    if legacy is not None:
+        return legacy
+    return 1.0 if observed_default and payload.get("observed") is True else None
 
 
 def _parse_visual_participants(
@@ -597,6 +807,29 @@ def _parse_state_change(
     }
 
 
+def _parse_visible_text(
+    value: Any,
+    by_index: dict[int, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    result = []
+    for raw in value[:8]:
+        if not isinstance(raw, dict):
+            continue
+        text = " ".join(str(raw.get("text") or "").split())
+        evidence = _frame_indices(raw.get("evidence_frames"), by_index)
+        if not text or not evidence:
+            continue
+        result.append({"text": text[:240], "evidence_frames": list(evidence)})
+    return result
+
+
+def _grounded_caption(payload: dict[str, Any], predicate: str) -> str:
+    caption = " ".join(str(payload.get("grounded_caption") or "").split())
+    return caption[:600] if caption else predicate
+
+
 def _assign_track_ids(events: list[_LocalizedEvent], *, max_gap_s: float) -> int:
     tracks: dict[tuple[str, str], list[tuple[float, str]]] = {}
     next_track = 1
@@ -641,9 +874,7 @@ def _event_to_l1_node(
     index: int,
 ) -> MemoryNode:
     node_id = f"visual_l1:{video_id}:{index:04d}"
-    segment_ref = (
-        f"raw_video:{video_id}:{event.time_span.start_s:.3f}-{event.time_span.end_s:.3f}"
-    )
+    segment_ref = f"raw_video:{video_id}:{event.time_span.start_s:.3f}-{event.time_span.end_s:.3f}"
     return MemoryNode(
         node_id=node_id,
         video_id=video_id,
@@ -657,24 +888,24 @@ def _event_to_l1_node(
             "uses_hidden_supervision": False,
         },
         node_type="observation",
-        text=event.predicate,
+        text=event.grounded_caption,
         source_node_id=segment_ref,
         source_segments=[segment_ref],
         metadata={
             "predicate": event.predicate,
+            "grounded_descriptor": event.grounded_caption,
             "confidence": event.confidence,
             "action_kind": event.action_kind,
             "participants": event.participants,
             "states": event.states,
             "state_change": event.state_change,
+            "visible_text": event.visible_text,
+            "observed_modalities": ["visual"],
             "entity_track_ids": sorted(
-                {
-                    str(participant["mention_id"])
-                    for participant in event.participants
-                }
+                {str(participant["mention_id"]) for participant in event.participants}
             ),
             "localization": {
-                "method": "coarse_to_fine_frame_grounding",
+                "method": event.localization_method,
                 "evidence_frames": list(event.evidence_frames),
                 "frame_records": list(event.frame_records),
                 "coarse_window": event.coarse_window,
@@ -719,7 +950,9 @@ def _dedupe_candidates(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]
 
 def _dedupe_localized(events: list[_LocalizedEvent]) -> list[_LocalizedEvent]:
     result: list[_LocalizedEvent] = []
-    for event in sorted(events, key=lambda item: (item.time_span.start_s, item.predicate)):
+    for event in sorted(
+        events, key=lambda item: (item.time_span.start_s, item.predicate)
+    ):
         duplicate = any(
             _norm(event.predicate) == _norm(existing.predicate)
             and _interval_iou(
@@ -797,8 +1030,6 @@ def _memory_node_from_dict(payload: Any) -> MemoryNode:
         source_node_id=(
             str(payload["source_node_id"]) if payload.get("source_node_id") else None
         ),
-        source_segments=[
-            str(value) for value in payload.get("source_segments") or []
-        ],
+        source_segments=[str(value) for value in payload.get("source_segments") or []],
         metadata=dict(payload.get("metadata") or {}),
     )

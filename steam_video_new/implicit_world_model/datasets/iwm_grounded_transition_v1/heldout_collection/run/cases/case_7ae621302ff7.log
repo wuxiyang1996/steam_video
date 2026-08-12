@@ -1,0 +1,114 @@
+Traceback (most recent call last):
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/l15_graph_navigator/gpt_oss.py", line 553, in _parse_json_object
+    payload = json.loads(stripped)
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/json/decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 9 column 198 (char 2318)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/l15_graph_navigator/gpt_oss.py", line 233, in complete_json
+    result = _parse_json_object(str(content))
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/l15_graph_navigator/gpt_oss.py", line 555, in _parse_json_object
+    raise ValueError("GPT-OSS must return one valid JSON object") from exc
+ValueError: GPT-OSS must return one valid JSON object
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 667, in _predict_with_adaptive_split
+    return self._predict_one_batch(groups, graph)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 882, in _predict_one_batch
+    result = self.client.complete_json(
+        task=(task if attempt == 0 else _TRANSITION_REPAIR_TASK),
+        payload=request_payload,
+    )
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/transition_cache.py", line 57, in complete_json
+    response = self.delegate.complete_json(task=task, payload=payload)
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/l15_graph_navigator/gpt_oss.py", line 235, in complete_json
+    raise ValueError(
+    ...<2 lines>...
+    ) from exc
+ValueError: GPT-OSS must return one complete JSON object; finish_reason=error
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_cgbench.py", line 1535, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_cgbench.py", line 1500, in main
+    result = run_multi_trajectory_matched_pilot(
+        gate=gate,
+    ...<24 lines>...
+        iwm_input_regime=args.iwm_input_regime,
+    )
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_cgbench.py", line 964, in run_multi_trajectory_matched_pilot
+    run = run_multi_trajectory_case(
+        case_id=case_id,
+    ...<16 lines>...
+        evaluator_answer=str(hidden.get("answer_text") or ""),
+    )
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_cgbench.py", line 338, in run_multi_trajectory_case
+    trace = run_multi_trajectory_closed_loop(
+        pool,
+    ...<5 lines>...
+        evidence_reader=evidence_reader,
+    )
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory.py", line 869, in run_multi_trajectory_closed_loop
+    decision = planner.plan(pool, graph)
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 244, in plan
+    second_predictions = self._predict_checked(tuple(second_requests), graph)
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 422, in _predict_checked
+    predictions = tuple(self.world_model.predict_batch(requests, graph))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 623, in predict_batch
+    predictions.extend(self._predict_with_adaptive_split(batch, graph))
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 675, in _predict_with_adaptive_split
+    *self._predict_with_adaptive_split(groups[midpoint:], graph),
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 667, in _predict_with_adaptive_split
+    return self._predict_one_batch(groups, graph)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/multi_trajectory_rollout.py", line 882, in _predict_one_batch
+    result = self.client.complete_json(
+        task=(task if attempt == 0 else _TRANSITION_REPAIR_TASK),
+        payload=request_payload,
+    )
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/full_graph_iwm/transition_cache.py", line 57, in complete_json
+    response = self.delegate.complete_json(task=task, payload=payload)
+  File "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/l15_graph_navigator/gpt_oss.py", line 176, in complete_json
+    candidate = json.loads(response.read().decode("utf-8"))
+                           ~~~~~~~~~~~~~^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/http/client.py", line 473, in read
+    return self._read_chunked(amt)
+           ~~~~~~~~~~~~~~~~~~^^^^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/http/client.py", line 597, in _read_chunked
+    while (chunk_left := self._get_chunk_left()) is not None:
+                         ~~~~~~~~~~~~~~~~~~~~^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/http/client.py", line 579, in _get_chunk_left
+    chunk_left = self._read_next_chunk_size()
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/http/client.py", line 539, in _read_next_chunk_size
+    line = self.fp.readline(_MAXLINE + 1)
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/socket.py", line 719, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/ssl.py", line 1304, in recv_into
+    return self.read(nbytes, buffer)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/fs/gamma-projects/vlm-robot/conda/lib/python3.13/ssl.py", line 1138, in read
+    return self._sslobj.read(len, buffer)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+KeyboardInterrupt

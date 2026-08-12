@@ -1,0 +1,34 @@
+{
+  "schema_version": "steam-memory-graph-baseline/v0.1",
+  "created_at": "2026-07-19T22:52:01.661414+00:00",
+  "repository": "/fs/gamma-projects/vlm-robot/steam_video",
+  "git_commit": "541c4691f407a08c3c1c73c85c936396aa1e98e4",
+  "git_branch": "agent/memory-graph-integrity",
+  "note": "Full isolated entity-reference end-to-end overlay and GPT-OSS held-out audit; Video_Skills source f7812e1; engineering smoke only, not independent-human precision evidence.",
+  "artifacts": [
+    {
+      "name": "audit",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/audit.json",
+      "size_bytes": 8167,
+      "sha256": "d825664115cea3a94c9a325f418fc0d1f27001f68252d0f79fbb826acc4b749a"
+    },
+    {
+      "name": "failed_audit",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/audit.failed.json",
+      "size_bytes": 249,
+      "sha256": "535f45c40ce52de4775536a100f302da2a2b6e17d94910099f91302e4232d783"
+    },
+    {
+      "name": "overlay",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "size_bytes": 980456,
+      "sha256": "84b0fd21024c13773d183bd16c6efb6eb4678d4c47579feeaadeab8f5ad01bfa"
+    },
+    {
+      "name": "summary",
+      "path": "memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/summary.json",
+      "size_bytes": 5528,
+      "sha256": "c174a77a3a465b4ec10f1480a25d9c0553d90f670b9652d2517973541e4637f8"
+    }
+  ]
+}

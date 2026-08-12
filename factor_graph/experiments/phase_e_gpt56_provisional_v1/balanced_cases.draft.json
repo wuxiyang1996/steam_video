@@ -1,0 +1,1973 @@
+{
+  "schema_version": "steam-navigation-gold-cases/v0.1",
+  "case_set_id": "phase-e-balanced-reasoning-candidates-v1",
+  "annotation_status": "draft",
+  "annotator": null,
+  "locked_sha256": null,
+  "cases": [
+    {
+      "case_id": "-3l2KFTj7yY:delayed_two_hop:10b20220f5e3:c7f960df",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Following the same entity from 'girl is hugging a toy | participants: agent=girl, patient=toy | visible states: m5.hugging=true', which intermediate observation leads to 'shouts | participants: agent=girl'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:005",
+        "event:atomic:memory:vh_seg_001:007",
+        "event:atomic:memory:vh_seg_003:002"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:007"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:delayed_two_hop:11525361b3d3:c7f960df",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Following the same entity from 'approaches | participants: agent=girl, patient=Santa Claus', which intermediate observation leads to 'holds | participants: agent=Santa Claus'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:001"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:001",
+        "event:atomic:memory:vh_seg_003:004",
+        "event:atomic:memory:vh_seg_003:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_003:001",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:delayed_two_hop:00c104814b30:e1267bec",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Following the same entity from 'picks up | participants: agent=Mia, patient=baby', which intermediate observation leads to 'returns | participants: agent=Smith, location=home'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:003"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:003",
+        "event:atomic:memory:vh_seg_003:004",
+        "event:atomic:memory:vh_seg_003:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_003:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity",
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:delayed_two_hop:015171998a98:e1267bec",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "What happened immediately after 'turned back | participants: agent=Mia, instrument=knife', and which intermediate evidence leads to 'sent message | participants: agent=Sarah, patient=Smith, object=message'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "TNYeYwYiAag:delayed_two_hop:03a16bce0135:f64ec92b",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+      "question": "What happened immediately after 'He leans forward and moves out of the frame. | participants: other=Man wearing a brown knitted beanie sits in the passe…', and which intermediate evidence leads to 'A person stands still on the illuminated path. | participants: other=The person wears a light‑colored jacket, pants, an…'?",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00019"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00019",
+        "event:atomic:video_skills_l1:00023",
+        "event:atomic:video_skills_l1:00030"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:video_skills_l1:00019",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00023"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "TNYeYwYiAag:delayed_two_hop:066298e02695:f64ec92b",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+      "question": "What happened immediately after 'Camera switches from road view to driver’s face and back.', and which intermediate evidence leads to 'Transition from interior view to road ahead'?",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00082"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00082",
+        "event:atomic:video_skills_l1:00095",
+        "event:atomic:video_skills_l1:00099"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:video_skills_l1:00082",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00095"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:delayed_two_hop:00b375e84223:f5addaa2",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Following the same entity from 'Man holds a crumpled white tissue to his face then lowers it. | participants: other=man | visible states: l1-track:evid…', which intermediate observation leads to 'Man examines the wooden object. | participants: other=man, other=wooden object | visible states: l1-track:evidence.enti…'?",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00179"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00179",
+        "event:atomic:video_skills_l1:00225",
+        "event:atomic:video_skills_l1:00258"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:video_skills_l1:00179",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00225"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:delayed_two_hop:01a03b126a91:19255b5d",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "What happened immediately after 'Man turns and walks forward toward the camera. | participants: other=man', and which intermediate evidence leads to 'Close‑up shot of the carved wooden box. | participants: other=wooden box'?",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00057"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00057",
+        "event:atomic:video_skills_l1:00058",
+        "event:atomic:video_skills_l1:00069"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:video_skills_l1:00057",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00058"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:delayed_two_hop:015171998a98:75fec3fd",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "What happened immediately after 'girl walks away carrying bricks | participants: agent=girl in red and yellow clothes, instrument=bricks', and which intermediate evidence leads to 'girl takes two objects | participants: agent=girl in black and white dress, patient=two items'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:delayed_two_hop:03d9a73ec670:75fec3fd",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "Following the same entity from 'girl takes an object | participants: agent=girl in red and yellow clothes, patient=one item', which intermediate observation leads to 'girl arrives | participants: agent=girl in black and white dress'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:004",
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:005"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity",
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "033fKtGdpPc:delayed_two_hop:013ab9addf2a:cb553c19",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "Following the same entity from 'looks around | participants: agent=man', which intermediate observation leads to 'hurried over | participants: agent=man'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:003"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:003",
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:001"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "033fKtGdpPc:delayed_two_hop:015171998a98:cb553c19",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "What happened immediately after 'demanded release of hostage | participants: agent=man, patient=woman in black', and which intermediate evidence leads to 'appeared stiff and feeble | participants: agent=woman in white | visible states: woman_white_1.appearance=stiff and fee…'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:delayed_two_hop:015171998a98:dd20f9e4",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "What happened immediately after 'potted plant knocked over | participants: patient=potted plant on the second floor', and which intermediate evidence leads to 'cup knocked over | participants: patient=cup'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:delayed_two_hop:028c07200534:44122a5c",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "Following the same entity from 'knocks over umbrella | participants: agent=man, patient=umbrella', which intermediate observation leads to 'man looks down | participants: agent=man on second floor'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:005",
+        "event:atomic:memory:vh_seg_002:003",
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:003"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0jq3JQ9YTqg:delayed_two_hop:015171998a98:cbd11613",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+      "question": "What happened immediately after 'man gets into car | participants: agent=man, patient=car', and which intermediate evidence leads to 'man exclaims \"Oh my God, what’s going on?\" | participants: agent=man, patient=\"Oh my God, what’s going on?\"'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_two_hop",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:identity_support:13c97dde2b9b",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_003:004.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:004"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:004",
+        "event:atomic:memory:vh_seg_003:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_003:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:006"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:identity_support:231b4eab03bf",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_001:007.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:007"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:007",
+        "event:atomic:memory:vh_seg_003:002"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:007",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:002"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:identity_support:04e4b0b4370c",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_002:008.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:008"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:008",
+        "event:atomic:memory:vh_seg_003:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:008",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:006"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:identity_support:08615738469a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_002:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:001"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:008"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:001",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:008"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:identity_support:0540041cb769",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the identity support reasoning path from event:atomic:video_skills_l1:00208.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00208"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00208",
+        "event:atomic:video_skills_l1:00214"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:video_skills_l1:00208",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00214"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:identity_support:08742c99e0a6",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the identity support reasoning path from event:atomic:video_skills_l1:00075.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00075"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00075",
+        "event:atomic:video_skills_l1:00103"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:video_skills_l1:00075",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00103"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:identity_support:189dfdbf470a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_002:003.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:003"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:003",
+        "event:atomic:memory:vh_seg_002:009"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:009"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:identity_support:4a113402c5c9",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_003:003.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:003"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:003",
+        "event:atomic:memory:vh_seg_003:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_003:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:004"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "033fKtGdpPc:identity_support:0065d30f38c4",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_005:006.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_005:006"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_005:006",
+        "event:atomic:memory:vh_seg_006:003"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_005:006",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_006:003"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "033fKtGdpPc:identity_support:07121fec8f43",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "Review the identity support reasoning path from event:atomic:memory:vh_seg_002:006.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:006"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_006:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:006",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_006:006"
+          ],
+          "relation": "same_entity"
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity_support",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:state_support:e24a9d55a6f1",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the state support reasoning path from event:atomic:video_skills_l1:00132.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00132"
+      ],
+      "missing_roles": [
+        "state_transition"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00132",
+        "event:atomic:video_skills_l1:00150"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "follow_dependency",
+          "source_id": "event:atomic:video_skills_l1:00132",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00150"
+          ],
+          "relation": "transition_support"
+        }
+      ],
+      "required_relation_types": [
+        "transition_support"
+      ],
+      "tags": [
+        "state_support",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:state_reject:03151f9b6c7b",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the state reject reasoning path from event:atomic:video_skills_l1:00140.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00140"
+      ],
+      "missing_roles": [
+        "state_transition"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00140",
+        "event:atomic:video_skills_l1:00258"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "inspect_state_change",
+          "source_id": "event:atomic:video_skills_l1:00140",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00258"
+          ],
+          "relation": "state_transition"
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "state_reject",
+        "correction_sensitive",
+        "test",
+        "offline_verifier_challenge"
+      ],
+      "split": "test",
+      "notes": "Hard-verifier diagnostic for a relation rejected before admission; it is not a legal online graph edge unless review explicitly restores it."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:state_reject:06dffab964c5",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the state reject reasoning path from event:atomic:video_skills_l1:00147.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00147"
+      ],
+      "missing_roles": [
+        "state_transition"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00147",
+        "event:atomic:video_skills_l1:00159"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "inspect_state_change",
+          "source_id": "event:atomic:video_skills_l1:00147",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00159"
+          ],
+          "relation": "state_transition"
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "state_reject",
+        "correction_sensitive",
+        "test",
+        "offline_verifier_challenge"
+      ],
+      "split": "test",
+      "notes": "Hard-verifier diagnostic for a relation rejected before admission; it is not a legal online graph edge unless review explicitly restores it."
+    },
+    {
+      "case_id": "1TR9riaDzY8:state_reject:28d6669ba787",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/1TR9riaDzY8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1TR9riaDzY8:q138",
+      "question": "Review the state reject reasoning path from event:atomic:memory:vh_seg_002:004.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "missing_roles": [
+        "state_transition"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:004",
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "inspect_state_change",
+          "source_id": "event:atomic:memory:vh_seg_002:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:005"
+          ],
+          "relation": "state_transition"
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "state_reject",
+        "correction_sensitive",
+        "train",
+        "offline_verifier_challenge"
+      ],
+      "split": "train",
+      "notes": "Hard-verifier diagnostic for a relation rejected before admission; it is not a legal online graph edge unless review explicitly restores it."
+    },
+    {
+      "case_id": "1TR9riaDzY8:state_reject:e0975b0b48b8",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/1TR9riaDzY8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1TR9riaDzY8:q138",
+      "question": "Review the state reject reasoning path from event:atomic:memory:vh_seg_001:004.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:004"
+      ],
+      "missing_roles": [
+        "state_transition"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:004",
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "inspect_state_change",
+          "source_id": "event:atomic:memory:vh_seg_001:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:005"
+          ],
+          "relation": "state_transition"
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "state_reject",
+        "correction_sensitive",
+        "train",
+        "offline_verifier_challenge"
+      ],
+      "split": "train",
+      "notes": "Hard-verifier diagnostic for a relation rejected before admission; it is not a legal online graph edge unless review explicitly restores it."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:counterevidence_empty:ff32f3d7b5b2",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:counterevidence_empty:ce94a8a40b7d",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "TNYeYwYiAag:counterevidence_empty:4398fd2c9829",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:video_skills_l1:00019.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00019"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00019"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:video_skills_l1:00019",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:counterevidence_empty:46d374c8437d",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:video_skills_l1:00006.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00006"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:video_skills_l1:00006",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:counterevidence_empty:9fec38e72f5d",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:video_skills_l1:00001.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:video_skills_l1:00001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:counterevidence_empty:7659f863bf1d",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "033fKtGdpPc:counterevidence_empty:723f7621ca71",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:counterevidence_empty:0b0cea5e03e6",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:counterevidence_empty:e33bee10ee33",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0jq3JQ9YTqg:counterevidence_empty:58e9ff7251fb",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+      "question": "Review the counterevidence empty reasoning path from event:atomic:memory:vh_seg_001:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "missing_roles": [
+        "counterevidence"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "search_counterevidence",
+          "source_id": "event:atomic:memory:vh_seg_001:001",
+          "target_ids": [],
+          "relation": "contradicts"
+        }
+      ],
+      "required_relation_types": [
+        "contradicts"
+      ],
+      "tags": [
+        "counterevidence_empty",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:blocked_path_recovery:0552c24a6d52",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the blocked path recovery reasoning path from event:atomic:video_skills_l1:00203.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00203"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00203",
+        "event:atomic:video_skills_l1:00208"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "verify",
+          "source_id": "event:atomic:video_skills_l1:00203",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00208"
+          ],
+          "relation": "transition_support"
+        }
+      ],
+      "required_relation_types": [
+        "transition_support"
+      ],
+      "tags": [
+        "blocked_path_recovery",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:blocked_path_recovery:0af00c6dd74c",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the blocked path recovery reasoning path from event:atomic:video_skills_l1:00179.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00179"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00179",
+        "event:atomic:video_skills_l1:00225"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "verify",
+          "source_id": "event:atomic:video_skills_l1:00179",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00225"
+          ],
+          "relation": "state_transition"
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "blocked_path_recovery",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1TR9riaDzY8:blocked_path_recovery:f9b94b64887a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_causal_visual_smoke_2/1TR9riaDzY8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1TR9riaDzY8:q138",
+      "question": "Review the blocked path recovery reasoning path from event:atomic:memory:vh_seg_002:004.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:004",
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "verify",
+          "source_id": "event:atomic:memory:vh_seg_002:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:005"
+          ],
+          "relation": "state_transition"
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "blocked_path_recovery",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1iHavvOahH0:blocked_path_recovery:9e417e5101ce",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1iHavvOahH0/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1iHavvOahH0:q305",
+      "question": "Review the blocked path recovery reasoning path from event:atomic:memory:vh_seg_001:004.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:004"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:004",
+        "event:atomic:memory:vh_seg_002:002"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "verify",
+          "source_id": "event:atomic:memory:vh_seg_001:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:002"
+          ],
+          "relation": "enables"
+        }
+      ],
+      "required_relation_types": [
+        "enables"
+      ],
+      "tags": [
+        "blocked_path_recovery",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:ambiguity_abstention:0f8cd1502447",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:memory:vh_seg_003:001.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:001"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:001",
+        "event:atomic:memory:vh_seg_003:002",
+        "event:atomic:memory:vh_seg_003:003",
+        "event:atomic:memory:vh_seg_003:004",
+        "event:atomic:memory:vh_seg_003:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:ambiguity_abstention:14561365400a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:memory:vh_seg_001:006.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:006"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:006",
+        "event:atomic:memory:vh_seg_001:007",
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:002",
+        "event:atomic:memory:vh_seg_002:003"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:ambiguity_abstention:0157697f7d08",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:memory:vh_seg_001:003.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:003"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:003",
+        "event:atomic:memory:vh_seg_001:004",
+        "event:atomic:memory:vh_seg_001:005",
+        "event:atomic:memory:vh_seg_001:006",
+        "event:atomic:memory:vh_seg_001:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:ambiguity_abstention:0dc7621a3139",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:memory:vh_seg_002:004.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:004",
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007",
+        "event:atomic:memory:vh_seg_002:008"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "TNYeYwYiAag:ambiguity_abstention:0a76291bf0a7",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:video_skills_l1:00099.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00099"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00099",
+        "event:atomic:video_skills_l1:00104",
+        "event:atomic:video_skills_l1:00112",
+        "event:atomic:video_skills_l1:00141",
+        "event:atomic:video_skills_l1:00156"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "TNYeYwYiAag:ambiguity_abstention:0cb801924c87",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:TNYeYwYiAag:q838",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:video_skills_l1:00141.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00141"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00141",
+        "event:atomic:video_skills_l1:00156",
+        "event:atomic:video_skills_l1:00177",
+        "event:atomic:video_skills_l1:00181",
+        "event:atomic:video_skills_l1:00187"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:ambiguity_abstention:016f1d8a1c82",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_structured_state_embedding_smoke_v1/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:video_skills_l1:00094.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00094"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00094",
+        "event:atomic:video_skills_l1:00101",
+        "event:atomic:video_skills_l1:00113",
+        "event:atomic:video_skills_l1:00134",
+        "event:atomic:video_skills_l1:00140"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:ambiguity_abstention:06457b1bb22a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_phase34_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:mKqiGQrHtW8:q684",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:video_skills_l1:00108.",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00108"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00108",
+        "event:atomic:video_skills_l1:00123",
+        "event:atomic:video_skills_l1:00131",
+        "event:atomic:video_skills_l1:00146",
+        "event:atomic:video_skills_l1:00150"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:ambiguity_abstention:05b208c61fde",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:memory:vh_seg_002:009.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:009"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:009",
+        "event:atomic:memory:vh_seg_003:001",
+        "event:atomic:memory:vh_seg_003:002",
+        "event:atomic:memory:vh_seg_003:003",
+        "event:atomic:memory:vh_seg_003:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:ambiguity_abstention:0c76f9d1795c",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "Review the ambiguity abstention reasoning path from event:atomic:memory:vh_seg_001:005.",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:005",
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:002",
+        "event:atomic:memory:vh_seg_002:003",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "stop",
+          "source_id": null,
+          "target_ids": [],
+          "relation": null
+        }
+      ],
+      "required_relation_types": [],
+      "tags": [
+        "ambiguity_abstention",
+        "correction_sensitive",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined diagnostic candidate; reviewer must verify evidence, outcome, and action."
+    }
+  ]
+}

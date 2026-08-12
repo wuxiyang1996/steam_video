@@ -1,0 +1,3125 @@
+{
+  "schema_version": "steam-multi-trajectory-iwm-cgbench-pilot/v0.2",
+  "runtime_contract_version": "steam-multi-trajectory-runtime/v1.0",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "model": "qwen/qwen3.6-flash",
+  "arms": [
+    "no_world_model"
+  ],
+  "selected_case_ids": [
+    "cgcase:52e77f99db56a8ddfda3"
+  ],
+  "matched_contract": {
+    "same_frozen_graph": true,
+    "same_public_choice_hypotheses": true,
+    "same_real_read_budget": 2,
+    "hidden_feedback_to_planner": false,
+    "model_output_is_categorical_only": true,
+    "top_k_applied": false,
+    "complete_pair_budget": 4096,
+    "budget_overflow_policy": "explicit_abstain_not_candidate_pruning",
+    "belief_backend": "latent",
+    "gtsam_is_optional_and_never_ranks_actions": true,
+    "same_entry_localization_across_model_backed_arms": true,
+    "hidden_evidence_sufficiency_evaluator_is_uncached_and_posthoc": true,
+    "iwm_input_visibility": {
+      "regime": "semantic_address",
+      "question_independent_graph_required": true,
+      "hidden_clue_intervals_visible": false,
+      "hidden_answer_visible": false,
+      "post_read_vlm_observation_visible": false,
+      "full_l1_descriptor_visible_before_read": false,
+      "oracle_observation_is_posthoc_only": true,
+      "metadata_allowlist": [
+        "predicate",
+        "action_kind",
+        "participants",
+        "states",
+        "state_change",
+        "actor",
+        "target",
+        "objects",
+        "location",
+        "modality",
+        "source_type"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "schema_version": "steam-multi-trajectory-closed-loop-run/v0.2",
+      "runtime_contract_version": "steam-multi-trajectory-runtime/v1.0",
+      "case_id": "cgcase:52e77f99db56a8ddfda3",
+      "arm": "no_world_model",
+      "graph_fingerprint": "6cc31f0aef81299d1ea224e49fa87e52ddf511d620dd7b1114db81892aee5cd2",
+      "hypothesis_source": "public_answer_choices",
+      "initial_hypothesis_count": 6,
+      "steps": [
+        {
+          "pool_before": {
+            "pool_id": "trajectory-pool:cgcase:52e77f99db56a8ddfda3:no_world_model",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "hypothesis": "Because he was demonstrating a first aid technique.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:0",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "hypothesis": "Because it was part of a training exercise.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:1",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "hypothesis": "Because it was a staged performance.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:2",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "hypothesis": "Because it was a rehearsal.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:3",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "hypothesis": "Because they were practicing a rescue scenario.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:4",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "hypothesis": "Because it was an emergency drill.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:5",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": null,
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 2,
+                  "step": 0
+                },
+                "parent_trajectory_id": null,
+                "action_history": [],
+                "shared_observation_ids": [],
+                "status": "active",
+                "merged_into": null,
+                "lifecycle_rationale": ""
+              }
+            ],
+            "top_k_applied": false
+          },
+          "decision": {
+            "selected_action": {
+              "action_id": "action:5d9dc3465a377464ae7d",
+              "kind": "start_at",
+              "source_id": null,
+              "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+              "edge_id": null,
+              "relation": null,
+              "reads_evidence": true
+            },
+            "planning_status": "reactive_scheduled_discriminating_first_hop",
+            "expansions": [
+              {
+                "expansion_id": "hypothesis-expansion:00408356fc1630cf6aed",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:18e6ff3021e75cf34ce4",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:2a0e695fe8a2009d488d",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:5d9dc3465a377464ae7d",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:2e8315f20bdae669e746",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:c2981c0611f4d19584f5",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:30d60013ef8dc70fd46d",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:c2981c0611f4d19584f5",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:4bd813ebcab39b7ba3ea",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:18e6ff3021e75cf34ce4",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:56b34e88c3b539acd7b3",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:5d9dc3465a377464ae7d",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:894a08a05f832479b41f",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:c2981c0611f4d19584f5",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:9388088d76c48df1765d",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:5d9dc3465a377464ae7d",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:970de6bcbbd84fdb2299",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:c2981c0611f4d19584f5",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:bfe5555ecba94859a249",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:5d9dc3465a377464ae7d",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:cb117b4045e65b0196d2",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:c2981c0611f4d19584f5",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:cc98d6dc4c386ecc3ac8",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:18e6ff3021e75cf34ce4",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:dadd0e28474a9b1a28e8",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:18e6ff3021e75cf34ce4",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:e560f33c6c32fb6798e4",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:c2981c0611f4d19584f5",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:e77b32f78ca3e9399a31",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:5d9dc3465a377464ae7d",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:efb52651ba80830697cb",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:5d9dc3465a377464ae7d",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:f5dd5426617e1e212dfe",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:18e6ff3021e75cf34ce4",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:fe288167c7bc59a97da9",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:18e6ff3021e75cf34ce4",
+                  "kind": "start_at",
+                  "source_id": null,
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": null,
+                  "relation": null,
+                  "reads_evidence": true
+                }
+              }
+            ],
+            "preferred_expansion_ids": [
+              "hypothesis-expansion:00408356fc1630cf6aed",
+              "hypothesis-expansion:2a0e695fe8a2009d488d",
+              "hypothesis-expansion:2e8315f20bdae669e746",
+              "hypothesis-expansion:30d60013ef8dc70fd46d",
+              "hypothesis-expansion:4bd813ebcab39b7ba3ea",
+              "hypothesis-expansion:56b34e88c3b539acd7b3",
+              "hypothesis-expansion:894a08a05f832479b41f",
+              "hypothesis-expansion:9388088d76c48df1765d",
+              "hypothesis-expansion:970de6bcbbd84fdb2299",
+              "hypothesis-expansion:bfe5555ecba94859a249",
+              "hypothesis-expansion:cb117b4045e65b0196d2",
+              "hypothesis-expansion:cc98d6dc4c386ecc3ac8",
+              "hypothesis-expansion:dadd0e28474a9b1a28e8",
+              "hypothesis-expansion:e560f33c6c32fb6798e4",
+              "hypothesis-expansion:e77b32f78ca3e9399a31",
+              "hypothesis-expansion:efb52651ba80830697cb",
+              "hypothesis-expansion:f5dd5426617e1e212dfe",
+              "hypothesis-expansion:fe288167c7bc59a97da9"
+            ],
+            "lifecycle_predictions": [],
+            "legal_expansion_count": 18,
+            "top_k_applied": false,
+            "imagined_paths": [],
+            "preferred_path_ids": [
+              "joint-first-hop-tree:045718609b2d5641b9fa",
+              "joint-first-hop-tree:79e215b88f7961bc7740",
+              "joint-first-hop-tree:b33868032bb2cdfc4f84"
+            ],
+            "planning_horizon": 0,
+            "preference_audit": {
+              "horizon": 0,
+              "first_expansion_count": 18,
+              "imagined_path_count": 3,
+              "hypothesis_conditioned_outcome_count": 18,
+              "exhaustive_pair_count": 0,
+              "comparison_count": 1,
+              "complete_coverage": true,
+              "preference_mode": "setwise_full_frontier",
+              "top_k_applied": false,
+              "world_model_predictions_visible": false,
+              "evidence_scheduler_used": true,
+              "evidence_scheduler_status": "selected",
+              "surviving_trajectory_paths_preserved": true
+            }
+          },
+          "observation_id": "visual_l1:BV1Qt4y1f7zw:0096",
+          "assessments": [
+            {
+              "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+              "effect": "inconclusive",
+              "rationale": "The observation records a fall but provides no context to determine if the artificial respiration was for a first aid demonstration."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+              "effect": "inconclusive",
+              "rationale": "A fall is consistent with a training exercise, but the observation lacks specific markers to confirm this context over others."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+              "effect": "inconclusive",
+              "rationale": "The recorded fall could occur in a staged performance, yet the evidence does not verify the staged nature of the event."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+              "effect": "inconclusive",
+              "rationale": "The fall might be part of a rehearsal, but the observation provides no details to distinguish rehearsal from other simulated scenarios."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+              "effect": "inconclusive",
+              "rationale": "The observation documents a fall but does not indicate whether the situation involves a practiced rescue scenario."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+              "effect": "inconclusive",
+              "rationale": "While a fall could initiate an emergency drill, the observation lacks drill-specific indicators to support this hypothesis."
+            }
+          ],
+          "pool_after": {
+            "pool_id": "trajectory-pool:cgcase:52e77f99db56a8ddfda3:no_world_model:step:1",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "hypothesis": "Because he was demonstrating a first aid technique.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:0:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation records a fall but provides no context to determine if the artificial respiration was for a first aid demonstration."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "hypothesis": "Because it was part of a training exercise.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:1:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "A fall is consistent with a training exercise, but the observation lacks specific markers to confirm this context over others."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "hypothesis": "Because it was a staged performance.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:2:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The recorded fall could occur in a staged performance, yet the evidence does not verify the staged nature of the event."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "hypothesis": "Because it was a rehearsal.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:3:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The fall might be part of a rehearsal, but the observation provides no details to distinguish rehearsal from other simulated scenarios."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "hypothesis": "Because they were practicing a rescue scenario.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:4:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation documents a fall but does not indicate whether the situation involves a practiced rescue scenario."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "hypothesis": "Because it was an emergency drill.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:5:step:1:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "While a fall could initiate an emergency drill, the observation lacks drill-specific indicators to support this hypothesis."
+              }
+            ],
+            "top_k_applied": false
+          }
+        },
+        {
+          "pool_before": {
+            "pool_id": "trajectory-pool:cgcase:52e77f99db56a8ddfda3:no_world_model:step:1",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "hypothesis": "Because he was demonstrating a first aid technique.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:0:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation records a fall but provides no context to determine if the artificial respiration was for a first aid demonstration."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "hypothesis": "Because it was part of a training exercise.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:1:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "A fall is consistent with a training exercise, but the observation lacks specific markers to confirm this context over others."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "hypothesis": "Because it was a staged performance.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:2:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The recorded fall could occur in a staged performance, yet the evidence does not verify the staged nature of the event."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "hypothesis": "Because it was a rehearsal.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:3:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The fall might be part of a rehearsal, but the observation provides no details to distinguish rehearsal from other simulated scenarios."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "hypothesis": "Because they were practicing a rescue scenario.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:4:shared-read:action:5d9dc3465a377464ae7d:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation documents a fall but does not indicate whether the situation involves a practiced rescue scenario."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "hypothesis": "Because it was an emergency drill.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:5:step:1:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 1,
+                  "step": 1
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "While a fall could initiate an emergency drill, the observation lacks drill-specific indicators to support this hypothesis."
+              }
+            ],
+            "top_k_applied": false
+          },
+          "decision": {
+            "selected_action": {
+              "action_id": "action:ef046494ef37233fe3c4",
+              "kind": "follow_correlation",
+              "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+              "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+              "edge_id": "soft-correlation:96eed93967d02404bf20",
+              "relation": "semantic",
+              "reads_evidence": true
+            },
+            "planning_status": "reactive_selected_unique_preferred_first_hop",
+            "expansions": [
+              {
+                "expansion_id": "hypothesis-expansion:003fe3f90b85abf966de",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:47843bf7c2f6e668462e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0278",
+                  "edge_id": "soft-correlation:6f70c0678c41070227d5",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:0669ded23c596300f390",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:ca0c15ac344e18751fcc",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0260",
+                  "edge_id": "soft-correlation:2c05ee68fdfb5273ce2e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:0cc39f535829ef21dd0b",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:4161dce96a288bf182cf",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0097",
+                  "edge_id": "relation:retained-temporal:97d281423c70cc69:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:0f294a6af0d8ef00dbba",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:ca0c15ac344e18751fcc",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0260",
+                  "edge_id": "soft-correlation:2c05ee68fdfb5273ce2e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:1079ba72724a484ca0cd",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:ef046494ef37233fe3c4",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "edge_id": "soft-correlation:96eed93967d02404bf20",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:1600585df228a83397f7",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:ef046494ef37233fe3c4",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "edge_id": "soft-correlation:96eed93967d02404bf20",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:1b51c35c49917b77b9df",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:7124d42e1b3dbd8fea1f",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0095",
+                  "edge_id": "relation:retained-temporal:3d398d77bfca437a:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:24559533c8a3aee755fb",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:ef046494ef37233fe3c4",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "edge_id": "soft-correlation:96eed93967d02404bf20",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:29e2a5a3791acee44ce4",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:47843bf7c2f6e668462e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0278",
+                  "edge_id": "soft-correlation:6f70c0678c41070227d5",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:2b432cbc4bc8b80b78ef",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:7563b1690638530d229e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": "soft-correlation:6b9a00e080be045d956e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:2ca2fa1d2957d0441677",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:47843bf7c2f6e668462e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0278",
+                  "edge_id": "soft-correlation:6f70c0678c41070227d5",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:3bf7ea96c72429078c80",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:ef046494ef37233fe3c4",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "edge_id": "soft-correlation:96eed93967d02404bf20",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:3bfc4ab4c1f27d624f7b",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:4161dce96a288bf182cf",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0097",
+                  "edge_id": "relation:retained-temporal:97d281423c70cc69:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:3d3d58b2a2e5227daa77",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:7563b1690638530d229e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": "soft-correlation:6b9a00e080be045d956e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:433c581233d8daa6e92b",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:ef046494ef37233fe3c4",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "edge_id": "soft-correlation:96eed93967d02404bf20",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:4b1765ff84f7c7082f97",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:7124d42e1b3dbd8fea1f",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0095",
+                  "edge_id": "relation:retained-temporal:3d398d77bfca437a:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:501efda5740f06e15e5d",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:9a73ed0ae150b36ab91d",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": "soft-correlation:7c6411a121e10f52a4ba",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:520c3bb491c5dfa0a76b",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:4161dce96a288bf182cf",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0097",
+                  "edge_id": "relation:retained-temporal:97d281423c70cc69:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:5b3eb78544de3bfb6e9d",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:7124d42e1b3dbd8fea1f",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0095",
+                  "edge_id": "relation:retained-temporal:3d398d77bfca437a:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:6bd5f396c4dd5974a30c",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:ca0c15ac344e18751fcc",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0260",
+                  "edge_id": "soft-correlation:2c05ee68fdfb5273ce2e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:6c6f2f2374ebde8fc2f7",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:47843bf7c2f6e668462e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0278",
+                  "edge_id": "soft-correlation:6f70c0678c41070227d5",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:7357333c0b627faa5c30",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:ca0c15ac344e18751fcc",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0260",
+                  "edge_id": "soft-correlation:2c05ee68fdfb5273ce2e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:79dce630c1ea08950c3b",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:9a73ed0ae150b36ab91d",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": "soft-correlation:7c6411a121e10f52a4ba",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:7e3dee410ef3f9ff63e4",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:7563b1690638530d229e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": "soft-correlation:6b9a00e080be045d956e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:7f0f3c5abba0b6b5a4bb",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:9a73ed0ae150b36ab91d",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": "soft-correlation:7c6411a121e10f52a4ba",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:8398c131026dc8a57c73",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:ca0c15ac344e18751fcc",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0260",
+                  "edge_id": "soft-correlation:2c05ee68fdfb5273ce2e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:860b1a59c11c0733da57",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:4161dce96a288bf182cf",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0097",
+                  "edge_id": "relation:retained-temporal:97d281423c70cc69:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:91afebac031feeff5086",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:4161dce96a288bf182cf",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0097",
+                  "edge_id": "relation:retained-temporal:97d281423c70cc69:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:95f307669ecf72011b41",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:7563b1690638530d229e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": "soft-correlation:6b9a00e080be045d956e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:99d3b47a1b59030f66f4",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:7124d42e1b3dbd8fea1f",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0095",
+                  "edge_id": "relation:retained-temporal:3d398d77bfca437a:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:9ec723fb033fe2a484ab",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:9a73ed0ae150b36ab91d",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": "soft-correlation:7c6411a121e10f52a4ba",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:a6fbd1821ff323314c6a",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:7563b1690638530d229e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": "soft-correlation:6b9a00e080be045d956e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:a73205d5f3c69d823413",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:7124d42e1b3dbd8fea1f",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0095",
+                  "edge_id": "relation:retained-temporal:3d398d77bfca437a:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:acd5bb530aefd2c18aff",
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "action": {
+                  "action_id": "action:7563b1690638530d229e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0083",
+                  "edge_id": "soft-correlation:6b9a00e080be045d956e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:ace79a4bf21b8f5c9f51",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:4161dce96a288bf182cf",
+                  "kind": "temporal_forward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0097",
+                  "edge_id": "relation:retained-temporal:97d281423c70cc69:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:b570fb25704da8350403",
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "action": {
+                  "action_id": "action:47843bf7c2f6e668462e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0278",
+                  "edge_id": "soft-correlation:6f70c0678c41070227d5",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:bacb8d3d7f0bc2b81321",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:ef046494ef37233fe3c4",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "edge_id": "soft-correlation:96eed93967d02404bf20",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:c4910618b369826182e9",
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "action": {
+                  "action_id": "action:7124d42e1b3dbd8fea1f",
+                  "kind": "temporal_backward",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0095",
+                  "edge_id": "relation:retained-temporal:3d398d77bfca437a:temporal_next",
+                  "relation": "temporal_next",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:cd9ccd55f0addbf9fc04",
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "action": {
+                  "action_id": "action:47843bf7c2f6e668462e",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0278",
+                  "edge_id": "soft-correlation:6f70c0678c41070227d5",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:f46416aa87f5fe837373",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:ca0c15ac344e18751fcc",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0260",
+                  "edge_id": "soft-correlation:2c05ee68fdfb5273ce2e",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:f516a155dc5d10ab39e4",
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "action": {
+                  "action_id": "action:9a73ed0ae150b36ab91d",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": "soft-correlation:7c6411a121e10f52a4ba",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              },
+              {
+                "expansion_id": "hypothesis-expansion:ffba53f5b71de023e250",
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "action": {
+                  "action_id": "action:9a73ed0ae150b36ab91d",
+                  "kind": "follow_correlation",
+                  "source_id": "visual_l1:BV1Qt4y1f7zw:0096",
+                  "target_id": "visual_l1:BV1Qt4y1f7zw:0091",
+                  "edge_id": "soft-correlation:7c6411a121e10f52a4ba",
+                  "relation": "semantic",
+                  "reads_evidence": true
+                }
+              }
+            ],
+            "preferred_expansion_ids": [
+              "hypothesis-expansion:1079ba72724a484ca0cd",
+              "hypothesis-expansion:1600585df228a83397f7",
+              "hypothesis-expansion:24559533c8a3aee755fb",
+              "hypothesis-expansion:3bf7ea96c72429078c80",
+              "hypothesis-expansion:433c581233d8daa6e92b",
+              "hypothesis-expansion:bacb8d3d7f0bc2b81321"
+            ],
+            "lifecycle_predictions": [],
+            "legal_expansion_count": 42,
+            "top_k_applied": false,
+            "imagined_paths": [],
+            "preferred_path_ids": [
+              "joint-first-hop-tree:d5bda81820ef44a3c412"
+            ],
+            "planning_horizon": 0,
+            "preference_audit": {
+              "horizon": 0,
+              "first_expansion_count": 42,
+              "imagined_path_count": 7,
+              "hypothesis_conditioned_outcome_count": 42,
+              "exhaustive_pair_count": 0,
+              "comparison_count": 1,
+              "complete_coverage": true,
+              "preference_mode": "setwise_full_frontier",
+              "top_k_applied": false,
+              "world_model_predictions_visible": false,
+              "evidence_scheduler_used": false,
+              "evidence_scheduler_status": "not_needed",
+              "surviving_trajectory_paths_preserved": true
+            }
+          },
+          "observation_id": "visual_l1:BV1Qt4y1f7zw:0039",
+          "assessments": [
+            {
+              "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+              "effect": "inconclusive",
+              "rationale": "The observation only records a fall and lacks context regarding instructional intent, making it inconclusive for a first aid demonstration."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+              "effect": "inconclusive",
+              "rationale": "The observation captures a fall but provides no details about training environments or structured exercises, leaving the hypothesis inconclusive."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+              "effect": "inconclusive",
+              "rationale": "The observation merely notes a fall without visual cues of staging or performance elements, rendering the hypothesis inconclusive."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+              "effect": "inconclusive",
+              "rationale": "The observation provides no evidence of rehearsal markers such as pauses or director cues, making it inconclusive for a rehearsal."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+              "effect": "inconclusive",
+              "rationale": "The observation shows a fall but does not specify whether the subsequent actions are part of a practiced rescue scenario, resulting in an inconclusive assessment."
+            },
+            {
+              "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+              "effect": "inconclusive",
+              "rationale": "The observation records a fall but lacks indicators of an organized emergency drill, such as official personnel or drill protocols, making it inconclusive."
+            }
+          ],
+          "pool_after": {
+            "pool_id": "trajectory-pool:cgcase:52e77f99db56a8ddfda3:no_world_model:step:1:step:2",
+            "trajectories": [
+              {
+                "trajectory_id": "reasoning_trajectory:6bb24f8ae23cf2a13570",
+                "hypothesis": "Because he was demonstrating a first aid technique.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:0:shared-read:action:5d9dc3465a377464ae7d:real-correction:shared-read:action:ef046494ef37233fe3c4:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096",
+                    "visual_l1:BV1Qt4y1f7zw:0039"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ],
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0039"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d",
+                  "action:ef046494ef37233fe3c4"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096",
+                  "visual_l1:BV1Qt4y1f7zw:0039"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation only records a fall and lacks context regarding instructional intent, making it inconclusive for a first aid demonstration."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2ef6a31ded8a7fb844a9",
+                "hypothesis": "Because it was part of a training exercise.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:1:shared-read:action:5d9dc3465a377464ae7d:real-correction:shared-read:action:ef046494ef37233fe3c4:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096",
+                    "visual_l1:BV1Qt4y1f7zw:0039"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0039"
+                    ],
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d",
+                  "action:ef046494ef37233fe3c4"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096",
+                  "visual_l1:BV1Qt4y1f7zw:0039"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation captures a fall but provides no details about training environments or structured exercises, leaving the hypothesis inconclusive."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:2c04cd9a093e20ef7439",
+                "hypothesis": "Because it was a staged performance.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:2:shared-read:action:5d9dc3465a377464ae7d:real-correction:step:2:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096",
+                    "visual_l1:BV1Qt4y1f7zw:0039"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d",
+                  "action:ef046494ef37233fe3c4"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096",
+                  "visual_l1:BV1Qt4y1f7zw:0039"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation merely notes a fall without visual cues of staging or performance elements, rendering the hypothesis inconclusive."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:17a0d2e757bcad9b183f",
+                "hypothesis": "Because it was a rehearsal.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:3:shared-read:action:5d9dc3465a377464ae7d:real-correction:shared-read:action:ef046494ef37233fe3c4:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096",
+                    "visual_l1:BV1Qt4y1f7zw:0039"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d",
+                  "action:ef046494ef37233fe3c4"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096",
+                  "visual_l1:BV1Qt4y1f7zw:0039"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation provides no evidence of rehearsal markers such as pauses or director cues, making it inconclusive for a rehearsal."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:588ef0b5e9d53bb20a14",
+                "hypothesis": "Because they were practicing a rescue scenario.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:4:shared-read:action:5d9dc3465a377464ae7d:real-correction:shared-read:action:ef046494ef37233fe3c4:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096",
+                    "visual_l1:BV1Qt4y1f7zw:0039"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d",
+                  "action:ef046494ef37233fe3c4"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096",
+                  "visual_l1:BV1Qt4y1f7zw:0039"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation shows a fall but does not specify whether the subsequent actions are part of a practiced rescue scenario, resulting in an inconclusive assessment."
+              },
+              {
+                "trajectory_id": "reasoning_trajectory:9d94e0bee40b6a439230",
+                "hypothesis": "Because it was an emergency drill.",
+                "belief": {
+                  "belief_id": "belief:cgcase:52e77f99db56a8ddfda3:no_world_model:initial:hypothesis:5:step:1:real-correction:shared-read:action:ef046494ef37233fe3c4:real-correction",
+                  "question": "In the video, why did Zhang Fengyi give Du Haitao artificial respiration?",
+                  "current_node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+                  "localized_entry_node_ids": [
+                    "visual_l1:BV1Qt4y1f7zw:0083",
+                    "visual_l1:BV1Qt4y1f7zw:0091",
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "acquired_evidence": [
+                    "visual_l1:BV1Qt4y1f7zw:0096",
+                    "visual_l1:BV1Qt4y1f7zw:0039"
+                  ],
+                  "imagined_evidence": [],
+                  "cursor_history": [
+                    "visual_l1:BV1Qt4y1f7zw:0096"
+                  ],
+                  "accepted_relations": [],
+                  "rejected_relations": [],
+                  "unresolved_relations": [],
+                  "required_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready",
+                  "remaining_reads": 0,
+                  "step": 2
+                },
+                "parent_trajectory_id": null,
+                "action_history": [
+                  "action:5d9dc3465a377464ae7d",
+                  "action:ef046494ef37233fe3c4"
+                ],
+                "shared_observation_ids": [
+                  "visual_l1:BV1Qt4y1f7zw:0096",
+                  "visual_l1:BV1Qt4y1f7zw:0039"
+                ],
+                "status": "inconclusive",
+                "merged_into": null,
+                "lifecycle_rationale": "The observation records a fall but lacks indicators of an organized emergency drill, such as official personnel or drill protocols, making it inconclusive."
+              }
+            ],
+            "top_k_applied": false
+          }
+        }
+      ],
+      "real_observations": [
+        {
+          "node_id": "visual_l1:BV1Qt4y1f7zw:0096",
+          "video_id": "BV1Qt4y1f7zw",
+          "time_span": {
+            "start_s": 333.857,
+            "end_s": 335.036
+          },
+          "provenance": {
+            "source_graph_id": "video_l1:BV1Qt4y1f7zw",
+            "source_node_type": "raw_video_frame_window",
+            "adapter": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "producer": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "layer": "L1",
+            "uses_hidden_supervision": false
+          },
+          "node_type": "observation",
+          "text": "person_falls",
+          "source_node_id": "raw_video:BV1Qt4y1f7zw:333.857-335.036",
+          "source_segments": [
+            "raw_video:BV1Qt4y1f7zw:333.857-335.036"
+          ],
+          "embedding_ref": {
+            "path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1Qt4y1f7zw/node_embeddings.npy",
+            "model": "Qwen/Qwen3-VL-Embedding-2B",
+            "dimension": 2048,
+            "dtype": "float32",
+            "normalized": true,
+            "row_index": 95,
+            "checksum": "d149d18a51b2cd1ebd80924bada7f7e42700f6954e7352d1f87b0b825d64e7ea"
+          },
+          "metadata": {
+            "predicate": "person_falls",
+            "confidence": 1.0,
+            "action_kind": "motion",
+            "participants": [
+              {
+                "role": "faller",
+                "entity_type": "person",
+                "surface": "ground",
+                "visual_signature": "camouflage uniform, helmet",
+                "confidence": 0.5,
+                "evidence_frames": [
+                  0,
+                  1,
+                  2,
+                  3
+                ],
+                "mention_id": "track:0094",
+                "track_status": "candidate_visual_signature",
+                "local_index": 0
+              }
+            ],
+            "states": [],
+            "state_change": null,
+            "entity_track_ids": [
+              "track:0094"
+            ],
+            "localization": {
+              "method": "grounded_single_pass_sampled_frames",
+              "evidence_frames": [
+                2,
+                3
+              ],
+              "frame_records": [
+                {
+                  "frame_index": 0,
+                  "time_s": 331.5,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 1,
+                  "time_s": 332.679,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 2,
+                  "time_s": 333.857,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 3,
+                  "time_s": 335.036,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 4,
+                  "time_s": 336.214,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 5,
+                  "time_s": 337.393,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 6,
+                  "time_s": 338.571,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 7,
+                  "time_s": 339.75,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                }
+              ],
+              "coarse_window": {
+                "start_s": 331.5,
+                "end_s": 339.75,
+                "purpose": "surprise_adaptive_coarse_scan",
+                "boundary_reason": "representation_surprise",
+                "sample_count": 11
+              }
+            },
+            "visibility": {
+              "mode": "video_only",
+              "visible_to_agent": true,
+              "hidden_supervision": false
+            },
+            "source_type": "raw_video_visual_observation",
+            "layer": "L1"
+          }
+        },
+        {
+          "node_id": "visual_l1:BV1Qt4y1f7zw:0039",
+          "video_id": "BV1Qt4y1f7zw",
+          "time_span": {
+            "start_s": 153.0,
+            "end_s": 154.286
+          },
+          "provenance": {
+            "source_graph_id": "video_l1:BV1Qt4y1f7zw",
+            "source_node_type": "raw_video_frame_window",
+            "adapter": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "producer": "memory_graph.video_l1.QwenVideoL1Extractor",
+            "layer": "L1",
+            "uses_hidden_supervision": false
+          },
+          "node_type": "observation",
+          "text": "person_falls",
+          "source_node_id": "raw_video:BV1Qt4y1f7zw:153.000-154.286",
+          "source_segments": [
+            "raw_video:BV1Qt4y1f7zw:153.000-154.286"
+          ],
+          "embedding_ref": {
+            "path": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1Qt4y1f7zw/node_embeddings.npy",
+            "model": "Qwen/Qwen3-VL-Embedding-2B",
+            "dimension": 2048,
+            "dtype": "float32",
+            "normalized": true,
+            "row_index": 38,
+            "checksum": "d149d18a51b2cd1ebd80924bada7f7e42700f6954e7352d1f87b0b825d64e7ea"
+          },
+          "metadata": {
+            "predicate": "person_falls",
+            "confidence": 1.0,
+            "action_kind": "motion",
+            "participants": [
+              {
+                "role": "falling_person",
+                "entity_type": "person",
+                "surface": "floor",
+                "visual_signature": "white jacket, blue jeans",
+                "confidence": 0.5,
+                "evidence_frames": [
+                  0,
+                  1,
+                  2
+                ],
+                "mention_id": "track:0043",
+                "track_status": "candidate_visual_signature",
+                "local_index": 0
+              }
+            ],
+            "states": [],
+            "state_change": null,
+            "entity_track_ids": [
+              "track:0043"
+            ],
+            "localization": {
+              "method": "grounded_single_pass_sampled_frames",
+              "evidence_frames": [
+                0,
+                1,
+                2
+              ],
+              "frame_records": [
+                {
+                  "frame_index": 0,
+                  "time_s": 153.0,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 1,
+                  "time_s": 153.643,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 2,
+                  "time_s": 154.286,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 3,
+                  "time_s": 154.929,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 4,
+                  "time_s": 155.571,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 5,
+                  "time_s": 156.214,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 6,
+                  "time_s": 156.857,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                },
+                {
+                  "frame_index": 7,
+                  "time_s": 157.5,
+                  "purpose": "surprise_adaptive_coarse_scan"
+                }
+              ],
+              "coarse_window": {
+                "start_s": 153.0,
+                "end_s": 157.5,
+                "purpose": "surprise_adaptive_coarse_scan",
+                "boundary_reason": "representation_surprise",
+                "sample_count": 6
+              }
+            },
+            "visibility": {
+              "mode": "video_only",
+              "visible_to_agent": true,
+              "hidden_supervision": false
+            },
+            "source_type": "raw_video_visual_observation",
+            "layer": "L1"
+          }
+        }
+      ],
+      "realized_labels_evaluator_only": [
+        {
+          "observation_id": "visual_l1:BV1Qt4y1f7zw:0096",
+          "observation_outcome": "support",
+          "belief_delta": {
+            "progress": "advanced",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "predicted_only": false
+          },
+          "newly_covered_clue_indices": [
+            1
+          ],
+          "fed_back_to_planner": false
+        },
+        {
+          "observation_id": "visual_l1:BV1Qt4y1f7zw:0039",
+          "observation_outcome": "inconclusive",
+          "belief_delta": {
+            "progress": "unchanged",
+            "answerability_after": "not_ready",
+            "frontier_change": "unchanged",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [],
+            "opened_roles": [],
+            "relation_updates": [],
+            "predicted_only": false
+          },
+          "newly_covered_clue_indices": [],
+          "fed_back_to_planner": false
+        }
+      ],
+      "termination": "read_budget_exhausted",
+      "terminal_answer": {
+        "status": "abstain",
+        "selected_choice": null,
+        "rationale": "The acquired evidence only indicates a person falling, and all reasoning trajectories are marked as inconclusive due to missing critical roles such as rescuer intervention and causal motivation. Consequently, no choice is sufficiently supported by the real evidence."
+      },
+      "evidence_sufficiency_evaluator_only": {
+        "status": "insufficient",
+        "rationale": "The provided evidence only captures instances of people falling but lacks any information regarding Zhang Fengyi, Du Haitao, artificial respiration, or the specific context (e.g., rehearsal) required to validate the reference answer or rule out alternatives.",
+        "evaluator_only": true,
+        "fed_back_to_planner": false
+      },
+      "final_trajectory_statuses": [
+        "inconclusive",
+        "inconclusive",
+        "inconclusive",
+        "inconclusive",
+        "inconclusive",
+        "inconclusive"
+      ],
+      "empirical_audit": {
+        "joint_chain_coverage": {
+          "steps": [
+            {
+              "step_index": 0,
+              "joint_chain_count": 0,
+              "expected_conditioned_outcome_count": 18,
+              "retained_conditioned_outcome_count": 0,
+              "lossless_joint_grouping": false,
+              "every_chain_covers_every_current_hypothesis": true,
+              "per_chain": []
+            },
+            {
+              "step_index": 1,
+              "joint_chain_count": 0,
+              "expected_conditioned_outcome_count": 42,
+              "retained_conditioned_outcome_count": 0,
+              "lossless_joint_grouping": false,
+              "every_chain_covers_every_current_hypothesis": true,
+              "per_chain": []
+            }
+          ],
+          "all_steps_lossless": false,
+          "outcome_retention_rate": 0.0,
+          "all_initial_chains_cover_every_hypothesis": true
+        },
+        "post_read_belief_divergence": {
+          "steps": [
+            {
+              "step_index": 0,
+              "observation_id": "visual_l1:BV1Qt4y1f7zw:0096",
+              "hypothesis_count": 6,
+              "unique_belief_signature_count": 2,
+              "belief_diverged": true,
+              "belief_groups": [
+                {
+                  "hypotheses": [
+                    "Because he was demonstrating a first aid technique.",
+                    "Because it was a staged performance.",
+                    "Because it was a rehearsal.",
+                    "Because they were practicing a rescue scenario.",
+                    "Because it was an emergency drill."
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                },
+                {
+                  "hypotheses": [
+                    "Because it was part of a training exercise."
+                  ],
+                  "missing_roles": [
+                    "victim_medical_state",
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "step_index": 1,
+              "observation_id": "visual_l1:BV1Qt4y1f7zw:0039",
+              "hypothesis_count": 6,
+              "unique_belief_signature_count": 3,
+              "belief_diverged": true,
+              "belief_groups": [
+                {
+                  "hypotheses": [
+                    "Because he was demonstrating a first aid technique."
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ],
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0039"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                },
+                {
+                  "hypotheses": [
+                    "Because it was part of a training exercise."
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0039"
+                    ],
+                    [
+                      "causal_motivation",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                },
+                {
+                  "hypotheses": [
+                    "Because it was a staged performance.",
+                    "Because it was a rehearsal.",
+                    "Because they were practicing a rescue scenario.",
+                    "Because it was an emergency drill."
+                  ],
+                  "missing_roles": [
+                    "rescuer_intervention",
+                    "causal_motivation"
+                  ],
+                  "grounded_role_evidence": [
+                    [
+                      "victim_medical_state",
+                      "visual_l1:BV1Qt4y1f7zw:0096"
+                    ]
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "divergence_rate": 1.0
+        },
+        "transition_calibration": {
+          "reference": "hidden_clue_overlap_evaluator_only",
+          "rows": [],
+          "observation_outcome_exact_accuracy": null,
+          "progress_exact_accuracy": null,
+          "answerability_exact_accuracy": null,
+          "observation_outcome_balanced_accuracy": null,
+          "progress_balanced_accuracy": null,
+          "answerability_balanced_accuracy": null,
+          "observation_outcome_over_credit_fdr": null,
+          "progress_over_credit_fdr": null,
+          "answerability_over_credit_fdr": null,
+          "observation_outcome_confusion": {},
+          "progress_confusion": {},
+          "answerability_confusion": {}
+        }
+      },
+      "metrics": {
+        "answer_correct": false,
+        "answer_abstained": true,
+        "clue_count": 2,
+        "covered_clue_count": 1,
+        "clue_recall": 0.5,
+        "clue_coverage_complete": false,
+        "real_read_count": 2,
+        "read_efficiency": 0.5,
+        "delayed_reasoning_success": false,
+        "delayed_recovery_success": false,
+        "delayed_completion_after_unproductive_first": false,
+        "correct_hypothesis_survived": true,
+        "false_correct_hypothesis_elimination": false,
+        "final_expandable_trajectory_count": 6,
+        "shared_action_selection_count": 1,
+        "complete_comparison_budget_failure": false,
+        "joint_chain_outcome_retention_rate": 0.0,
+        "post_read_belief_divergence_rate": 1.0,
+        "transition_outcome_calibration_accuracy": null,
+        "transition_progress_calibration_accuracy": null,
+        "transition_outcome_balanced_accuracy": null,
+        "transition_progress_balanced_accuracy": null,
+        "transition_answerability_balanced_accuracy": null,
+        "transition_outcome_over_credit_fdr": null,
+        "transition_progress_over_credit_fdr": null,
+        "transition_answerability_over_credit_fdr": null
+      },
+      "hidden_evaluator_feedback_to_planner": false,
+      "top_k_applied": false,
+      "training_performed": false,
+      "method_audit": {
+        "planner_type": "ReactiveMultiTrajectoryPlanner",
+        "world_model_type": "NoneType",
+        "complete_coverage": {
+          "horizon": 0,
+          "first_expansion_count": 42,
+          "imagined_path_count": 7,
+          "hypothesis_conditioned_outcome_count": 42,
+          "exhaustive_pair_count": 0,
+          "comparison_count": 1,
+          "complete_coverage": true,
+          "preference_mode": "setwise_full_frontier",
+          "top_k_applied": false,
+          "world_model_predictions_visible": false,
+          "evidence_scheduler_used": false,
+          "evidence_scheduler_status": "not_needed",
+          "surviving_trajectory_paths_preserved": true
+        },
+        "transport": [
+          {
+            "operation": "categorical_setwise_frontier",
+            "item_count": 3,
+            "batch_count": 1,
+            "complete_coverage": true,
+            "top_k_applied": false,
+            "imagined_transitions_visible": false
+          },
+          {
+            "operation": "categorical_evidence_scheduler",
+            "item_count": 3,
+            "batch_count": 1,
+            "complete_coverage": true,
+            "top_k_applied": false,
+            "surviving_paths_preserved": true,
+            "imagined_transitions_visible": false
+          },
+          {
+            "operation": "categorical_setwise_frontier",
+            "item_count": 7,
+            "batch_count": 1,
+            "complete_coverage": true,
+            "top_k_applied": false,
+            "imagined_transitions_visible": false
+          }
+        ],
+        "transition_contract": [],
+        "top_k_applied": false,
+        "belief_backend": "latent",
+        "gtsam_audit": [],
+        "real_evidence_reread": [],
+        "entry_localization": {
+          "candidate_address_count": 192,
+          "selected_anchor_count": 3,
+          "selected_node_ids": [
+            "visual_l1:BV1Qt4y1f7zw:0083",
+            "visual_l1:BV1Qt4y1f7zw:0091",
+            "visual_l1:BV1Qt4y1f7zw:0096"
+          ],
+          "status": "located",
+          "top_k_applied": false,
+          "numeric_score_used": false,
+          "alias_prefix_normalization_count": 0,
+          "role_conditioned_output": true,
+          "role_key_normalization_count": 0,
+          "schema_repair_count": 0
+        },
+        "entry_localization_failure": null,
+        "initial_role_fingerprint": "592831165298df1cb916ac80d9082902e49a9ae146f7f9d09250e1fd697db4cc"
+      }
+    }
+  ],
+  "errors": [],
+  "method_failures": [],
+  "metrics_by_arm": {
+    "no_world_model": {
+      "case_count": 1,
+      "answer_accuracy": 0.0,
+      "mean_clue_recall": 0.5,
+      "mean_real_reads": 2.0,
+      "mean_read_efficiency": 0.5,
+      "answer_abstain_rate": 1.0,
+      "delayed_success_rate": 0.0,
+      "delayed_recovery_rate": 0.0,
+      "delayed_completion_after_unproductive_first_rate": 0.0,
+      "correct_hypothesis_survival_rate": 1.0,
+      "false_correct_hypothesis_elimination_rate": 0.0,
+      "complete_comparison_budget_failure_rate": 0.0,
+      "mean_joint_chain_outcome_retention": 0.0,
+      "post_read_belief_divergence_rate": 1.0,
+      "transition_outcome_calibration_accuracy": null,
+      "transition_progress_calibration_accuracy": null,
+      "pooled_transition_calibration": null
+    }
+  },
+  "metrics_by_arm_localized_frontier_complete": {
+    "no_world_model": {
+      "case_count": 0,
+      "answer_accuracy": null,
+      "mean_clue_recall": null,
+      "mean_real_reads": null,
+      "mean_read_efficiency": null,
+      "answer_abstain_rate": null,
+      "delayed_success_rate": null,
+      "delayed_recovery_rate": null,
+      "delayed_completion_after_unproductive_first_rate": null,
+      "correct_hypothesis_survival_rate": null,
+      "false_correct_hypothesis_elimination_rate": null,
+      "complete_comparison_budget_failure_rate": null,
+      "mean_joint_chain_outcome_retention": null,
+      "post_read_belief_divergence_rate": null,
+      "transition_outcome_calibration_accuracy": null,
+      "transition_progress_calibration_accuracy": null,
+      "pooled_transition_calibration": null
+    }
+  },
+  "localized_entry_preflight": [
+    {
+      "case_id": "cgcase:52e77f99db56a8ddfda3",
+      "status": "insufficient_frontier",
+      "clue_recall_ceiling": null,
+      "clue_coverage_complete": false,
+      "evaluator_only": true,
+      "fed_back_to_planner": false
+    }
+  ],
+  "scientifically_evaluable_case_ids": [],
+  "localized_entry_preflight_contract": {
+    "uses_hidden_clues_for_evaluation_only": true,
+    "runs_after_model_entry_localization": true,
+    "same_read_budget_as_model_arms": true,
+    "fed_back_to_planner": false,
+    "purpose": "separate navigation quality from unreachable evidence"
+  },
+  "action_divergence": [],
+  "input_visibility_audits": [
+    {
+      "case_id": "cgcase:52e77f99db56a8ddfda3",
+      "regime": "semantic_address",
+      "question_independent_graph_required": true,
+      "hidden_clue_intervals_visible": false,
+      "hidden_answer_visible": false,
+      "post_read_vlm_observation_visible": false,
+      "full_l1_descriptor_visible_before_read": false,
+      "oracle_observation_is_posthoc_only": true,
+      "metadata_allowlist": [
+        "predicate",
+        "action_kind",
+        "participants",
+        "states",
+        "state_change",
+        "actor",
+        "target",
+        "objects",
+        "location",
+        "modality",
+        "source_type"
+      ],
+      "graph_question_independent_contract": null,
+      "exposed_forbidden_fields": [],
+      "leakage_detected": false,
+      "node_count": 192
+    }
+  ],
+  "initial_role_fingerprints": [
+    {
+      "case_id": "cgcase:52e77f99db56a8ddfda3",
+      "fingerprint": "592831165298df1cb916ac80d9082902e49a9ae146f7f9d09250e1fd697db4cc"
+    }
+  ],
+  "response_cache_audit": {
+    "available": true,
+    "hit_count": 1,
+    "miss_count": 18
+  },
+  "training_performed": false,
+  "compile_gate": {
+    "schema_version": "steam-full-graph-iwm-cgbench-gate/v0.1",
+    "dataset_id": "cgbench-gt-navigation-pilot-v2",
+    "selection_schema": "steam-cgbench-fixed-l15-cohort-selection/v0.1",
+    "graph_root": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8",
+    "capacity": 192,
+    "read_budget": 2,
+    "requested_video_count": 4,
+    "selected_case_count": 4,
+    "fixed_cohort_case_filter_applied": true,
+    "allowed_case_count": 4,
+    "runnable_case_ids": [
+      "cgcase:52e77f99db56a8ddfda3",
+      "cgcase:b1164e579fdb03f5e4d9",
+      "cgcase:3a80fe7762ad83424f3f",
+      "cgcase:daec71dbc4ef887b1f23"
+    ],
+    "scientifically_runnable_case_ids": [
+      "cgcase:52e77f99db56a8ddfda3",
+      "cgcase:b1164e579fdb03f5e4d9",
+      "cgcase:3a80fe7762ad83424f3f",
+      "cgcase:daec71dbc4ef887b1f23"
+    ],
+    "dataset_boundary": "whitelist_required_and_applied",
+    "checks": {
+      "all_requested_graphs_available": true,
+      "all_available_graphs_compile": true,
+      "all_graphs_question_independent": true,
+      "all_graphs_have_embedding_correlation_build": true,
+      "planner_input_has_no_hidden_keys": true,
+      "planner_input_has_no_unread_values": true,
+      "eligible_case_exists": true,
+      "every_horizon_eligible_case_retains_all_clues": true,
+      "scientifically_runnable_case_exists": true
+    },
+    "gate_passed": true,
+    "gate_contract": "structural, clue-retention, and exact oracle-at-read-budget preflight; navigation metrics remain separate and are never collapsed into this boolean",
+    "graphs": [
+      {
+        "video_id": "BV1Qt4y1f7zw",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1Qt4y1f7zw/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 408,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "6cc31f0aef81299d1ea224e49fa87e52ddf511d620dd7b1114db81892aee5cd2",
+        "observation_end_s": 1090.467
+      },
+      {
+        "video_id": "BV1zJ41187BP",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/BV1zJ41187BP/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 377,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "f61a2711145247a5bb411f5b1f04f9809cd153f58754c502990b478903876c9f",
+        "observation_end_s": 830.933
+      },
+      {
+        "video_id": "W1X32VHJ7fM",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/W1X32VHJ7fM/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 387,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "e1eb9b0be02459b5d77854115741dcefc92cf83fd09431572a0750a005031f44",
+        "observation_end_s": 2046.561
+      },
+      {
+        "video_id": "w8j9zNp8hNI",
+        "source_graph": "/fs/gamma-projects/vlm-robot/steam_video/steam_video_new/implicit_world_model/datasets/cgbench_gt_navigation_pilot_v2/l15_fixed_cohort_v2_vllm_c8/w8j9zNp8hNI/causal_temporal_overlay.json",
+        "graph_available": true,
+        "compile_status": "compiled",
+        "question_independent": true,
+        "retained_node_count": 192,
+        "temporal_edge_count": 191,
+        "correlation_edge_count": 365,
+        "candidate_edge_count": 0,
+        "caption_candidate_overlay_loaded": false,
+        "verified_relation_count": 0,
+        "soft_correlation_build_available": true,
+        "capacity": 192,
+        "graph_fingerprint": "c7b74ce1f53267854125a8c3fe6d292dc4c0026620cea6b855eb76ccc636dd99",
+        "observation_end_s": 2182.0
+      }
+    ],
+    "cases": [
+      {
+        "case_id": "cgcase:52e77f99db56a8ddfda3",
+        "video_id": "BV1Qt4y1f7zw",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "6cc31f0aef81299d1ea224e49fa87e52ddf511d620dd7b1114db81892aee5cd2",
+        "scientifically_runnable": true
+      },
+      {
+        "case_id": "cgcase:b1164e579fdb03f5e4d9",
+        "video_id": "BV1zJ41187BP",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "f61a2711145247a5bb411f5b1f04f9809cd153f58754c502990b478903876c9f",
+        "scientifically_runnable": true
+      },
+      {
+        "case_id": "cgcase:3a80fe7762ad83424f3f",
+        "video_id": "W1X32VHJ7fM",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "e1eb9b0be02459b5d77854115741dcefc92cf83fd09431572a0750a005031f44",
+        "scientifically_runnable": true
+      },
+      {
+        "case_id": "cgcase:daec71dbc4ef887b1f23",
+        "video_id": "w8j9zNp8hNI",
+        "split": "validation",
+        "graph_compile_status": "compiled",
+        "runnable": true,
+        "clue_count_evaluator_only": 2,
+        "all_clues_within_observation_horizon": true,
+        "all_clues_within_graph_horizon": true,
+        "status": "compiled",
+        "legal_action_count": 3,
+        "visible_node_count": 1,
+        "structural_audit_entry_count": 1,
+        "global_start_at_all_nodes_disabled": true,
+        "all_visible_nodes_have_start_action": true,
+        "top_k_applied": false,
+        "unread_evidence_value_leak_count": 0,
+        "forbidden_planner_keys": [],
+        "retained_clue_count_evaluator_only": 2,
+        "retained_clue_recall_evaluator_only": 1.0,
+        "oracle_clue_count_at_planning_horizon_evaluator_only": 2,
+        "oracle_clue_recall_at_planning_horizon_evaluator_only": 1.0,
+        "oracle_clue_complete_at_planning_horizon_evaluator_only": true,
+        "graph_fingerprint": "c7b74ce1f53267854125a8c3fe6d292dc4c0026620cea6b855eb76ccc636dd99",
+        "scientifically_runnable": true
+      }
+    ],
+    "gpt_service_called": false,
+    "training_performed": false
+  }
+}

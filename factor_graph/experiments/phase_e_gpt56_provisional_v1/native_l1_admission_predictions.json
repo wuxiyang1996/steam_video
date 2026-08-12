@@ -1,0 +1,232 @@
+{
+  "schema_version": "steam-categorical-relation-predictions/v0.1",
+  "predictor": "native_l1_candidate_admission",
+  "semantics": "Every packet row existed in the admitted candidate set, so the baseline categorically predicts supports. This is not a post-read verifier.",
+  "predictions": [
+    {
+      "item_id": "l1-edge:0001",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0002",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0003",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0004",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0005",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0006",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0007",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0008",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0009",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0010",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0011",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0012",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0013",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0014",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0015",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0016",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0017",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0018",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0019",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0020",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0021",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0022",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0023",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0024",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0025",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0026",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0027",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0028",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0029",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0030",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0031",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0032",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0033",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0034",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0035",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0036",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0037",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0038",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0039",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0040",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0041",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0042",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0043",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0044",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    },
+    {
+      "item_id": "l1-edge:0045",
+      "outcome": "supports",
+      "reason": "relation was present in the admitted native L1 candidate set"
+    }
+  ]
+}

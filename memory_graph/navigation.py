@@ -17,6 +17,8 @@ class NavigationActionType(str, Enum):
     TRACK_ENTITY = "track_entity"
     INSPECT_STATE_CHANGE = "inspect_state_change"
     FOLLOW_DEPENDENCY = "follow_dependency"
+    CANDIDATE_CAUSE = "candidate_cause"
+    EFFECT = "effect"
     FIND_BRIDGE = "find_bridge"
     SEARCH_COUNTEREVIDENCE = "search_counterevidence"
     VERIFY = "verify"
@@ -46,6 +48,13 @@ class NavigationBeliefState:
 
 @dataclass(frozen=True)
 class PredictedReadTransition:
+    """Legacy scalar baseline output.
+
+    The preference-only implicit world model lives in
+    ``steam_video_new.implicit_world_model.l15_graph_navigator`` and does not
+    consume or emit this contract.
+    """
+
     action: GraphReadAction
     expected_information_gain: float
     delayed_utility: float
@@ -322,6 +331,28 @@ def _edge_actions(
                 "follow a predictive dependency without assuming causality",
             )
         )
+    candidate_causal = names & {"explains", "enables"}
+    for name in sorted(candidate_causal):
+        if edge.dst == source_id:
+            actions.append(
+                GraphReadAction(
+                    NavigationActionType.CANDIDATE_CAUSE,
+                    source_id,
+                    (edge.src,),
+                    name,
+                    "inspect an earlier candidate explanation without assuming causality",
+                )
+            )
+        elif edge.src == source_id:
+            actions.append(
+                GraphReadAction(
+                    NavigationActionType.EFFECT,
+                    source_id,
+                    (edge.dst,),
+                    name,
+                    "inspect a later candidate effect without assuming causality",
+                )
+            )
     if "contradicts" in names:
         actions.append(
             GraphReadAction(

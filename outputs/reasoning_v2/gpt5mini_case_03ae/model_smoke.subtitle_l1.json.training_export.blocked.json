@@ -1,0 +1,11 @@
+{
+  "training_export_eligible": false,
+  "training_performed": false,
+  "blocking_gates": [
+    "oracle_entry_route_budget_feasible",
+    "oracle_entry_later_clue_reached_strict_interval",
+    "oracle_entry_iwm_answer_correct",
+    "transition_calibration_available",
+    "multi_video_fixed_cohort"
+  ]
+}

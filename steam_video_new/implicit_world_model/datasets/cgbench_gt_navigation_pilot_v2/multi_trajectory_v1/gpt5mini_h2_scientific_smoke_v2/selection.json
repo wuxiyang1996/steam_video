@@ -1,0 +1,21 @@
+{
+  "schema_version": "steam-multi-trajectory-pilot-selection/v0.2",
+  "selection_id": "gpt5mini_h2_scientific_smoke_v2",
+  "frozen_before_model_execution": true,
+  "source_gate": "../../l15_fixed_cohort_v2_vllm_c8/iwm_zero_shot_34case_compile_gate.json",
+  "source_integrity_exclusions": "../../source_integrity_exclusions.json",
+  "selection_policy": {
+    "purpose": "post-fix two-hop model-backed diagnostic",
+    "question_independent_graph": true,
+    "all_clues_retained": true,
+    "oracle_clue_complete_within_two_executable_graph_reads": true,
+    "top_k_applied": false,
+    "hidden_labels_visible_to_planner": false
+  },
+  "case_ids": [
+    "cgcase:b54bf2f29a2825093457",
+    "cgcase:d371e59bdb2daa7c3fba",
+    "cgcase:8c0c9161f8659806dae9"
+  ],
+  "training_performed": false
+}

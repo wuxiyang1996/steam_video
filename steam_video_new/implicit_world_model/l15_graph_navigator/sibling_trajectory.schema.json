@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wuxiyang1996/steam_video/sibling_trajectory.schema.json",
+  "title": "PreferenceNavigationSiblingCheckpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "overlay_id",
+    "example_id",
+    "checkpoint",
+    "branches",
+    "pairwise_preferences",
+    "annotation_status",
+    "allowed_labels",
+    "output_contract"
+  ],
+  "properties": {
+    "schema_version": {"const": "steam-preference-siblings/v0.1"},
+    "overlay_id": {"type": "string", "minLength": 1},
+    "example_id": {"type": "string", "minLength": 1},
+    "video_id": {"type": "string", "minLength": 1},
+    "checkpoint": {"$ref": "#/$defs/belief"},
+    "branches": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/branch"}
+    },
+    "pairwise_preferences": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/preference"}
+    },
+    "annotation_status": {"const": "requires_independent_annotation"},
+    "allowed_labels": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/preference_label"},
+      "uniqueItems": true
+    },
+    "output_contract": {"const": "ordinal_preference_only"}
+  },
+  "$defs": {
+    "preference_label": {
+      "enum": ["prefer_left", "tie", "prefer_right", "incomparable"]
+    },
+    "belief": {
+      "type": "object",
+      "required": [
+        "belief_id",
+        "backend_name",
+        "question",
+        "acquired_evidence",
+        "frontier",
+        "missing_roles",
+        "contradictions",
+        "relation_states",
+        "uncertainty",
+        "answerability",
+        "remaining_graph_reads",
+        "step"
+      ],
+      "additionalProperties": true
+    },
+    "action": {
+      "type": "object",
+      "required": ["action_type", "target_ids", "rationale"],
+      "additionalProperties": true
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_id",
+        "belief_before_id",
+        "action",
+        "skill_invocation",
+        "real_observation_ids",
+        "belief_after",
+        "realized_transition"
+      ],
+      "properties": {
+        "branch_id": {"type": "string", "minLength": 1},
+        "belief_before_id": {"type": "string", "minLength": 1},
+        "action": {"$ref": "#/$defs/action"},
+        "skill_invocation": {"type": "object"},
+        "real_observation_ids": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "belief_after": {"$ref": "#/$defs/belief"},
+        "realized_transition": {
+          "type": "object",
+          "required": ["action", "observation_descriptor", "belief_delta"],
+          "additionalProperties": true
+        }
+      }
+    },
+    "preference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "left_branch_id",
+        "right_branch_id",
+        "label",
+        "rationale",
+        "label_source"
+      ],
+      "properties": {
+        "left_branch_id": {"type": "string"},
+        "right_branch_id": {"type": "string"},
+        "label": {"$ref": "#/$defs/preference_label"},
+        "rationale": {"type": "string"},
+        "label_source": {
+          "enum": [
+            "rule_based_provisional/v0.1",
+            "gpt-oss-120b_categorical_provisional/v0.1"
+          ]
+        }
+      }
+    }
+  }
+}

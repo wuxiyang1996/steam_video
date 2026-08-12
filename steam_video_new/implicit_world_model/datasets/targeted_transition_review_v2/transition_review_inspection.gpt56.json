@@ -1,0 +1,48 @@
+{
+  "schema_version": "steam-transition-review-inspection/v0.1",
+  "packet_id": "targeted-transition-review-v2",
+  "annotation_status": "ai_provisional",
+  "valid": true,
+  "validation_errors": [],
+  "item_count": 52,
+  "categorical_counts": {
+    "action_execution_validity": {
+      "inconclusive": 8,
+      "invalid": 17,
+      "valid": 27
+    },
+    "belief_delta_validity": {
+      "inconclusive": 8,
+      "invalid": 19,
+      "valid": 25
+    },
+    "observation_validity": {
+      "inconclusive": 12,
+      "invalid": 11,
+      "valid": 29
+    },
+    "relation_outcome": {
+      "inconclusive": 27,
+      "not_applicable": 15,
+      "rejects": 2,
+      "supports": 8
+    },
+    "review_decision": {
+      "accept": 21,
+      "reject": 31
+    }
+  },
+  "duplicate_consistency": {
+    "evaluated_group_count": 6,
+    "exact_agreement_group_count": 6,
+    "all_groups_exact": true
+  },
+  "numeric_annotation_output_present": false,
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false,
+  "blockers": [
+    "review remains model-provisional rather than independent-human locked",
+    "training is intentionally disabled for this review stage"
+  ]
+}

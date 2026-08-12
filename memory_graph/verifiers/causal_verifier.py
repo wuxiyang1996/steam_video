@@ -6,7 +6,12 @@ from typing import Any, Iterable
 
 from ..causal_witness import witness_from_provenance
 from ..types import MechanismKind, MemoryNode, RelationBelief, RelationType
-from .entity_state_verifier import VerifierResult, _common_problems, _norm, _support_value
+from .entity_state_verifier import (
+    VerifierResult,
+    _common_problems,
+    _norm,
+    _support_value,
+)
 
 
 class CausalVerifier:
@@ -90,7 +95,10 @@ def _verify_causal(
     problems = _common_problems(belief, src, dst, relation)
     witness = witness_from_provenance(belief.provenance)
     if witness is not None:
-        if witness.cause_event_id != src.node_id or witness.effect_event_id != dst.node_id:
+        if (
+            witness.cause_event_id != src.node_id
+            or witness.effect_event_id != dst.node_id
+        ):
             problems.append("causal witness endpoints do not match the relation")
         if witness.relation != relation:
             problems.append("causal witness relation type does not match the proposal")
@@ -113,7 +121,9 @@ def _verify_causal(
 
     problems.extend(_evidence_ref_problems(belief, src, dst))
     problems.extend(_minimal_support_problems(belief, src, dst))
-    quote_problems, grounded_quotes = _quote_grounding_problems(belief, src, dst, warrant)
+    quote_problems, grounded_quotes = _quote_grounding_problems(
+        belief, src, dst, warrant
+    )
     problems.extend(quote_problems)
 
     support_name, support = _first_explicit_support(
@@ -134,7 +144,7 @@ def _verify_causal(
     return VerifierResult(
         True,
         (
-            f"source precedes destination and both endpoint quotes are grounded",
+            "source precedes destination and both endpoint quotes are grounded",
             f"explicit {support_name} supplies the causal bridge",
             f"grounded quotes: {grounded_quotes[0]!r} -> {grounded_quotes[1]!r}",
         ),
@@ -178,7 +188,10 @@ def _l1_temporal_direction_problems(
         visual = belief.provenance.get("visual_verification")
         if isinstance(visual, dict) and visual.get("status") == "passed":
             checks = visual.get("checks")
-            if isinstance(checks, dict) and checks.get("temporal_order_visible") is True:
+            if (
+                isinstance(checks, dict)
+                and checks.get("temporal_order_visible") is True
+            ):
                 return []
         return [
             "causal direction relies on unverified timing refined inside a coarse L1 span"
@@ -210,9 +223,7 @@ def _minimal_support_problems(
     support = {str(value) for value in raw}
     expected = {src.node_id, dst.node_id}
     if not expected.issubset(support):
-        return [
-            "minimal_support_set must include the source and destination event IDs"
-        ]
+        return ["minimal_support_set must include the source and destination event IDs"]
     if witness is not None and witness.mechanism_event_id:
         if witness.mechanism_event_id not in support:
             return ["minimal_support_set must include the mechanism event ID"]
@@ -274,8 +285,16 @@ def _evidence_quotes(
                 continue
             side = str(item.get("side") or "")
             node_id = str(item.get("node_id") or "")
-            target = side if side in result else (
-                "src" if node_id == src.node_id else "dst" if node_id == dst.node_id else ""
+            target = (
+                side
+                if side in result
+                else (
+                    "src"
+                    if node_id == src.node_id
+                    else "dst"
+                    if node_id == dst.node_id
+                    else ""
+                )
             )
             if target:
                 result[target].extend(_strings(item.get("quote") or item.get("quotes")))

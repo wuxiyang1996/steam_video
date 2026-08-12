@@ -1,0 +1,19 @@
+{
+  "schema_version": "steam-cgbench-grounding-quarantine/v0.1",
+  "source_case_count": 256,
+  "retained_case_count": 254,
+  "excluded_case_count": 2,
+  "excluded_case_ids": [
+    "cgcase:915940db9d4e39304170",
+    "cgcase:e0d5c4becfe0bae5041d"
+  ],
+  "retained_transition_count": 662,
+  "embedding_shape": [
+    662,
+    2048
+  ],
+  "embedding_checksum": "77a1e021b03dfa76693724733c2552d1a3c7885dfb69329e7970eb413723523f",
+  "selection_signal": "grounding_or_asset_failure_only",
+  "answer_or_clue_label_used_for_exclusion": false,
+  "training_performed": false
+}

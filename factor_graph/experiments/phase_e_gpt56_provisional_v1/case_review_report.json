@@ -1,0 +1,15 @@
+{
+  "schema_version": "steam-navigation-case-review-report/v0.1",
+  "case_set_id": "phase-e-gpt56-provisional-v1",
+  "labels_source": "model_provisional",
+  "annotator": "gpt-5.6-sol/current-session",
+  "input_case_count": 30,
+  "locked_case_count": 29,
+  "judgment_counts": {
+    "inconclusive": 1,
+    "supported": 29
+  },
+  "locked_sha256": "729e39c4c24ab5beda5b7cf1982454d8b448ea147f5bb54080fbf34738d9a668",
+  "formal_gate_eligible": false,
+  "formal_blocker": "independent human review is still required"
+}

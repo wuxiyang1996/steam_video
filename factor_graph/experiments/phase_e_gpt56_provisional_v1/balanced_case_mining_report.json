@@ -1,0 +1,68 @@
+{
+  "schema_version": "steam-balanced-case-mining-report/v0.1",
+  "case_set_id": "phase-e-balanced-reasoning-candidates-v1",
+  "available_video_count": 11,
+  "available_overlay_count": 15,
+  "duplicate_overlay_count": 0,
+  "requested_quotas": {
+    "delayed_two_hop": 15,
+    "identity_support": 10,
+    "identity_reject": 10,
+    "identity_inconclusive": 10,
+    "state_support": 10,
+    "state_reject": 10,
+    "state_inconclusive": 10,
+    "contradiction_open": 10,
+    "contradiction_resolve": 10,
+    "counterevidence_useful": 10,
+    "counterevidence_empty": 10,
+    "blocked_path_recovery": 10,
+    "ambiguity_abstention": 10
+  },
+  "available_candidates": {
+    "delayed_two_hop": 874,
+    "identity_support": 260,
+    "identity_reject": 0,
+    "identity_inconclusive": 0,
+    "state_support": 1,
+    "state_reject": 26,
+    "state_inconclusive": 0,
+    "contradiction_open": 0,
+    "contradiction_resolve": 0,
+    "counterevidence_useful": 0,
+    "counterevidence_empty": 15,
+    "blocked_path_recovery": 25,
+    "ambiguity_abstention": 309
+  },
+  "selected_categories": {
+    "delayed_two_hop": 15,
+    "identity_support": 10,
+    "state_support": 1,
+    "state_reject": 4,
+    "counterevidence_empty": 10,
+    "blocked_path_recovery": 4,
+    "ambiguity_abstention": 10
+  },
+  "quota_deficits": {
+    "delayed_two_hop": 0,
+    "identity_support": 0,
+    "identity_reject": 10,
+    "identity_inconclusive": 10,
+    "state_support": 9,
+    "state_reject": 6,
+    "state_inconclusive": 10,
+    "contradiction_open": 10,
+    "contradiction_resolve": 10,
+    "counterevidence_useful": 10,
+    "counterevidence_empty": 0,
+    "blocked_path_recovery": 6,
+    "ambiguity_abstention": 0
+  },
+  "cross_category_backfill": false,
+  "formal_ready": false,
+  "formal_blockers": [
+    "all candidates require independent evidence/action review",
+    "verifier outcome is a review target, not a mined gold label",
+    "quota deficits remain: {'delayed_two_hop': 0, 'identity_support': 0, 'identity_reject': 10, 'identity_inconclusive': 10, 'state_support': 9, 'state_reject': 6, 'state_inconclusive': 10, 'contradiction_open': 10, 'contradiction_resolve': 10, 'counterevidence_useful': 10, 'counterevidence_empty': 0, 'blocked_path_recovery': 6, 'ambiguity_abstention': 0}"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "steam-memory-graph-baseline/v0.1",
+  "created_at": "2026-07-19T20:57:19.673497+00:00",
+  "repository": "/fs/gamma-projects/vlm-robot/steam_video",
+  "git_commit": "816129b811f63d7797b0a1c8330d4ca8640cba29",
+  "git_branch": "agent/memory-graph-integrity",
+  "note": "Frozen before structured entity-reference admission work.",
+  "artifacts": [
+    {
+      "name": "gpt56_provisional_packet",
+      "path": "memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/independent_l1_relation_audit/annotation_packet.gpt56_provisional.json",
+      "size_bytes": 71692,
+      "sha256": "54fe9c72691c923d8ac586d3eff6e5f735cb39eaf84eab02aaeeaf78b6fba297"
+    },
+    {
+      "name": "gpt56_provisional_report",
+      "path": "memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/independent_l1_relation_audit/gpt56_provisional_report.json",
+      "size_bytes": 857,
+      "sha256": "6f1f5b789921489132ceae79408cd52b86ad4e8a17886c64a593e84a787a9fcb"
+    },
+    {
+      "name": "human_annotation_packet",
+      "path": "memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/independent_l1_relation_audit/annotation_packet.json",
+      "size_bytes": 59984,
+      "sha256": "357c249c03db47ceadee50bcf525c8e160acc79249f34dfa46e3bc29abcb8ab8"
+    },
+    {
+      "name": "overlay",
+      "path": "memory_graph/outputs/video_holmes_phase34_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json",
+      "size_bytes": 933820,
+      "sha256": "874fe36530698e09fb705a9c032af6ca2865caddc58d452f5b5271bbd36e9cad"
+    },
+    {
+      "name": "overlay_audit",
+      "path": "memory_graph/outputs/video_holmes_phase34_smoke/memory_graph/mKqiGQrHtW8/audit.json",
+      "size_bytes": 1641,
+      "sha256": "89aab0aa78304df4c33c5ce20f83c996dfda464179366d3725c047b3feb08450"
+    },
+    {
+      "name": "smoke_summary",
+      "path": "memory_graph/outputs/video_holmes_phase34_smoke/memory_graph/summary.json",
+      "size_bytes": 5503,
+      "sha256": "afb95ce16820882e9686f69fa819fafa90e4115ee15e7e63936ed09c49ad9bbe"
+    },
+    {
+      "name": "video_skills_example",
+      "path": "memory_graph/outputs/video_holmes_phase34_smoke/video_skills_l1/examples.jsonl",
+      "size_bytes": 1394282,
+      "sha256": "5d59fd0ec73f3b60268e83247ce2cee11069c4e98462fb6f357124fedcd567a7"
+    }
+  ]
+}

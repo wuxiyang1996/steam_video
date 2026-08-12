@@ -1,0 +1,62 @@
+{
+  "schema_version": "steam-targeted-transition-gathering/v0.1",
+  "packet_id": "targeted-transition-review-v1",
+  "source_dataset_id": "balanced-executed-transitions-review-anchored-v2",
+  "requested_quotas": {
+    "strict_state_delta_candidate": 6,
+    "identity_hard_negative_candidate": 8,
+    "counterevidence_support_or_refute": 10,
+    "empty_or_reject_control": 8,
+    "inconclusive_control": 8,
+    "delayed_two_hop": 10
+  },
+  "available_candidates": {
+    "strict_state_delta_candidate": 3,
+    "identity_hard_negative_candidate": 93,
+    "counterevidence_support_or_refute": 10,
+    "empty_or_reject_control": 16,
+    "inconclusive_control": 826,
+    "delayed_two_hop": 13
+  },
+  "selected_counts": {
+    "strict_state_delta_candidate": 3,
+    "identity_hard_negative_candidate": 8,
+    "counterevidence_support_or_refute": 10,
+    "empty_or_reject_control": 8,
+    "inconclusive_control": 8,
+    "delayed_two_hop": 10
+  },
+  "quota_deficits": {
+    "strict_state_delta_candidate": 3,
+    "identity_hard_negative_candidate": 0,
+    "counterevidence_support_or_refute": 0,
+    "empty_or_reject_control": 0,
+    "inconclusive_control": 0,
+    "delayed_two_hop": 0
+  },
+  "selected_record_count": 47,
+  "selected_video_count": 9,
+  "selected_video_counts": {
+    "-3l2KFTj7yY": 4,
+    "0-kQB8Jo80I": 3,
+    "033fKtGdpPc": 4,
+    "0CPoD4ZRTUQ": 5,
+    "0jq3JQ9YTqg": 4,
+    "1IzpG2kJPdg": 4,
+    "1iHavvOahH0": 2,
+    "TNYeYwYiAag": 8,
+    "mKqiGQrHtW8": 13
+  },
+  "public_packet_item_count": 53,
+  "consistency_duplicate_count": 6,
+  "counterevidence_outcome_coverage": "pending_independent_human_review",
+  "selection_is_gold": false,
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false,
+  "blockers": [
+    "target strata are acquisition rules rather than gold labels",
+    "counterevidence support versus refute remains a human review target",
+    "requested targeted quotas have source-data deficits"
+  ]
+}

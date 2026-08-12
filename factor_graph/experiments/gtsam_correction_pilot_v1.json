@@ -1,0 +1,415 @@
+{
+  "all_gates_pass": true,
+  "gates": {
+    "frozen_posterior_does_not_correct": true,
+    "loop_closure_changes_identity_belief": true,
+    "observed_measurement_updates_conflict": true,
+    "shuffled_measurement_does_not_fake_target_correction": true
+  },
+  "runs": {
+    "correction": {
+      "backend": "gtsam_discrete_factor_graph/v0.1",
+      "boundary": {
+        "llm_output": "categorical transition descriptors and pairwise preference only",
+        "measurement_source": "synthetic_controlled_fixture",
+        "numeric_belief_owner": "GTSAM factor graph",
+        "observed_measurement_becomes_factor": true,
+        "query_is_factor": false
+      },
+      "public_categorical_trace": {
+        "belief_after": {
+          "conflict_a_c": "accepted",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "rejected"
+        },
+        "belief_before": {
+          "conflict_a_c": "rejected",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "candidate_queries": [
+          {
+            "expected_belief_delta": "may resolve identity-track conflict",
+            "observation_descriptor": "inspect whether A and C have incompatible stable attributes or co-occur",
+            "query_id": "inspect_a_c_conflict"
+          },
+          {
+            "expected_belief_delta": "likely leaves the identity ambiguity unresolved",
+            "observation_descriptor": "repeat already acquired A-to-B appearance evidence",
+            "query_id": "repeat_a_b_match"
+          }
+        ],
+        "measurement_fixture_received": true,
+        "pairwise_preference": {
+          "label": "prefer_left",
+          "left_id": "inspect_a_c_conflict",
+          "rationale": "left directly tests the unresolved loop-closure conflict",
+          "right_id": "repeat_a_b_match"
+        },
+        "replanned_next_step": "inspect_identity_b_c_or_split_track",
+        "selected_query": "inspect_a_c_conflict"
+      },
+      "schema_version": "gtsam_active_slam_pilot/v0.1",
+      "solver_audit": {
+        "after": {
+          "factor_count": 6,
+          "map_assignment": {
+            "conflict_a_c": 1,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 0
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.8386040388960335,
+            "decoy_conflict": 0.07999999999999999,
+            "identity_a_b": 0.7932026533159179,
+            "identity_b_c": 0.29098052565457566
+          },
+          "normalizer": 0.028501332799999998,
+          "variable_count": 4
+        },
+        "before": {
+          "factor_count": 5,
+          "map_assignment": {
+            "conflict_a_c": 0,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.02544586275498149,
+            "decoy_conflict": 0.08,
+            "identity_a_b": 0.9258491417313575,
+            "identity_b_c": 0.7457684859360821
+          },
+          "normalizer": 0.9440214400000001,
+          "variable_count": 4
+        },
+        "factor_sources": [
+          "pilot_identity_prior",
+          "pilot_identity_prior",
+          "pilot_conflict_prior",
+          "pilot_conflict_prior",
+          "identity_transitivity_and_observed_conflict",
+          "pilot_measurement_after_executed_query"
+        ]
+      },
+      "variant": "correction"
+    },
+    "frozen": {
+      "backend": "gtsam_discrete_factor_graph/v0.1",
+      "boundary": {
+        "llm_output": "categorical transition descriptors and pairwise preference only",
+        "measurement_source": "synthetic_controlled_fixture",
+        "numeric_belief_owner": "GTSAM factor graph",
+        "observed_measurement_becomes_factor": false,
+        "query_is_factor": false
+      },
+      "public_categorical_trace": {
+        "belief_after": {
+          "conflict_a_c": "rejected",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "belief_before": {
+          "conflict_a_c": "rejected",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "candidate_queries": [
+          {
+            "expected_belief_delta": "may resolve identity-track conflict",
+            "observation_descriptor": "inspect whether A and C have incompatible stable attributes or co-occur",
+            "query_id": "inspect_a_c_conflict"
+          },
+          {
+            "expected_belief_delta": "likely leaves the identity ambiguity unresolved",
+            "observation_descriptor": "repeat already acquired A-to-B appearance evidence",
+            "query_id": "repeat_a_b_match"
+          }
+        ],
+        "measurement_fixture_received": false,
+        "pairwise_preference": {
+          "label": "prefer_left",
+          "left_id": "inspect_a_c_conflict",
+          "rationale": "left directly tests the unresolved loop-closure conflict",
+          "right_id": "repeat_a_b_match"
+        },
+        "replanned_next_step": "continue_with_current_identity_track",
+        "selected_query": "inspect_a_c_conflict"
+      },
+      "schema_version": "gtsam_active_slam_pilot/v0.1",
+      "solver_audit": {
+        "after": {
+          "factor_count": 5,
+          "map_assignment": {
+            "conflict_a_c": 0,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.02544586275498149,
+            "decoy_conflict": 0.08,
+            "identity_a_b": 0.9258491417313575,
+            "identity_b_c": 0.7457684859360821
+          },
+          "normalizer": 0.9440214400000001,
+          "variable_count": 4
+        },
+        "before": {
+          "factor_count": 5,
+          "map_assignment": {
+            "conflict_a_c": 0,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.02544586275498149,
+            "decoy_conflict": 0.08,
+            "identity_a_b": 0.9258491417313575,
+            "identity_b_c": 0.7457684859360821
+          },
+          "normalizer": 0.9440214400000001,
+          "variable_count": 4
+        },
+        "factor_sources": [
+          "pilot_identity_prior",
+          "pilot_identity_prior",
+          "pilot_conflict_prior",
+          "pilot_conflict_prior",
+          "identity_transitivity_and_observed_conflict"
+        ]
+      },
+      "variant": "frozen"
+    },
+    "no_loop_closure": {
+      "backend": "gtsam_discrete_factor_graph/v0.1",
+      "boundary": {
+        "llm_output": "categorical transition descriptors and pairwise preference only",
+        "measurement_source": "synthetic_controlled_fixture",
+        "numeric_belief_owner": "GTSAM factor graph",
+        "observed_measurement_becomes_factor": true,
+        "query_is_factor": false
+      },
+      "public_categorical_trace": {
+        "belief_after": {
+          "conflict_a_c": "accepted",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "belief_before": {
+          "conflict_a_c": "rejected",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "candidate_queries": [
+          {
+            "expected_belief_delta": "may resolve identity-track conflict",
+            "observation_descriptor": "inspect whether A and C have incompatible stable attributes or co-occur",
+            "query_id": "inspect_a_c_conflict"
+          },
+          {
+            "expected_belief_delta": "likely leaves the identity ambiguity unresolved",
+            "observation_descriptor": "repeat already acquired A-to-B appearance evidence",
+            "query_id": "repeat_a_b_match"
+          }
+        ],
+        "measurement_fixture_received": true,
+        "pairwise_preference": {
+          "label": "prefer_left",
+          "left_id": "inspect_a_c_conflict",
+          "rationale": "left directly tests the unresolved loop-closure conflict",
+          "right_id": "repeat_a_b_match"
+        },
+        "replanned_next_step": "inspect_identity_b_c_or_split_track",
+        "selected_query": "inspect_a_c_conflict"
+      },
+      "schema_version": "gtsam_active_slam_pilot/v0.1",
+      "solver_audit": {
+        "after": {
+          "factor_count": 5,
+          "map_assignment": {
+            "conflict_a_c": 1,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.9453681710213777,
+            "decoy_conflict": 0.08,
+            "identity_a_b": 0.93,
+            "identity_b_c": 0.76
+          },
+          "normalizer": 0.08420000000000001,
+          "variable_count": 4
+        },
+        "before": {
+          "factor_count": 4,
+          "map_assignment": {
+            "conflict_a_c": 0,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.08,
+            "decoy_conflict": 0.08,
+            "identity_a_b": 0.93,
+            "identity_b_c": 0.7599999999999999
+          },
+          "normalizer": 1.0000000000000002,
+          "variable_count": 4
+        },
+        "factor_sources": [
+          "pilot_identity_prior",
+          "pilot_identity_prior",
+          "pilot_conflict_prior",
+          "pilot_conflict_prior",
+          "pilot_measurement_after_executed_query"
+        ]
+      },
+      "variant": "no_loop_closure"
+    },
+    "shuffled_evidence": {
+      "backend": "gtsam_discrete_factor_graph/v0.1",
+      "boundary": {
+        "llm_output": "categorical transition descriptors and pairwise preference only",
+        "measurement_source": "synthetic_controlled_fixture",
+        "numeric_belief_owner": "GTSAM factor graph",
+        "observed_measurement_becomes_factor": true,
+        "query_is_factor": false
+      },
+      "public_categorical_trace": {
+        "belief_after": {
+          "conflict_a_c": "rejected",
+          "decoy_conflict": "accepted",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "belief_before": {
+          "conflict_a_c": "rejected",
+          "decoy_conflict": "rejected",
+          "identity_a_b": "accepted",
+          "identity_b_c": "accepted"
+        },
+        "candidate_queries": [
+          {
+            "expected_belief_delta": "may resolve identity-track conflict",
+            "observation_descriptor": "inspect whether A and C have incompatible stable attributes or co-occur",
+            "query_id": "inspect_a_c_conflict"
+          },
+          {
+            "expected_belief_delta": "likely leaves the identity ambiguity unresolved",
+            "observation_descriptor": "repeat already acquired A-to-B appearance evidence",
+            "query_id": "repeat_a_b_match"
+          }
+        ],
+        "measurement_fixture_received": true,
+        "pairwise_preference": {
+          "label": "prefer_left",
+          "left_id": "inspect_a_c_conflict",
+          "rationale": "left directly tests the unresolved loop-closure conflict",
+          "right_id": "repeat_a_b_match"
+        },
+        "replanned_next_step": "continue_with_current_identity_track",
+        "selected_query": "inspect_a_c_conflict"
+      },
+      "schema_version": "gtsam_active_slam_pilot/v0.1",
+      "solver_audit": {
+        "after": {
+          "factor_count": 6,
+          "map_assignment": {
+            "conflict_a_c": 0,
+            "decoy_conflict": 1,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.025445862754981483,
+            "decoy_conflict": 0.9453681710213776,
+            "identity_a_b": 0.9258491417313574,
+            "identity_b_c": 0.7457684859360822
+          },
+          "normalizer": 0.07948660524800001,
+          "variable_count": 4
+        },
+        "before": {
+          "factor_count": 5,
+          "map_assignment": {
+            "conflict_a_c": 0,
+            "decoy_conflict": 0,
+            "identity_a_b": 1,
+            "identity_b_c": 1
+          },
+          "marginal_true": {
+            "conflict_a_c": 0.02544586275498149,
+            "decoy_conflict": 0.08,
+            "identity_a_b": 0.9258491417313575,
+            "identity_b_c": 0.7457684859360821
+          },
+          "normalizer": 0.9440214400000001,
+          "variable_count": 4
+        },
+        "factor_sources": [
+          "pilot_identity_prior",
+          "pilot_identity_prior",
+          "pilot_conflict_prior",
+          "pilot_conflict_prior",
+          "identity_transitivity_and_observed_conflict",
+          "pilot_measurement_after_executed_query"
+        ]
+      },
+      "variant": "shuffled_evidence"
+    }
+  },
+  "runtime": {
+    "gtsam": "4.2.1",
+    "python": "3.12.13"
+  },
+  "schema_version": "gtsam_correction_experiment/v0.1",
+  "status": "pilot_not_benchmark",
+  "summaries": {
+    "correction": {
+      "conflict_after": "accepted",
+      "conflict_before": "rejected",
+      "identity_b_c_after": "rejected",
+      "identity_b_c_before": "accepted",
+      "next_step": "inspect_identity_b_c_or_split_track"
+    },
+    "frozen": {
+      "conflict_after": "rejected",
+      "conflict_before": "rejected",
+      "identity_b_c_after": "accepted",
+      "identity_b_c_before": "accepted",
+      "next_step": "continue_with_current_identity_track"
+    },
+    "no_loop_closure": {
+      "conflict_after": "accepted",
+      "conflict_before": "rejected",
+      "identity_b_c_after": "accepted",
+      "identity_b_c_before": "accepted",
+      "next_step": "inspect_identity_b_c_or_split_track"
+    },
+    "shuffled_evidence": {
+      "conflict_after": "rejected",
+      "conflict_before": "rejected",
+      "identity_b_c_after": "accepted",
+      "identity_b_c_before": "accepted",
+      "next_step": "continue_with_current_identity_track"
+    }
+  },
+  "variants": [
+    "correction",
+    "frozen",
+    "no_loop_closure",
+    "shuffled_evidence"
+  ]
+}

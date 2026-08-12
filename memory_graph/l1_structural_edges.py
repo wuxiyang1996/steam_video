@@ -6,6 +6,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
+from .identity_verifier import verify_identity_candidates
 from .types import MemoryNode, RelationBelief, RelationStatus
 
 
@@ -64,6 +65,7 @@ def materialize_l1_structural_relations(
     raw_edges = [
         value for value in source_graph.get("edges") or [] if isinstance(value, dict)
     ]
+    raw_edges, _ = verify_identity_candidates(raw_by_id, raw_edges)
     for edge in raw_edges:
         if str(edge.get("edge_type") or "") not in {
             "entity_mention",

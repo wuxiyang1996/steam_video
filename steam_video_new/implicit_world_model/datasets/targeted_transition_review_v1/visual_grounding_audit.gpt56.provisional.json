@@ -1,0 +1,71 @@
+{
+  "schema_version": "steam-visual-grounding-audit/v0.1",
+  "packet_id": "targeted-transition-review-v1",
+  "packet_sha256": "2772aa3ce59da9db0e2b02930849bef25684a37bb473c0c4ad7bcd4b24b2d9a3",
+  "reviewer_model": "gpt-5.6",
+  "labels_source": "model_provisional_visual_review",
+  "review_protocol": "public descriptions and sampled frames only; stored targets, verifier outcomes, and terminal QA answers were not used",
+  "axes": {
+    "clip_description_alignment": ["aligned", "partial", "mismatch"],
+    "reasoning_evidence_sufficiency": ["sufficient", "insufficient", "inconclusive"]
+  },
+  "summary": {
+    "reviewed_item_count": 53,
+    "clip_description_alignment": {
+      "aligned": 30,
+      "partial": 11,
+      "mismatch": 12
+    },
+    "reasoning_evidence_sufficiency": {
+      "sufficient": 22,
+      "insufficient": 20,
+      "inconclusive": 11
+    },
+    "duration_integrity": {
+      "fully_covered_items": 50,
+      "partially_covered_items": 3,
+      "partially_available_windows": 3,
+      "out_of_range_windows": 2
+    }
+  },
+  "item_groups_by_packet_order": {
+    "aligned": [3, 4, 5, 8, 14, 16, 19, 20, 21, 22, 23, 24, 25, 26, 29, 30, 31, 32, 33, 35, 37, 38, 44, 45, 47, 49, 50, 51, 52, 53],
+    "partial": [2, 6, 10, 11, 12, 28, 34, 42, 43, 46, 48],
+    "mismatch": [1, 7, 9, 13, 15, 17, 18, 27, 36, 39, 40, 41],
+    "reasoning_sufficient": [3, 4, 8, 14, 16, 19, 21, 22, 23, 29, 33, 35, 38, 45, 46, 47, 48, 49, 50, 51, 52, 53],
+    "reasoning_insufficient": [1, 7, 9, 12, 13, 15, 17, 18, 20, 24, 25, 27, 31, 32, 36, 37, 39, 40, 41, 44],
+    "reasoning_inconclusive": [2, 5, 6, 10, 11, 26, 28, 30, 34, 42, 43]
+  },
+  "failure_slices": [
+    {
+      "slice": "wrong_or_incomplete_video_pairing",
+      "items": [1, 9, 13, 17],
+      "finding": "0jq3JQ9YTqg.mp4 is 63.44 seconds long while bound evidence extends to 145 seconds. Its crawling/drilling imagery also conflicts with public descriptions about a news anchor, a man entering a car, and day-to-dark changes."
+    },
+    {
+      "slice": "atomic_window_does_not_show_claimed_event",
+      "items": [7, 12, 15, 18, 27, 28, 36, 39, 40, 41],
+      "finding": "The sampled atomic window is empty, shows a different scene, or reaches credits instead of the described person/action/state."
+    },
+    {
+      "slice": "audio_or_dialogue_claim_not_visually_decidable",
+      "items": [6, 10, 28, 34, 43, 48],
+      "finding": "The frames broadly match the scene, but speech, response, naming, or action attribution cannot be established from sampled visuals alone."
+    },
+    {
+      "slice": "relation_not_established_by_matching_clips",
+      "items": [20, 24, 25, 31, 32, 37, 44],
+      "finding": "The clips may match their node descriptions but do not establish the proposed relation: temporal windows overlap, state comparisons lack an explicit same-attribute before/after delta, or counterevidence is merely related rather than directly contradictory."
+    },
+    {
+      "slice": "broad_window_or_sparse_sampling",
+      "items": [2, 5, 11, 26, 30, 42],
+      "finding": "Broad L1 windows contain relevant story context, but three sampled frames do not localize enough evidence for a strict transition judgment."
+    }
+  ],
+  "recommended_action": "Do not lock this packet as human ground truth yet. Repair or remove the 0jq3JQ9YTqg bindings, re-localize mismatched atomic windows, add audio-aware evidence where claims depend on dialogue, and keep relation sufficiency separate from clip-description alignment.",
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false,
+  "human_locked": false
+}

@@ -1,0 +1,2986 @@
+{
+  "schema_version": "steam-reasoning-v2-complete-graph-smoke/v0.2",
+  "case_id": "cgcase:03ae94a7899404983244",
+  "video_id": "BV1gbgWeBE92",
+  "model": "openai/gpt-5-mini",
+  "scope": "dual-entry-complete-graph-smoke_not_training_evidence",
+  "complete_graph": {
+    "node_count": 192,
+    "proposal_count": 628,
+    "question_independent": true,
+    "unread_evidence_values_exposed": false
+  },
+  "expected_first_clue_node_ids_hidden_evaluator_only": [
+    "visual_l1:BV1gbgWeBE92:0021"
+  ],
+  "later_clue_node_ids_hidden_evaluator_only": [
+    "visual_l1:BV1gbgWeBE92:0034",
+    "visual_l1:BV1gbgWeBE92:0035"
+  ],
+  "protocols": {
+    "oracle_entry": {
+      "entry": {
+        "status": "located",
+        "source": "hidden_evaluator_only",
+        "selected_node_ids": [
+          "visual_l1:BV1gbgWeBE92:0021"
+        ],
+        "selected_anchor_count": 1,
+        "candidate_address_count": 192,
+        "all_addresses_available": true,
+        "hidden_clue_exposed_to_model": false,
+        "top_k_applied": false,
+        "numeric_score_used": false
+      },
+      "complete_graph": {
+        "node_count": 192,
+        "proposal_count": 628,
+        "preserved": true,
+        "only_entry_frontier_changed": true
+      },
+      "arms": {
+        "iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "complete_coverage"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0176",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "resolves_roles_consistently"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0176"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "no_wm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "all_futures_equivalent"
+            },
+            {
+              "status": "incomparable",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "no_clear_preference"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021"
+          ],
+          "executed_read_count": 1,
+          "remaining_read_budget": 1,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "shuffled_iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "unique_coverage"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0072",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "most_consistent_role_resolution_and_answerability"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0072"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": {
+            "kind": "within_batch_effect_rotation_preserving_marginals",
+            "batch_count": 4,
+            "changed_effect_count": 158,
+            "effective": true
+          }
+        },
+        "immediate_only": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_0 is preferred — it uniquely advances at least one hypothesis to ready (resolving required roles for 1 and 4) while other hypothesis-conditioned futures only regress and remain abstain."
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0176",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "most-informative: resolves required roles and yields ready answerability across the largest set of hypotheses (consistent advanced/entity_attribute observations, closed frontiers)"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0176"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "oracle": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0021",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 1,
+              "observation_prediction_count": 16,
+              "effect_prediction_count": 96,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "hidden evaluator shortest-route oracle for headroom only"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0034",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0034"
+              ],
+              "candidate_tree_count": 15,
+              "observation_prediction_count": 121,
+              "effect_prediction_count": 726,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "hidden evaluator shortest-route oracle for headroom only"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0021",
+            "visual_l1:BV1gbgWeBE92:0034"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        }
+      },
+      "gates": {
+        "entry_contains_first_clue": true,
+        "iwm_first_action_matches_first_clue": true,
+        "iwm_two_round_closed_loop_executed": true,
+        "iwm_replan_moves_toward_later_clue": false,
+        "iwm_real_beliefs_diverged": false,
+        "iwm_action_sequence_diverges_from_no_wm": true,
+        "shuffling_changes_action_sequence": true,
+        "delayed_changes_action_sequence": false,
+        "oracle_two_round_route_available": true
+      }
+    },
+    "learned_entry": {
+      "entry": {
+        "candidate_address_count": 192,
+        "selected_anchor_count": 2,
+        "selected_node_ids": [
+          "visual_l1:BV1gbgWeBE92:0045",
+          "visual_l1:BV1gbgWeBE92:0060"
+        ],
+        "status": "located",
+        "all_addresses_inspected": true,
+        "top_k_applied": false,
+        "numeric_score_used": false,
+        "unread_evidence_value_exposed": false,
+        "schema_repair_count": 0
+      },
+      "complete_graph": {
+        "node_count": 192,
+        "proposal_count": 628,
+        "preserved": true,
+        "only_entry_frontier_changed": true
+      },
+      "arms": {
+        "iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0060",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "tree_1 preferred — more consistent advancement to ready/closed frontiers across hypotheses; tree_0 induces more regressions and opened contradictions"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0050",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0050"
+              ],
+              "candidate_tree_count": 7,
+              "observation_prediction_count": 51,
+              "effect_prediction_count": 306,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "preferred: more hypothesis-conditioned futures reach ready answerability with closed frontiers and resolved roles (dominant information gain)"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0060",
+            "visual_l1:BV1gbgWeBE92:0050"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "no_wm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0060",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefer_tree_1_due_to_more_diverse_informative_successors"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0046",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0050"
+              ],
+              "candidate_tree_count": 7,
+              "observation_prediction_count": 51,
+              "effect_prediction_count": 306,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "highest_discriminative_coverage"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0060",
+            "visual_l1:BV1gbgWeBE92:0046"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "shuffled_iwm": {
+          "rounds": [
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0045",
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "more_frontier_closure_fewer_contradiction_opens"
+            },
+            {
+              "status": "select",
+              "selected_target_id": "visual_l1:BV1gbgWeBE92:0085",
+              "matches_expected_target": true,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0044",
+                "visual_l1:BV1gbgWeBE92:0085"
+              ],
+              "candidate_tree_count": 3,
+              "observation_prediction_count": 18,
+              "effect_prediction_count": 108,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "prefer-tree-with-most-advanced-progress-and-frontier-shifts-with-minimal-contradiction-opening"
+            }
+          ],
+          "executed_target_ids": [
+            "visual_l1:BV1gbgWeBE92:0045",
+            "visual_l1:BV1gbgWeBE92:0085"
+          ],
+          "executed_read_count": 2,
+          "remaining_read_budget": 0,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            },
+            {
+              "1 and 2": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "1 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 3": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "2 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ],
+              "3 and 4": [
+                {
+                  "missing_roles": [
+                    "first_item_identity",
+                    "answer_attributes"
+                  ],
+                  "contradictions": [],
+                  "answerability": "not_ready"
+                }
+              ]
+            }
+          ],
+          "top_k_applied": false,
+          "intervention_audit": {
+            "kind": "within_batch_effect_rotation_preserving_marginals",
+            "batch_count": 4,
+            "changed_effect_count": 43,
+            "effective": true
+          }
+        },
+        "immediate_only": {
+          "rounds": [
+            {
+              "status": "tie",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "Both trees provide equivalent hypothesis coverage and similar resolution outcomes (same hypotheses become ready/closed and the same remain not_ready); no clear preference."
+            },
+            {
+              "status": "not_executed",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [],
+              "candidate_tree_count": 0,
+              "observation_prediction_count": 0,
+              "effect_prediction_count": 0,
+              "joint_hypothesis_coverage": false,
+              "top_k_applied": false,
+              "rationale": "previous round did not select an executable action"
+            }
+          ],
+          "executed_target_ids": [],
+          "executed_read_count": 0,
+          "remaining_read_budget": 2,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [],
+          "top_k_applied": false,
+          "intervention_audit": null
+        },
+        "oracle": {
+          "rounds": [
+            {
+              "status": "abstain",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [
+                "visual_l1:BV1gbgWeBE92:0021"
+              ],
+              "candidate_tree_count": 2,
+              "observation_prediction_count": 12,
+              "effect_prediction_count": 72,
+              "joint_hypothesis_coverage": true,
+              "top_k_applied": false,
+              "rationale": "evaluator route target is absent from the legal frontier"
+            },
+            {
+              "status": "not_executed",
+              "selected_target_id": null,
+              "matches_expected_target": false,
+              "expected_target_ids_hidden_evaluator_only": [],
+              "candidate_tree_count": 0,
+              "observation_prediction_count": 0,
+              "effect_prediction_count": 0,
+              "joint_hypothesis_coverage": false,
+              "top_k_applied": false,
+              "rationale": "previous round did not select an executable action"
+            }
+          ],
+          "executed_target_ids": [],
+          "executed_read_count": 0,
+          "remaining_read_budget": 2,
+          "real_beliefs_diverged": false,
+          "belief_after_each_real_read": [],
+          "top_k_applied": false,
+          "intervention_audit": null
+        }
+      },
+      "gates": {
+        "entry_contains_first_clue": false,
+        "iwm_first_action_matches_first_clue": false,
+        "iwm_two_round_closed_loop_executed": true,
+        "iwm_replan_moves_toward_later_clue": true,
+        "iwm_real_beliefs_diverged": false,
+        "iwm_action_sequence_diverges_from_no_wm": true,
+        "shuffling_changes_action_sequence": true,
+        "delayed_changes_action_sequence": true,
+        "oracle_two_round_route_available": false
+      }
+    }
+  },
+  "gates": {
+    "complete_graph_preserved_both_protocols": true,
+    "oracle_entry_closed_loop_executed": true,
+    "oracle_entry_replan_moves_toward_later_clue": false,
+    "oracle_entry_real_beliefs_diverged": false,
+    "learned_entry_contains_first_clue": false,
+    "learned_entry_closed_loop_executed": true,
+    "learned_entry_iwm_first_action_matches_first_clue": false,
+    "answer_accuracy_available": false,
+    "transition_calibration_available": false,
+    "multi_video_fixed_cohort": false
+  },
+  "training_export_eligible": false,
+  "training_performed": false,
+  "response_audits": [
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    },
+    {
+      "cache_hit": true
+    }
+  ]
+}

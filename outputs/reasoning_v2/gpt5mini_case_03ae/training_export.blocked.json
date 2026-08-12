@@ -1,0 +1,11 @@
+{
+  "training_export_eligible": false,
+  "training_performed": false,
+  "blocking_gates": [
+    "learned_entry_contains_first_clue",
+    "learned_entry_iwm_first_action_matches_first_clue",
+    "oracle_entry_iwm_answer_correct",
+    "transition_calibration_available",
+    "multi_video_fixed_cohort"
+  ]
+}

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from memory_graph.adapter import canonical_to_memory_nodes
 from memory_graph.atomic_events import parse_atomic_events
+from memory_graph.baseline_manifest import freeze_baseline, verify_baseline
 from memory_graph.calibration import calibrate
 from memory_graph.cli import main as cli_main
 from memory_graph.contracts import (
@@ -14,10 +15,22 @@ from memory_graph.contracts import (
     EntityLinkJudgment,
     EntityMention,
     L1HumanAudit,
-    StateAssertion,
 )
 from memory_graph.event_adapter import atomic_events_to_graph_nodes
+from memory_graph.embedding import EMBEDDING_TEXT_CONTRACT, embed_memory_nodes
 from memory_graph.graph_builder import LinearRelationScorer, build_memory_graph
+from memory_graph.identity_tracks import build_identity_tracks
+from memory_graph.identity_reread import (
+    apply_identity_reread_packet,
+    apply_identity_reread_to_artifact,
+    prepare_identity_reread_packet,
+)
+from memory_graph.identity_verifier import verify_identity_candidates
+from memory_graph.l1_relation_audit import (
+    create_locked_audit_split,
+    evaluate_l1_relation_packet,
+    prepare_l1_relation_packet,
+)
 from memory_graph.l1_structuralizer import structuralize_video_skills_l1
 from memory_graph.l1_structural_edges import materialize_l1_structural_relations
 from memory_graph.mechanism_candidates import (
@@ -33,6 +46,7 @@ from memory_graph.navigation import (
     propose_navigation_actions,
     update_belief_after_read,
 )
+from memory_graph.navigation_ablation import evaluate_navigation_ablation
 from memory_graph.openrouter_validation import (
     _computed_audit_summary,
     _parse_teacher_relations,
@@ -43,11 +57,16 @@ from memory_graph.pipeline import (
     _verify_proposals,
 )
 from memory_graph.reliability import audit_l1_nodes
+from memory_graph.retry_overlay_audit import (
+    event_graph_from_overlay,
+    update_run_summary,
+)
 from memory_graph.schema_validation import validate_overlay_artifact
 from memory_graph.selectstream_policy import (
     merge_preserves_causal_witness,
     plan_bounded_memory,
 )
+from memory_graph.state_relations import derive_state_transition_candidates
 from memory_graph.types import (
     CausalWitness,
     CausalTemporalOverlay,
@@ -67,6 +86,7 @@ from memory_graph.video_l1 import (
     PayloadVideoL1Provider,
     VideoL1AtomicEventExtractor,
     _assign_track_ids,
+    _coarse_prompt,
     _event_to_l1_node,
     _parse_coarse_response,
     _parse_fine_response,
@@ -203,11 +223,11 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(accepted.status, "pass")
         self.assertEqual(accepted.grade, "high")
         self.assertEqual(self_edge_fail.status, "fail")
-        self.assertTrue(
-            any("self-edges" in issue for issue in self_edge_fail.issues)
-        )
+        self.assertTrue(any("self-edges" in issue for issue in self_edge_fail.issues))
 
-    def test_video_skills_l1_gate_rejects_missing_ids_and_nonfinite_values(self) -> None:
+    def test_video_skills_l1_gate_rejects_missing_ids_and_nonfinite_values(
+        self,
+    ) -> None:
         canonical = {
             "metadata": {
                 "clip_schemas": [{"clip_id": "clip:1"}],
@@ -294,6 +314,10 @@ class MemoryGraphTest(unittest.TestCase):
                 {
                     "node_id": "entity:car:1",
                     "node_type": "entity_mention",
+                    "mention_id": "clip:1:entity:000",
+                    "entity_type": "object",
+                    "instance_id": "car:shared",
+                    "evidence_refs": ["clip:1"],
                     "clip_id": "clip:1",
                     "text": "car",
                     "confidence": 0.95,
@@ -301,6 +325,10 @@ class MemoryGraphTest(unittest.TestCase):
                 {
                     "node_id": "entity:car:2",
                     "node_type": "entity_mention",
+                    "mention_id": "clip:2:entity:000",
+                    "entity_type": "object",
+                    "instance_id": "car:shared",
+                    "evidence_refs": ["clip:2"],
                     "clip_id": "clip:2",
                     "text": "the car",
                     "confidence": 0.94,
@@ -326,6 +354,7 @@ class MemoryGraphTest(unittest.TestCase):
                     "src": "entity:car:1",
                     "dst": "entity:car:2",
                     "edge_type": "same_object",
+                    "identity_verified": True,
                 },
                 {
                     "edge_id": "edge:state",
@@ -391,6 +420,467 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(events[1].states[0].attribute, "motion_state")
         self.assertTrue(verify_relation(belief, event_nodes[0], event_nodes[1]).passed)
 
+    def test_explicit_state_of_attaches_state_with_multiple_participants(self) -> None:
+        graph = {
+            "nodes": [
+                {
+                    "node_id": "event:closed",
+                    "node_type": "event",
+                    "clip_id": "clip:1",
+                    "text": "He holds it.",
+                    "participant_refs": ["person:1", "box:1"],
+                },
+                {
+                    "node_id": "event:open",
+                    "node_type": "event",
+                    "clip_id": "clip:2",
+                    "text": "The person opens the box.",
+                    "participant_refs": ["person:2", "box:2"],
+                },
+                {
+                    "node_id": "person:1",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:1:entity:000",
+                    "entity_type": "person",
+                    "clip_id": "clip:1",
+                    "text": "person",
+                },
+                {
+                    "node_id": "person:2",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:2:entity:000",
+                    "entity_type": "person",
+                    "clip_id": "clip:2",
+                    "text": "person",
+                },
+                {
+                    "node_id": "box:1",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:1:entity:001",
+                    "entity_type": "object",
+                    "instance_id": "box:shared",
+                    "evidence_refs": ["clip:1"],
+                    "clip_id": "clip:1",
+                    "text": "box",
+                },
+                {
+                    "node_id": "box:2",
+                    "node_type": "entity_mention",
+                    "mention_id": "clip:2:entity:001",
+                    "entity_type": "object",
+                    "instance_id": "box:shared",
+                    "evidence_refs": ["clip:2"],
+                    "clip_id": "clip:2",
+                    "text": "box",
+                },
+                {
+                    "node_id": "state:closed",
+                    "node_type": "state",
+                    "clip_id": "clip:1",
+                    "subject_ref": "box:1",
+                    "attribute": "openness",
+                    "value": "closed",
+                    "text": "The box is closed.",
+                    "confidence": 0.95,
+                },
+                {
+                    "node_id": "state:open",
+                    "node_type": "state",
+                    "clip_id": "clip:2",
+                    "subject_ref": "box:2",
+                    "attribute": "openness",
+                    "value": "open",
+                    "text": "The box is open.",
+                    "confidence": 0.96,
+                },
+            ],
+            "edges": [
+                {
+                    "edge_id": "same-box",
+                    "src": "box:1",
+                    "dst": "box:2",
+                    "edge_type": "same_object",
+                    "identity_verified": True,
+                },
+                {
+                    "edge_id": "state-of-closed",
+                    "src": "state:closed",
+                    "dst": "box:1",
+                    "edge_type": "state_of",
+                },
+                {
+                    "edge_id": "state-of-open",
+                    "src": "state:open",
+                    "dst": "box:2",
+                    "edge_type": "state_of",
+                },
+            ],
+        }
+        nodes = [
+            MemoryNode(
+                node_id="memory:event:closed",
+                video_id="video-1",
+                time_span=TimeSpan(0, 1),
+                provenance={},
+                node_type="observation",
+                text="He holds it.",
+                source_node_id="event:closed",
+                source_segments=["event:closed"],
+                metadata={"source_node_type": "event", "confidence": 0.9},
+            ),
+            MemoryNode(
+                node_id="memory:event:open",
+                video_id="video-1",
+                time_span=TimeSpan(2, 3),
+                provenance={},
+                node_type="observation",
+                text="The person opens the box.",
+                source_node_id="event:open",
+                source_segments=["event:open"],
+                metadata={"source_node_type": "event", "confidence": 0.9},
+            ),
+        ]
+
+        enriched, report = structuralize_video_skills_l1(graph, nodes)
+        events = VideoSkillsL1AtomicEventExtractor().extract(enriched)
+        event_nodes, _ = atomic_events_to_graph_nodes(events, l1_nodes=enriched)
+        transitions = derive_state_transition_candidates(event_nodes)
+
+        self.assertEqual(report.events_with_states, 2)
+        self.assertEqual(len(events[0].participants), 2)
+        self.assertEqual(events[0].states[0].attribute, "openness")
+        self.assertEqual(events[0].states[0].value, "closed")
+        self.assertEqual(events[1].states[0].value, "open")
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(
+            transitions[0].relation_probabilities,
+            {"state_transition": 0.95},
+        )
+
+    def test_identity_tracks_reject_component_and_motion_conflicts(self) -> None:
+        nodes = {
+            "person:a": {
+                "node_id": "person:a",
+                "entity_type": "person",
+                "attributes": {"clothing": "red coat"},
+            },
+            "person:b": {
+                "node_id": "person:b",
+                "entity_type": "person",
+                "attributes": {"clothing": "red coat"},
+            },
+            "person:c": {
+                "node_id": "person:c",
+                "entity_type": "person",
+                "attributes": {"clothing": "blue coat"},
+            },
+            "car:a": {
+                "node_id": "car:a",
+                "entity_type": "vehicle",
+                "instance_id": "car-1",
+                "time_span": {"start_s": 0, "end_s": 2},
+            },
+            "car:b": {
+                "node_id": "car:b",
+                "entity_type": "vehicle",
+                "instance_id": "car-2",
+                "time_span": {"start_s": 1, "end_s": 3},
+            },
+            "walker:a": {
+                "node_id": "walker:a",
+                "entity_type": "person",
+                "position_m": [0, 0],
+                "max_speed_mps": 2,
+                "time_span": {"start_s": 0, "end_s": 1},
+            },
+            "walker:b": {
+                "node_id": "walker:b",
+                "entity_type": "person",
+                "position_m": [100, 0],
+                "max_speed_mps": 2,
+                "time_span": {"start_s": 2, "end_s": 3},
+            },
+            "object:a": {"node_id": "object:a", "entity_type": "object"},
+        }
+        for node_id, node in nodes.items():
+            node.update(
+                {
+                    "node_type": "entity_mention",
+                    "mention_id": f"mention:{node_id}",
+                    "evidence_refs": [f"clip:{node_id}"],
+                }
+            )
+        edges = [
+            {
+                "edge_id": "accept:ab",
+                "src": "person:a",
+                "dst": "person:b",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:component",
+                "src": "person:b",
+                "dst": "person:c",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:simultaneous",
+                "src": "car:a",
+                "dst": "car:b",
+                "edge_type": "same_object",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:motion",
+                "src": "walker:a",
+                "dst": "walker:b",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+            {
+                "edge_id": "reject:type",
+                "src": "person:a",
+                "dst": "object:a",
+                "edge_type": "same_entity",
+                "identity_verified": True,
+            },
+        ]
+
+        tracks, report = build_identity_tracks(nodes, edges)
+        reasons = {
+            row["edge_id"]: " ".join(row["reasons"]) for row in report.rejected_edges
+        }
+
+        self.assertEqual(tracks["person:a"], tracks["person:b"])
+        self.assertNotEqual(tracks["person:a"], tracks["person:c"])
+        self.assertIn("stable attribute conflict", reasons["reject:component"])
+        self.assertIn("simultaneous distinct", reasons["reject:simultaneous"])
+        self.assertIn("impossible displacement", reasons["reject:motion"])
+        self.assertIn("entity type conflict", reasons["reject:type"])
+
+    def test_unverified_identity_hint_does_not_create_track(self) -> None:
+        nodes = {
+            "entity:1": {
+                "node_id": "entity:1",
+                "node_type": "entity_mention",
+                "mention_id": "mention:1",
+                "entity_type": "person",
+                "evidence_refs": ["clip:1"],
+            },
+            "entity:2": {
+                "node_id": "entity:2",
+                "node_type": "entity_mention",
+                "mention_id": "mention:2",
+                "entity_type": "person",
+                "evidence_refs": ["clip:2"],
+            },
+        }
+        tracks, report = build_identity_tracks(
+            nodes,
+            [
+                {
+                    "edge_id": "hint:1",
+                    "src": "entity:1",
+                    "dst": "entity:2",
+                    "edge_type": "reappears",
+                }
+            ],
+        )
+
+        self.assertNotEqual(tracks["entity:1"], tracks["entity:2"])
+        self.assertEqual(report.accepted_edge_ids, ())
+        self.assertIn("lacks explicit verifier", report.rejected_edges[0]["reasons"][0])
+
+    def test_identity_attributes_reject_only_explicit_contradictions(self) -> None:
+        nodes = {
+            "projector:a": {
+                "node_id": "projector:a",
+                "node_type": "entity_mention",
+                "mention_id": "mention:projector:a",
+                "entity_type": "object",
+                "attributes": {
+                    "color": "black and silver",
+                    "material": "wood/metal",
+                    "role": "projecting device",
+                    "size": "large in frame",
+                },
+                "evidence_refs": ["clip:a"],
+            },
+            "projector:b": {
+                "node_id": "projector:b",
+                "node_type": "entity_mention",
+                "mention_id": "mention:projector:b",
+                "entity_type": "object",
+                "attributes": {
+                    "color": "dark gray/black",
+                    "material": "metal",
+                    "role": "light source",
+                    "size": "close-up",
+                },
+                "evidence_refs": ["clip:b"],
+            },
+        }
+        edges = [
+            {
+                "edge_id": "compatible-description",
+                "src": "projector:a",
+                "dst": "projector:b",
+                "edge_type": "same_object",
+                "confidence": 0.9,
+            }
+        ]
+
+        verified, report = verify_identity_candidates(nodes, edges)
+
+        self.assertFalse(verified[0].get("identity_verified", False))
+        self.assertEqual(len(report.rejected), 0)
+        self.assertEqual(len(report.targeted_reread_queue), 1)
+
+    def test_identity_verifier_requires_instance_or_grounded_reread(self) -> None:
+        nodes = {
+            "box:1": {
+                "node_id": "box:1",
+                "node_type": "entity_mention",
+                "mention_id": "mention:box:1",
+                "entity_type": "object",
+                "attributes": {"color": "red", "material": "wood"},
+                "evidence_refs": ["clip:1"],
+            },
+            "box:2": {
+                "node_id": "box:2",
+                "node_type": "entity_mention",
+                "mention_id": "mention:box:2",
+                "entity_type": "object",
+                "attributes": {"color": "red", "material": "wood"},
+                "evidence_refs": ["clip:2"],
+            },
+        }
+        edges = [
+            {
+                "edge_id": "candidate",
+                "src": "box:1",
+                "dst": "box:2",
+                "edge_type": "same_object",
+                "confidence": 0.9,
+            }
+        ]
+
+        verified, report = verify_identity_candidates(nodes, edges)
+        self.assertFalse(verified[0].get("identity_verified", False))
+        self.assertEqual(len(report.targeted_reread_queue), 1)
+
+        edges[0]["targeted_reread"] = {
+            "passed": True,
+            "src_evidence_ref": "frame:1",
+            "dst_evidence_ref": "frame:2",
+            "matched_attributes": ["wood grain"],
+            "conflicts": [],
+            "annotator": "visual-reviewer",
+            "labels_source": "raw_video_verifier",
+        }
+        verified, report = verify_identity_candidates(nodes, edges)
+        self.assertTrue(verified[0]["identity_verified"])
+        self.assertEqual(report.accepted[0]["method"], "targeted_raw_video_reread")
+
+        untrusted = [dict(edges[0])]
+        untrusted[0]["targeted_reread"] = {
+            **untrusted[0]["targeted_reread"],
+            "labels_source": "graph_llm",
+        }
+        verified, report = verify_identity_candidates(nodes, untrusted)
+        self.assertFalse(verified[0].get("identity_verified", False))
+        self.assertEqual(len(report.targeted_reread_queue), 1)
+
+    def test_identity_reread_packet_requires_grounded_visual_decision(self) -> None:
+        graph = {
+            "nodes": [
+                {
+                    "node_id": "box:1",
+                    "node_type": "entity_mention",
+                    "mention_id": "mention:box:1",
+                    "entity_type": "object",
+                    "attributes": {"color": "red"},
+                    "clip_id": "clip:1",
+                    "time_span": {"start_s": 0, "end_s": 1},
+                    "text": "red box",
+                    "evidence_refs": ["clip:1"],
+                },
+                {
+                    "node_id": "box:2",
+                    "node_type": "entity_mention",
+                    "mention_id": "mention:box:2",
+                    "entity_type": "object",
+                    "attributes": {"color": "red"},
+                    "clip_id": "clip:2",
+                    "time_span": {"start_s": 2, "end_s": 3},
+                    "text": "red box",
+                    "evidence_refs": ["clip:2"],
+                },
+            ],
+            "edges": [
+                {
+                    "edge_id": "same-box",
+                    "src": "box:1",
+                    "dst": "box:2",
+                    "edge_type": "same_object",
+                    "confidence": 0.9,
+                }
+            ],
+        }
+        packet = prepare_identity_reread_packet(
+            graph,
+            video_path="/datasets/video.mp4",
+        )
+        self.assertEqual(len(packet["items"]), 1)
+        self.assertEqual(packet["items"][0]["edge_ids"], ["same-box"])
+        self.assertEqual(packet["source_video_path"], "/datasets/video.mp4")
+        packet["annotator"] = "visual-reviewer"
+        packet["labels_source"] = "raw_video_verifier"
+        packet["items"][0]["annotation"] = {
+            "passed": True,
+            "src_evidence_ref": "frame:clip1:10",
+            "dst_evidence_ref": "frame:clip2:20",
+            "matched_attributes": ["same red corner mark"],
+            "conflicts": [],
+            "reason": "Distinctive mark is visible in both frames.",
+        }
+        applied = apply_identity_reread_packet(graph, packet)
+        verified, report = verify_identity_candidates(
+            {node["node_id"]: node for node in applied["nodes"]},
+            applied["edges"],
+        )
+        self.assertTrue(verified[0]["identity_verified"])
+        self.assertEqual(report.accepted[0]["method"], "targeted_raw_video_reread")
+
+        l1_nodes = [_grounded_node("memory:box:1"), _grounded_node("memory:box:2")]
+        for memory_node, source_id in zip(l1_nodes, ("box:1", "box:2")):
+            memory_node.source_node_id = source_id
+        relations, _ = materialize_l1_structural_relations(applied, l1_nodes)
+        self.assertEqual(
+            relations[0].relation_probabilities,
+            {"same_object": 0.9},
+        )
+        self.assertEqual(
+            relations[0].provenance["admission_tier"],
+            "verified_identity",
+        )
+
+        stale_packet = dict(packet)
+        stale_packet["graph_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            apply_identity_reread_packet(graph, stale_packet)
+
+        canonical = {"metadata": {"clue_memory_graph": graph}, "question": {}}
+        applied_canonical = apply_identity_reread_to_artifact(canonical, packet)
+        self.assertTrue(
+            applied_canonical["metadata"]["clue_memory_graph"]["edges"][0][
+                "targeted_reread"
+            ]["passed"]
+        )
+        self.assertNotIn("targeted_reread", graph["edges"][0])
+
     def test_native_l1_relations_remain_navigation_only(self) -> None:
         graph = {
             "nodes": [
@@ -442,27 +932,21 @@ class MemoryGraphTest(unittest.TestCase):
             ],
         }
         l1_src = _grounded_node("memory:event:car:1")
-        l1_src.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:1"}
-        )
+        l1_src.metadata.update({"source_node_type": "event", "clip_id": "clip:1"})
         l1_src.source_node_id = "event:car:1"
         l1_dst = _grounded_node(
             "memory:event:car:2",
             start_s=3,
             end_s=5,
         )
-        l1_dst.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:2"}
-        )
+        l1_dst.metadata.update({"source_node_type": "event", "clip_id": "clip:2"})
         l1_dst.source_node_id = "event:car:2"
         l1_support = _grounded_node(
             "memory:event:car:3",
             start_s=6,
             end_s=8,
         )
-        l1_support.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:3"}
-        )
+        l1_support.metadata.update({"source_node_type": "event", "clip_id": "clip:3"})
         l1_support.source_node_id = "event:car:3"
 
         relations, report = materialize_l1_structural_relations(
@@ -532,14 +1016,10 @@ class MemoryGraphTest(unittest.TestCase):
         }
         l1_event = _grounded_node("memory:event:car:1")
         l1_event.source_node_id = "event:car:1"
-        l1_event.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:1"}
-        )
+        l1_event.metadata.update({"source_node_type": "event", "clip_id": "clip:1"})
         l1_dst = _grounded_node("memory:event:car:2", start_s=3, end_s=5)
         l1_dst.source_node_id = "event:car:2"
-        l1_dst.metadata.update(
-            {"source_node_type": "event", "clip_id": "clip:2"}
-        )
+        l1_dst.metadata.update({"source_node_type": "event", "clip_id": "clip:2"})
 
         relations, report = materialize_l1_structural_relations(
             graph,
@@ -647,25 +1127,33 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertIn(("a", "b", "before"), relations)
         self.assertIn(("b", "c", "overlaps"), relations)
         self.assertIn(("d", "c", "during"), relations)
-        self.assertTrue(all(edge.status is RelationStatus.DETERMINISTIC for edge in graph.relations))
+        self.assertTrue(
+            all(edge.status is RelationStatus.DETERMINISTIC for edge in graph.relations)
+        )
 
     def test_probabilistic_relations_require_explicit_scorer_weights(self) -> None:
         nodes = [_node("a", 0, 2), _node("b", 3, 5), _node("c", 8, 10)]
         scorer = LinearRelationScorer(
             weights={
                 "same_entity": {"cosine_similarity": 2.0},
-                "state_transition": {"cosine_similarity": 1.0, "temporal_proximity": 1.0},
+                "state_transition": {
+                    "cosine_similarity": 1.0,
+                    "temporal_proximity": 1.0,
+                },
                 "explains": {"temporal_proximity": 1.0, "forward_order": 1.0},
                 "enables": {"temporal_proximity": 0.5},
                 "contradicts": {"cosine_similarity": -1.0},
             },
-            biases={relation: -0.5 for relation in (
-                "same_entity",
-                "state_transition",
-                "explains",
-                "enables",
-                "contradicts",
-            )},
+            biases={
+                relation: -0.5
+                for relation in (
+                    "same_entity",
+                    "state_transition",
+                    "explains",
+                    "enables",
+                    "contradicts",
+                )
+            },
             calibrated=False,
         )
         graph = build_memory_graph(
@@ -682,10 +1170,18 @@ class MemoryGraphTest(unittest.TestCase):
             top_k_candidates=1,
         )
 
-        candidates = [edge for edge in graph.relations if edge.status is RelationStatus.UNCALIBRATED_PRIOR]
+        candidates = [
+            edge
+            for edge in graph.relations
+            if edge.status is RelationStatus.UNCALIBRATED_PRIOR
+        ]
         self.assertTrue(candidates)
-        self.assertTrue(all("explains" in edge.relation_probabilities for edge in candidates))
-        self.assertTrue(all(edge.provenance["producer"] == scorer.producer for edge in candidates))
+        self.assertTrue(
+            all("explains" in edge.relation_probabilities for edge in candidates)
+        )
+        self.assertTrue(
+            all(edge.provenance["producer"] == scorer.producer for edge in candidates)
+        )
 
     def test_schema_and_embedding_contract_use_qwen_2b(self) -> None:
         schema_path = Path(__file__).parents[1] / "memory_graph.schema.json"
@@ -696,6 +1192,40 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EMBEDDING_DIM, 2048)
         self.assertEqual(embedding_schema["model"]["const"], DEFAULT_EMBEDDING_MODEL)
         self.assertEqual(embedding_schema["dimension"]["const"], DEFAULT_EMBEDDING_DIM)
+
+    def test_embedding_text_includes_participants_and_visible_states(self) -> None:
+        class RecordingProvider:
+            model_name = "fixture"
+            dimension = 2
+
+            def __init__(self) -> None:
+                self.texts: list[str] = []
+
+            def encode(self, texts, *, batch_size=8):
+                self.texts = list(texts)
+                return [[1.0, 0.0] for _ in texts]
+
+        node = _atomic_node(
+            "event:stateful",
+            0,
+            1,
+            "The man examines the box.",
+            mention_id="l1-track:man",
+            surface="the man",
+            state=("expression", "focused"),
+        )
+        provider = RecordingProvider()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "embeddings.npy"
+            embed_memory_nodes([node], provider, output_path=output)
+            manifest = json.loads(
+                output.with_suffix(".manifest.json").read_text(encoding="utf-8")
+            )
+
+        self.assertIn("The man examines the box", provider.texts[0])
+        self.assertIn("Participants: the man (person)", provider.texts[0])
+        self.assertIn("Visible states: expression=focused", provider.texts[0])
+        self.assertEqual(manifest["text_contract"], EMBEDDING_TEXT_CONTRACT)
 
     def test_overlay_schema_validation_resolves_local_references(self) -> None:
         overlay = CausalTemporalOverlay(
@@ -715,14 +1245,14 @@ class MemoryGraphTest(unittest.TestCase):
                 )
             ],
             relations=[],
-            metadata={
-                "layer_contract": "l1_observations_plus_l1_5_atomic_overlay"
-            },
+            metadata={"layer_contract": "l1_observations_plus_l1_5_atomic_overlay"},
         )
 
         self.assertEqual(validate_overlay_artifact(overlay.to_dict()), [])
 
-    def test_overlay_schema_accepts_legacy_build_report_without_candidates(self) -> None:
+    def test_overlay_schema_accepts_legacy_build_report_without_candidates(
+        self,
+    ) -> None:
         overlay = CausalTemporalOverlay(
             overlay_id="overlay:legacy",
             example_id="example:legacy",
@@ -730,9 +1260,7 @@ class MemoryGraphTest(unittest.TestCase):
             l1_observations=[_grounded_node("memory:legacy")],
             atomic_events=[],
             relations=[],
-            metadata={
-                "layer_contract": "l1_observations_plus_l1_5_atomic_overlay"
-            },
+            metadata={"layer_contract": "l1_observations_plus_l1_5_atomic_overlay"},
         ).to_dict()
         overlay["build_report"] = {
             "l1_reliability": {},
@@ -762,6 +1290,34 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertEqual(accepted, [])
         self.assertIn("outside", rejected[0]["reason"])
+
+    def test_video_l1_accepts_categorical_grounding_without_model_confidence(
+        self,
+    ) -> None:
+        accepted, rejected = _parse_coarse_response(
+            {
+                "events": [
+                    {
+                        "predicate": "A hand touches the cup.",
+                        "coarse_start_s": 4.0,
+                        "coarse_end_s": 7.0,
+                        "grounding_status": "observed",
+                    }
+                ]
+            },
+            window={"start_s": 0.0, "end_s": 8.0, "purpose": "coarse_scan"},
+            window_index=0,
+            minimum_confidence=0.5,
+            max_events=4,
+        )
+        self.assertEqual(rejected, [])
+        self.assertEqual(accepted[0]["confidence"], 1.0)
+        self.assertIn(
+            "Do not output confidence",
+            _coarse_prompt(
+                window={"start_s": 0.0, "end_s": 8.0}, frame_records=[], max_events=4
+            ),
+        )
 
     def test_video_l1_fine_localization_tracks_states_and_frame_evidence(self) -> None:
         records = [
@@ -830,7 +1386,9 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(atomic[0].participants[0].surface, "red cup")
         self.assertEqual(atomic[0].states[0].value, "held in hand")
 
-    def test_video_l1_evaluation_separates_structure_from_human_correctness(self) -> None:
+    def test_video_l1_evaluation_separates_structure_from_human_correctness(
+        self,
+    ) -> None:
         node = _grounded_node("visual_l1:1")
         node.metadata.update(
             {
@@ -1025,33 +1583,33 @@ class MemoryGraphTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            exit_code = cli_main([
-                "--canonical",
-                str(canonical_path),
-                "--output",
-                str(output_path),
-                "--atomic-events",
-                str(events_path),
-                "--input-mode",
-                "video_only",
-            ])
+            exit_code = cli_main(
+                [
+                    "--canonical",
+                    str(canonical_path),
+                    "--output",
+                    str(output_path),
+                    "--atomic-events",
+                    str(events_path),
+                    "--input-mode",
+                    "video_only",
+                ]
+            )
 
             output = json.loads(output_path.read_text(encoding="utf-8"))
             self.assertEqual(exit_code, 0)
             self.assertEqual(output["schema_version"], "steam-causal-overlay/v0.2")
-            self.assertEqual(output["metadata"]["l1_reliability"]["status"], "incomplete")
+            self.assertEqual(
+                output["metadata"]["l1_reliability"]["status"], "incomplete"
+            )
             self.assertEqual(len(output["l1_observations"]), 2)
             self.assertEqual(len(output["atomic_events"]), 2)
             self.assertEqual(validate_overlay_artifact(output), [])
             self.assertIn("candidate_relations", output["build_report"])
             self.assertIn("rejected_relations", output["build_report"])
             self.assertIn("verifier_summary", output["build_report"])
-            self.assertIn(
-                "identity_candidates", output["metadata"]["relation_layers"]
-            )
-            self.assertIn(
-                "observation_support", output["metadata"]["relation_layers"]
-            )
+            self.assertIn("identity_candidates", output["metadata"]["relation_layers"])
+            self.assertIn("observation_support", output["metadata"]["relation_layers"])
             self.assertNotEqual(
                 output["metadata"]["node_event_assumption"],
                 "one_memory_node_approximately_one_event",
@@ -1086,7 +1644,9 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertTrue(report.metrics["provenance_completeness"].passed)
         self.assertIsNone(report.metrics["grounded_event_precision"].passed)
 
-    def test_l1_reliability_gate_passes_only_with_complete_independent_labels(self) -> None:
+    def test_l1_reliability_gate_passes_only_with_complete_independent_labels(
+        self,
+    ) -> None:
         nodes = [
             _grounded_node("memory:event:1"),
             _grounded_node("memory:event:2", start_s=2, end_s=4),
@@ -1197,7 +1757,9 @@ class MemoryGraphTest(unittest.TestCase):
         nodes, index = atomic_events_to_graph_nodes(events, l1_nodes=[l1])
 
         self.assertEqual(len(nodes), 2)
-        self.assertEqual(index.l1_to_events[l1.node_id], ("event:atomic:1", "event:atomic:2"))
+        self.assertEqual(
+            index.l1_to_events[l1.node_id], ("event:atomic:1", "event:atomic:2")
+        )
         self.assertTrue(all(node.source_segments == [l1.node_id] for node in nodes))
 
     def test_dict_visibility_hidden_supervision_fails_l1_gate(self) -> None:
@@ -1264,13 +1826,50 @@ class MemoryGraphTest(unittest.TestCase):
             0,
             1,
             "The door is closed.",
-            mention_id="door:before",
+            mention_id="l1-track:door",
             entity_type="object",
             surface="the door",
             state=("position", "closed"),
         )
         dst = _atomic_node(
             "event:dst",
+            2,
+            3,
+            "The door is open.",
+            mention_id="l1-track:door",
+            entity_type="object",
+            surface="the door",
+            state=("position", "open"),
+        )
+        belief = _belief(
+            src,
+            dst,
+            "state_transition",
+            participant_alignment=[
+                {
+                    "src_mention_id": "l1-track:door",
+                    "dst_mention_id": "l1-track:door",
+                }
+            ],
+        )
+
+        self.assertTrue(verify_relation(belief, src, dst).passed)
+
+    def test_state_transition_rejects_surface_match_without_accepted_track(
+        self,
+    ) -> None:
+        src = _atomic_node(
+            "event:closed",
+            0,
+            1,
+            "The door is closed.",
+            mention_id="door:before",
+            entity_type="object",
+            surface="the door",
+            state=("position", "closed"),
+        )
+        dst = _atomic_node(
+            "event:open",
             2,
             3,
             "The door is open.",
@@ -1291,14 +1890,148 @@ class MemoryGraphTest(unittest.TestCase):
             ],
         )
 
-        self.assertTrue(verify_relation(belief, src, dst).passed)
+        result = verify_relation(belief, src, dst)
+
+        self.assertFalse(result.passed)
+        self.assertIn("accepted conflict-aware identity track", result.reasons[0])
+
+    def test_state_transition_is_derived_only_on_accepted_track(self) -> None:
+        before = _atomic_node(
+            "event:closed-track",
+            0,
+            1,
+            "The door is closed.",
+            mention_id="l1-track:door",
+            entity_type="object",
+            surface="the door",
+            state=("openness", "closed"),
+        )
+        after = _atomic_node(
+            "event:open-track",
+            2,
+            3,
+            "The door is open.",
+            mention_id="l1-track:door",
+            entity_type="object",
+            surface="the door",
+            state=("openness", "open"),
+        )
+        candidates = derive_state_transition_candidates([before, after])
+
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(
+            candidates[0].provenance["accepted_identity_track"],
+            "l1-track:door",
+        )
+        self.assertTrue(verify_relation(candidates[0], before, after).passed)
+
+        after.metadata["participants"][0]["mention_id"] = "door:lookalike"
+        after.metadata["states"][0]["mention_id"] = "door:lookalike"
+        self.assertEqual(derive_state_transition_candidates([before, after]), [])
+
+    def test_state_transition_collapses_gaze_synonyms(self) -> None:
+        before = _atomic_node(
+            "event:gaze-down",
+            0,
+            1,
+            "The person looks down.",
+            mention_id="l1-track:person",
+            surface="the person",
+            state=("gaze_direction", "looking down"),
+        )
+        after = _atomic_node(
+            "event:gaze-downward",
+            2,
+            3,
+            "The person's gaze is downward.",
+            mention_id="l1-track:person",
+            surface="the person",
+            state=("gaze_direction", "downward"),
+        )
+
+        self.assertEqual(derive_state_transition_candidates([before, after]), [])
+
+    def test_state_transition_uses_only_adjacent_track_snapshots(self) -> None:
+        events = [
+            _atomic_node(
+                "event:gaze-down",
+                0,
+                1,
+                "The person looks down.",
+                mention_id="l1-track:person",
+                surface="the person",
+                state=("gaze_direction", "downward"),
+            ),
+            _atomic_node(
+                "event:gaze-forward",
+                2,
+                3,
+                "The person looks forward.",
+                mention_id="l1-track:person",
+                surface="the person",
+                state=("gaze_direction", "looking forward"),
+            ),
+            _atomic_node(
+                "event:gaze-left",
+                4,
+                5,
+                "The person looks left.",
+                mention_id="l1-track:person",
+                surface="the person",
+                state=("gaze_direction", "looking left"),
+            ),
+        ]
+
+        candidates = derive_state_transition_candidates(events)
+
+        self.assertEqual(
+            [(candidate.src, candidate.dst) for candidate in candidates],
+            [
+                ("event:gaze-down", "event:gaze-forward"),
+                ("event:gaze-forward", "event:gaze-left"),
+            ],
+        )
+
+    def test_state_transition_rejects_visibility_open_attribute_mismatch(self) -> None:
+        before = _atomic_node(
+            "event:box-open",
+            0,
+            1,
+            "The box is open.",
+            mention_id="l1-track:box",
+            entity_type="object",
+            surface="the box",
+            state=("visibility", "open"),
+        )
+        after = _atomic_node(
+            "event:box-obscured",
+            2,
+            3,
+            "The box is partially obscured.",
+            mention_id="l1-track:box",
+            entity_type="object",
+            surface="the box",
+            state=("visibility", "partially obscured"),
+        )
+
+        self.assertEqual(derive_state_transition_candidates([before, after]), [])
 
     def test_regression_5P_6Q2Q0NLk_timer_narrative_does_not_enable(self) -> None:
         src = _atomic_node(
-            "event:src", 0, 1, "A timer starts.", mention_id="timer:1", surface="a timer"
+            "event:src",
+            0,
+            1,
+            "A timer starts.",
+            mention_id="timer:1",
+            surface="a timer",
         )
         dst = _atomic_node(
-            "event:dst", 2, 3, "A person leaves.", mention_id="person:1", surface="a person"
+            "event:dst",
+            2,
+            3,
+            "A person leaves.",
+            mention_id="person:1",
+            surface="a person",
         )
         belief = _belief(
             src,
@@ -1627,7 +2360,9 @@ class MemoryGraphTest(unittest.TestCase):
         )
 
         self.assertEqual(count, 1)
-        self.assertEqual(proposals[0].provenance["visual_verification"]["status"], "passed")
+        self.assertEqual(
+            proposals[0].provenance["visual_verification"]["status"], "passed"
+        )
         self.assertEqual(len(accepted), 1)
         self.assertEqual(rejected, [])
 
@@ -1696,7 +2431,9 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertEqual(witness["mechanism"], "contact_transfer")
         self.assertEqual(witness["cause_event_id"], src.node_id)
 
-    def test_visual_evidence_indices_enforce_frame_roles_and_time_direction(self) -> None:
+    def test_visual_evidence_indices_enforce_frame_roles_and_time_direction(
+        self,
+    ) -> None:
         records = [
             {"frame_index": 0, "time_s": 10.0, "purpose": "cause"},
             {"frame_index": 1, "time_s": 20.0, "purpose": "mechanism"},
@@ -1855,7 +2592,9 @@ class MemoryGraphTest(unittest.TestCase):
 
         self.assertFalse(verify_relation(belief, src, dst).passed)
 
-    def test_world_model_navigation_follows_dependency_then_reads_real_node(self) -> None:
+    def test_world_model_navigation_follows_dependency_then_reads_real_node(
+        self,
+    ) -> None:
         src = _atomic_node(
             "event:paper-ground",
             0,
@@ -2059,6 +2798,246 @@ class MemoryGraphTest(unittest.TestCase):
         )
         self.assertNotIn("causal_witness", dependency.provenance)
 
+    def test_navigation_ablation_keeps_candidate_and_verified_edges_separate(
+        self,
+    ) -> None:
+        events = [
+            _atomic_node(
+                "event:seed",
+                0,
+                1,
+                "A person sees a door.",
+                mention_id="person:1",
+                surface="a person",
+            ),
+            _atomic_node(
+                "event:background",
+                2,
+                3,
+                "The person walks slowly.",
+                mention_id="person:1",
+                surface="a person",
+            ),
+            _atomic_node(
+                "event:native-target",
+                4,
+                5,
+                "A key is behind the door.",
+                mention_id="key:1",
+                surface="a key",
+                entity_type="object",
+            ),
+            _atomic_node(
+                "event:verified-target",
+                6,
+                7,
+                "The verified bridge reveals the exit.",
+                mention_id="exit:1",
+                surface="the exit",
+                entity_type="object",
+            ),
+        ]
+        l1_nodes = [
+            _grounded_node(ref) for event in events for ref in event.source_segments
+        ]
+        temporal = RelationBelief(
+            edge_id="temporal:seed-background",
+            src="event:seed",
+            dst="event:background",
+            relation_probabilities={"temporal_next": 1.0},
+            status=RelationStatus.DETERMINISTIC,
+            direction_confidence=1.0,
+        )
+        dependency = RelationBelief(
+            edge_id="dependency:verified",
+            src="event:seed",
+            dst="event:verified-target",
+            relation_probabilities={"transition_support": 0.9},
+            status=RelationStatus.UNCALIBRATED_PRIOR,
+            direction_confidence=0.9,
+            provenance={"hard_verifier": {"transition_support": {"passed": True}}},
+        )
+        native = RelationBelief(
+            edge_id="native:candidate",
+            src=events[0].source_segments[0],
+            dst=events[2].source_segments[0],
+            relation_probabilities={"same_instance_candidate": 0.8},
+            status=RelationStatus.UNCALIBRATED_PRIOR,
+            direction_confidence=0.5,
+            provenance={"navigation_only": True},
+        )
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:ablation",
+            example_id="example:ablation",
+            video_id="video-1",
+            l1_observations=l1_nodes,
+            atomic_events=events,
+            relations=[temporal, dependency],
+            l1_structural_relations=[native],
+        )
+        report = evaluate_navigation_ablation(
+            overlay.to_dict(),
+            [
+                {
+                    "case_id": "native",
+                    "question": "What door key does the person see?",
+                    "gold_event_ids": ["event:native-target"],
+                    "graph_read_budget": 2,
+                },
+                {
+                    "case_id": "verified",
+                    "question": "What verified exit does the person sees?",
+                    "gold_event_ids": ["event:verified-target"],
+                    "graph_read_budget": 2,
+                },
+            ],
+        )
+
+        native_rows = report["cases"]["native_l1_candidate"]
+        verified_rows = report["cases"]["verified_dependency"]
+        self.assertTrue(native_rows[0]["answerable"])
+        self.assertFalse(native_rows[1]["answerable"])
+        self.assertFalse(verified_rows[0]["answerable"])
+        self.assertTrue(verified_rows[1]["answerable"])
+
+    def test_navigation_ablation_prefers_supplied_embedding_scores(self) -> None:
+        events = [
+            _atomic_node(
+                "event:early",
+                0,
+                1,
+                "An unrelated early event.",
+                mention_id="entity:1",
+                surface="entity",
+            ),
+            _atomic_node(
+                "event:gold",
+                2,
+                3,
+                "The relevant event.",
+                mention_id="entity:2",
+                surface="entity",
+            ),
+        ]
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:embedding-ablation",
+            example_id="example:embedding-ablation",
+            video_id="video-1",
+            l1_observations=[
+                _grounded_node(ref) for event in events for ref in event.source_segments
+            ],
+            atomic_events=events,
+            relations=[],
+        )
+        case = {
+            "case_id": "embedding-case",
+            "question": "Which event is relevant?",
+            "gold_event_ids": ["event:gold"],
+            "graph_read_budget": 1,
+            "query_embedding_ref": {
+                "model": "Qwen/Qwen3-VL-Embedding-2B",
+                "dimension": 2,
+            },
+        }
+
+        report = evaluate_navigation_ablation(
+            overlay.to_dict(),
+            [case],
+            event_embeddings={
+                "event:early": [1.0, 0.0],
+                "event:gold": [0.0, 1.0],
+            },
+            query_embeddings={"embedding-case": [0.0, 1.0]},
+            embedding_metadata={"model": "Qwen/Qwen3-VL-Embedding-2B"},
+        )
+
+        self.assertEqual(report["retrieval"]["mode"], "qwen3_vl_embedding")
+        self.assertTrue(report["cases"]["semantic_only"][0]["answerable"])
+        self.assertEqual(
+            report["cases"]["semantic_only"][0]["query_embedding_ref"]["model"],
+            "Qwen/Qwen3-VL-Embedding-2B",
+        )
+
+    def test_verified_dependency_is_prioritized_over_temporal_neighbor(self) -> None:
+        events = [
+            _atomic_node(
+                "event:seed",
+                0,
+                1,
+                "Seed event.",
+                mention_id="track:seed",
+                surface="seed",
+            ),
+            _atomic_node(
+                "event:temporal",
+                2,
+                3,
+                "Temporally adjacent event.",
+                mention_id="track:temporal",
+                surface="temporal",
+            ),
+            _atomic_node(
+                "event:dependency",
+                4,
+                5,
+                "Verified state dependency.",
+                mention_id="track:dependency",
+                surface="dependency",
+            ),
+        ]
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:priority",
+            example_id="example:priority",
+            video_id="video-1",
+            l1_observations=[
+                _grounded_node(ref) for event in events for ref in event.source_segments
+            ],
+            atomic_events=events,
+            relations=[
+                RelationBelief(
+                    edge_id="temporal",
+                    src="event:seed",
+                    dst="event:temporal",
+                    relation_probabilities={"temporal_next": 1.0},
+                    status=RelationStatus.DETERMINISTIC,
+                    direction_confidence=1.0,
+                ),
+                RelationBelief(
+                    edge_id="dependency",
+                    src="event:seed",
+                    dst="event:dependency",
+                    relation_probabilities={"state_transition": 0.9},
+                    status=RelationStatus.UNCALIBRATED_PRIOR,
+                    direction_confidence=1.0,
+                    provenance={"accepted_identity_track": "l1-track:entity"},
+                ),
+            ],
+        )
+        case = {
+            "case_id": "priority",
+            "question": "How did the object change from closed to open?",
+            "gold_event_ids": ["event:dependency"],
+            "graph_read_budget": 2,
+        }
+
+        report = evaluate_navigation_ablation(
+            overlay.to_dict(),
+            [case],
+            event_embeddings={
+                "event:seed": [0.9, 0.1],
+                "event:temporal": [1.0, 0.0],
+                "event:dependency": [0.0, 1.0],
+            },
+            query_embeddings={"priority": [1.0, 0.0]},
+        )
+
+        self.assertFalse(report["cases"]["event_only"][0]["answerable"])
+        self.assertTrue(report["cases"]["verified_dependency"][0]["answerable"])
+        self.assertEqual(
+            report["cases"]["verified_dependency"][0]["acquired_event_ids"],
+            ["event:seed", "event:dependency"],
+        )
+
     def test_calibration_requires_independent_labels(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             sample = Path(temp_dir) / "sample"
@@ -2117,6 +3096,161 @@ class MemoryGraphTest(unittest.TestCase):
         self.assertFalse(self_audit["calibrated"])
         self.assertTrue(human["calibrated"])
         self.assertEqual(human["relations"]["enables"]["sample_counts"]["used"], 2)
+
+    def test_baseline_manifest_hashes_artifacts_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            artifact = root / "artifact.json"
+            artifact.write_text('{"ok": true}\n', encoding="utf-8")
+            original = artifact.read_bytes()
+            manifest = freeze_baseline(
+                {"smoke": artifact},
+                repository=Path(__file__).resolve().parents[2],
+                note="test baseline",
+            )
+            verification = verify_baseline(
+                manifest,
+                repository=Path(__file__).resolve().parents[2],
+            )
+            self.assertTrue(verification["passed"])
+            artifact.write_text('{"ok": false}\n', encoding="utf-8")
+            drift = verify_baseline(
+                manifest,
+                repository=Path(__file__).resolve().parents[2],
+            )
+            self.assertFalse(drift["passed"])
+
+        self.assertEqual(manifest["schema_version"], "steam-memory-graph-baseline/v0.1")
+        self.assertEqual(manifest["artifacts"][0]["name"], "smoke")
+        self.assertEqual(manifest["artifacts"][0]["size_bytes"], len(original))
+
+    def test_l1_relation_audit_requires_independent_complete_labels(self) -> None:
+        src = _grounded_node("memory:a")
+        dst = _grounded_node("memory:b", start_s=3, end_s=4)
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:audit",
+            example_id="example:audit",
+            video_id="video-1",
+            l1_observations=[src, dst],
+            atomic_events=[],
+            relations=[],
+            l1_structural_relations=[
+                RelationBelief(
+                    edge_id="l1:identity",
+                    src=src.node_id,
+                    dst=dst.node_id,
+                    relation_probabilities={"same_entity": 0.9},
+                    status=RelationStatus.UNCALIBRATED_PRIOR,
+                    direction_confidence=0.5,
+                    evidence_refs=[src.node_id, dst.node_id],
+                ),
+                RelationBelief(
+                    edge_id="l1:state",
+                    src=src.node_id,
+                    dst=dst.node_id,
+                    relation_probabilities={"state_transition": 0.9},
+                    status=RelationStatus.UNCALIBRATED_PRIOR,
+                    direction_confidence=1.0,
+                    evidence_refs=[src.node_id, dst.node_id],
+                ),
+            ],
+        )
+        packet, model_key = prepare_l1_relation_packet(overlay.to_dict())
+        self.assertEqual(len(packet["items"]), 2)
+        self.assertNotIn("probability", packet["items"][0])
+        self.assertIn("probability", model_key["items"][0])
+        with self.assertRaisesRegex(ValueError, "annotator"):
+            evaluate_l1_relation_packet(packet)
+
+        packet["annotator"] = "independent-reviewer"
+        for item in packet["items"]:
+            item["annotation"]["judgment"] = "supported"
+        report = evaluate_l1_relation_packet(packet)
+
+        self.assertTrue(report["acceptance_passed"])
+        self.assertEqual(report["groups"]["identity"]["strict_precision"], 1.0)
+        self.assertEqual(report["groups"]["state_transition"]["strict_precision"], 1.0)
+
+        packet["labels_source"] = "model_provisional"
+        provisional = evaluate_l1_relation_packet(packet)
+        self.assertTrue(provisional["provisional_target_met"])
+        self.assertFalse(provisional["acceptance_passed"])
+        self.assertEqual(provisional["labels_source"], "model_provisional")
+
+        packet["labels_source"] = "independent_human"
+        packet["items"][0]["annotation"]["judgment"] = "unclear"
+        conservative = evaluate_l1_relation_packet(packet)
+        self.assertFalse(conservative["acceptance_passed"])
+        self.assertEqual(
+            conservative["groups"]["identity"]["conservative_precision"], 0.0
+        )
+        self.assertEqual(conservative["groups"]["identity"]["decision_coverage"], 0.0)
+
+        split = create_locked_audit_split(
+            packet,
+            development_fraction=0.5,
+            salt="locked-test-salt",
+        )
+        development = set(split["development_item_ids"])
+        held_out = set(split["held_out_item_ids"])
+        self.assertFalse(development & held_out)
+        self.assertEqual(development | held_out, {"l1-edge:0001", "l1-edge:0002"})
+        self.assertEqual(split["group_counts"]["identity"]["held_out"], 1)
+        self.assertEqual(split["group_counts"]["state_transition"]["held_out"], 1)
+
+    def test_persisted_overlay_can_be_restored_for_audit_only_retry(self) -> None:
+        first = _atomic_node(
+            "event:1", 0.0, 1.0, "first", mention_id="person:1", surface="man"
+        )
+        second = _atomic_node(
+            "event:2", 1.0, 2.0, "second", mention_id="person:1", surface="man"
+        )
+        relation = _belief(first, second, "same_entity")
+        overlay = CausalTemporalOverlay(
+            overlay_id="overlay:1",
+            example_id="example:1",
+            video_id="video-1",
+            l1_observations=[
+                _grounded_node("l1:event:1", start_s=0.0, end_s=1.0),
+                _grounded_node("l1:event:2", start_s=1.0, end_s=2.0),
+            ],
+            atomic_events=[first, second],
+            relations=[relation],
+        )
+
+        restored = event_graph_from_overlay(overlay.to_dict())
+
+        self.assertEqual(restored.graph_id, "overlay:1")
+        self.assertEqual(len(restored.nodes), 2)
+        self.assertEqual(
+            restored.relations[0].relation_probabilities,
+            {"same_entity": 0.9},
+        )
+        self.assertTrue(restored.metadata["restored_from_persisted_overlay"])
+
+    def test_successful_audit_retry_updates_only_matching_summary_error(self) -> None:
+        summary = {
+            "samples": [{"video_id": "video-1", "audit_summary": None}],
+            "errors": [
+                {"video_id": "video-1", "stage": "graph_audit", "error": "bad JSON"},
+                {"video_id": "video-2", "stage": "overlay_build", "error": "failed"},
+            ],
+            "video_count_failed": 2,
+        }
+        audit = {
+            "summary": {"verdict": "pass"},
+            "computed_summary": {"audit_complete": True, "strict_precision": 1.0},
+            "temporal_consistency": {"passed": True, "issues": []},
+        }
+
+        updated = update_run_summary(summary, video_id="video-1", audit=audit)
+
+        self.assertEqual(updated["video_count_failed"], 1)
+        self.assertEqual(updated["errors"][0]["video_id"], "video-2")
+        self.assertEqual(updated["samples"][0]["audit_summary"]["verdict"], "pass")
+        self.assertTrue(
+            updated["samples"][0]["computed_audit_summary"]["audit_complete"]
+        )
 
 
 def _atomic_node(

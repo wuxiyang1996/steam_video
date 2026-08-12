@@ -1,0 +1,152 @@
+{
+  "schema_version": "steam-cgbench-l15-smoke-selection/v0.1",
+  "dataset_id": "cgbench-gt-navigation-pilot-v2",
+  "selection_policy": "shortest_by_video_duration_within_split_x_fallback_source",
+  "selection_uses_question_or_gt": false,
+  "observation_horizon_s": 120.0,
+  "videos": [
+    {
+      "video_id": "BV141421m7D4",
+      "video_ref": "cg_videos/BV141421m7D4.mp4",
+      "split": "test",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 895.299,
+      "selection_stratum": [
+        "test",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "BV16A4m1F7Jc",
+      "video_ref": "cg_videos/BV16A4m1F7Jc.mp4",
+      "split": "test",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 623.466,
+      "selection_stratum": [
+        "test",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "BV1Qv411q7uo",
+      "video_ref": "cg_videos/BV1Qv411q7uo.mp4",
+      "split": "test",
+      "fallback_source": "unavailable",
+      "duration_s": 672.24,
+      "selection_stratum": [
+        "test",
+        "unavailable"
+      ]
+    },
+    {
+      "video_id": "BV1xq4y1F7Yj",
+      "video_ref": "cg_videos/BV1xq4y1F7Yj.mp4",
+      "split": "test",
+      "fallback_source": "unavailable",
+      "duration_s": 758.8,
+      "selection_stratum": [
+        "test",
+        "unavailable"
+      ]
+    },
+    {
+      "video_id": "BV1dS411A7bX",
+      "video_ref": "cg_videos/BV1dS411A7bX.mp4",
+      "split": "train",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 619.833,
+      "selection_stratum": [
+        "train",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "BV1oB4y1z7FK",
+      "video_ref": "cg_videos/BV1oB4y1z7FK.mp4",
+      "split": "train",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 647.58,
+      "selection_stratum": [
+        "train",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "BV1AV411n7Jh",
+      "video_ref": "cg_videos/BV1AV411n7Jh.mp4",
+      "split": "train",
+      "fallback_source": "unavailable",
+      "duration_s": 602.727,
+      "selection_stratum": [
+        "train",
+        "unavailable"
+      ]
+    },
+    {
+      "video_id": "BV1qT4y137Xq",
+      "video_ref": "cg_videos/BV1qT4y137Xq.mp4",
+      "split": "train",
+      "fallback_source": "unavailable",
+      "duration_s": 632.4,
+      "selection_stratum": [
+        "train",
+        "unavailable"
+      ]
+    },
+    {
+      "video_id": "BV1Qt4y1f7zw",
+      "video_ref": "cg_videos/BV1Qt4y1f7zw.mp4",
+      "split": "validation",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 1090.467,
+      "selection_stratum": [
+        "validation",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "BV1zJ41187BP",
+      "video_ref": "cg_videos/BV1zJ41187BP.mp4",
+      "split": "validation",
+      "fallback_source": "time_aligned_subtitle_l1_fallback",
+      "duration_s": 830.933,
+      "selection_stratum": [
+        "validation",
+        "time_aligned_subtitle_l1_fallback"
+      ]
+    },
+    {
+      "video_id": "-tpms_BbjHA",
+      "video_ref": "cg_videos/-tpms_BbjHA.mp4",
+      "split": "validation",
+      "fallback_source": "unavailable",
+      "duration_s": 1202.159,
+      "selection_stratum": [
+        "validation",
+        "unavailable"
+      ]
+    },
+    {
+      "video_id": "BV1NZ421q7Cb",
+      "video_ref": "cg_videos/BV1NZ421q7Cb.mp4",
+      "split": "validation",
+      "fallback_source": "unavailable",
+      "duration_s": 890.766,
+      "selection_stratum": [
+        "validation",
+        "unavailable"
+      ]
+    }
+  ],
+  "rejected": [],
+  "forbidden_worker_inputs": [
+    "answer",
+    "answer_key",
+    "answer_text",
+    "choices",
+    "clue_intervals",
+    "hop_alignment",
+    "question"
+  ],
+  "training_performed": false
+}

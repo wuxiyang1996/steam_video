@@ -1,0 +1,1106 @@
+{
+  "schema_version": "steam-navigation-gold-cases/v0.1",
+  "case_set_id": "phase-e-gpt56-provisional-v1",
+  "annotation_status": "draft",
+  "annotator": null,
+  "locked_sha256": null,
+  "cases": [
+    {
+      "case_id": "mKqiGQrHtW8:state_transition:df7e07afe386",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_d_coupled_overlay.json",
+      "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+      "question": "How did the tracked entity reach 'Man examines the wooden object. | participants: other=man, other=wooden object | visible states: l1-track:evidence.enti…' after 'Man examines handheld device. | participants: other=man | visible states: l1-track:evidence.entity_mention:148813fbbc.g…'?",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00140"
+      ],
+      "missing_roles": [
+        "state_transition"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00140",
+        "event:atomic:video_skills_l1:00258"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "inspect_state_change",
+          "source_id": "event:atomic:video_skills_l1:00140",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00258"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "state_transition"
+      ],
+      "tags": [
+        "state_transition",
+        "one_step_control",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "mKqiGQrHtW8:verified_dependency:c3f47d8020e6",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/factor_graph/fixtures/phase_d_coupled_overlay.json",
+      "overlay_id": "overlay:phase-d:grounded-coupled-smoke:v1",
+      "question": "Does the verified event 'Man examines the wooden object. | participants: other=man, other=wooden object | visible states: l1-track:evidence.enti…' depend on 'Man examines handheld device. | participants: other=man | visible states: l1-track:evidence.entity_mention:148813fbbc.g…'?",
+      "seed_event_ids": [
+        "event:atomic:video_skills_l1:00140"
+      ],
+      "missing_roles": [
+        "dependency"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:video_skills_l1:00140",
+        "event:atomic:video_skills_l1:00258"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "follow_dependency",
+          "source_id": "event:atomic:video_skills_l1:00140",
+          "target_ids": [
+            "event:atomic:video_skills_l1:00258"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "transition_support"
+      ],
+      "tags": [
+        "verified_dependency",
+        "one_step_control",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:identity:0bca63955da6",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Does 'exits | participants: agent=Mia, location=baby’s room' contain the same entity as 'enters | participants: agent=Mia, location=baby’s room'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:002"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:002",
+        "event:atomic:memory:vh_seg_003:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_003:002",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:identity:1b1965938ab3",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Does 'exits | participants: agent=Mia, location=baby’s room' contain the same entity as 'picks up | participants: agent=Mia, patient=baby'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_003:003"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_003:003",
+        "event:atomic:memory:vh_seg_003:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_003:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:identity:2898f515312f",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Does 'left | participants: agent=Smith' contain the same entity as 'sent message | participants: agent=Sarah, patient=Smith, object=message'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:007",
+        "event:atomic:memory:vh_seg_002:008"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:007",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:008"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1IzpG2kJPdg:identity:2ae8f043c97d",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1IzpG2kJPdg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1IzpG2kJPdg:q1442",
+      "question": "Does 'exits | participants: agent=Mia, location=baby’s room' contain the same entity as 'turned back | participants: agent=Mia, instrument=knife'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_003:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_003:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1iHavvOahH0:identity:01da1139891c",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1iHavvOahH0/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1iHavvOahH0:q305",
+      "question": "Does 'woman calls child | participants: agent=woman, patient=child' contain the same entity as 'woman makes breakfast | participants: agent=woman'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:003"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:003",
+        "event:atomic:memory:vh_seg_001:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1iHavvOahH0:identity:134ca090de0a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1iHavvOahH0/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1iHavvOahH0:q305",
+      "question": "Does 'woman runs into forest and sees nothing | participants: agent=woman, location=forest | visible states: woman1.visual=no…' contain the same entity as 'woman sees child standing by forest edge | participants: agent=woman, patient=child | visible states: child1.posture=st…'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:001"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:001",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1iHavvOahH0:identity:16680a7b1a75",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1iHavvOahH0/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1iHavvOahH0:q305",
+      "question": "Does 'woman panics and is surrounded by women in white | participants: agent=woman, patient=women in white | visible states: …' contain the same entity as 'woman in white appears behind woman | participants: agent=woman in white, patient=woman'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:007"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "1iHavvOahH0:identity:4ec3afe67a8c",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/1iHavvOahH0/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:1iHavvOahH0:q305",
+      "question": "Does 'woman sees child standing by forest edge | participants: agent=woman, patient=child | visible states: child1.posture=st…' contain the same entity as 'child stays outside | participants: agent=child'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "missing_roles": [
+        "identity"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:005",
+        "event:atomic:memory:vh_seg_002:001"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:001"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "identity",
+        "one_step_control",
+        "dev"
+      ],
+      "split": "dev",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:temporal:0bfa1ec33f8e",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "What happened immediately after 'places gifts | participants: agent=a Santa Claus, patient=gifts, location=the living room on the first floor'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:003"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:003",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:temporal:0c2177797590",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "What happened immediately after 'house is decorated with Christmas ornaments | participants: location=the house'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:002"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:002",
+        "event:atomic:memory:vh_seg_002:003"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:002",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:003"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:temporal:13c65f80a9d3",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "What happened immediately after 'girl is sleeping | participants: agent=girl | visible states: m5.sleeping=true'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:004"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:004",
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_001:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:005"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "-3l2KFTj7yY:temporal:34da3405b407",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/-3l2KFTj7yY/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:-3l2KFTj7yY:q735",
+      "question": "What happened immediately after 'walks down the stairs | participants: agent=the girl, location=the stairs'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:001"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:002"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:001",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:002"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "test"
+      ],
+      "split": "test",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:temporal:0bfa1ec33f8e",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "What happened immediately after 'girl looks at clown | participants: agent=girl in red and yellow clothes, patient=clown hanging on the door'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:003"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:003",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:004"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:temporal:0c2177797590",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "What happened immediately after 'candies are placed beside the sign | participants: agent=candies, location=beside the sign'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:002"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:002",
+        "event:atomic:memory:vh_seg_002:003"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:002",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:003"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:temporal:1202836cd569",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "What happened immediately after 'girl takes two objects | participants: agent=girl in black and white dress, patient=two items'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:007",
+        "event:atomic:memory:vh_seg_002:008"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:007",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:008"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "0-kQB8Jo80I:temporal:13c65f80a9d3",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0-kQB8Jo80I/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0-kQB8Jo80I:q1272",
+      "question": "What happened immediately after 'appears behind | participants: agent=girl in a black and white skirt, location=behind the first girl'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:004"
+      ],
+      "missing_roles": [
+        "temporal"
+      ],
+      "graph_read_budget": 2,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:004",
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_001:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:005"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "temporal",
+        "one_step_control",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined draft; independently verify the question, evidence chain, and acceptable action."
+    },
+    {
+      "case_id": "033fKtGdpPc:delayed_bridge:013ab9addf2a",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "Following the same entity from 'looks around | participants: agent=man', which intermediate observation leads to 'hurried over | participants: agent=man'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:003"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:003",
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_001:003",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:001"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "033fKtGdpPc:delayed_bridge:015171998a98",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "What happened immediately after 'demanded release of hostage | participants: agent=man, patient=woman in black', and which intermediate evidence leads to 'appeared stiff and feeble | participants: agent=woman in white | visible states: woman_white_1.appearance=stiff and fee…'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "033fKtGdpPc:delayed_bridge:028c3456cea2",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "What happened immediately after 'accused | participants: agent=woman in black, patient=her husband | visible states: m3.expression=pained', and which intermediate evidence leads to 'replied | participants: agent=woman in black, patient=man'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_005:004"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_005:004",
+        "event:atomic:memory:vh_seg_005:005",
+        "event:atomic:memory:vh_seg_005:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_005:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_005:005"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "033fKtGdpPc:delayed_bridge:029f25bdddcc",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/033fKtGdpPc/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:033fKtGdpPc:q626",
+      "question": "Following the same entity from 'replied | participants: agent=woman in black, patient=man', which intermediate observation leads to 'said | participants: agent=woman in black, patient=man, other=bomb'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_005:006"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_005:006",
+        "event:atomic:memory:vh_seg_005:007",
+        "event:atomic:memory:vh_seg_005:008"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_005:006",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_005:007"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity",
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:delayed_bridge:015171998a98",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "What happened immediately after 'potted plant knocked over | participants: patient=potted plant on the second floor', and which intermediate evidence leads to 'cup knocked over | participants: patient=cup'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:delayed_bridge:11a7f23939a1",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "What happened immediately after 'door closes | participants: patient=door of the house', and which intermediate evidence leads to 'steps back | participants: agent=man on the second floor'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:001"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:002",
+        "event:atomic:memory:vh_seg_002:004"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:001",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:002"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next",
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:delayed_bridge:1302a2c4f371",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "What happened immediately after 'door closes suddenly | participants: agent=door', and which intermediate evidence leads to 'potted plant falls over on upper floor | participants: agent=potted plant'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:005",
+        "event:atomic:memory:vh_seg_001:006",
+        "event:atomic:memory:vh_seg_001:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_001:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0CPoD4ZRTUQ:delayed_bridge:16df11c1ef65",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0CPoD4ZRTUQ/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0CPoD4ZRTUQ:q1539",
+      "question": "Following the same entity from 'is scared | participants: agent=man on the second floor', which intermediate observation leads to 'cup knocked over | participants: patient=cup'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:002"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:002",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_002:002",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity",
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0jq3JQ9YTqg:delayed_bridge:015171998a98",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+      "question": "What happened immediately after 'man gets into car | participants: agent=man, patient=car', and which intermediate evidence leads to 'man exclaims \"Oh my God, what’s going on?\" | participants: agent=man, patient=\"Oh my God, what’s going on?\"'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_002:005",
+        "event:atomic:memory:vh_seg_002:006",
+        "event:atomic:memory:vh_seg_002:007"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_002:005",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:006"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0jq3JQ9YTqg:delayed_bridge:02404f818209",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+      "question": "Following the same entity from 'camera cuts to scene | participants: instrument=camera, patient=little girl', which intermediate observation leads to 'appears in sky | participants: patient=very large pair of glasses, location=sky'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_004:001"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_004:001",
+        "event:atomic:memory:vh_seg_004:005",
+        "event:atomic:memory:vh_seg_004:006"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "track_entity",
+          "source_id": "event:atomic:memory:vh_seg_004:001",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_004:005"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "same_entity",
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0jq3JQ9YTqg:delayed_bridge:24101cfff347",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+      "question": "What happened immediately after 'man speaks | participants: agent=man', and which intermediate evidence leads to 'a man in sunglasses is visible | participants: agent=man in sunglasses | visible states: m2.wearing=sunglasses'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:004"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:004",
+        "event:atomic:memory:vh_seg_002:001",
+        "event:atomic:memory:vh_seg_002:002"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_001:004",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_002:001"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    },
+    {
+      "case_id": "0jq3JQ9YTqg:delayed_bridge:2789b6073d54",
+      "overlay_path": "/fs/gamma-projects/vlm-robot/steam_video/memory_graph/outputs/video_holmes_atomic_dev_10/0jq3JQ9YTqg/causal_temporal_overlay.json",
+      "overlay_id": "causal_temporal_overlay:video_holmes:train:0jq3JQ9YTqg:q454",
+      "question": "What happened immediately after 'man adjusts equipment | participants: agent=man, instrument=equipment', and which intermediate evidence leads to 'man gets into car | participants: agent=man, patient=car'?",
+      "seed_event_ids": [
+        "event:atomic:memory:vh_seg_001:002"
+      ],
+      "missing_roles": [
+        "bridge"
+      ],
+      "graph_read_budget": 3,
+      "gold_event_ids": [
+        "event:atomic:memory:vh_seg_001:002",
+        "event:atomic:memory:vh_seg_001:003",
+        "event:atomic:memory:vh_seg_002:005"
+      ],
+      "acceptable_first_actions": [
+        {
+          "action_type": "temporal_forward",
+          "source_id": "event:atomic:memory:vh_seg_001:002",
+          "target_ids": [
+            "event:atomic:memory:vh_seg_001:003"
+          ]
+        }
+      ],
+      "required_relation_types": [
+        "temporal_next",
+        "same_entity"
+      ],
+      "tags": [
+        "delayed_bridge",
+        "delayed_preference",
+        "train"
+      ],
+      "split": "train",
+      "notes": "Automatically mined two-hop draft with no admitted direct non-before edge; human review must confirm that the bridge is genuinely required."
+    }
+  ]
+}

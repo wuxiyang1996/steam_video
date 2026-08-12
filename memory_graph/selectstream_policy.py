@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, Mapping
 
 from .causal_witness import witness_from_provenance
 from .types import MemoryNode, RelationBelief
@@ -11,6 +11,7 @@ from .types import MemoryNode, RelationBelief
 
 @dataclass(frozen=True)
 class MemoryUtilityWeights:
+    write_surprise: float = 0.75
     semantic_relevance: float = 1.0
     temporal_bridge: float = 0.5
     state_change: float = 1.0
@@ -53,13 +54,15 @@ def plan_bounded_memory(
     capacity: int,
     semantic_relevance: dict[str, float] | None = None,
     redundancy: dict[str, float] | None = None,
+    pairwise_redundancy: Mapping[tuple[str, str], float] | None = None,
     weights: MemoryUtilityWeights = MemoryUtilityWeights(),
     merge_redundancy_threshold: float = 0.8,
 ) -> MemoryPolicyDecision:
     """Plan keep/merge/evict without breaking a verified causal witness.
 
-    This function plans consolidation but does not mutate nodes. A writer must
-    preserve order, state, mechanism, and provenance when executing a merge.
+    This function is question-independent when ``semantic_relevance`` is not
+    supplied, as in the full-IWM main path.  Call ``materialize_bounded_memory``
+    to execute the returned decision while preserving lineage and graph validity.
     """
 
     if capacity < 1:
@@ -67,6 +70,7 @@ def plan_bounded_memory(
     node_by_id = {node.node_id: node for node in nodes}
     semantic_relevance = semantic_relevance or {}
     redundancy = redundancy or {}
+    pairwise_redundancy = pairwise_redundancy or {}
     witness_sets = _protected_witness_sets(relations, known=set(node_by_id))
     protected = {node_id for group in witness_sets for node_id in group}
     if len(protected) > capacity:
@@ -78,6 +82,7 @@ def plan_bounded_memory(
     utility: dict[str, float] = {}
     for node in nodes:
         values = {
+            "write_surprise": _write_surprise_value(node),
             "semantic_relevance": _unit(semantic_relevance.get(node.node_id, 0.0)),
             "temporal_bridge": _temporal_bridge_value(node.node_id, relations),
             "state_change": _state_change_value(node, relations),
@@ -91,7 +96,8 @@ def plan_bounded_memory(
         }
         components[node.node_id] = values
         utility[node.node_id] = (
-            weights.semantic_relevance * values["semantic_relevance"]
+            weights.write_surprise * values["write_surprise"]
+            + weights.semantic_relevance * values["semantic_relevance"]
             + weights.temporal_bridge * values["temporal_bridge"]
             + weights.state_change * values["state_change"]
             + weights.predictive_dependency * values["predictive_dependency"]
@@ -100,23 +106,30 @@ def plan_bounded_memory(
             - weights.redundancy * values["redundancy"]
         )
 
-    ranked = sorted(
+    candidate_merge_groups = _safe_merge_groups(
         nodes,
-        key=lambda node: (
-            node.node_id not in protected,
-            -utility[node.node_id],
-            node.time_span.start_s,
-            node.node_id,
-        ),
-    )
-    keep_ids = {node.node_id for node in ranked[:capacity]}
-    evict_ids = {node.node_id for node in nodes} - keep_ids
-    merge_groups = _safe_merge_groups(
-        [node for node in nodes if node.node_id in keep_ids],
         protected=protected,
         redundancy=redundancy,
+        pairwise_redundancy=pairwise_redundancy,
         threshold=merge_redundancy_threshold,
     )
+    merged_members = {node_id for group in candidate_merge_groups for node_id in group}
+    units = [*candidate_merge_groups]
+    units.extend(
+        (node.node_id,) for node in nodes if node.node_id not in merged_members
+    )
+    units.sort(
+        key=lambda group: (
+            not bool(set(group) & protected),
+            -max(utility[node_id] for node_id in group),
+            min(node_by_id[node_id].time_span.start_s for node_id in group),
+            group,
+        )
+    )
+    retained_units = tuple(units[:capacity])
+    keep_ids = {node_id for group in retained_units for node_id in group}
+    evict_ids = {node.node_id for node in nodes} - keep_ids
+    merge_groups = tuple(group for group in retained_units if len(group) > 1)
     ordered_keep = tuple(node.node_id for node in nodes if node.node_id in keep_ids)
     ordered_evict = tuple(node.node_id for node in nodes if node.node_id in evict_ids)
     return MemoryPolicyDecision(
@@ -128,9 +141,11 @@ def plan_bounded_memory(
         utility_components=components,
         capacity=capacity,
         metadata={
-            "policy": "selectstream_causal_witness_value/v0.1",
+            "policy": "selectstream_causal_witness_value/v0.2",
             "weights": asdict(weights),
             "merge_is_plan_only": True,
+            "capacity_unit": "retained_node_after_merge",
+            "pairwise_redundancy_available": bool(pairwise_redundancy),
         },
     )
 
@@ -183,6 +198,23 @@ def _temporal_bridge_value(node_id: str, relations: list[RelationBelief]) -> flo
         and any(name in temporal for name in relation.relation_probabilities)
     )
     return min(1.0, degree / 2.0)
+
+
+def _write_surprise_value(node: MemoryNode) -> float:
+    localization = node.metadata.get("localization")
+    coarse_window = (
+        localization.get("coarse_window") if isinstance(localization, dict) else None
+    )
+    reason = (
+        str(coarse_window.get("boundary_reason") or "")
+        if isinstance(coarse_window, dict)
+        else ""
+    )
+    if reason == "representation_surprise":
+        return 1.0
+    if node.metadata.get("state_change") or node.metadata.get("states"):
+        return 1.0
+    return 0.0
 
 
 def _state_change_value(node: MemoryNode, relations: list[RelationBelief]) -> float:
@@ -260,6 +292,7 @@ def _safe_merge_groups(
     *,
     protected: set[str],
     redundancy: dict[str, float],
+    pairwise_redundancy: Mapping[tuple[str, str], float],
     threshold: float,
 ) -> tuple[tuple[str, ...], ...]:
     ordered = sorted(
@@ -267,18 +300,48 @@ def _safe_merge_groups(
         key=lambda node: (node.time_span.start_s, node.time_span.end_s, node.node_id),
     )
     groups: list[tuple[str, ...]] = []
-    for left, right in zip(ordered, ordered[1:]):
-        if left.node_id in protected or right.node_id in protected:
+    run: list[MemoryNode] = []
+
+    def flush() -> None:
+        if len(run) > 1:
+            groups.append(tuple(node.node_id for node in run))
+
+    for node in ordered:
+        if not run:
+            run.append(node)
             continue
-        if min(
-            _unit(redundancy.get(left.node_id, 0.0)),
-            _unit(redundancy.get(right.node_id, 0.0)),
-        ) < threshold:
+        left = run[-1]
+        pair_score = _pair_value(pairwise_redundancy, left.node_id, node.node_id)
+        pairwise_merge = pair_score is not None and pair_score >= threshold
+        legacy_scalar_merge = (
+            pair_score is None
+            and min(
+                _unit(redundancy.get(left.node_id, 0.0)),
+                _unit(redundancy.get(node.node_id, 0.0)),
+            )
+            >= threshold
+            and set(left.source_segments) == set(node.source_segments)
+        )
+        if (
+            left.node_id not in protected
+            and node.node_id not in protected
+            and (pairwise_merge or legacy_scalar_merge)
+        ):
+            run.append(node)
             continue
-        if set(left.source_segments) != set(right.source_segments):
-            continue
-        groups.append((left.node_id, right.node_id))
+        flush()
+        run = [node]
+    flush()
     return tuple(groups)
+
+
+def _pair_value(
+    values: Mapping[tuple[str, str], float], left: str, right: str
+) -> float | None:
+    value = values.get((left, right))
+    if value is None:
+        value = values.get((right, left))
+    return _unit(value) if value is not None else None
 
 
 def _unit(value: float) -> float:

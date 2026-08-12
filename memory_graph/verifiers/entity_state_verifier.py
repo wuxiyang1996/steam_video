@@ -108,7 +108,14 @@ def verify_state_transition(
     if problems:
         return VerifierResult(False, tuple(_unique(problems)), relation)
 
-    for left, right in _identity_matches(pairs):
+    accepted_pairs = _accepted_track_matches(belief, pairs)
+    if not accepted_pairs:
+        return VerifierResult(
+            False,
+            ("state transition requires one accepted conflict-aware identity track",),
+            relation,
+        )
+    for left, right in accepted_pairs:
         for before in src_states:
             if before.mention_id != left.mention_id:
                 continue
@@ -305,6 +312,23 @@ def _identity_matches(
         if _norm(left.entity_type) == _norm(right.entity_type)
         and _norm(left.surface) == _norm(right.surface)
     ]
+
+
+def _accepted_track_matches(
+    belief: RelationBelief,
+    pairs: Iterable[tuple[_Participant, _Participant]],
+) -> list[tuple[_Participant, _Participant]]:
+    """Require exact accepted-track identity, never surface similarity alone."""
+
+    matches: list[tuple[_Participant, _Participant]] = []
+    for left, right in _identity_matches(pairs):
+        same_structural_track = (
+            left.mention_id == right.mention_id
+            and left.mention_id.startswith("l1-track:")
+        )
+        if same_structural_track:
+            matches.append((left, right))
+    return matches
 
 
 def _alignment_ids(value: Any) -> list[tuple[str, str]]:

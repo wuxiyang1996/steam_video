@@ -351,6 +351,26 @@ class VideoSkillsL1AtomicEventExtractor:
                     value=str(value["value"]),
                     confidence=float(value["confidence"]),
                     polarity=str(value.get("polarity") or "positive"),
+                    contract_version=(
+                        str(value["contract_version"])
+                        if value.get("contract_version")
+                        else None
+                    ),
+                    source_l1_node_id=(
+                        str(value["source_l1_node_id"])
+                        if value.get("source_l1_node_id")
+                        else None
+                    ),
+                    subject_source_l1_node_id=(
+                        str(value["subject_source_l1_node_id"])
+                        if value.get("subject_source_l1_node_id")
+                        else None
+                    ),
+                    subject_binding=(
+                        str(value["subject_binding"])
+                        if value.get("subject_binding")
+                        else None
+                    ),
                 )
                 for value in node.metadata.get("states") or ()
                 if isinstance(value, dict)

@@ -1,0 +1,15 @@
+{
+  "schema_version": "steam-cgbench-subtitle-l1-enrichment/v0.1",
+  "descriptor_schema": "time-aligned-subtitle-l1/v0.1",
+  "question_or_gt_used": false,
+  "completed": [
+    {
+      "video_id": "BV1gbgWeBE92",
+      "aligned_node_count": 382,
+      "cue_count": 810,
+      "overlay_l1_node_count": 389
+    }
+  ],
+  "skipped": [],
+  "training_performed": false
+}

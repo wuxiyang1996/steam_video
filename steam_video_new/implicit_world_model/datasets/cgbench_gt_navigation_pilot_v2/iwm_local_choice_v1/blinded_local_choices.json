@@ -1,0 +1,152 @@
+{
+  "schema_version": "steam-full-iwm-grounded-local-choice/v0.1",
+  "local_choice_records": [
+    {
+      "record_id": "local_choice:fc42446d270e85c4157b",
+      "case_id": "cgcase:85bf9fc17ca9944b6af4",
+      "split": "test",
+      "question": "How many people did Jinx's blue missile kill on the irregular table in the video?",
+      "belief": {
+        "answerability": "not_ready",
+        "required_roles": [
+          "agent",
+          "projectile",
+          "action",
+          "victim",
+          "location",
+          "outcome",
+          "quantity"
+        ],
+        "missing_roles": [
+          "agent",
+          "projectile",
+          "action",
+          "victim",
+          "location",
+          "outcome",
+          "quantity"
+        ],
+        "contradictions": []
+      },
+      "candidates": [
+        {
+          "candidate": "candidate_a",
+          "predicted_transition": {
+            "observation": {
+              "outcome": "identity_evidence",
+              "descriptor": [
+                "projectile_motion | motion | projectile object air blue beam"
+              ]
+            },
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "projectile",
+                "action"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        },
+        {
+          "candidate": "candidate_b",
+          "predicted_transition": {
+            "observation": {
+              "outcome": "identity_evidence",
+              "descriptor": [
+                "projectile_travel | motion | projectile energy_beam blue_purple trailing_smoke"
+              ]
+            },
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "projectile",
+                "action"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        },
+        {
+          "candidate": "candidate_c",
+          "predicted_transition": {
+            "observation": {
+              "outcome": "identity_evidence",
+              "descriptor": [
+                "firearm_discharge | action | agent character weapon blue_hair_female | target character body masked_figure"
+              ]
+            },
+            "belief_delta": {
+              "progress": "advanced",
+              "answerability_after": "not_ready",
+              "frontier_change": "opened",
+              "contradiction_change": "unchanged",
+              "resolved_roles": [
+                "action",
+                "agent",
+                "victim"
+              ],
+              "opened_roles": [],
+              "relation_updates": []
+            }
+          }
+        }
+      ],
+      "pairwise_labels": null
+    }
+  ],
+  "transition_correction_records": [
+    {
+      "record_id": "transition_correction:fc42446d270e85c4157b",
+      "case_id": "cgcase:85bf9fc17ca9944b6af4",
+      "split": "test",
+      "question": "How many people did Jinx's blue missile kill on the irregular table in the video?",
+      "candidate": {
+        "address_descriptor": [
+          "firearm_discharge | action | agent character weapon blue_hair_female | target character body masked_figure"
+        ],
+        "predicted_transition": {
+          "observation": {
+            "outcome": "identity_evidence",
+            "descriptor": [
+              "firearm_discharge | action | agent character weapon blue_hair_female | target character body masked_figure"
+            ]
+          },
+          "belief_delta": {
+            "progress": "advanced",
+            "answerability_after": "not_ready",
+            "frontier_change": "opened",
+            "contradiction_change": "unchanged",
+            "resolved_roles": [
+              "action",
+              "agent",
+              "victim"
+            ],
+            "opened_roles": [],
+            "relation_updates": []
+          }
+        }
+      },
+      "grounded_navigation_label": null
+    }
+  ],
+  "record_counts": {
+    "local_choice": 1,
+    "transition_correction": 1
+  },
+  "label_visibility": "separate_hidden_key",
+  "candidate_order_semantics": "none",
+  "outside_clue_negative_labels_created": false,
+  "numeric_reward_present": false,
+  "top_k_applied": false,
+  "training_ready": false,
+  "training_performed": false
+}

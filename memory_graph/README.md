@@ -2,15 +2,22 @@
 
 ## 1. Goal
 
+> **Current architecture role:** this directory implements grounded evidence
+> memory plus the explicit graph artifact used by graph-based baselines,
+> diagnostics, teachers, and optional GTSAM correction. The target main method
+> uses this fixed L1/L1.5 graph as a shared evidence substrate. Existing graph
+> construction is necessary infrastructure but is not the primary IWM
+> contribution; final hop selection must depend on predicted future belief.
+
 This directory implements a temporal and predictive-dependency graph grounded
 in video memory nodes, with mechanism-grounded candidate causality retained as
 a smaller verified subset:
 
 ```text
 streaming video
-  → bounded memory nodes
-  → temporal + predictive-dependency graph
-  → optional verified causal witnesses
+  → bounded grounded semantic L1 nodes + temporal backbone
+  → soft embedding-derived L1.5 navigation correlations
+  → optional separately verified identity/state/causal relations
   → question-conditioned belief
   → evidence action
   → real memory read
@@ -21,9 +28,9 @@ The design is inspired by SelectStream's fixed-capacity latent evidence graph, b
 
 Video_Skills can provide video segmentation, clip schemas, L1/L2 graphs, typed skills, provenance, verifiers, and trajectory logging. It is the data and execution interface, not the belief model proposed here.
 
-### Architecture decision: dependency-first navigation
+### Graph-baseline decision: dependency-first navigation
 
-The main runtime graph does not require every useful event relation to be
+The graph-based baseline does not require every useful event relation to be
 causal. It separates three levels:
 
 ```text
@@ -49,7 +56,7 @@ Question bridges are derived during navigation and are never written as
 question-independent observed facts. Correlation/dependency edges may choose a
 real graph read, but they may not enter the final answer as evidence.
 
-The navigation world model is therefore epistemic:
+The graph-baseline navigation world model is therefore epistemic:
 
 ```text
 P(next observation, belief change, answerability
@@ -101,15 +108,59 @@ an observable before/after state delta, an explicit mechanism, a minimal
 support set, raw-video verification, and no direct counterevidence. Without
 reliable identity and state change, no causal claim is admitted.
 
-The current implementation has the right dual-layer storage contract but not
-yet reliable relation admission. An independent GPT5.6 audit of the 45
-materialized L1 navigation priors judged 21 supported, 12 ambiguous, and 12
-unsupported (46.7% provisional strict precision); all four mechanically mapped
-`transition_support` edges were unsupported. This model audit is not human
-ground truth, but it is sufficient to prohibit calling the current edges
-reliable. The causal admission gate, schema validation, endpoint resolution,
-and identity-association verifier must be corrected before navigation
-evaluation.
+The current implementation has the dual-layer storage contract and a strict
+relation-admission gate, but it does not yet have enough grounded identity
+evidence for useful coverage. A blinded GPT-5.6 provisional audit of the 45
+old-flow L1 navigation priors produced 19/34 supported identity labels and 3/7
+supported state-transition labels. Decided precision was 70.4% and 50.0%; the
+more conservative precision that counts `unclear` as not established was 55.9%
+and 42.9%. These are model-provisional diagnostics, not human ground truth.
+
+The fresh high-grade smoke artifact contains 85 native identity candidates,
+but its 80 distinct candidate endpoints carry no structured `entity_type`,
+`mention_id`, observable attributes, or evidence references; only one native
+edge connects two explicit `entity_mention` nodes. The correct next step is to
+preserve grounded clip-schema entity references through L1 composition, not to
+lower the identity threshold. Until independent human labels accept non-empty
+admitted identity and state-transition sets, candidate edges are not called
+reliable and the formal navigation comparison remains gated.
+
+The isolated entity-reference rerun under
+`outputs/video_holmes_entity_refs_smoke` closes that data-contract failure. It
+completed 55/55 clip schemas and 55/55 neighbor-composer cache targets after
+resumable retries, with zero final compose, schema, or integrity errors and an
+intrinsic `high` grade. All 93 entity mentions have a mention ID, entity type,
+non-empty observable attributes, and evidence references. All 82 native
+identity edges connect two such entity mentions; the old smoke was 1/85.
+
+The strict verifier automatically admits none of those model proposals: eight
+carry explicit type or normalized stable-attribute conflicts and 74 remain
+raw-video reread candidates (63 unique endpoint pairs). A GPT-5.6 visual
+provisional reread accepted 69 edges, of which the component-wide consistency
+pass merged 64; the simultaneously visible look-alike men near the end remain
+separate tracks. This is an engineering smoke, not the independent-human gate.
+No accepted track has a sufficiently grounded same-attribute before/after
+delta, so zero `state_transition` edges are generated. A one-case provisional
+navigation ablation is negative: semantic-only evidence recall is 0.5 at two
+reads, while event-only, native-L1, and verified-dependency recall are 0.0.
+Formal navigation conclusions therefore remain blocked on independent labels,
+non-empty verified state/dependency edges, and a larger fixed gold case set.
+
+The full isolated end-to-end run also completed with 32 atomic events, 172 L1
+observations, 175 event relations, and 37 native L1 navigation relations. Its
+relation teacher finished without errors. The first held-out graph-audit reply
+was truncated at the shared 3000-token limit; audit retries now use an
+independent 8000-token budget and compact retry instructions. Re-auditing the
+persisted overlay completed all 27/27 requested rows with temporal consistency
+passing. That result is a GPT-OSS engineering audit, not independent-human
+precision evidence. The failed response is preserved as `audit.failed.json`.
+An existing overlay can be retried without repeating video extraction:
+
+```bash
+python -m memory_graph.retry_overlay_audit \
+  --overlay memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/mKqiGQrHtW8/causal_temporal_overlay.json \
+  --summary memory_graph/outputs/video_holmes_entity_refs_smoke/memory_graph/summary.json
+```
 
 #### Implementation plan: evidence-first relation admission
 
@@ -269,6 +320,21 @@ replacement. Its replacement path is disabled. Qwen frame rereads remain
 available only as targeted repair/verification for a specific accepted node,
 state transition, or candidate-causal witness.
 
+For the CG-Bench question-independent substrate, `subtitle_l1.py` provides a
+separate multimodal L1 enrichment path. It aligns dataset-provided SRT cues to
+already frozen surprise-window nodes by timestamp overlap only. A bounded
+subtitle-bearing semantic key is available for routing; the complete aligned
+transcript remains part of the grounded value revealed by a real read. The
+enrichment records source path/checksum and explicitly invalidates the old
+embedding reference before L1.5 recompilation. It never receives a question,
+answer, clue interval, relevance label, or numeric score.
+
+The visual extractor's `v0.3-rich-grounded-single-pass` contract also requests
+a concise frame-grounded factual caption and evidence-indexed visible text for
+videos without usable subtitles. The atomic predicate remains separate from
+this richer descriptor. OCR/caption output is perceptual evidence subject to
+the L1 reliability gate, not an identity, causal, or relevance assertion.
+
 GPU execution remains staged: run Video_Skills
 `dataset_clip_wrapper.run_staged_llm_pipeline --skip-l2-planner`, unload the
 9B server, then pass its `examples.jsonl` to
@@ -363,8 +429,98 @@ The first Phase 1/2 implementation now includes:
   resolution before CLI and benchmark writers persist them; legacy v0.2
   reports may omit unavailable `candidate_relations`, while every new build
   writes the complete field;
+- `identity_tracks.py`: admits only explicitly verified identity links after
+  component-wide type, stable-attribute, simultaneous-instance, and motion
+  consistency checks; unverified native labels remain candidates;
+- `identity_reread.py`: prepares graph-hash-bound raw-video review packets,
+  deduplicates repeated endpoint pairs, validates reviewer provenance and
+  evidence, and applies decisions back to either a graph or nested canonical
+  artifact;
+- `state_relations.py`: derives a state-transition proposal only when both
+  visible states belong to the same accepted conflict-aware track, use the
+  same normalized attribute, and have different grounded values;
+- `l1_relation_audit.py`: prepares the blinded 45-edge native-L1 human audit
+  and enforces separate ≥90% identity and state-transition precision gates;
+- `navigation_ablation.py`: compares semantic-only, event-only, native-L1
+  candidate, and verified-dependency reads under the same persisted-read
+  budget and independently supplied evidence targets. Explicit state-change
+  questions route the verified strategy to the jointly most relevant
+  hard-verified `state_transition` pair; no gold event ID is used for routing;
 - `cli.py`: builds an atomic-event overlay from one canonical example;
 - `tests/test_memory_graph.py`: covers adapter selection, interval relations, relation scoring, and the embedding contract.
+
+#### Historical structured-state Video-Holmes smoke (2026-07-20)
+
+**Note:** CG-Bench is now the primary navigation/IWM testbed. The Video-Holmes
+structured-state smoke below is retained as historical graph-construction
+evidence only; it is not the active evaluation protocol.
+
+This structured-state Video-Holmes smoke supersedes the earlier negative
+navigation diagnosis above, while remaining historical relative to CG-Bench.
+The resumable Video_Skills flow completed 55/55 clip schemas and 55/55 graph
+composition targets with zero final schema or integrity errors. The resulting
+canonical graph contains 177 structured state nodes and exactly 177 `state_of`
+edges. Its L1.5 overlay contains 30 atomic events, all 30 with explicit
+participant references, and 67 strict visible-state assertions.
+
+Every atomic event retains an `embedding_ref` for the normalized,
+2048-dimensional `Qwen/Qwen3-VL-Embedding-2B` representation. Embedding text
+uses the `event+participants+states/v1` contract so future navigation can use
+the event description, grounded participants, and visible states together.
+Large vectors remain in `.npy` matrices; graph JSON stores the model,
+dimension, dtype, normalization flag, row index, matrix path, and SHA-256
+checksum. Navigation questions use the same model and persist equivalent query
+embedding references and manifests.
+
+After a GPT-5.6 visual **provisional** identity reread, the conflict-aware track
+pass admits one strict state transition: the same tracked man's expression
+changes from `serious` to `focused`. The transition connects the explicit
+before/after events and passes the accepted-track hard verifier. The base
+video-only artifact still admits no probabilistic identity or state edge
+without an independent reviewer, as intended.
+
+On the unchanged six-case, raw-video-reviewed provisional gold set, with two
+persisted event reads per question, the final Qwen embedding ablation is:
+
+| Strategy | Answer accuracy | Mean evidence recall |
+| --- | ---: | ---: |
+| Semantic only | 66.7% | 0.833 |
+| Event only | 66.7% | 0.833 |
+| Native L1 candidate | 66.7% | 0.833 |
+| Verified dependency | **83.3%** | **0.917** |
+
+For the held diagnostic state-change question, the first three strategies
+acquire only one of two required events (`0%` answer accuracy and `0.5`
+evidence recall). Verified dependency follows the strict state edge and
+acquires both endpoints (`100%` and `1.0`) under the same read budget. This is
+positive engineering evidence that a verified state dependency can improve
+navigation; it is not yet a statistically reliable benchmark result.
+
+The current assessment is therefore:
+
+- the implementation is reliable enough for continued evaluation, and the
+  central dependency-navigation hypothesis now has a positive signal;
+- strict identity/state admission correctly favors precision over coverage;
+- the embedding representation is a reusable artifact rather than a temporary
+  evaluation input;
+- formal validation is still blocked because the result covers one video, six
+  fixed questions, and one admitted transition, and its identity decisions are
+  GPT-5.6 provisional rather than independent-human labels;
+- the `change` / `become` / `from ... to ...` query-intent route needs broader
+  paraphrase and hard-negative evaluation before it is treated as general.
+
+The next evidence milestones, in order, are:
+
+1. independently review the existing identity-relation packet and require at
+   least 90% strict precision for admitted identity and state-transition edges;
+2. freeze 30--50 navigation questions across multiple videos before examining
+   ablation results;
+3. include diverse state-change paraphrases and negative questions that mention
+   change even though no verified transition exists;
+4. report coverage alongside precision: videos with accepted tracks, tracks
+   with grounded state deltas, and questions that can use a verified dependency;
+5. only after those gates pass, build the persistent embedding index and expand
+   to learned or multi-hop navigation.
 
 The repository does **not** include trained relation-head weights. Consequently, `same_entity`, `state_transition`, `explains`, `enables`, and `contradicts` must not be reported as calibrated posteriors until a teacher-labeled or human-audited relation dataset has been fitted and calibrated.
 
@@ -458,7 +614,8 @@ Candidate-causal evidence affects bounded-memory value:
 
 ```text
 memory_value =
-    semantic_relevance
+    write_surprise
+  + optional semantic_relevance (baseline only)
   + temporal_bridge_value
   + state_change_value
   + predictive_dependency_value
@@ -472,6 +629,63 @@ unresolved candidates. `merge` is permitted only when temporal order, entity
 continuity, before/after states, mechanism, and provenance survive. `evict`
 prefers redundant background observations and must not remove only one member
 of a protected witness set.
+
+The implementation is no longer plan-only. `adaptive_windowing.py` provides a
+question-independent representation-surprise writer; a learned feature
+provider is pluggable and the OpenCV representation is an explicit smoke
+fallback. `consolidation.materialize_bounded_memory` executes a policy decision,
+stores merge lineage, invalidates merged embeddings for refresh, rewires
+surviving relations, removes orphans, and rebuilds the retained temporal chain.
+`soft_correlation.py` scores every non-temporal retained-node pair with the
+Qwen embedding sidecar, collapses near-identical semantics into equivalence
+classes, represents recurrence as a time-ordered chain instead of a clique,
+and applies class-level standardized sparsemax. Symmetric embedding evidence
+creates bidirectional semantic hops rather than fabricating one-way facts. A
+frozen global admission policy may apply calibrated similarity/affinity gates,
+but never per-node Top-K. Every pair receives a separate audit row containing
+cosine, temporal gap, endpoint type/modality, semantic-class membership,
+admission outcome, and rejection reason. These values are navigation features,
+not probabilities, planner rewards, or verified facts. The compiler fingerprints
+source and retained L1 and raises if L1.5 construction mutates source L1. The legacy
+`correlation_overlay.py` categorical contract is retained only for optional
+typed fact-relation review; its unverified candidates do not become main-path
+navigation edges.
+
+The CG-Bench `audit-correlations` command compiles the graph and pair audit
+without an LLM, then joins hidden clue intervals only after graph freeze. It
+reports direct clue-bridge coverage separately from shortest-path coverage,
+because a sparse graph should not be penalized for replacing a direct clique
+edge with a short recurrence path. Unmatched pairs remain unlabeled; precision
+is reported as unavailable until trusted negative controls exist.
+
+`multichannel_correlation.py` adds a second, complete pair audit without
+changing the runtime topology. It keeps semantic affinity separate from
+grounded categorical descriptors for cross-window entity correspondence,
+same-attribute change candidates, and explicit contrast references. These
+descriptors are emitted only from structured L1 fields: local
+`candidate_visual_signature` IDs are not treated as cross-window identity,
+node-local `state_change` is not copied onto every incident pair, and text
+keywords are not used to manufacture contrast. Descriptor channels do not
+admit legal hops, verify identity/state, claim causality, or express planner
+preference. The compiler writes this audit as
+`l1_l15_multichannel_pair_audit.json` beside the existing semantic audit.
+
+A separate optional runtime artifact,
+`l1_l15_caption_candidates.json`, may add sparse scoreless navigation hops from
+one question-independent model pass over frozen structured L1 descriptors. It
+is deliberately not the multichannel audit and not a fact verifier. Each
+proposal must use an allowed categorical channel and quote exact grounding
+text from both endpoint descriptors; temporal/semantic duplicates are removed.
+These hops expand legal reachability but do not assert causality, same identity,
+state-transition truth, calibrated probability, confidence, relevance to a
+future question, or planner preference. Their endpoints are included in the
+closed-loop graph fingerprint.
+
+There is intentionally no separately trained L1.5 edge selector. CG-Bench clue
+chains and reviewed executed transitions supervise the action-conditioned IWM:
+L1.5 exposes a static evidence/navigation substrate, while the IWM learns how
+a legal hop may change belief for the current question. Training another
+question-independent bridge model would duplicate the central IWM contribution.
 
 ## 2. Core Distinctions
 
@@ -488,14 +702,19 @@ m_i = (h_i, τ_i, p_i)
 
 A memory node is what the system actually stores and reads. It is not necessarily identical to one event: one node may cover multiple events, and multiple nodes may describe the same event.
 
-### 2.2 Memory nodes are not event nodes
+### 2.2 Main navigation L1.5 is correlation, not a second node store
 
 ```text
-L1 memory node = grounded observation container
-L1.5 event node = atomic, revisable hypothesis grounded in one or more L1 nodes
+L1 = grounded semantic evidence nodes + deterministic temporal backbone
+L1.5 = soft nonlocal navigation correlation plus non-admitting grounded pair
+       descriptors over the same L1 node IDs
+optional strict overlay = revisable atomic/identity/state/causal hypotheses
 ```
 
-The earlier `1 memory node ≈ 1 event node` prototype assumption is retired because Video-Holmes segments contain multiple actions and state changes. The overlay must allow:
+The main IWM path does not duplicate L1 nodes into an event graph. Legacy
+Video-Holmes relation experiments may still construct atomic event hypotheses
+for strict fact verification and graph baselines. That optional overlay must
+allow:
 
 - one memory node to split into multiple event hypotheses;
 - multiple memory nodes to map to the same event;
@@ -685,14 +904,52 @@ Before executing an action, the world model predicts a belief transition:
 b^-_(t+1) = T_phi(b_t, a_t)
 ```
 
-The system executes only the first planned action and reads a real memory node:
+The system executes only the first planned operation and reads real grounded
+evidence memory:
 
 ```text
-o_(t+1) = ReadGraph(G_t, a_t)
+o_(t+1) = ReadMemory(M_t, a_t)
 b_(t+1) = Update(b^-_(t+1), o_(t+1))
 ```
 
-Imagined evidence must never enter the final answer directly. The posterior must be corrected and planning repeated after every real graph read.
+Imagined evidence must never enter the final answer directly. The belief must
+be corrected and planning repeated after every real evidence-memory read.
+
+For IWM supervision, every legal action can also be executed independently
+from the same immutable L1/L1.5 checkpoint. The resulting dataset stores real
+observation descriptors and recomputes categorical belief deltas only after
+the persisted read and correction. It keeps Qwen embedding references for
+future retrieval but excludes raw vectors and numeric targets. Generated
+records remain unreviewed until independently accepted/rejected and locked;
+they are not automatically training gold.
+
+Verifier provenance is explicit in executed-transition records. A persisted
+hard-verifier result is labeled pre-read, replay without a verifier is
+inconclusive, and only an actually invoked Video_Skills verifier is labeled
+post-read. Failure to establish support is not treated as contradiction.
+Balanced mining reports missing correction-sensitive categories rather than
+backfilling them with ordinary temporal examples.
+Its independent review rows also remove the miner's expected outcome from the
+ID, question, tags, and category, and use stable hash ordering to prevent label
+and row-position leakage.
+
+For annotation, a separate public evidence packet contains bounded visible
+L1/L1.5 endpoints and context plus opaque Qwen embedding references. Overlay
+paths and embedding paths stay in a hidden key; teacher probability,
+hard-verifier output, confidence, and expected outcomes are excluded. The first
+GPT-5.6 pass is explicitly model-provisional. Live executed-transition
+collection stops with unreviewed targets and a coverage inspection; no world
+model is trained from these artifacts.
+
+The review-anchored v2 collector executes accepted reviewed actions as well as
+native candidates. Restored actions may read only existing reviewed endpoints;
+they never write a missing edge back to L1.5. It also preserves returned
+bridge/counterevidence nodes and represents a completed empty counterevidence
+search as a grounded operation outcome rather than a fabricated evidence node.
+State-transition resolution requires a strict post-read categorical state
+delta. The v2 artifact reaches exact grounded execution for all 42 reviewed
+non-STOP cases, but remains unreviewed and therefore cannot be used for formal
+training.
 
 ## 7. Are We Performing Causal Inference?
 
@@ -707,17 +964,24 @@ Here, a counterfactual means epistemic-action branching: execute different evide
 
 ## 8. Are We Using a Factor Graph?
 
-The first version will not implement a complete GTSAM-style factor graph.
+The L1/L1.5 Memory Graph is required as the shared evidence substrate. The
+factor graph is not required as the main planner or ranking mechanism. The IWM
+uses the fixed memory graph to construct legal candidates and bounded context,
+then predicts future-belief effects to choose the next reasoning hop.
 
-It will use:
+Factor graph / GTSAM remains available as an optional real-evidence belief
+correction backup and as a graph-based baseline, diagnostic oracle, teacher,
+and visualization tool. It never consumes imagined evidence and does not rank
+reasoning operations. The complete backup boundary, existing implementation,
+pilot, destructive controls, and migration status are centralized in
+[`factor_graph/README.md`](../factor_graph/README.md).
 
-- a sparse typed graph;
-- relation probabilities;
-- a question-conditioned factorized belief;
-- contradiction and missing-role updates;
-- one- or two-step model-predictive planning.
-
-A complete factor graph may be considered later, but it is outside the first version and its novelty claim.
+The backup engineering interface is finalized with three explicit runtime
+modes, categorical-only activation, isolated sibling sessions, and
+checksum-validated checkpoint restore. Empty counterevidence searches and
+review-restored endpoint reads never fabricate relation factors. This means
+the backup is runnable and auditable; it remains uncalibrated and has not yet
+shown matched-budget navigation benefit.
 
 ## 9. Integration with Video_Skills
 
@@ -788,9 +1052,11 @@ python -m memory_graph.cli \
 `--visual-reread` is opt-in because it requires a running VLM endpoint and a
 valid raw-video path in the canonical example. `--require-visual-verification`
 turns a failed or inconclusive reread into a hard rejection for `explains` and
-`enables`. `--memory-capacity` plans keep/merge/evict actions without mutating
-the immutable evidence graph; executing safe consolidation remains a separate
-writer responsibility.
+`enables`. `--memory-capacity` on the legacy CLI still records a compatibility
+plan without mutating that artifact. The full-IWM main path calls
+`materialize_bounded_memory` through
+`steam_video_new.implicit_world_model.full_graph_iwm.graph_adapter`, producing a
+separate retained graph with a hard capacity and an explicit lineage audit.
 
 The embedding path requires:
 
@@ -845,19 +1111,32 @@ python -m memory_graph.validate_vrbench \
 
 Use `--phase locked` for the fixed 100-example run. VRBench evaluates timestamp coverage, temporal order, and interior bridge recall only; Video-Holmes independent edge audits remain responsible for candidate-causal precision.
 
-## 11. First Implementation Phase
+## 11. Current implementation order
 
-1. Audit video-only L1 observations for factuality, coverage, atomicity, provenance, and leakage.
-2. Split coarse L1 observations into atomic L1.5 event hypotheses while preserving L1 references.
-3. Build a deterministic temporal skeleton from explicit time spans.
-4. Evaluate sparse candidate-pair recall separately from relation precision.
-5. Predict constrained `same_entity`, `state_transition`, `explains`, `enables`, and `contradicts` hypotheses.
-6. Reject edges that fail temporal, entity, state, grounding, or minimal-support checks.
-7. Calibrate relation scores against independent human labels.
-8. Implement question-conditioned belief and real graph-read updates.
-9. Record sibling action trajectories from the same checkpoint.
-10. Train transition, observation, and delayed-utility heads.
-11. Test whether one- or two-step MPC outperforms greedy retrieval and direct action ranking.
+1. Audit question-independent video L1 observations for factuality, coverage,
+   temporal grounding, provenance, and leakage.
+2. Treat retained L1 observations as grounded semantic nodes and rebuild their
+   deterministic temporal backbone after consolidation.
+3. Attach checksum-validated Qwen embedding sidecars; coalesce only adjacent
+   near-duplicate semantics.
+4. Build soft nonlocal L1.5 navigation correlations over the same node IDs,
+   with recurrence chains and class-level standardized sparsemax rather than a
+   fixed Top-K or dense pair clique.
+5. Compile cursor-local temporal/correlation actions and expose the complete
+   retained root set without a hand-written winner score.
+6. Optionally attach the frozen, question-independent, grounded categorical
+   candidate-hop overlay; keep it scoreless and distinct from verified facts.
+7. Use the IWM to predict categorical observation/belief deltas and use only
+   ordinal pairwise or setwise categorical trajectory preference in the planner.
+8. Execute one real read, discard imagined evidence, correct belief, and
+   replan; record the executed L2 trace.
+9. Keep typed `same_entity`, `state_transition`, `explains`, `enables`, and
+   `contradicts` proposals in an optional strict overlay; admit them only after
+   their independent evidence gates.
+10. Evaluate answer accuracy, clue coverage, read efficiency, action divergence,
+   abstention, and latency separately under matched budgets.
+11. Keep GTSAM as an optional belief-correction backup/baseline, never as the
+    default action ranker.
 
 ## 12. Go / No-Go Criteria
 
@@ -865,7 +1144,7 @@ Go:
 
 - the L1 reliability gates in [`L1_RELIABILITY.md`](L1_RELIABILITY.md) pass on an independently audited video-only set;
 - manually audited candidate-relation precision is at least 70%;
-- at least 20% of valid questions require a bridge or delayed-utility hop;
+- at least 20% of valid questions require a bridge or delayed-belief-effect hop;
 - under the same graph-read budget, compared with greedy and direct-ranking baselines:
   - supporting-event Recall@K improves by at least 10 absolute points, or
   - answer accuracy improves by at least 5 absolute points;

@@ -1,0 +1,50 @@
+{
+  "schema_version": "steam-visual-transition-review-coverage/v0.1",
+  "packet_id": "targeted-transition-review-v2",
+  "packet_sha256": "13a20db61621b495e753ac8a9284bca511300ed19619e44c4dad71d194fe8305",
+  "public_index_sha256": "50de3b19963c7e27cf22f2eb98846d07221487b947ee13493c11f9eda33a0feb",
+  "item_count": 52,
+  "fully_covered_item_count": 52,
+  "partially_covered_item_count": 0,
+  "uncovered_item_count": 0,
+  "requested_node_count": 167,
+  "available_node_count": 167,
+  "partially_available_node_count": 0,
+  "missing_node_count": 0,
+  "unique_media_binding_count": 109,
+  "role_counts": {
+    "observation": 99,
+    "source": 44,
+    "target": 78
+  },
+  "available_windows_by_video": {
+    "-3l2KFTj7yY": 18,
+    "0-kQB8Jo80I": 15,
+    "033fKtGdpPc": 15,
+    "0CPoD4ZRTUQ": 20,
+    "1IzpG2kJPdg": 13,
+    "1TR9riaDzY8": 6,
+    "1iHavvOahH0": 6,
+    "TNYeYwYiAag": 30,
+    "mKqiGQrHtW8": 44
+  },
+  "missing_reasons": {},
+  "partial_reasons": {},
+  "video_durations_s": {
+    "-3l2KFTj7yY": 138.07126666666667,
+    "0-kQB8Jo80I": 160.29166666666666,
+    "033fKtGdpPc": 260.4268333333333,
+    "0CPoD4ZRTUQ": 172.64,
+    "1IzpG2kJPdg": 219.55266666666665,
+    "1TR9riaDzY8": 119.33333333333333,
+    "1iHavvOahH0": 240.2817083333333,
+    "TNYeYwYiAag": 247.66666666666666,
+    "mKqiGQrHtW8": 162.36
+  },
+  "delivery": "original_mp4_http_range_with_browser_time_window",
+  "pre_generated_clip_count": 0,
+  "pre_generated_keyframe_count": 0,
+  "formal_eligible": false,
+  "training_ready": false,
+  "training_performed": false
+}

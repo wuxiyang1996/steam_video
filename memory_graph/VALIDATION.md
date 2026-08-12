@@ -18,7 +18,7 @@ Three conclusion scopes must remain separate:
 
 - **provisional expert-text**: useful only for testing extraction, graph, and verifier wiring; it cannot pass the L1 gate;
 - **trusted video-only**: requires a passing independent L1 audit before any candidate-causal relation is generated;
-- **benchmark scope**: Video-Holmes independent edge labels measure candidate-causal precision, while VRBench measures temporal/multi-hop transfer and does not provide complete typed causal-edge gold.
+- **benchmark scope**: **CG-Bench is the primary navigation/IWM testbed** (clue coverage, ordinal preference, matched closed-loop arms). Historical Video-Holmes independent edge labels may still measure candidate-causal precision; VRBench measures temporal/multi-hop transfer and does not provide complete typed causal-edge gold. Video-Holmes is not the active evaluation protocol.
 
 The updated runner writes `causal_temporal_overlay.json`, records L1 status and verifier rejections, and refuses to reuse the old segment-level API retry path. A 10-video expert-text development rerun and the 47-video locked rerun require new API calls; a trusted acceptance decision additionally requires independent human edge labels.
 
@@ -140,6 +140,24 @@ python -m memory_graph.materialize_independent_edge_audit \
 ```
 
 Then run `evaluate_validation_outcomes --labels-source independent_human` and `calibration --labels-source independent_human`. `unclear` labels are excluded rather than treated as positive.
+
+The historical 45 native-L1 relations use a separate blinded packet because
+their endpoints are L1 observations rather than L1.5 events:
+
+```bash
+python -m memory_graph.l1_relation_audit prepare \
+  --overlay memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/TNYeYwYiAag/causal_temporal_overlay.json \
+  --output-dir memory_graph/outputs/video_holmes_video_skills_l1_graph_smoke/independent_l1_relation_audit
+
+# An independent reviewer fills annotation_packet.json without opening model_key.json.
+python -m memory_graph.l1_relation_audit evaluate \
+  --packet /path/to/locked_annotation_packet.json \
+  --output /path/to/l1_relation_precision.json
+```
+
+The gate passes only when both admitted identity and admitted
+`state_transition` groups contain decided labels and reach at least 90% strict
+precision. `unclear` is reported but excluded from the precision denominator.
 
 ## Atomic-event grounding audit
 
